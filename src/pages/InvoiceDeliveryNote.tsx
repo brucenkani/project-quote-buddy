@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { loadInvoices } from '@/utils/invoiceStorage';
 import { loadSettings } from '@/utils/settingsStorage';
 
-export default function InvoicePrint() {
+export default function InvoiceDeliveryNote() {
   const { id } = useParams();
   const navigate = useNavigate();
   const settings = loadSettings();
@@ -11,7 +11,6 @@ export default function InvoicePrint() {
 
   useEffect(() => {
     if (invoice) {
-      // Trigger print dialog after component mounts
       window.print();
     }
   }, [invoice]);
@@ -45,7 +44,7 @@ export default function InvoicePrint() {
           <img src={settings.logoUrl} alt={settings.companyName} className="h-16 mb-4" />
         )}
         <h1 className="text-3xl font-bold mb-2" style={{ color: settings.primaryColor }}>
-          TAX INVOICE
+          DELIVERY NOTE
         </h1>
         <div className="text-sm">
           <p className="font-semibold">{settings.companyName}</p>
@@ -57,95 +56,64 @@ export default function InvoicePrint() {
       </div>
 
       <div className="mb-6">
-        <p className="text-lg font-semibold">Invoice #{invoice.invoiceNumber}</p>
+        <p className="text-lg font-semibold">Delivery Note #{invoice.invoiceNumber}</p>
+        <p className="text-sm">Date: {new Date(invoice.issueDate).toLocaleDateString()}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-8 mb-8">
         <div>
-          <h2 className="font-semibold mb-2">Bill To:</h2>
+          <h2 className="font-semibold mb-2">Deliver To:</h2>
           <p className="font-medium">{invoice.projectDetails.clientName}</p>
           <p className="text-sm">{invoice.projectDetails.clientEmail}</p>
           <p className="text-sm">{invoice.projectDetails.clientPhone}</p>
         </div>
         <div>
-          <div className="mb-3">
-            <p className="text-sm text-gray-600">Issue Date</p>
-            <p className="font-medium">{new Date(invoice.issueDate).toLocaleDateString()}</p>
-          </div>
-          <div className="mb-3">
-            <p className="text-sm text-gray-600">Due Date</p>
-            <p className="font-medium">{new Date(invoice.dueDate).toLocaleDateString()}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Project Reference</p>
-            <p className="font-medium">{invoice.projectDetails.projectName || '-'}</p>
-          </div>
+          <h2 className="font-semibold mb-2">Reference:</h2>
+          <p className="text-sm">Invoice: {invoice.invoiceNumber}</p>
+          <p className="text-sm">Project: {invoice.projectDetails.projectName || '-'}</p>
         </div>
       </div>
 
       <table className="w-full mb-8">
         <thead>
           <tr className="border-b-2" style={{ borderColor: settings.primaryColor }}>
-            <th className="text-left py-2">Description</th>
-            <th className="text-right py-2">Qty</th>
-            <th className="text-right py-2">Rate</th>
-            <th className="text-right py-2">Amount</th>
+            <th className="text-left py-2">Item Description</th>
+            <th className="text-right py-2">Quantity</th>
+            <th className="text-left py-2">Unit</th>
           </tr>
         </thead>
         <tbody>
           {invoice.lineItems.map((item, index) => (
             <tr key={index} className="border-b border-gray-200">
-              <td className="py-2">{item.description}</td>
+              <td className="py-3">{item.description}</td>
               <td className="text-right">{item.quantity}</td>
-              <td className="text-right">{settings.currencySymbol}{item.unitPrice.toFixed(2)}</td>
-              <td className="text-right">{settings.currencySymbol}{item.total.toFixed(2)}</td>
+              <td className="text-left">{item.unit || 'pcs'}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <div className="flex justify-end mb-8">
-        <div className="w-64 space-y-2">
-          <div className="flex justify-between">
-            <span>Subtotal:</span>
-            <span>{settings.currencySymbol}{invoice.subtotal.toFixed(2)}</span>
+      <div className="mt-12 pt-8 border-t border-gray-300">
+        <div className="grid grid-cols-2 gap-8">
+          <div>
+            <p className="text-sm font-semibold mb-4">Delivered By:</p>
+            <div className="border-b border-gray-400 mb-2" style={{ width: '200px' }}></div>
+            <p className="text-xs text-gray-600">Signature & Date</p>
           </div>
-          {invoice.discount > 0 && (
-            <div className="flex justify-between">
-              <span>Discount:</span>
-              <span>-{settings.currencySymbol}{invoice.discount.toFixed(2)}</span>
-            </div>
-          )}
-          <div className="flex justify-between">
-            <span>Tax ({(invoice.taxRate * 100).toFixed(0)}%):</span>
-            <span>{settings.currencySymbol}{invoice.taxAmount.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between font-bold text-lg border-t-2 pt-2" style={{ borderColor: settings.primaryColor }}>
-            <span>TOTAL:</span>
-            <span>{settings.currencySymbol}{invoice.total.toFixed(2)}</span>
+          <div>
+            <p className="text-sm font-semibold mb-4">Received By:</p>
+            <div className="border-b border-gray-400 mb-2" style={{ width: '200px' }}></div>
+            <p className="text-xs text-gray-600">Signature & Date</p>
           </div>
         </div>
       </div>
 
       {invoice.notes && (
-        <div className="mb-4">
+        <div className="mt-8">
           <h3 className="font-semibold mb-2">Notes:</h3>
           <p className="text-sm">{invoice.notes}</p>
         </div>
       )}
-
-      {invoice.paymentTerms && (
-        <div className="mb-8">
-          <h3 className="font-semibold mb-2">Payment Terms:</h3>
-          <p className="text-sm">{invoice.paymentTerms}</p>
-        </div>
-      )}
-
-      {/* Footer */}
-      <div className="mt-12 pt-4 border-t border-gray-300 text-center text-xs text-gray-600">
-        <p>Thank you for your business!</p>
-        <p className="mt-1">{settings.companyName} | {settings.email} | {settings.phone}</p>
-      </div>
     </div>
   );
 }
