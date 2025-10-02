@@ -12,6 +12,7 @@ export interface ChartAccount {
 export const defaultChartOfAccounts: Omit<ChartAccount, 'id' | 'createdAt'>[] = [
   // Assets
   { accountNumber: '101', accountName: 'Cash', accountType: 'asset', isDefault: true },
+  { accountNumber: '101-1', accountName: 'Cash on Hand', accountType: 'asset', isDefault: true },
   { accountNumber: '102', accountName: 'Bank Account', accountType: 'asset', isDefault: true },
   { accountNumber: '103', accountName: 'Accounts Receivable', accountType: 'asset', isDefault: true },
   { accountNumber: '104', accountName: 'Inventory', accountType: 'asset', isDefault: true },
@@ -43,4 +44,5 @@ export const defaultChartOfAccounts: Omit<ChartAccount, 'id' | 'createdAt'>[] = 
   { accountNumber: '504', accountName: 'Supplies Expense', accountType: 'expense', isDefault: true },
   { accountNumber: '505', accountName: 'Insurance Expense', accountType: 'expense', isDefault: true },
   { accountNumber: '506', accountName: 'Depreciation Expense', accountType: 'expense', isDefault: true },
+  { accountNumber: '507', accountName: 'Interest Expense', accountType: 'expense', isDefault: true },
 ];

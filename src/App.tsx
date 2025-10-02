@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Settings from "./pages/Settings";
 import Invoices from "./pages/Invoices";
 import InvoiceBuilder from "./pages/InvoiceBuilder";
+import InvoicePayment from "./pages/InvoicePayment";
 import Inventory from "./pages/Inventory";
 import Journal from "./pages/Journal";
 import Expenses from "./pages/Expenses";
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/invoices" element={<Invoices />} />
           <Route path="/invoices/new" element={<InvoiceBuilder />} />
           <Route path="/invoices/:id" element={<InvoiceBuilder />} />
+          <Route path="/invoices/:id/payment" element={<InvoicePayment />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/journal" element={<Journal />} />
           <Route path="/expenses" element={<Expenses />} />

@@ -14,6 +14,7 @@ import { Invoice } from '@/types/invoice';
 import { useToast } from '@/hooks/use-toast';
 import { ContactSelector } from '@/components/ContactSelector';
 import { Contact } from '@/types/contacts';
+import { recordInvoice } from '@/utils/doubleEntryManager';
 
 export default function InvoiceBuilder() {
   const navigate = useNavigate();
@@ -107,7 +108,23 @@ export default function InvoiceBuilder() {
     };
 
     saveInvoice(invoice);
-    toast({ title: 'Invoice saved successfully' });
+    
+    // Create double-entry journal entry for new invoices
+    if (!id && invoice.status !== 'draft' && invoice.status !== 'cancelled') {
+      try {
+        recordInvoice(invoice);
+        toast({ title: 'Invoice and journal entry created successfully' });
+      } catch (error) {
+        toast({ 
+          title: 'Warning: Invoice saved but journal entry failed', 
+          description: error instanceof Error ? error.message : 'Unknown error',
+          variant: 'destructive' 
+        });
+      }
+    } else {
+      toast({ title: 'Invoice saved successfully' });
+    }
+    
     navigate('/invoices');
   };
 

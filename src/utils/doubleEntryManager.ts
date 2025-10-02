@@ -1,0 +1,440 @@
+import { JournalEntry, JournalEntryLine, Expense } from '@/types/accounting';
+import { Invoice } from '@/types/invoice';
+import { saveJournalEntry } from './accountingStorage';
+
+/**
+ * Centralized Double-Entry Bookkeeping Manager
+ * Ensures all transactions follow strict double-entry accounting principles
+ * Every transaction must have balanced debits and credits
+ */
+
+// Validate that debits equal credits
+export const validateBalance = (entries: JournalEntryLine[]): boolean => {
+  const totalDebits = entries.reduce((sum, entry) => sum + entry.debit, 0);
+  const totalCredits = entries.reduce((sum, entry) => sum + entry.credit, 0);
+  return Math.abs(totalDebits - totalCredits) < 0.01; // Allow for floating point precision
+};
+
+// Create journal entry with validation
+const createValidatedJournalEntry = (
+  date: string,
+  reference: string,
+  description: string,
+  entries: JournalEntryLine[]
+): JournalEntry => {
+  if (!validateBalance(entries)) {
+    throw new Error('Transaction is not balanced. Debits must equal credits.');
+  }
+
+  const totalDebit = entries.reduce((sum, entry) => sum + entry.debit, 0);
+  const totalCredit = entries.reduce((sum, entry) => sum + entry.credit, 0);
+
+  const journalEntry: JournalEntry = {
+    id: crypto.randomUUID(),
+    date,
+    reference,
+    description,
+    entries,
+    totalDebit,
+    totalCredit,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  saveJournalEntry(journalEntry);
+  return journalEntry;
+};
+
+/**
+ * Transaction Type 1: Invoice (Sale on Credit)
+ * Debit: Accounts Receivable (Asset ↑)
+ * Credit: Sales Revenue (Income ↑)
+ */
+export const recordInvoice = (invoice: Invoice): JournalEntry => {
+  const entries: JournalEntryLine[] = [
+    {
+      id: crypto.randomUUID(),
+      account: 'Accounts Receivable',
+      accountType: 'asset',
+      debit: invoice.total,
+      credit: 0,
+      description: `Invoice ${invoice.invoiceNumber} - ${invoice.projectDetails.clientName}`,
+    },
+    {
+      id: crypto.randomUUID(),
+      account: 'Sales Revenue',
+      accountType: 'revenue',
+      debit: 0,
+      credit: invoice.subtotal,
+      description: `Sales to ${invoice.projectDetails.clientName}`,
+    },
+  ];
+
+  // Add tax liability if applicable
+  if (invoice.taxAmount > 0) {
+    entries.push({
+      id: crypto.randomUUID(),
+      account: 'Taxes Payable',
+      accountType: 'liability',
+      debit: 0,
+      credit: invoice.taxAmount,
+      description: `Tax on Invoice ${invoice.invoiceNumber}`,
+    });
+  }
+
+  return createValidatedJournalEntry(
+    invoice.issueDate,
+    invoice.invoiceNumber,
+    `Invoice: ${invoice.projectDetails.clientName}`,
+    entries
+  );
+};
+
+/**
+ * Transaction Type 2: Receive Payment from Customer
+ * Debit: Cash/Bank (Asset ↑)
+ * Credit: Accounts Receivable (Asset ↓)
+ */
+export const recordPaymentReceived = (
+  invoice: Invoice,
+  paymentMethod: 'cash' | 'bank',
+  paymentDate: string,
+  paymentReference: string
+): JournalEntry => {
+  const paymentAccount = paymentMethod === 'cash' ? 'Cash' : 'Bank Account';
+
+  const entries: JournalEntryLine[] = [
+    {
+      id: crypto.randomUUID(),
+      account: paymentAccount,
+      accountType: 'asset',
+      debit: invoice.total,
+      credit: 0,
+      description: `Payment received from ${invoice.projectDetails.clientName}`,
+    },
+    {
+      id: crypto.randomUUID(),
+      account: 'Accounts Receivable',
+      accountType: 'asset',
+      debit: 0,
+      credit: invoice.total,
+      description: `Payment for Invoice ${invoice.invoiceNumber}`,
+    },
+  ];
+
+  return createValidatedJournalEntry(
+    paymentDate,
+    paymentReference,
+    `Payment received: ${invoice.invoiceNumber}`,
+    entries
+  );
+};
+
+/**
+ * Transaction Type 3: Record Expense
+ * Debit: Expense Account (Expense ↑)
+ * Credit: Cash/Bank (Asset ↓)
+ */
+export const recordExpense = (expense: Expense): JournalEntry => {
+  const paymentAccount = getPaymentAccount(expense.paymentMethod);
+
+  const entries: JournalEntryLine[] = [
+    {
+      id: crypto.randomUUID(),
+      account: expense.category,
+      accountType: 'expense',
+      debit: expense.amount,
+      credit: 0,
+      description: `${expense.vendor} - ${expense.description || 'Expense'}`,
+    },
+    {
+      id: crypto.randomUUID(),
+      account: paymentAccount,
+      accountType: 'asset',
+      debit: 0,
+      credit: expense.amount,
+      description: `Payment via ${expense.paymentMethod}`,
+    },
+  ];
+
+  return createValidatedJournalEntry(
+    expense.date,
+    expense.reference || `EXP-${expense.id.slice(0, 8)}`,
+    `Expense: ${expense.vendor}`,
+    entries
+  );
+};
+
+/**
+ * Transaction Type 4: Purchase on Credit
+ * Debit: Expense/Asset (depending on purchase type)
+ * Credit: Accounts Payable (Liability ↑)
+ */
+export const recordPurchaseOnCredit = (
+  date: string,
+  vendor: string,
+  account: string,
+  accountType: 'expense' | 'asset',
+  amount: number,
+  reference: string
+): JournalEntry => {
+  const entries: JournalEntryLine[] = [
+    {
+      id: crypto.randomUUID(),
+      account,
+      accountType,
+      debit: amount,
+      credit: 0,
+      description: `Purchase from ${vendor}`,
+    },
+    {
+      id: crypto.randomUUID(),
+      account: 'Accounts Payable',
+      accountType: 'liability',
+      debit: 0,
+      credit: amount,
+      description: `Payable to ${vendor}`,
+    },
+  ];
+
+  return createValidatedJournalEntry(
+    date,
+    reference,
+    `Credit Purchase: ${vendor}`,
+    entries
+  );
+};
+
+/**
+ * Transaction Type 5: Loan Received
+ * Debit: Cash/Bank (Asset ↑)
+ * Credit: Loan Payable (Liability ↑)
+ */
+export const recordLoanReceived = (
+  date: string,
+  lender: string,
+  amount: number,
+  reference: string,
+  receivedIn: 'cash' | 'bank' = 'bank'
+): JournalEntry => {
+  const assetAccount = receivedIn === 'cash' ? 'Cash' : 'Bank Account';
+
+  const entries: JournalEntryLine[] = [
+    {
+      id: crypto.randomUUID(),
+      account: assetAccount,
+      accountType: 'asset',
+      debit: amount,
+      credit: 0,
+      description: `Loan received from ${lender}`,
+    },
+    {
+      id: crypto.randomUUID(),
+      account: 'Loan Payable',
+      accountType: 'liability',
+      debit: 0,
+      credit: amount,
+      description: `Loan from ${lender}`,
+    },
+  ];
+
+  return createValidatedJournalEntry(
+    date,
+    reference,
+    `Loan Received: ${lender}`,
+    entries
+  );
+};
+
+/**
+ * Transaction Type 6: Loan Repayment (Principal + Interest)
+ * Debit: Loan Payable (Liability ↓) - for principal
+ * Debit: Interest Expense (Expense ↑) - for interest
+ * Credit: Cash/Bank (Asset ↓)
+ */
+export const recordLoanRepayment = (
+  date: string,
+  lender: string,
+  principal: number,
+  interest: number,
+  reference: string,
+  paidFrom: 'cash' | 'bank' = 'bank'
+): JournalEntry => {
+  const assetAccount = paidFrom === 'cash' ? 'Cash' : 'Bank Account';
+  const totalPayment = principal + interest;
+
+  const entries: JournalEntryLine[] = [
+    {
+      id: crypto.randomUUID(),
+      account: 'Loan Payable',
+      accountType: 'liability',
+      debit: principal,
+      credit: 0,
+      description: `Loan repayment to ${lender} (Principal)`,
+    },
+  ];
+
+  if (interest > 0) {
+    entries.push({
+      id: crypto.randomUUID(),
+      account: 'Interest Expense',
+      accountType: 'expense',
+      debit: interest,
+      credit: 0,
+      description: `Interest on loan to ${lender}`,
+    });
+  }
+
+  entries.push({
+    id: crypto.randomUUID(),
+    account: assetAccount,
+    accountType: 'asset',
+    debit: 0,
+    credit: totalPayment,
+    description: `Loan payment to ${lender}`,
+  });
+
+  return createValidatedJournalEntry(
+    date,
+    reference,
+    `Loan Payment: ${lender}`,
+    entries
+  );
+};
+
+/**
+ * Transaction Type 7: Capital Contribution (Owner Investment)
+ * Debit: Cash/Bank (Asset ↑)
+ * Credit: Owner's Capital (Equity ↑)
+ */
+export const recordCapitalContribution = (
+  date: string,
+  ownerName: string,
+  amount: number,
+  reference: string,
+  receivedIn: 'cash' | 'bank' = 'bank'
+): JournalEntry => {
+  const assetAccount = receivedIn === 'cash' ? 'Cash' : 'Bank Account';
+
+  const entries: JournalEntryLine[] = [
+    {
+      id: crypto.randomUUID(),
+      account: assetAccount,
+      accountType: 'asset',
+      debit: amount,
+      credit: 0,
+      description: `Capital contribution by ${ownerName}`,
+    },
+    {
+      id: crypto.randomUUID(),
+      account: "Owner's Capital",
+      accountType: 'equity',
+      debit: 0,
+      credit: amount,
+      description: `Investment by ${ownerName}`,
+    },
+  ];
+
+  return createValidatedJournalEntry(
+    date,
+    reference,
+    `Capital Contribution: ${ownerName}`,
+    entries
+  );
+};
+
+/**
+ * Transaction Type 8: Owner's Withdrawal (Drawings)
+ * Debit: Owner's Drawings (Equity ↓)
+ * Credit: Cash/Bank (Asset ↓)
+ */
+export const recordOwnerDrawing = (
+  date: string,
+  ownerName: string,
+  amount: number,
+  reference: string,
+  paidFrom: 'cash' | 'bank' = 'bank'
+): JournalEntry => {
+  const assetAccount = paidFrom === 'cash' ? 'Cash' : 'Bank Account';
+
+  const entries: JournalEntryLine[] = [
+    {
+      id: crypto.randomUUID(),
+      account: "Owner's Drawings",
+      accountType: 'equity',
+      debit: amount,
+      credit: 0,
+      description: `Drawing by ${ownerName}`,
+    },
+    {
+      id: crypto.randomUUID(),
+      account: assetAccount,
+      accountType: 'asset',
+      debit: 0,
+      credit: amount,
+      description: `Withdrawal by ${ownerName}`,
+    },
+  ];
+
+  return createValidatedJournalEntry(
+    date,
+    reference,
+    `Owner's Drawing: ${ownerName}`,
+    entries
+  );
+};
+
+/**
+ * Transaction Type 9: Pay Supplier (Accounts Payable)
+ * Debit: Accounts Payable (Liability ↓)
+ * Credit: Cash/Bank (Asset ↓)
+ */
+export const recordSupplierPayment = (
+  date: string,
+  vendor: string,
+  amount: number,
+  reference: string,
+  paidFrom: 'cash' | 'bank' = 'bank'
+): JournalEntry => {
+  const assetAccount = paidFrom === 'cash' ? 'Cash' : 'Bank Account';
+
+  const entries: JournalEntryLine[] = [
+    {
+      id: crypto.randomUUID(),
+      account: 'Accounts Payable',
+      accountType: 'liability',
+      debit: amount,
+      credit: 0,
+      description: `Payment to ${vendor}`,
+    },
+    {
+      id: crypto.randomUUID(),
+      account: assetAccount,
+      accountType: 'asset',
+      debit: 0,
+      credit: amount,
+      description: `Payment to supplier ${vendor}`,
+    },
+  ];
+
+  return createValidatedJournalEntry(
+    date,
+    reference,
+    `Supplier Payment: ${vendor}`,
+    entries
+  );
+};
+
+// Helper function to map payment methods to accounts
+const getPaymentAccount = (paymentMethod: string): string => {
+  switch (paymentMethod) {
+    case 'cash':
+      return 'Cash';
+    case 'card':
+    case 'bank-transfer':
+    case 'check':
+      return 'Bank Account';
+    default:
+      return 'Cash';
+  }
+};

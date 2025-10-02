@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FileText, Eye, Trash2 } from 'lucide-react';
+import { Plus, FileText, Eye, Trash2, DollarSign } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { loadInvoices, deleteInvoice } from '@/utils/invoiceStorage';
 import { Invoice } from '@/types/invoice';
@@ -96,6 +96,17 @@ export default function Invoices() {
                     <Eye className="h-4 w-4" />
                     View
                   </Button>
+                  {invoice.status === 'sent' && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => navigate(`/invoices/${invoice.id}/payment`)}
+                      className="gap-2"
+                    >
+                      <DollarSign className="h-4 w-4" />
+                      Record Payment
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
