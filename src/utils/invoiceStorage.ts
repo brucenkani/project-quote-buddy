@@ -6,7 +6,14 @@ export const loadInvoices = (): Invoice[] => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const invoices = JSON.parse(stored);
+      // Ensure all invoices have a type field for backward compatibility
+      return invoices.map((inv: any) => ({
+        ...inv,
+        type: inv.type || (inv.invoiceNumber?.startsWith('CN-') ? 'credit-note' : 'invoice'),
+        payments: inv.payments || [],
+        creditNotes: inv.creditNotes || [],
+      }));
     }
   } catch (error) {
     console.error('Failed to load invoices:', error);

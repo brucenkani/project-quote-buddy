@@ -34,8 +34,10 @@ export default function Invoices() {
   const [activeTab, setActiveTab] = useState<'invoices' | 'credit-notes'>('invoices');
 
   useEffect(() => {
-    setInvoices(loadInvoices());
-  }, []);
+    const loadedInvoices = loadInvoices();
+    console.log('Loaded invoices:', loadedInvoices);
+    setInvoices(loadedInvoices);
+  }, [activeTab]); // Reload when tab changes
 
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this invoice?')) {
@@ -56,10 +58,15 @@ export default function Invoices() {
   };
 
   const calculateAmountDue = (invoice: Invoice) => {
+    // For credit notes, always return 0
+    if (invoice.type === 'credit-note') {
+      return 0;
+    }
+
     let amountDue = invoice.total;
     
     // Subtract payments
-    if (invoice.payments) {
+    if (invoice.payments && invoice.payments.length > 0) {
       const totalPaid = invoice.payments.reduce((sum, payment) => sum + payment.amount, 0);
       amountDue -= totalPaid;
     }
@@ -70,15 +77,19 @@ export default function Invoices() {
         invoice.creditNotes?.includes(inv.id) && inv.type === 'credit-note'
       );
       const totalCredit = creditNoteInvoices.reduce((sum, cn) => sum + Math.abs(cn.total), 0);
+      console.log(`Invoice ${invoice.invoiceNumber} - Total: ${invoice.total}, Credit applied: ${totalCredit}`);
       amountDue -= totalCredit;
     }
     
     return Math.max(0, amountDue);
   };
 
-  const displayInvoices = invoices.filter(inv => 
-    activeTab === 'invoices' ? (inv.type === 'invoice' || !inv.type) : inv.type === 'credit-note'
-  );
+  const displayInvoices = invoices.filter(inv => {
+    const isInvoice = inv.type === 'invoice' || !inv.type;
+    const isCreditNote = inv.type === 'credit-note';
+    console.log(`Invoice ${inv.invoiceNumber} - type: ${inv.type}, isInvoice: ${isInvoice}, isCreditNote: ${isCreditNote}`);
+    return activeTab === 'invoices' ? isInvoice : isCreditNote;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
