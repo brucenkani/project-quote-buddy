@@ -73,10 +73,11 @@ export default function Expenses() {
       return;
     }
 
-    // Calculate VAT amount if applicable
+    // Calculate VAT amount if applicable (for VAT-inclusive amounts)
     let vatAmount = 0;
     if (formData.includesVAT && formData.vatRate) {
-      vatAmount = formData.amount! * formData.vatRate;
+      // VAT component = amount / (1 + vatRate) * vatRate
+      vatAmount = formData.amount! / (1 + formData.vatRate) * formData.vatRate;
     }
 
     const expense: Expense = {
@@ -427,7 +428,7 @@ export default function Expenses() {
                   {formData.includesVAT && (
                     <div className="text-sm text-muted-foreground ml-6">
                       VAT Rate: {((formData.vatRate || 0) * 100).toFixed(1)}% • 
-                      VAT Amount: {settings.currencySymbol}{((formData.amount || 0) * (formData.vatRate || 0)).toFixed(2)}
+                      VAT Amount: {settings.currencySymbol}{((formData.amount || 0) / (1 + (formData.vatRate || 0)) * (formData.vatRate || 0)).toFixed(2)}
                     </div>
                   )}
                 </div>
