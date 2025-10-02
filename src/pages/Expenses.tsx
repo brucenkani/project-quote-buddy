@@ -6,7 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Receipt, Pencil, Trash2 } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plus, Receipt, Pencil, Trash2, Upload, Download, Check, X } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { Navigation } from '@/components/Navigation';
 import { loadExpenses, saveExpense, deleteExpense } from '@/utils/accountingStorage';
 import { loadSettings } from '@/utils/settingsStorage';
@@ -24,6 +26,8 @@ export default function Expenses() {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [showNewAccountDialog, setShowNewAccountDialog] = useState(false);
   const [newAccount, setNewAccount] = useState({ accountNumber: '', accountName: '', accountType: 'expense' as AccountType });
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [bulkExpenses, setBulkExpenses] = useState<Partial<Expense>[]>([]);
 
   const [formData, setFormData] = useState<Partial<Expense>>({
     date: new Date().toISOString().split('T')[0],
@@ -114,6 +118,101 @@ export default function Expenses() {
 
   const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
 
+  const downloadTemplate = () => {
+    const template = [
+      {
+        Date: '2024-01-15',
+        Vendor: 'Example Vendor',
+        Category: 'Office Supplies',
+        Description: 'Office supplies purchase',
+        Amount: 150.00,
+        PaymentMethod: 'cash',
+        Reference: 'REF-001',
+        Status: 'pending'
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Expenses');
+    XLSX.writeFile(wb, 'expense_template.xlsx');
+    
+    toast({ title: 'Template downloaded successfully' });
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+
+        const parsedExpenses = data.map((row: any) => ({
+          date: row.Date || new Date().toISOString().split('T')[0],
+          vendor: row.Vendor || '',
+          category: row.Category || '',
+          description: row.Description || '',
+          amount: parseFloat(row.Amount) || 0,
+          paymentMethod: row.PaymentMethod || 'cash',
+          reference: row.Reference || '',
+          status: row.Status || 'pending',
+        }));
+
+        setBulkExpenses(parsedExpenses);
+        setIsBulkUploadOpen(true);
+        toast({ title: `${parsedExpenses.length} expenses loaded for review` });
+      } catch (error) {
+        toast({ title: 'Failed to parse Excel file', variant: 'destructive' });
+      }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = '';
+  };
+
+  const updateBulkExpenseAccount = (index: number, category: string) => {
+    const updated = [...bulkExpenses];
+    updated[index] = { ...updated[index], category };
+    setBulkExpenses(updated);
+  };
+
+  const removeBulkExpense = (index: number) => {
+    setBulkExpenses(bulkExpenses.filter((_, i) => i !== index));
+  };
+
+  const saveBulkExpenses = () => {
+    let savedCount = 0;
+    bulkExpenses.forEach((exp) => {
+      if (exp.vendor && exp.category && exp.amount) {
+        const expense: Expense = {
+          id: crypto.randomUUID(),
+          date: exp.date!,
+          vendor: exp.vendor!,
+          category: exp.category!,
+          description: exp.description || '',
+          amount: exp.amount!,
+          paymentMethod: exp.paymentMethod || 'cash',
+          reference: exp.reference,
+          status: (exp.status as Expense['status']) || 'pending',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        saveExpense(expense);
+        savedCount++;
+      }
+    });
+    
+    setExpenses(loadExpenses());
+    setBulkExpenses([]);
+    setIsBulkUploadOpen(false);
+    toast({ title: `${savedCount} expenses saved successfully` });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
       <Navigation />
@@ -127,14 +226,31 @@ export default function Expenses() {
               Track and manage business expenses • Total: {settings.currencySymbol}{totalExpenses.toFixed(2)}
             </p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2" onClick={() => { setEditingExpense(null); setFormData({ date: new Date().toISOString().split('T')[0], vendor: '', category: '', description: '', amount: 0, paymentMethod: 'cash', reference: '', status: 'pending' }); }}>
-                <Plus className="h-4 w-4" />
-                Add Expense
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={downloadTemplate}>
+              <Download className="h-4 w-4" />
+              Download Template
+            </Button>
+            <Button variant="outline" className="gap-2" asChild>
+              <label>
+                <Upload className="h-4 w-4" />
+                Upload Excel
+                <input
+                  type="file"
+                  className="hidden"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileUpload}
+                />
+              </label>
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2" onClick={() => { setEditingExpense(null); setFormData({ date: new Date().toISOString().split('T')[0], vendor: '', category: '', description: '', amount: 0, paymentMethod: 'cash', reference: '', status: 'pending' }); }}>
+                  <Plus className="h-4 w-4" />
+                  Add Expense
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>{editingExpense ? 'Edit Expense' : 'Add New Expense'}</DialogTitle>
               </DialogHeader>
@@ -243,8 +359,9 @@ export default function Expenses() {
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
                 <Button onClick={handleSubmit}>Save</Button>
               </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <Dialog open={showNewAccountDialog} onOpenChange={setShowNewAccountDialog}>
@@ -273,6 +390,91 @@ export default function Expenses() {
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowNewAccountDialog(false)}>Cancel</Button>
               <Button onClick={handleCreateAccount}>Create</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isBulkUploadOpen} onOpenChange={setIsBulkUploadOpen}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Review and Confirm Bulk Expenses</DialogTitle>
+            </DialogHeader>
+            <div className="mt-4">
+              {bulkExpenses.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No expenses to review</p>
+              ) : (
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Vendor</TableHead>
+                        <TableHead>Expense Account</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Payment</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="w-[80px]">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {bulkExpenses.map((exp, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="text-sm">{exp.date}</TableCell>
+                          <TableCell className="text-sm">{exp.vendor}</TableCell>
+                          <TableCell>
+                            <Select
+                              value={exp.category}
+                              onValueChange={(value) => {
+                                if (value === '__new__') {
+                                  setShowNewAccountDialog(true);
+                                } else {
+                                  updateBulkExpenseAccount(index, value);
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="h-8 text-sm">
+                                <SelectValue placeholder="Select account" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {expenseAccounts.map(acc => (
+                                  <SelectItem key={acc.id} value={acc.accountName}>
+                                    {acc.accountNumber} - {acc.accountName}
+                                  </SelectItem>
+                                ))}
+                                <SelectItem value="__new__" className="text-primary font-semibold">
+                                  + Create New Account
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell className="text-sm font-semibold">{settings.currencySymbol}{exp.amount?.toFixed(2)}</TableCell>
+                          <TableCell className="text-sm">{exp.paymentMethod}</TableCell>
+                          <TableCell>
+                            <Badge className="text-xs">{exp.status}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeBulkExpense(index)}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  <div className="flex justify-end gap-2 mt-6">
+                    <Button variant="outline" onClick={() => setIsBulkUploadOpen(false)}>Cancel</Button>
+                    <Button onClick={saveBulkExpenses} className="gap-2">
+                      <Check className="h-4 w-4" />
+                      Save All ({bulkExpenses.length})
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           </DialogContent>
         </Dialog>
