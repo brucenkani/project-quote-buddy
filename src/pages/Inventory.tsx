@@ -12,6 +12,8 @@ import { loadInventory, saveInventoryItem, deleteInventoryItem } from '@/utils/i
 import { loadSettings } from '@/utils/settingsStorage';
 import { InventoryItem, getInventoryTypesForCompanyType } from '@/types/inventory';
 import { useToast } from '@/hooks/use-toast';
+import { ContactSelector } from '@/components/ContactSelector';
+import { Contact } from '@/types/contacts';
 
 export default function Inventory() {
   const { toast } = useToast();
@@ -213,10 +215,13 @@ export default function Inventory() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="supplier">Supplier</Label>
-                  <Input
-                    id="supplier"
-                    value={formData.supplier}
-                    onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                  <ContactSelector
+                    type="supplier"
+                    value=""
+                    onSelect={(contact: Contact) => {
+                      setFormData({ ...formData, supplier: contact.name });
+                    }}
+                    placeholder="Select or add supplier"
                   />
                 </div>
                 <div className="space-y-2">

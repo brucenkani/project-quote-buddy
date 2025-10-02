@@ -12,6 +12,8 @@ import { loadSettings } from '@/utils/settingsStorage';
 import { saveInvoice } from '@/utils/invoiceStorage';
 import { Invoice } from '@/types/invoice';
 import { useToast } from '@/hooks/use-toast';
+import { ContactSelector } from '@/components/ContactSelector';
+import { Contact } from '@/types/contacts';
 
 export default function InvoiceBuilder() {
   const navigate = useNavigate();
@@ -202,10 +204,19 @@ export default function InvoiceBuilder() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="clientName">Client Name *</Label>
-                  <Input
-                    id="clientName"
-                    value={formData.clientName}
-                    onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                  <ContactSelector
+                    type="client"
+                    value=""
+                    onSelect={(contact: Contact) => {
+                      setFormData({
+                        ...formData,
+                        clientName: contact.name,
+                        clientEmail: contact.email,
+                        clientPhone: contact.phone,
+                        clientAddress: contact.address,
+                      });
+                    }}
+                    placeholder="Select or add client"
                   />
                 </div>
                 <div className="space-y-2">

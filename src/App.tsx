@@ -10,6 +10,7 @@ import InvoiceBuilder from "./pages/InvoiceBuilder";
 import Inventory from "./pages/Inventory";
 import Journal from "./pages/Journal";
 import Expenses from "./pages/Expenses";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/journal" element={<Journal />} />
           <Route path="/expenses" element={<Expenses />} />
+          <Route path="/reports" element={<Reports />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -5,6 +5,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ProjectDetails, IndustrySpecificFields, Industry } from '@/types/quote';
 import { industryOptions } from '@/utils/industryData';
+import { ContactSelector } from '@/components/ContactSelector';
+import { Contact } from '@/types/contacts';
 import { ConstructionFields } from './industry/ConstructionFields';
 import { PlumbingFields } from './industry/PlumbingFields';
 import { ElectricalFields } from './industry/ElectricalFields';
@@ -49,11 +51,15 @@ export const ProjectDetailsForm = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="clientName">Client Name *</Label>
-          <Input
-            id="clientName"
-            value={projectDetails.clientName}
-            onChange={(e) => updateField('clientName', e.target.value)}
-            placeholder="John Doe"
+          <ContactSelector
+            type="client"
+            value=""
+            onSelect={(contact: Contact) => {
+              updateField('clientName', contact.name);
+              updateField('clientEmail', contact.email);
+              updateField('clientPhone', contact.phone);
+            }}
+            placeholder="Select or add client"
           />
         </div>
 

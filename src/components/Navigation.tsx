@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { FileText, DollarSign, Package, BookOpen, Receipt, Settings } from 'lucide-react';
+import { FileText, DollarSign, Package, BookOpen, Receipt, Settings, BarChart3 } from 'lucide-react';
 import { loadSettings } from '@/utils/settingsStorage';
 
 export const Navigation = () => {
@@ -13,6 +13,7 @@ export const Navigation = () => {
     { path: '/inventory', label: 'Inventory', icon: Package },
     { path: '/journal', label: 'Journal', icon: BookOpen },
     { path: '/expenses', label: 'Expenses', icon: Receipt },
+    { path: '/reports', label: 'Reports', icon: BarChart3 },
     { path: '/settings', label: 'Settings', icon: Settings },
   ];
 
