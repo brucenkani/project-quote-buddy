@@ -10,8 +10,8 @@ import InvoiceBuilder from "./pages/InvoiceBuilder";
 import Inventory from "./pages/Inventory";
 import Journal from "./pages/Journal";
 import Expenses from "./pages/Expenses";
-import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
+import Reports from "./pages/Reports";
 
 const queryClient = new QueryClient();
 
