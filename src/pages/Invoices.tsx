@@ -40,11 +40,39 @@ export default function Invoices() {
     setInvoices(loadedInvoices);
   }, [activeTab]); // Reload when tab changes
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this invoice?')) {
+  const handleDelete = (id: string, isCreditNote: boolean = false) => {
+    const message = isCreditNote 
+      ? 'Are you sure you want to delete this credit note? This will remove it from the original invoice.'
+      : 'Are you sure you want to delete this invoice?';
+    
+    if (confirm(message)) {
+      if (isCreditNote) {
+        // Find the credit note to get its parent invoice number
+        const creditNote = invoices.find(inv => inv.id === id);
+        if (creditNote) {
+          // Find and update the parent invoice to remove this credit note reference
+          const parentInvoiceNumber = creditNote.invoiceNumber.replace('CN-', '');
+          const parentInvoice = invoices.find(inv => 
+            inv.invoiceNumber === parentInvoiceNumber && inv.type === 'invoice'
+          );
+          
+          if (parentInvoice && parentInvoice.creditNotes) {
+            const updatedParentInvoice = {
+              ...parentInvoice,
+              creditNotes: parentInvoice.creditNotes.filter(cnId => cnId !== id)
+            };
+            // Save the updated parent invoice first
+            const { saveInvoice } = require('@/utils/invoiceStorage');
+            saveInvoice(updatedParentInvoice);
+          }
+        }
+      }
+      
       deleteInvoice(id);
       setInvoices(loadInvoices());
-      toast({ title: 'Invoice deleted successfully' });
+      toast({ 
+        title: isCreditNote ? 'Credit note deleted successfully' : 'Invoice deleted successfully' 
+      });
     }
   };
 
@@ -93,19 +121,32 @@ export default function Invoices() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
-              Invoices
+              {activeTab === 'credit-notes' ? 'Credit Notes' : 'Invoices'}
             </h1>
-            <p className="text-muted-foreground">Manage customer tax invoices and credit notes</p>
+            <p className="text-muted-foreground">
+              {activeTab === 'credit-notes' 
+                ? 'Manage customer credit notes' 
+                : 'Manage customer tax invoices and credit notes'}
+            </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2" onClick={() => navigate('/invoices/recurring')}>
-              <Calendar className="h-4 w-4" />
-              Recurring Invoices
-            </Button>
-            <Button className="gap-2" onClick={() => navigate('/invoices/new')}>
-              <Plus className="h-4 w-4" />
-              New Invoice
-            </Button>
+            {activeTab !== 'credit-notes' && (
+              <Button variant="outline" className="gap-2" onClick={() => navigate('/invoices/recurring')}>
+                <Calendar className="h-4 w-4" />
+                Recurring Invoices
+              </Button>
+            )}
+            {activeTab === 'credit-notes' ? (
+              <Button className="gap-2" onClick={() => navigate('/invoices/new', { state: { createCreditNote: true } })}>
+                <Plus className="h-4 w-4" />
+                New Credit Note
+              </Button>
+            ) : (
+              <Button className="gap-2" onClick={() => navigate('/invoices/new')}>
+                <Plus className="h-4 w-4" />
+                New Invoice
+              </Button>
+            )}
           </div>
         </div>
 
@@ -159,82 +200,99 @@ export default function Invoices() {
                     <TableHead>Doc. No.</TableHead>
                     <TableHead>Cust. Ref.</TableHead>
                     <TableHead>Date</TableHead>
-                    <TableHead>Due Date</TableHead>
+                    {activeTab !== 'credit-notes' && <TableHead>Due Date</TableHead>}
                     <TableHead className="text-right">Total</TableHead>
-                    <TableHead className="text-right">Amount Due</TableHead>
+                    {activeTab !== 'credit-notes' && <TableHead className="text-right">Amount Due</TableHead>}
                     <TableHead className="text-center">Printed</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {displayInvoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
-                      <TableCell>
-                        <Checkbox />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {invoice.projectDetails.clientName}
-                      </TableCell>
-                      <TableCell>{invoice.invoiceNumber}</TableCell>
-                      <TableCell>{invoice.projectDetails.projectName || '-'}</TableCell>
-                      <TableCell>{new Date(invoice.issueDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-right">
-                        {settings.currencySymbol}{invoice.total.toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {settings.currencySymbol}{calculateAmountDue(invoice, invoices).toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox checked={false} disabled />
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(invoice.status)}>
-                          {getStatusLabel(invoice.status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="gap-1">
-                              Actions
-                              <span className="ml-1">▼</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}/preview`)}>
-                              Preview
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}/print`)}>
-                              Print
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}/email`)}>
-                              Email
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}`)}>
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}/receipt`)}>
-                              Create Receipt
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}/credit-note`)}>
-                              Create Credit Note
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleCopyInvoice(invoice)}>
-                              Copy Invoice
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}/delivery-note`)}>
-                              Print Delivery Note
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}/history`)}>
-                              View History
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {displayInvoices.map((invoice) => {
+                    const isCreditNote = invoice.type === 'credit-note';
+                    return (
+                      <TableRow key={invoice.id}>
+                        <TableCell>
+                          <Checkbox />
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {invoice.projectDetails.clientName}
+                        </TableCell>
+                        <TableCell>{invoice.invoiceNumber}</TableCell>
+                        <TableCell>{invoice.projectDetails.projectName || '-'}</TableCell>
+                        <TableCell>{new Date(invoice.issueDate).toLocaleDateString()}</TableCell>
+                        {activeTab !== 'credit-notes' && (
+                          <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
+                        )}
+                        <TableCell className="text-right">
+                          {settings.currencySymbol}{invoice.total.toFixed(2)}
+                        </TableCell>
+                        {activeTab !== 'credit-notes' && (
+                          <TableCell className="text-right">
+                            {settings.currencySymbol}{calculateAmountDue(invoice, invoices).toFixed(2)}
+                          </TableCell>
+                        )}
+                        <TableCell className="text-center">
+                          <Checkbox checked={false} disabled />
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(invoice.status)}>
+                            {getStatusLabel(invoice.status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="gap-1">
+                                Actions
+                                <span className="ml-1">▼</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}/preview`)}>
+                                Preview
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}/print`)}>
+                                Print
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}/email`)}>
+                                Email
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}`)}>
+                                Edit
+                              </DropdownMenuItem>
+                              {!isCreditNote && (
+                                <>
+                                  <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}/receipt`)}>
+                                    Create Receipt
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}/credit-note`)}>
+                                    Create Credit Note
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleCopyInvoice(invoice)}>
+                                    Copy Invoice
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}/delivery-note`)}>
+                                    Print Delivery Note
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => navigate(`/invoices/${invoice.id}/history`)}>
+                                    View History
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              <DropdownMenuItem 
+                                onClick={() => handleDelete(invoice.id, isCreditNote)}
+                                className="text-destructive"
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
