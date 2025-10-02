@@ -16,6 +16,20 @@ export const loadInvoices = (): Invoice[] => {
         creditNotes: inv.creditNotes || [],
       }));
       
+      // Auto-link credit notes to their parent invoices if not already linked
+      const creditNotes = processedInvoices.filter((inv: Invoice) => inv.type === 'credit-note');
+      creditNotes.forEach((cn: Invoice) => {
+        // Extract parent invoice number from credit note number (e.g., CN-INV-0001 -> INV-0001)
+        const parentInvoiceNumber = cn.invoiceNumber.replace('CN-', '');
+        const parentInvoice = processedInvoices.find((inv: Invoice) => 
+          inv.invoiceNumber === parentInvoiceNumber && inv.type === 'invoice'
+        );
+        
+        if (parentInvoice && !parentInvoice.creditNotes.includes(cn.id)) {
+          parentInvoice.creditNotes.push(cn.id);
+        }
+      });
+      
       // Recalculate status dynamically for each invoice
       return processedInvoices.map((inv: Invoice) => ({
         ...inv,
