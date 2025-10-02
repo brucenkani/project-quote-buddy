@@ -104,166 +104,146 @@ interface KPIDashboardProps {
 
 export const KPIDashboard = ({ kpis, currencySymbol, companyType, onKPIClick }: KPIDashboardProps) => {
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold mb-4">Financial Performance</h3>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div>
+      <h3 className="text-lg font-semibold mb-4">Financial Performance</h3>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <KPICard
+          title="Total Revenue"
+          current={kpis.current.revenue}
+          prior={kpis.prior.revenue}
+          format="currency"
+          currencySymbol={currencySymbol}
+          onClick={() => onKPIClick?.('revenue')}
+          isClickable={!!onKPIClick}
+        />
+        <KPICard
+          title="Net Income"
+          current={kpis.current.netIncome}
+          prior={kpis.prior.netIncome}
+          format="currency"
+          currencySymbol={currencySymbol}
+          onClick={() => onKPIClick?.('netIncome')}
+          isClickable={!!onKPIClick}
+        />
+        <KPICard
+          title="Gross Margin"
+          current={kpis.current.grossMargin}
+          prior={kpis.prior.grossMargin}
+          format="percentage"
+          currencySymbol={currencySymbol}
+          onClick={() => onKPIClick?.('grossMargin')}
+          isClickable={!!onKPIClick}
+        />
+        <KPICard
+          title="Net Profit Margin"
+          current={kpis.current.netProfitMargin}
+          prior={kpis.prior.netProfitMargin}
+          format="percentage"
+          currencySymbol={currencySymbol}
+          onClick={() => onKPIClick?.('netProfitMargin')}
+          isClickable={!!onKPIClick}
+        />
+        <KPICard
+          title="Accounts Receivable"
+          current={kpis.current.accountsReceivable}
+          prior={kpis.prior.accountsReceivable}
+          format="currency"
+          currencySymbol={currencySymbol}
+          onClick={() => onKPIClick?.('accountsReceivable')}
+          isClickable={!!onKPIClick}
+        />
+        <KPICard
+          title="Accounts Payable"
+          current={kpis.current.accountsPayable}
+          prior={kpis.prior.accountsPayable}
+          format="currency"
+          currencySymbol={currencySymbol}
+          onClick={() => onKPIClick?.('accountsPayable')}
+          isClickable={!!onKPIClick}
+        />
+        {(companyType === 'trading' || companyType === 'manufacturer') && kpis.current.inventory !== undefined && (
           <KPICard
-            title="Total Revenue"
-            current={kpis.current.revenue}
-            prior={kpis.prior.revenue}
+            title="Inventory"
+            current={kpis.current.inventory}
+            prior={kpis.prior.inventory || 0}
             format="currency"
             currencySymbol={currencySymbol}
-            onClick={() => onKPIClick?.('revenue')}
+            onClick={() => onKPIClick?.('inventory')}
             isClickable={!!onKPIClick}
           />
-          <KPICard
-            title="Net Income"
-            current={kpis.current.netIncome}
-            prior={kpis.prior.netIncome}
-            format="currency"
-            currencySymbol={currencySymbol}
-            onClick={() => onKPIClick?.('netIncome')}
-            isClickable={!!onKPIClick}
-          />
-          <KPICard
-            title="Gross Margin"
-            current={kpis.current.grossMargin}
-            prior={kpis.prior.grossMargin}
-            format="percentage"
-            currencySymbol={currencySymbol}
-            onClick={() => onKPIClick?.('grossMargin')}
-            isClickable={!!onKPIClick}
-          />
-          <KPICard
-            title="Net Profit Margin"
-            current={kpis.current.netProfitMargin}
-            prior={kpis.prior.netProfitMargin}
-            format="percentage"
-            currencySymbol={currencySymbol}
-            onClick={() => onKPIClick?.('netProfitMargin')}
-            isClickable={!!onKPIClick}
-          />
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-lg font-semibold mb-4">Balance Sheet Items</h3>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <KPICard
-            title="Accounts Receivable"
-            current={kpis.current.accountsReceivable}
-            prior={kpis.prior.accountsReceivable}
-            format="currency"
-            currencySymbol={currencySymbol}
-            onClick={() => onKPIClick?.('accountsReceivable')}
-            isClickable={!!onKPIClick}
-          />
-          <KPICard
-            title="Accounts Payable"
-            current={kpis.current.accountsPayable}
-            prior={kpis.prior.accountsPayable}
-            format="currency"
-            currencySymbol={currencySymbol}
-            onClick={() => onKPIClick?.('accountsPayable')}
-            isClickable={!!onKPIClick}
-          />
-          {(companyType === 'trading' || companyType === 'manufacturer') && kpis.current.inventory !== undefined && (
-            <KPICard
-              title="Inventory"
-              current={kpis.current.inventory}
-              prior={kpis.prior.inventory || 0}
-              format="currency"
-              currencySymbol={currencySymbol}
-              onClick={() => onKPIClick?.('inventory')}
-              isClickable={!!onKPIClick}
-            />
-          )}
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-lg font-semibold mb-4">Liquidity & Solvency</h3>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <KPICard
-            title="Current Ratio"
-            current={kpis.current.currentRatio}
-            prior={kpis.prior.currentRatio}
-            format="ratio"
-            currencySymbol={currencySymbol}
-            onClick={() => onKPIClick?.('currentRatio')}
-            isClickable={!!onKPIClick}
-          />
-          <KPICard
-            title="Quick Ratio"
-            current={kpis.current.quickRatio}
-            prior={kpis.prior.quickRatio}
-            format="ratio"
-            currencySymbol={currencySymbol}
-            onClick={() => onKPIClick?.('quickRatio')}
-            isClickable={!!onKPIClick}
-          />
-          <KPICard
-            title="Working Capital"
-            current={kpis.current.workingCapital}
-            prior={kpis.prior.workingCapital}
-            format="currency"
-            currencySymbol={currencySymbol}
-            onClick={() => onKPIClick?.('workingCapital')}
-            isClickable={!!onKPIClick}
-          />
-          <KPICard
-            title="Debt to Equity"
-            current={kpis.current.debtToEquity}
-            prior={kpis.prior.debtToEquity}
-            format="ratio"
-            currencySymbol={currencySymbol}
-            onClick={() => onKPIClick?.('debtToEquity')}
-            isClickable={!!onKPIClick}
-          />
-          <KPICard
-            title="Debt Ratio"
-            current={kpis.current.debtRatio}
-            prior={kpis.prior.debtRatio}
-            format="percentage"
-            currencySymbol={currencySymbol}
-            onClick={() => onKPIClick?.('debtRatio')}
-            isClickable={!!onKPIClick}
-          />
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-lg font-semibold mb-4">Profitability Ratios</h3>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <KPICard
-            title="Return on Assets (ROA)"
-            current={kpis.current.roa}
-            prior={kpis.prior.roa}
-            format="percentage"
-            currencySymbol={currencySymbol}
-            onClick={() => onKPIClick?.('roa')}
-            isClickable={!!onKPIClick}
-          />
-          <KPICard
-            title="Return on Equity (ROE)"
-            current={kpis.current.roe}
-            prior={kpis.prior.roe}
-            format="percentage"
-            currencySymbol={currencySymbol}
-            onClick={() => onKPIClick?.('roe')}
-            isClickable={!!onKPIClick}
-          />
-          <KPICard
-            title="Asset Turnover"
-            current={kpis.current.assetTurnover}
-            prior={kpis.prior.assetTurnover}
-            format="ratio"
-            currencySymbol={currencySymbol}
-            onClick={() => onKPIClick?.('assetTurnover')}
-            isClickable={!!onKPIClick}
-          />
-        </div>
+        )}
+        <KPICard
+          title="Current Ratio"
+          current={kpis.current.currentRatio}
+          prior={kpis.prior.currentRatio}
+          format="ratio"
+          currencySymbol={currencySymbol}
+          onClick={() => onKPIClick?.('currentRatio')}
+          isClickable={!!onKPIClick}
+        />
+        <KPICard
+          title="Quick Ratio"
+          current={kpis.current.quickRatio}
+          prior={kpis.prior.quickRatio}
+          format="ratio"
+          currencySymbol={currencySymbol}
+          onClick={() => onKPIClick?.('quickRatio')}
+          isClickable={!!onKPIClick}
+        />
+        <KPICard
+          title="Working Capital"
+          current={kpis.current.workingCapital}
+          prior={kpis.prior.workingCapital}
+          format="currency"
+          currencySymbol={currencySymbol}
+          onClick={() => onKPIClick?.('workingCapital')}
+          isClickable={!!onKPIClick}
+        />
+        <KPICard
+          title="Debt to Equity"
+          current={kpis.current.debtToEquity}
+          prior={kpis.prior.debtToEquity}
+          format="ratio"
+          currencySymbol={currencySymbol}
+          onClick={() => onKPIClick?.('debtToEquity')}
+          isClickable={!!onKPIClick}
+        />
+        <KPICard
+          title="Debt Ratio"
+          current={kpis.current.debtRatio}
+          prior={kpis.prior.debtRatio}
+          format="percentage"
+          currencySymbol={currencySymbol}
+          onClick={() => onKPIClick?.('debtRatio')}
+          isClickable={!!onKPIClick}
+        />
+        <KPICard
+          title="Return on Assets (ROA)"
+          current={kpis.current.roa}
+          prior={kpis.prior.roa}
+          format="percentage"
+          currencySymbol={currencySymbol}
+          onClick={() => onKPIClick?.('roa')}
+          isClickable={!!onKPIClick}
+        />
+        <KPICard
+          title="Return on Equity (ROE)"
+          current={kpis.current.roe}
+          prior={kpis.prior.roe}
+          format="percentage"
+          currencySymbol={currencySymbol}
+          onClick={() => onKPIClick?.('roe')}
+          isClickable={!!onKPIClick}
+        />
+        <KPICard
+          title="Asset Turnover"
+          current={kpis.current.assetTurnover}
+          prior={kpis.prior.assetTurnover}
+          format="ratio"
+          currencySymbol={currencySymbol}
+          onClick={() => onKPIClick?.('assetTurnover')}
+          isClickable={!!onKPIClick}
+        />
       </div>
     </div>
   );
