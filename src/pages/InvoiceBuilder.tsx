@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ContactSelector } from '@/components/ContactSelector';
 import { Contact } from '@/types/contacts';
 import { recordInvoice } from '@/utils/doubleEntryManager';
-import { generateNextInvoiceNumber } from '@/utils/invoiceStorage';
+import { generateNextInvoiceNumber, loadInvoices } from '@/utils/invoiceStorage';
 
 export default function InvoiceBuilder() {
   const navigate = useNavigate();
@@ -42,6 +42,47 @@ export default function InvoiceBuilder() {
   ]);
 
   const [discount, setDiscount] = useState(0);
+  const [existingInvoice, setExistingInvoice] = useState<Invoice | null>(null);
+
+  // Load existing invoice when editing
+  useEffect(() => {
+    if (id) {
+      const invoices = loadInvoices();
+      const invoice = invoices.find(inv => inv.id === id);
+      
+      if (invoice) {
+        setExistingInvoice(invoice);
+        setFormData({
+          invoiceNumber: invoice.invoiceNumber,
+          clientName: invoice.projectDetails.clientName,
+          clientEmail: invoice.projectDetails.clientEmail || '',
+          clientPhone: invoice.projectDetails.clientPhone || '',
+          clientAddress: invoice.projectDetails.projectAddress || '',
+          projectName: invoice.projectDetails.projectName || '',
+          issueDate: invoice.issueDate,
+          dueDate: invoice.dueDate,
+          paymentTerms: invoice.paymentTerms,
+          notes: invoice.notes || '',
+        });
+        
+        setLineItems(invoice.lineItems.map(item => ({
+          description: item.description,
+          quantity: item.quantity,
+          unit: item.unit,
+          unitPrice: item.unitPrice,
+          total: item.total,
+        })));
+        
+        setDiscount(invoice.discount);
+      } else {
+        toast({ 
+          title: 'Invoice not found', 
+          variant: 'destructive' 
+        });
+        navigate('/invoices');
+      }
+    }
+  }, [id, navigate, toast]);
 
   const addLineItem = () => {
     setLineItems([...lineItems, { description: '', quantity: 1, unit: 'item', unitPrice: 0, total: 0 }]);
@@ -75,7 +116,7 @@ export default function InvoiceBuilder() {
     const invoice: Invoice = {
       id: id || crypto.randomUUID(),
       invoiceNumber: formData.invoiceNumber,
-      type: 'invoice',
+      type: existingInvoice?.type || 'invoice',
       projectDetails: {
         clientName: formData.clientName,
         clientEmail: formData.clientEmail,
@@ -102,12 +143,12 @@ export default function InvoiceBuilder() {
       total,
       issueDate: formData.issueDate,
       dueDate: formData.dueDate,
-      status: 'unpaid', // Status will be calculated dynamically
+      status: existingInvoice?.status || 'unpaid', // Preserve existing status or default to unpaid
       paymentTerms: formData.paymentTerms,
       notes: formData.notes,
-      payments: [],
-      creditNotes: [],
-      createdAt: new Date().toISOString(),
+      payments: existingInvoice?.payments || [],
+      creditNotes: existingInvoice?.creditNotes || [],
+      createdAt: existingInvoice?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
@@ -139,9 +180,11 @@ export default function InvoiceBuilder() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
-              {id ? 'Edit Invoice' : 'New Invoice'}
+              {id ? (existingInvoice?.type === 'credit-note' ? 'Edit Credit Note' : 'Edit Invoice') : 'New Invoice'}
             </h1>
-            <p className="text-muted-foreground">Create a professional invoice for your client</p>
+            <p className="text-muted-foreground">
+              {existingInvoice?.type === 'credit-note' ? 'Edit credit note details' : 'Create a professional invoice for your client'}
+            </p>
           </div>
           <Button onClick={handleSave} className="gap-2">
             <Save className="h-4 w-4" />
