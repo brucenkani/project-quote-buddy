@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, DollarSign, Percent, Activity } from 'lucide-react';
+import { CompanyType } from '@/types/settings';
 
 interface KPICardProps {
   title: string;
@@ -60,25 +61,42 @@ interface KPIDashboardProps {
       revenue: number;
       netIncome: number;
       grossMargin: number;
+      netProfitMargin: number;
+      accountsReceivable: number;
+      accountsPayable: number;
+      inventory?: number;
       currentRatio: number;
+      quickRatio: number;
+      workingCapital: number;
       debtToEquity: number;
+      debtRatio: number;
       roa: number;
       roe: number;
+      assetTurnover: number;
     };
     prior: {
       revenue: number;
       netIncome: number;
       grossMargin: number;
+      netProfitMargin: number;
+      accountsReceivable: number;
+      accountsPayable: number;
+      inventory?: number;
       currentRatio: number;
+      quickRatio: number;
+      workingCapital: number;
       debtToEquity: number;
+      debtRatio: number;
       roa: number;
       roe: number;
+      assetTurnover: number;
     };
   };
   currencySymbol: string;
+  companyType: CompanyType;
 }
 
-export const KPIDashboard = ({ kpis, currencySymbol }: KPIDashboardProps) => {
+export const KPIDashboard = ({ kpis, currencySymbol, companyType }: KPIDashboardProps) => {
   return (
     <div className="space-y-6">
       <div>
@@ -105,6 +123,42 @@ export const KPIDashboard = ({ kpis, currencySymbol }: KPIDashboardProps) => {
             format="percentage"
             currencySymbol={currencySymbol}
           />
+          <KPICard
+            title="Net Profit Margin"
+            current={kpis.current.netProfitMargin}
+            prior={kpis.prior.netProfitMargin}
+            format="percentage"
+            currencySymbol={currencySymbol}
+          />
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Balance Sheet Items</h3>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <KPICard
+            title="Accounts Receivable"
+            current={kpis.current.accountsReceivable}
+            prior={kpis.prior.accountsReceivable}
+            format="currency"
+            currencySymbol={currencySymbol}
+          />
+          <KPICard
+            title="Accounts Payable"
+            current={kpis.current.accountsPayable}
+            prior={kpis.prior.accountsPayable}
+            format="currency"
+            currencySymbol={currencySymbol}
+          />
+          {(companyType === 'trading' || companyType === 'manufacturer') && kpis.current.inventory !== undefined && (
+            <KPICard
+              title="Inventory"
+              current={kpis.current.inventory}
+              prior={kpis.prior.inventory || 0}
+              format="currency"
+              currencySymbol={currencySymbol}
+            />
+          )}
         </div>
       </div>
 
@@ -119,10 +173,31 @@ export const KPIDashboard = ({ kpis, currencySymbol }: KPIDashboardProps) => {
             currencySymbol={currencySymbol}
           />
           <KPICard
+            title="Quick Ratio"
+            current={kpis.current.quickRatio}
+            prior={kpis.prior.quickRatio}
+            format="ratio"
+            currencySymbol={currencySymbol}
+          />
+          <KPICard
+            title="Working Capital"
+            current={kpis.current.workingCapital}
+            prior={kpis.prior.workingCapital}
+            format="currency"
+            currencySymbol={currencySymbol}
+          />
+          <KPICard
             title="Debt to Equity"
             current={kpis.current.debtToEquity}
             prior={kpis.prior.debtToEquity}
             format="ratio"
+            currencySymbol={currencySymbol}
+          />
+          <KPICard
+            title="Debt Ratio"
+            current={kpis.current.debtRatio}
+            prior={kpis.prior.debtRatio}
+            format="percentage"
             currencySymbol={currencySymbol}
           />
         </div>
@@ -143,6 +218,13 @@ export const KPIDashboard = ({ kpis, currencySymbol }: KPIDashboardProps) => {
             current={kpis.current.roe}
             prior={kpis.prior.roe}
             format="percentage"
+            currencySymbol={currencySymbol}
+          />
+          <KPICard
+            title="Asset Turnover"
+            current={kpis.current.assetTurnover}
+            prior={kpis.prior.assetTurnover}
+            format="ratio"
             currencySymbol={currencySymbol}
           />
         </div>

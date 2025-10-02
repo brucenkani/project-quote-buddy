@@ -202,6 +202,44 @@ export const generateEquityStatement = (
   return { openingBalance, netIncome, drawings, closingBalance };
 };
 
+// Enhanced KPIs Interface
+export interface EnhancedKPIs {
+  current: {
+    revenue: number;
+    netIncome: number;
+    grossMargin: number;
+    netProfitMargin: number;
+    accountsReceivable: number;
+    accountsPayable: number;
+    inventory?: number;
+    currentRatio: number;
+    quickRatio: number;
+    workingCapital: number;
+    debtToEquity: number;
+    debtRatio: number;
+    roa: number;
+    roe: number;
+    assetTurnover: number;
+  };
+  prior: {
+    revenue: number;
+    netIncome: number;
+    grossMargin: number;
+    netProfitMargin: number;
+    accountsReceivable: number;
+    accountsPayable: number;
+    inventory?: number;
+    currentRatio: number;
+    quickRatio: number;
+    workingCapital: number;
+    debtToEquity: number;
+    debtRatio: number;
+    roa: number;
+    roe: number;
+    assetTurnover: number;
+  };
+}
+
 // Calculate KPIs
 export const calculateKPIs = (
   accounts: ChartAccount[],
@@ -272,6 +310,166 @@ export const calculateKPIs = (
       debtToEquity: priorDebtToEquity,
       roa: priorRoa,
       roe: priorRoe,
+    }
+  };
+};
+
+// Calculate Enhanced KPIs with additional metrics
+export const calculateEnhancedKPIs = (
+  accounts: ChartAccount[],
+  currentPeriod: PeriodData,
+  priorPeriod: PeriodData,
+  companyType: string
+): EnhancedKPIs => {
+  const currentIncome = generateIncomeStatement(accounts, currentPeriod);
+  const priorIncome = generateIncomeStatement(accounts, priorPeriod);
+  
+  const currentBalance = generateBalanceSheet(accounts, currentPeriod);
+  const priorBalance = generateBalanceSheet(accounts, priorPeriod);
+
+  // Get specific account balances
+  const getAccountBalance = (accountName: string, period: PeriodData) => {
+    const account = accounts.find(a => a.accountName === accountName);
+    return account ? calculateAccountBalance(account, period.journalEntries, period.expenses) : 0;
+  };
+
+  // Balance sheet items
+  const currentAR = getAccountBalance('Accounts Receivable', currentPeriod);
+  const priorAR = getAccountBalance('Accounts Receivable', priorPeriod);
+  
+  const currentAP = getAccountBalance('Accounts Payable', currentPeriod);
+  const priorAP = getAccountBalance('Accounts Payable', priorPeriod);
+
+  // Inventory (only for trading and manufacturing companies)
+  let currentInventory: number | undefined;
+  let priorInventory: number | undefined;
+  if (companyType === 'trading' || companyType === 'manufacturer') {
+    currentInventory = getAccountBalance('Inventory', currentPeriod);
+    priorInventory = getAccountBalance('Inventory', priorPeriod);
+  }
+
+  // Current assets and liabilities for liquidity ratios
+  const currentAssets = currentBalance.assets.filter(a => 
+    ['Cash on Hand', 'Bank Account', 'Accounts Receivable', 'Inventory', 'Prepaid Expenses'].includes(a.account)
+  ).reduce((sum, item) => sum + item.amount, 0);
+  
+  const priorCurrentAssets = priorBalance.assets.filter(a => 
+    ['Cash on Hand', 'Bank Account', 'Accounts Receivable', 'Inventory', 'Prepaid Expenses'].includes(a.account)
+  ).reduce((sum, item) => sum + item.amount, 0);
+
+  const currentLiabilities = currentBalance.liabilities.reduce((sum, item) => sum + item.amount, 0);
+  const priorCurrentLiabilities = priorBalance.liabilities.reduce((sum, item) => sum + item.amount, 0);
+
+  // Profitability ratios
+  const currentGrossMargin = currentIncome.totalRevenue > 0 
+    ? (currentIncome.netIncome / currentIncome.totalRevenue) * 100 
+    : 0;
+  const priorGrossMargin = priorIncome.totalRevenue > 0 
+    ? (priorIncome.netIncome / priorIncome.totalRevenue) * 100 
+    : 0;
+
+  const currentNetProfitMargin = currentIncome.totalRevenue > 0 
+    ? (currentIncome.netIncome / currentIncome.totalRevenue) * 100 
+    : 0;
+  const priorNetProfitMargin = priorIncome.totalRevenue > 0 
+    ? (priorIncome.netIncome / priorIncome.totalRevenue) * 100 
+    : 0;
+
+  // Liquidity ratios
+  const currentRatio = currentLiabilities > 0 
+    ? currentAssets / currentLiabilities 
+    : 0;
+  const priorCurrentRatio = priorCurrentLiabilities > 0 
+    ? priorCurrentAssets / priorCurrentLiabilities 
+    : 0;
+
+  // Quick ratio (excludes inventory)
+  const currentQuickAssets = currentAssets - (currentInventory || 0);
+  const priorQuickAssets = priorCurrentAssets - (priorInventory || 0);
+  const quickRatio = currentLiabilities > 0 
+    ? currentQuickAssets / currentLiabilities 
+    : 0;
+  const priorQuickRatio = priorCurrentLiabilities > 0 
+    ? priorQuickAssets / priorCurrentLiabilities 
+    : 0;
+
+  // Working capital
+  const workingCapital = currentAssets - currentLiabilities;
+  const priorWorkingCapital = priorCurrentAssets - priorCurrentLiabilities;
+
+  // Leverage ratios
+  const debtToEquity = currentBalance.totalEquity > 0 
+    ? currentBalance.totalLiabilities / currentBalance.totalEquity 
+    : 0;
+  const priorDebtToEquity = priorBalance.totalEquity > 0 
+    ? priorBalance.totalLiabilities / priorBalance.totalEquity 
+    : 0;
+
+  const debtRatio = currentBalance.totalAssets > 0 
+    ? (currentBalance.totalLiabilities / currentBalance.totalAssets) * 100 
+    : 0;
+  const priorDebtRatio = priorBalance.totalAssets > 0 
+    ? (priorBalance.totalLiabilities / priorBalance.totalAssets) * 100 
+    : 0;
+
+  // Return on Assets
+  const roa = currentBalance.totalAssets > 0 
+    ? (currentIncome.netIncome / currentBalance.totalAssets) * 100 
+    : 0;
+  const priorRoa = priorBalance.totalAssets > 0 
+    ? (priorIncome.netIncome / priorBalance.totalAssets) * 100 
+    : 0;
+
+  // Return on Equity
+  const roe = currentBalance.totalEquity > 0 
+    ? (currentIncome.netIncome / currentBalance.totalEquity) * 100 
+    : 0;
+  const priorRoe = priorBalance.totalEquity > 0 
+    ? (priorIncome.netIncome / priorBalance.totalEquity) * 100 
+    : 0;
+
+  // Asset Turnover
+  const assetTurnover = currentBalance.totalAssets > 0 
+    ? currentIncome.totalRevenue / currentBalance.totalAssets 
+    : 0;
+  const priorAssetTurnover = priorBalance.totalAssets > 0 
+    ? priorIncome.totalRevenue / priorBalance.totalAssets 
+    : 0;
+
+  return {
+    current: {
+      revenue: currentIncome.totalRevenue,
+      netIncome: currentIncome.netIncome,
+      grossMargin: currentGrossMargin,
+      netProfitMargin: currentNetProfitMargin,
+      accountsReceivable: currentAR,
+      accountsPayable: currentAP,
+      inventory: currentInventory,
+      currentRatio,
+      quickRatio,
+      workingCapital,
+      debtToEquity,
+      debtRatio,
+      roa,
+      roe,
+      assetTurnover,
+    },
+    prior: {
+      revenue: priorIncome.totalRevenue,
+      netIncome: priorIncome.netIncome,
+      grossMargin: priorGrossMargin,
+      netProfitMargin: priorNetProfitMargin,
+      accountsReceivable: priorAR,
+      accountsPayable: priorAP,
+      inventory: priorInventory,
+      currentRatio: priorCurrentRatio,
+      quickRatio: priorQuickRatio,
+      workingCapital: priorWorkingCapital,
+      debtToEquity: priorDebtToEquity,
+      debtRatio: priorDebtRatio,
+      roa: priorRoa,
+      roe: priorRoe,
+      assetTurnover: priorAssetTurnover,
     }
   };
 };

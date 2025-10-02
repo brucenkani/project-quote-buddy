@@ -20,10 +20,8 @@ import {
   generateEquityStatementPDF,
   generateEquityStatementExcel
 } from '@/utils/managementReportGenerator';
-import { calculateKPIs } from '@/utils/financialStatements';
 import { loadSettings } from '@/utils/settingsStorage';
 import { useToast } from '@/hooks/use-toast';
-import { KPIDashboard } from '@/components/reports/KPIDashboard';
 
 export default function Reports() {
   const { toast } = useToast();
@@ -195,12 +193,6 @@ export default function Reports() {
     toast({ title: `Ledger Report ${format.toUpperCase()} generated successfully` });
   };
 
-  const kpis = calculateKPIs(
-    chartOfAccounts,
-    getPeriodData(dateRange.startDate, dateRange.endDate),
-    getPeriodData(priorDateRange.startDate, priorDateRange.endDate)
-  );
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
       <Navigation />
@@ -261,9 +253,8 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+        <Tabs defaultValue="income" className="w-full">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="income">Income</TabsTrigger>
             <TabsTrigger value="balance">Balance</TabsTrigger>
             <TabsTrigger value="cashflow">Cash Flow</TabsTrigger>
@@ -271,20 +262,6 @@ export default function Reports() {
             <TabsTrigger value="trial-balance">Trial Balance</TabsTrigger>
             <TabsTrigger value="ledger">Ledger</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="dashboard">
-            <Card>
-              <CardHeader>
-                <CardTitle>Financial KPIs & Ratios</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Key performance indicators comparing current and prior periods
-                </p>
-              </CardHeader>
-              <CardContent>
-                <KPIDashboard kpis={kpis} currencySymbol={settings.currencySymbol} />
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="income">
             <Card>

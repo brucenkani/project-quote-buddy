@@ -1,7 +1,7 @@
-import { QuoteBuilder } from '@/components/QuoteBuilder';
+import Dashboard from './Dashboard';
 
 const Index = () => {
-  return <QuoteBuilder />;
+  return <Dashboard />;
 };
 
 export default Index;
