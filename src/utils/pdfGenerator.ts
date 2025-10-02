@@ -1,13 +1,23 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Quote } from '@/types/quote';
+import { loadSettings } from './settingsStorage';
+
+const hexToRgb = (hex: string): [number, number, number] => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result 
+    ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)]
+    : [59, 130, 246];
+};
 
 export const generateQuotePDF = (quote: Quote) => {
+  const settings = loadSettings();
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
+  const brandColor = hexToRgb(settings.primaryColor);
   
   // Header
-  doc.setFillColor(59, 130, 246);
+  doc.setFillColor(...brandColor);
   doc.rect(0, 0, pageWidth, 40, 'F');
   
   doc.setTextColor(255, 255, 255);
@@ -22,10 +32,11 @@ export const generateQuotePDF = (quote: Quote) => {
   // Company Info (right side)
   doc.setFontSize(9);
   const companyText = [
-    'QuoteBuilder Pro',
-    'professional@quotebuilder.com',
+    settings.companyName,
+    settings.email,
+    settings.phone,
     'Valid until: ' + new Date(quote.validUntil).toLocaleDateString(),
-  ];
+  ].filter(text => text);
   companyText.forEach((text, i) => {
     doc.text(text, pageWidth - 14, 15 + (i * 5), { align: 'right' });
   });
@@ -76,7 +87,7 @@ export const generateQuotePDF = (quote: Quote) => {
     body: tableData,
     theme: 'striped',
     headStyles: {
-      fillColor: [59, 130, 246],
+      fillColor: brandColor,
       textColor: [255, 255, 255],
       fontSize: 10,
       fontStyle: 'bold',
@@ -145,11 +156,13 @@ export const generateQuotePDF = (quote: Quote) => {
 };
 
 export const generateBillOfMaterialsPDF = (quote: Quote) => {
+  const settings = loadSettings();
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
+  const brandColor = hexToRgb(settings.primaryColor);
   
   // Header
-  doc.setFillColor(59, 130, 246);
+  doc.setFillColor(...brandColor);
   doc.rect(0, 0, pageWidth, 40, 'F');
   
   doc.setTextColor(255, 255, 255);
