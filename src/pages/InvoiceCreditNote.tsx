@@ -36,9 +36,16 @@ export default function InvoiceCreditNote() {
   }
 
   const handleCreateCreditNote = () => {
+    if (!creditNoteReason.trim() || creditAmount <= 0) {
+      toast({ title: 'Please provide a reason and valid amount', variant: 'destructive' });
+      return;
+    }
+
+    const creditNoteId = `CN-${Date.now()}`;
+    
     const creditNote: Invoice = {
       ...invoice,
-      id: `CN-${Date.now()}`,
+      id: creditNoteId,
       invoiceNumber: `CN-${invoice.invoiceNumber}`,
       type: 'credit-note',
       total: -Math.abs(creditAmount),
@@ -50,18 +57,20 @@ export default function InvoiceCreditNote() {
       creditNotes: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      status: 'unpaid',
+      status: 'paid', // Credit notes are always marked as paid
     };
 
     // Link credit note to original invoice
     const updatedInvoice = {
       ...invoice,
-      creditNotes: [...(invoice.creditNotes || []), creditNote.id],
+      creditNotes: [...(invoice.creditNotes || []), creditNoteId],
       updatedAt: new Date().toISOString(),
     };
 
+    // Save both invoices
     saveInvoice(creditNote);
     saveInvoice(updatedInvoice);
+    
     toast({ title: 'Credit Note created successfully' });
     navigate('/invoices');
   };

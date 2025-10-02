@@ -71,9 +71,7 @@ export default function Statements() {
       return Math.max(0, amountDue);
     };
 
-    const totalOutstanding = clientInvoices
-      .filter(inv => inv.type === 'invoice' || !inv.type)
-      .reduce((sum, inv) => sum + calculateAmountDue(inv), 0);
+    const totalOutstanding = totalInvoiced - totalPaid - totalCreditNotes;
 
     return (
       <div className="space-y-6">

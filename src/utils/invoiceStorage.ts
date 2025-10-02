@@ -37,19 +37,32 @@ export const saveInvoices = (invoices: Invoice[]): void => {
 };
 
 export const saveInvoice = (invoice: Invoice): void => {
-  const invoices = loadInvoices();
-  const index = invoices.findIndex(i => i.id === invoice.id);
-  if (index >= 0) {
-    invoices[index] = invoice;
-  } else {
-    invoices.push(invoice);
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const rawInvoices = stored ? JSON.parse(stored) : [];
+    const index = rawInvoices.findIndex((i: Invoice) => i.id === invoice.id);
+    
+    if (index >= 0) {
+      rawInvoices[index] = invoice;
+    } else {
+      rawInvoices.push(invoice);
+    }
+    
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(rawInvoices));
+  } catch (error) {
+    console.error('Failed to save invoice:', error);
   }
-  saveInvoices(invoices);
 };
 
 export const deleteInvoice = (id: string): void => {
-  const invoices = loadInvoices().filter(i => i.id !== id);
-  saveInvoices(invoices);
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const rawInvoices = stored ? JSON.parse(stored) : [];
+    const filtered = rawInvoices.filter((i: Invoice) => i.id !== id);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+  } catch (error) {
+    console.error('Failed to delete invoice:', error);
+  }
 };
 
 export const generateNextInvoiceNumber = (): string => {
