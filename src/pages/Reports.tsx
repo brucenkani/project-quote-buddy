@@ -9,6 +9,7 @@ import { Navigation } from '@/components/Navigation';
 import { FileDown, FileSpreadsheet, Calendar } from 'lucide-react';
 import { loadChartOfAccounts } from '@/utils/chartOfAccountsStorage';
 import { loadJournalEntries, loadExpenses } from '@/utils/accountingStorage';
+import { loadInvoices } from '@/utils/invoiceStorage';
 import { generateTrialBalancePDF, generateTrialBalanceExcel, generateLedgerPDF, generateLedgerExcel } from '@/utils/reportGenerator';
 import { 
   generateIncomeStatementPDF, 
@@ -20,6 +21,7 @@ import {
   generateEquityStatementPDF,
   generateEquityStatementExcel
 } from '@/utils/managementReportGenerator';
+import { generateVATReportPDF, generateVATReportExcel } from '@/utils/vatReportGenerator';
 import { loadSettings } from '@/utils/settingsStorage';
 import { useToast } from '@/hooks/use-toast';
 import { formatLocalISO } from '@/utils/date';
@@ -200,6 +202,26 @@ export default function Reports() {
     toast({ title: `Ledger Report ${format.toUpperCase()} generated successfully` });
   };
 
+  const handleGenerateVATReport = (format: 'pdf' | 'excel') => {
+    const invoices = loadInvoices().filter(inv => {
+      const invDate = new Date(inv.issueDate);
+      return invDate >= new Date(dateRange.startDate) && invDate <= new Date(dateRange.endDate);
+    });
+
+    const expenses = loadExpenses().filter(expense => {
+      const expenseDate = new Date(expense.date);
+      return expenseDate >= new Date(dateRange.startDate) && expenseDate <= new Date(dateRange.endDate);
+    });
+
+    if (format === 'pdf') {
+      generateVATReportPDF(invoices, expenses, dateRange, settings);
+    } else {
+      generateVATReportExcel(invoices, expenses, dateRange, settings);
+    }
+
+    toast({ title: `VAT Report ${format.toUpperCase()} generated successfully` });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
       <Navigation />
@@ -261,11 +283,12 @@ export default function Reports() {
         </Card>
 
         <Tabs defaultValue="income" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="income">Income</TabsTrigger>
             <TabsTrigger value="balance">Balance</TabsTrigger>
             <TabsTrigger value="cashflow">Cash Flow</TabsTrigger>
             <TabsTrigger value="equity">Equity</TabsTrigger>
+            <TabsTrigger value="vat">VAT</TabsTrigger>
             <TabsTrigger value="trial-balance">Trial Balance</TabsTrigger>
             <TabsTrigger value="ledger">Ledger</TabsTrigger>
           </TabsList>
@@ -354,6 +377,29 @@ export default function Reports() {
                     Export to PDF
                   </Button>
                   <Button onClick={() => handleGenerateEquityStatement('excel')} variant="outline" className="gap-2">
+                    <FileSpreadsheet className="h-4 w-4" />
+                    Export to Excel
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="vat">
+            <Card>
+              <CardHeader>
+                <CardTitle>VAT/Tax Report</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Output VAT (collected on sales) vs Input VAT (paid on purchases) with net amount payable/refundable
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Button onClick={() => handleGenerateVATReport('pdf')} className="gap-2">
+                    <FileDown className="h-4 w-4" />
+                    Export to PDF
+                  </Button>
+                  <Button onClick={() => handleGenerateVATReport('excel')} variant="outline" className="gap-2">
                     <FileSpreadsheet className="h-4 w-4" />
                     Export to Excel
                   </Button>

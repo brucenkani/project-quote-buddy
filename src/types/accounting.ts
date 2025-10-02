@@ -34,6 +34,9 @@ export interface Expense {
   status: 'pending' | 'approved' | 'paid' | 'rejected' | 'partly-paid' | 'overdue';
   dueDate?: string;
   payments?: ExpensePayment[];
+  includesVAT?: boolean; // Whether VAT is included in the amount
+  vatRate?: number; // VAT rate (e.g., 0.15 for 15%)
+  vatAmount?: number; // Calculated VAT amount
   createdAt: string;
   updatedAt: string;
 }

@@ -46,6 +46,8 @@ export default function Expenses() {
     status: 'pending',
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     payments: [],
+    includesVAT: false,
+    vatRate: settings.taxRate,
   });
 
   const expenseAccounts = chartAccounts.filter(acc => acc.accountType === 'expense');
@@ -71,6 +73,12 @@ export default function Expenses() {
       return;
     }
 
+    // Calculate VAT amount if applicable
+    let vatAmount = 0;
+    if (formData.includesVAT && formData.vatRate) {
+      vatAmount = formData.amount! * formData.vatRate;
+    }
+
     const expense: Expense = {
       id: editingExpense?.id || crypto.randomUUID(),
       date: formData.date!,
@@ -83,6 +91,9 @@ export default function Expenses() {
       status: formData.status!,
       dueDate: formData.dueDate,
       payments: editingExpense?.payments || [],
+      includesVAT: formData.includesVAT || false,
+      vatRate: formData.includesVAT ? formData.vatRate : undefined,
+      vatAmount: formData.includesVAT ? vatAmount : undefined,
       createdAt: editingExpense?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -119,6 +130,8 @@ export default function Expenses() {
       status: 'pending',
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       payments: [],
+      includesVAT: false,
+      vatRate: settings.taxRate,
     });
     toast({ title: editingExpense ? 'Expense updated' : 'Expense recorded with journal entry' });
   };
@@ -292,8 +305,10 @@ export default function Expenses() {
                     reference: '', 
                     status: 'pending', 
                     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                    payments: []
-                  }); 
+                    payments: [],
+                    includesVAT: false,
+                    vatRate: settings.taxRate,
+                  });
                 }}>
                   <Plus className="h-4 w-4" />
                   Add Expense
@@ -395,6 +410,26 @@ export default function Expenses() {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   />
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="includesVAT"
+                      checked={formData.includesVAT || false}
+                      onChange={(e) => setFormData({ ...formData, includesVAT: e.target.checked })}
+                      className="h-4 w-4"
+                    />
+                    <Label htmlFor="includesVAT" className="font-normal">
+                      This expense includes VAT/Tax
+                    </Label>
+                  </div>
+                  {formData.includesVAT && (
+                    <div className="text-sm text-muted-foreground ml-6">
+                      VAT Rate: {((formData.vatRate || 0) * 100).toFixed(1)}% • 
+                      VAT Amount: {settings.currencySymbol}{((formData.amount || 0) * (formData.vatRate || 0)).toFixed(2)}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-4">
