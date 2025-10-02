@@ -8,9 +8,11 @@ interface KPICardProps {
   prior: number;
   format: 'currency' | 'percentage' | 'ratio';
   currencySymbol: string;
+  onClick?: () => void;
+  isClickable?: boolean;
 }
 
-const KPICard = ({ title, current, prior, format, currencySymbol }: KPICardProps) => {
+const KPICard = ({ title, current, prior, format, currencySymbol, onClick, isClickable }: KPICardProps) => {
   const change = current - prior;
   const percentChange = prior !== 0 ? ((change / prior) * 100) : 0;
   const isPositive = change >= 0;
@@ -26,7 +28,10 @@ const KPICard = ({ title, current, prior, format, currencySymbol }: KPICardProps
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card 
+      className={`hover:shadow-lg transition-shadow ${isClickable ? 'cursor-pointer hover:border-primary' : ''}`}
+      onClick={onClick}
+    >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         {format === 'currency' ? (
@@ -94,9 +99,10 @@ interface KPIDashboardProps {
   };
   currencySymbol: string;
   companyType: CompanyType;
+  onKPIClick?: (kpiType: string) => void;
 }
 
-export const KPIDashboard = ({ kpis, currencySymbol, companyType }: KPIDashboardProps) => {
+export const KPIDashboard = ({ kpis, currencySymbol, companyType, onKPIClick }: KPIDashboardProps) => {
   return (
     <div className="space-y-6">
       <div>
@@ -108,6 +114,8 @@ export const KPIDashboard = ({ kpis, currencySymbol, companyType }: KPIDashboard
             prior={kpis.prior.revenue}
             format="currency"
             currencySymbol={currencySymbol}
+            onClick={() => onKPIClick?.('revenue')}
+            isClickable={!!onKPIClick}
           />
           <KPICard
             title="Net Income"
@@ -115,6 +123,8 @@ export const KPIDashboard = ({ kpis, currencySymbol, companyType }: KPIDashboard
             prior={kpis.prior.netIncome}
             format="currency"
             currencySymbol={currencySymbol}
+            onClick={() => onKPIClick?.('netIncome')}
+            isClickable={!!onKPIClick}
           />
           <KPICard
             title="Gross Margin"
@@ -142,6 +152,8 @@ export const KPIDashboard = ({ kpis, currencySymbol, companyType }: KPIDashboard
             prior={kpis.prior.accountsReceivable}
             format="currency"
             currencySymbol={currencySymbol}
+            onClick={() => onKPIClick?.('accountsReceivable')}
+            isClickable={!!onKPIClick}
           />
           <KPICard
             title="Accounts Payable"
@@ -149,6 +161,8 @@ export const KPIDashboard = ({ kpis, currencySymbol, companyType }: KPIDashboard
             prior={kpis.prior.accountsPayable}
             format="currency"
             currencySymbol={currencySymbol}
+            onClick={() => onKPIClick?.('accountsPayable')}
+            isClickable={!!onKPIClick}
           />
           {(companyType === 'trading' || companyType === 'manufacturer') && kpis.current.inventory !== undefined && (
             <KPICard
@@ -157,6 +171,8 @@ export const KPIDashboard = ({ kpis, currencySymbol, companyType }: KPIDashboard
               prior={kpis.prior.inventory || 0}
               format="currency"
               currencySymbol={currencySymbol}
+              onClick={() => onKPIClick?.('inventory')}
+              isClickable={!!onKPIClick}
             />
           )}
         </div>
@@ -171,6 +187,8 @@ export const KPIDashboard = ({ kpis, currencySymbol, companyType }: KPIDashboard
             prior={kpis.prior.currentRatio}
             format="ratio"
             currencySymbol={currencySymbol}
+            onClick={() => onKPIClick?.('currentRatio')}
+            isClickable={!!onKPIClick}
           />
           <KPICard
             title="Quick Ratio"
@@ -178,6 +196,8 @@ export const KPIDashboard = ({ kpis, currencySymbol, companyType }: KPIDashboard
             prior={kpis.prior.quickRatio}
             format="ratio"
             currencySymbol={currencySymbol}
+            onClick={() => onKPIClick?.('quickRatio')}
+            isClickable={!!onKPIClick}
           />
           <KPICard
             title="Working Capital"
@@ -185,6 +205,8 @@ export const KPIDashboard = ({ kpis, currencySymbol, companyType }: KPIDashboard
             prior={kpis.prior.workingCapital}
             format="currency"
             currencySymbol={currencySymbol}
+            onClick={() => onKPIClick?.('workingCapital')}
+            isClickable={!!onKPIClick}
           />
           <KPICard
             title="Debt to Equity"

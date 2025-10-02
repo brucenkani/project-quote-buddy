@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Navigation } from '@/components/Navigation';
-import { FileDown, Calendar } from 'lucide-react';
+import { FileDown, Calendar, FileSpreadsheet } from 'lucide-react';
 import { loadChartOfAccounts } from '@/utils/chartOfAccountsStorage';
 import { loadJournalEntries, loadExpenses } from '@/utils/accountingStorage';
 import { loadSettings } from '@/utils/settingsStorage';
@@ -13,6 +13,14 @@ import { KPIDashboard } from '@/components/reports/KPIDashboard';
 import { calculateEnhancedKPIs } from '@/utils/financialStatements';
 import { generateDashboardPDF } from '@/utils/dashboardPDFGenerator';
 import { formatLocalISO } from '@/utils/date';
+import { generateKPIBreakdownPDF, generateKPIBreakdownExcel } from '@/utils/kpiBreakdownGenerator';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -23,6 +31,9 @@ export default function Dashboard() {
     startDate: formatLocalISO(new Date(new Date().getFullYear(), 0, 1)),
     endDate: formatLocalISO(new Date()),
   });
+
+  const [selectedKPI, setSelectedKPI] = useState<string | null>(null);
+  const [showKPIDialog, setShowKPIDialog] = useState(false);
 
   const [priorDateRange, setPriorDateRange] = useState({
     startDate: formatLocalISO(new Date(new Date().getFullYear() - 1, 0, 1)),
@@ -94,6 +105,35 @@ export default function Dashboard() {
   const handleExportPDF = () => {
     generateDashboardPDF(kpis, dateRange, priorDateRange, settings);
     toast({ title: 'Dashboard exported to PDF successfully' });
+  };
+
+  const handleKPIClick = (kpiType: string) => {
+    setSelectedKPI(kpiType);
+    setShowKPIDialog(true);
+  };
+
+  const handleKPIExportPDF = () => {
+    if (!selectedKPI) return;
+    generateKPIBreakdownPDF(
+      selectedKPI as any,
+      chartOfAccounts,
+      getPeriodData(dateRange.startDate, dateRange.endDate),
+      settings
+    );
+    toast({ title: `${selectedKPI} breakdown exported to PDF` });
+    setShowKPIDialog(false);
+  };
+
+  const handleKPIExportExcel = () => {
+    if (!selectedKPI) return;
+    generateKPIBreakdownExcel(
+      selectedKPI as any,
+      chartOfAccounts,
+      getPeriodData(dateRange.startDate, dateRange.endDate),
+      settings
+    );
+    toast({ title: `${selectedKPI} breakdown exported to Excel` });
+    setShowKPIDialog(false);
   };
 
   return (
@@ -187,8 +227,34 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <KPIDashboard kpis={kpis} currencySymbol={settings.currencySymbol} companyType={settings.companyType} />
+        <KPIDashboard 
+          kpis={kpis} 
+          currencySymbol={settings.currencySymbol} 
+          companyType={settings.companyType}
+          onKPIClick={handleKPIClick}
+        />
       </div>
+
+      <Dialog open={showKPIDialog} onOpenChange={setShowKPIDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Export KPI Breakdown</DialogTitle>
+            <DialogDescription>
+              Choose the format to export the detailed breakdown for {selectedKPI}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-4 pt-4">
+            <Button onClick={handleKPIExportPDF} className="flex-1 gap-2">
+              <FileDown className="h-4 w-4" />
+              Export as PDF
+            </Button>
+            <Button onClick={handleKPIExportExcel} variant="outline" className="flex-1 gap-2">
+              <FileSpreadsheet className="h-4 w-4" />
+              Export as Excel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
