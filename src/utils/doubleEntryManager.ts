@@ -131,13 +131,11 @@ export const recordPaymentReceived = (
 };
 
 /**
- * Transaction Type 3: Record Expense
+ * Transaction Type 3: Record Expense (on Credit)
  * Debit: Expense Account (Expense ↑)
- * Credit: Cash/Bank (Asset ↓)
+ * Credit: Accounts Payable (Liability ↑)
  */
 export const recordExpense = (expense: Expense): JournalEntry => {
-  const paymentAccount = getPaymentAccount(expense.paymentMethod);
-
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
@@ -149,11 +147,11 @@ export const recordExpense = (expense: Expense): JournalEntry => {
     },
     {
       id: crypto.randomUUID(),
-      account: paymentAccount,
-      accountType: 'asset',
+      account: 'Accounts Payable',
+      accountType: 'liability',
       debit: 0,
       credit: expense.amount,
-      description: `Payment via ${expense.paymentMethod}`,
+      description: `Payable for ${expense.category}`,
     },
   ];
 
@@ -161,6 +159,47 @@ export const recordExpense = (expense: Expense): JournalEntry => {
     expense.date,
     expense.reference || `EXP-${expense.id.slice(0, 8)}`,
     `Expense: ${expense.vendor}`,
+    entries
+  );
+};
+
+/**
+ * Transaction Type: Record Expense Payment
+ * Debit: Accounts Payable (Liability ↓)
+ * Credit: Bank/Cash (Asset ↓)
+ */
+export const recordExpensePayment = (
+  expense: Expense,
+  paymentAmount: number,
+  paymentMethod: 'cash' | 'bank',
+  paymentDate: string,
+  paymentReference: string
+): JournalEntry => {
+  const paymentAccount = paymentMethod === 'cash' ? 'Cash' : 'Bank Account';
+
+  const entries: JournalEntryLine[] = [
+    {
+      id: crypto.randomUUID(),
+      account: 'Accounts Payable',
+      accountType: 'liability',
+      debit: paymentAmount,
+      credit: 0,
+      description: `Payment for ${expense.category}`,
+    },
+    {
+      id: crypto.randomUUID(),
+      account: paymentAccount,
+      accountType: 'asset',
+      debit: 0,
+      credit: paymentAmount,
+      description: `Payment via ${paymentMethod}`,
+    },
+  ];
+
+  return createValidatedJournalEntry(
+    paymentDate,
+    paymentReference,
+    `Expense Payment: ${expense.vendor}`,
     entries
   );
 };

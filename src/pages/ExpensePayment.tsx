@@ -12,6 +12,7 @@ import { Expense } from '@/types/accounting';
 import { useToast } from '@/hooks/use-toast';
 import { loadSettings } from '@/utils/settingsStorage';
 import { calculateExpenseAmountDue } from '@/utils/expenseStatusCalculator';
+import { recordExpensePayment } from '@/utils/doubleEntryManager';
 
 export default function ExpensePayment() {
   const navigate = useNavigate();
@@ -86,6 +87,19 @@ export default function ExpensePayment() {
     };
 
     saveExpense(updatedExpense);
+
+    // Create journal entry for payment (double-entry bookkeeping)
+    try {
+      recordExpensePayment(
+        expense,
+        paymentData.amount,
+        paymentData.paymentMethod,
+        paymentData.paymentDate,
+        paymentData.paymentReference
+      );
+    } catch (error) {
+      console.error('Failed to create journal entry:', error);
+    }
 
     toast({ 
       title: 'Payment recorded successfully',
