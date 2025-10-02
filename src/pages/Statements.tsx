@@ -161,22 +161,39 @@ export default function Statements() {
               {clientInvoices.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">No transactions found for this period</p>
               ) : (
-                clientInvoices.map((inv, index) => {
-                  const isInvoice = inv.type === 'invoice' || !inv.type;
-                  return (
-                    <div key={inv.id} className="grid grid-cols-5 gap-4 text-sm py-3 border-b">
-                      <span>{new Date(inv.issueDate).toLocaleDateString()}</span>
-                      <span className="font-medium">{inv.invoiceNumber}</span>
-                      <span className="truncate">{inv.projectDetails.projectName}</span>
-                      <span className={`text-right font-semibold ${isInvoice ? 'text-destructive' : 'text-green-600'}`}>
-                        {isInvoice ? '' : '-'}{settings.currencySymbol}{Math.abs(inv.total).toFixed(2)}
-                      </span>
-                      <span className="text-right font-semibold">
-                        {settings.currencySymbol}{calculateAmountDue(inv).toFixed(2)}
-                      </span>
-                    </div>
-                  );
-                })
+                (() => {
+                  let runningBalance = 0;
+                  return clientInvoices.map((inv, index) => {
+                    const isInvoice = inv.type === 'invoice' || !inv.type;
+                    const isCreditNote = inv.type === 'credit-note';
+                    
+                    // Update running balance
+                    if (isInvoice) {
+                      runningBalance += inv.total;
+                      // Subtract payments
+                      if (inv.payments && inv.payments.length > 0) {
+                        const totalPaid = inv.payments.reduce((sum: number, payment: any) => sum + payment.amount, 0);
+                        runningBalance -= totalPaid;
+                      }
+                    } else if (isCreditNote) {
+                      runningBalance -= Math.abs(inv.total);
+                    }
+                    
+                    return (
+                      <div key={inv.id} className="grid grid-cols-5 gap-4 text-sm py-3 border-b">
+                        <span>{new Date(inv.issueDate).toLocaleDateString()}</span>
+                        <span className="font-medium">{inv.invoiceNumber}</span>
+                        <span className="truncate">{inv.projectDetails.projectName}</span>
+                        <span className={`text-right font-semibold ${isInvoice ? 'text-destructive' : 'text-green-600'}`}>
+                          {isInvoice ? '' : '-'}{settings.currencySymbol}{Math.abs(inv.total).toFixed(2)}
+                        </span>
+                        <span className={`text-right font-semibold ${runningBalance > 0 ? 'text-destructive' : runningBalance < 0 ? 'text-green-600' : ''}`}>
+                          {settings.currencySymbol}{Math.abs(runningBalance).toFixed(2)}
+                        </span>
+                      </div>
+                    );
+                  });
+                })()
               )}
             </div>
           </CardContent>
