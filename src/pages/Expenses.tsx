@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Receipt, Pencil, Trash2, Upload, Download, Check, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Navigation } from '@/components/Navigation';
@@ -529,88 +530,105 @@ export default function Expenses() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4">
-            {expenses.map((expense) => (
-              <Card key={expense.id} className="shadow-[var(--shadow-elegant)] border-border/50">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CardTitle className="text-lg">{expense.vendor}</CardTitle>
-                        <Badge className={getStatusColor(expense.status)}>{expense.status}</Badge>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-muted-foreground">
-                        <p><strong>Date:</strong> {new Date(expense.date).toLocaleDateString()}</p>
-                        <p><strong>Category:</strong> {expense.category}</p>
-                        <p><strong>Payment:</strong> {expense.paymentMethod}</p>
-                        {expense.reference && <p><strong>Ref:</strong> {expense.reference}</p>}
-                        {expense.description && (
-                          <p className="col-span-2"><strong>Note:</strong> {expense.description}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xl font-bold text-primary">
-                        {settings.currencySymbol}{expense.amount.toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(expense)}>
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="gap-1">
-                          More Actions
-                          <span className="ml-1">▼</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem onClick={() => navigate(`/expenses/${expense.id}/preview`)}>
-                          Preview
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(`/expenses/${expense.id}/print`)}>
-                          Print
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(`/expenses/${expense.id}/payment`)}>
-                          Create Payment
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {
-                          const newExpense = {
-                            ...expense,
-                            id: crypto.randomUUID(),
-                            createdAt: new Date().toISOString(),
-                            updatedAt: new Date().toISOString(),
-                          };
-                          delete newExpense.payments;
-                          setFormData(newExpense);
-                          setIsDialogOpen(true);
-                        }}>
-                          Copy Expense
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(`/expenses/${expense.id}/history`)}>
-                          View History
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleDelete(expense.id)}
-                      className="text-destructive hover:text-destructive ml-auto"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-[50px]">
+                      <Checkbox />
+                    </TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="text-right">Amount Due</TableHead>
+                    <TableHead className="text-center">Printed</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {expenses.map((expense) => {
+                    const amountDue = calculateExpenseAmountDue(expense);
+                    
+                    return (
+                      <TableRow key={expense.id}>
+                        <TableCell>
+                          <Checkbox />
+                        </TableCell>
+                        <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
+                        <TableCell>{expense.dueDate ? new Date(expense.dueDate).toLocaleDateString() : '-'}</TableCell>
+                        <TableCell className="font-medium">{expense.category}</TableCell>
+                        <TableCell className="max-w-[200px] truncate">{expense.description || '-'}</TableCell>
+                        <TableCell className="text-right">
+                          {settings.currencySymbol}{expense.amount.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {settings.currencySymbol}{amountDue.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Checkbox checked={false} disabled />
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(expense.status)}>
+                            {expense.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="gap-1">
+                                Actions
+                                <span className="ml-1">▼</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => navigate(`/expenses/${expense.id}/preview`)}>
+                                Preview
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/expenses/${expense.id}/print`)}>
+                                Print
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEdit(expense)}>
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/expenses/${expense.id}/payment`)}>
+                                Create Payment
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                const newExpense = {
+                                  ...expense,
+                                  id: crypto.randomUUID(),
+                                  createdAt: new Date().toISOString(),
+                                  updatedAt: new Date().toISOString(),
+                                };
+                                delete newExpense.payments;
+                                setFormData(newExpense);
+                                setIsDialogOpen(true);
+                              }}>
+                                Copy Expense
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/expenses/${expense.id}/history`)}>
+                                View History
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleDelete(expense.id)}
+                                className="text-destructive"
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>
