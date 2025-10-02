@@ -22,6 +22,7 @@ import {
 } from '@/utils/managementReportGenerator';
 import { loadSettings } from '@/utils/settingsStorage';
 import { useToast } from '@/hooks/use-toast';
+import { formatLocalISO } from '@/utils/date';
 
 export default function Reports() {
   const { toast } = useToast();
@@ -29,13 +30,13 @@ export default function Reports() {
   const chartOfAccounts = loadChartOfAccounts();
   
   const [dateRange, setDateRange] = useState({
-    startDate: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0],
+    startDate: formatLocalISO(new Date(new Date().getFullYear(), 0, 1)),
+    endDate: formatLocalISO(new Date()),
   });
 
   const [priorDateRange, setPriorDateRange] = useState({
-    startDate: new Date(new Date().getFullYear() - 1, 0, 1).toISOString().split('T')[0],
-    endDate: new Date(new Date().getFullYear() - 1, 11, 31).toISOString().split('T')[0],
+    startDate: formatLocalISO(new Date(new Date().getFullYear() - 1, 0, 1)),
+    endDate: formatLocalISO(new Date(new Date().getFullYear() - 1, 11, 31)),
   });
 
   const [selectedAccount, setSelectedAccount] = useState<string>('');
@@ -73,12 +74,12 @@ export default function Reports() {
     const priorFyEnd = new Date(fyEndYear - 1, jsYearEndMonth + 1, 0);
 
     setDateRange({
-      startDate: fyStart.toISOString().split('T')[0],
-      endDate: fyEnd.toISOString().split('T')[0],
+      startDate: formatLocalISO(fyStart),
+      endDate: formatLocalISO(fyEnd),
     });
     setPriorDateRange({
-      startDate: priorFyStart.toISOString().split('T')[0],
-      endDate: priorFyEnd.toISOString().split('T')[0],
+      startDate: formatLocalISO(priorFyStart),
+      endDate: formatLocalISO(priorFyEnd),
     });
   };
 
