@@ -161,31 +161,65 @@ export default function Statements() {
               ) : (
                 (() => {
                   let runningBalance = 0;
-                  return clientInvoices.map((inv, index) => {
+                  const transactions: any[] = [];
+                  
+                  // Build a flat list of all transactions (invoices, payments, credit notes)
+                  clientInvoices.forEach((inv) => {
                     const isInvoice = inv.type === 'invoice' || !inv.type;
                     const isCreditNote = inv.type === 'credit-note';
                     
+                    // Add invoice or credit note
+                    transactions.push({
+                      date: inv.issueDate,
+                      type: isCreditNote ? 'credit-note' : 'invoice',
+                      document: inv.invoiceNumber,
+                      description: inv.projectDetails.projectName,
+                      amount: inv.total,
+                      invoiceId: inv.id,
+                    });
+                    
+                    // Add payments for this invoice
+                    if (isInvoice && inv.payments && inv.payments.length > 0) {
+                      inv.payments.forEach((payment) => {
+                        transactions.push({
+                          date: payment.date,
+                          type: 'payment',
+                          document: payment.reference || `Payment ${payment.id.slice(0, 8)}`,
+                          description: `Payment - ${inv.invoiceNumber}`,
+                          amount: payment.amount,
+                          invoiceId: inv.id,
+                        });
+                      });
+                    }
+                  });
+                  
+                  // Sort transactions by date
+                  transactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                  
+                  // Render transactions with running balance
+                  return transactions.map((txn, index) => {
                     // Update running balance
-                    if (isInvoice) {
-                      runningBalance += inv.total;
-                      // Subtract payments
-                      if (inv.payments && inv.payments.length > 0) {
-                        const totalPaid = inv.payments.reduce((sum: number, payment: any) => sum + payment.amount, 0);
-                        runningBalance -= totalPaid;
-                      }
-                    } else if (isCreditNote) {
-                      runningBalance -= Math.abs(inv.total);
+                    if (txn.type === 'invoice') {
+                      runningBalance += txn.amount;
+                    } else if (txn.type === 'credit-note') {
+                      runningBalance -= Math.abs(txn.amount);
+                    } else if (txn.type === 'payment') {
+                      runningBalance -= txn.amount;
                     }
                     
                     return (
-                      <div key={inv.id} className="grid grid-cols-5 gap-4 text-sm py-3 border-b">
-                        <span>{new Date(inv.issueDate).toLocaleDateString()}</span>
-                        <span className="font-medium">{inv.invoiceNumber}</span>
-                        <span className="truncate">{inv.projectDetails.projectName}</span>
-                        <span className={`text-right font-semibold ${isInvoice ? 'text-destructive' : 'text-green-600'}`}>
-                          {isInvoice ? '' : '-'}{settings.currencySymbol}{Math.abs(inv.total).toFixed(2)}
+                      <div key={`${txn.type}-${txn.invoiceId}-${index}`} className="grid grid-cols-5 gap-4 text-sm py-3 border-b">
+                        <span>{new Date(txn.date).toLocaleDateString()}</span>
+                        <span className="font-medium">{txn.document}</span>
+                        <span className="truncate">{txn.description}</span>
+                        <span className={`text-right font-semibold ${
+                          txn.type === 'invoice' ? 'text-destructive' : 'text-green-600'
+                        }`}>
+                          {txn.type === 'invoice' ? '' : '-'}{settings.currencySymbol}{Math.abs(txn.amount).toFixed(2)}
                         </span>
-                        <span className={`text-right font-semibold ${runningBalance > 0 ? 'text-destructive' : runningBalance < 0 ? 'text-green-600' : ''}`}>
+                        <span className={`text-right font-semibold ${
+                          runningBalance > 0 ? 'text-destructive' : runningBalance < 0 ? 'text-green-600' : ''
+                        }`}>
                           {settings.currencySymbol}{Math.abs(runningBalance).toFixed(2)}
                         </span>
                       </div>
