@@ -37,3 +37,23 @@ export const deleteInvoice = (id: string): void => {
   const invoices = loadInvoices().filter(i => i.id !== id);
   saveInvoices(invoices);
 };
+
+export const generateNextInvoiceNumber = (): string => {
+  const invoices = loadInvoices();
+  if (invoices.length === 0) {
+    return 'INV-0001';
+  }
+  
+  // Extract numbers from existing invoice numbers
+  const numbers = invoices
+    .map(inv => {
+      const match = inv.invoiceNumber.match(/INV-(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
+    })
+    .filter(n => n > 0);
+  
+  const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
+  const nextNumber = maxNumber + 1;
+  
+  return `INV-${String(nextNumber).padStart(4, '0')}`;
+};

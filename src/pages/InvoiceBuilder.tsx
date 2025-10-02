@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ContactSelector } from '@/components/ContactSelector';
 import { Contact } from '@/types/contacts';
 import { recordInvoice } from '@/utils/doubleEntryManager';
+import { generateNextInvoiceNumber } from '@/utils/invoiceStorage';
 
 export default function InvoiceBuilder() {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ export default function InvoiceBuilder() {
   const { id } = useParams();
 
   const [formData, setFormData] = useState({
-    invoiceNumber: `INV-${Date.now()}`,
+    invoiceNumber: generateNextInvoiceNumber(),
     clientName: '',
     clientEmail: '',
     clientPhone: '',
@@ -157,7 +158,8 @@ export default function InvoiceBuilder() {
                   <Input
                     id="invoiceNumber"
                     value={formData.invoiceNumber}
-                    onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
+                    disabled
+                    className="bg-muted"
                   />
                 </div>
                 <div className="space-y-2">

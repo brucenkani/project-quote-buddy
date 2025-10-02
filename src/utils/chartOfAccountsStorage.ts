@@ -47,3 +47,30 @@ export const deleteChartAccount = (id: string): void => {
   const accounts = loadChartOfAccounts().filter(acc => acc.id !== id);
   saveChartOfAccounts(accounts);
 };
+
+export const generateNextAccountNumber = (accountType: string): string => {
+  const accounts = loadChartOfAccounts();
+  const typeAccounts = accounts.filter(acc => acc.accountType === accountType);
+  
+  if (typeAccounts.length === 0) {
+    // Starting numbers for each account type (standard chart of accounts)
+    const startingNumbers: Record<string, number> = {
+      asset: 1000,
+      liability: 2000,
+      equity: 3000,
+      revenue: 4000,
+      expense: 5000,
+    };
+    return String(startingNumbers[accountType] || 1000);
+  }
+  
+  // Extract numbers from existing account numbers
+  const numbers = typeAccounts
+    .map(acc => parseInt(acc.accountNumber, 10))
+    .filter(n => !isNaN(n));
+  
+  const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
+  const nextNumber = maxNumber + 1;
+  
+  return String(nextNumber);
+};

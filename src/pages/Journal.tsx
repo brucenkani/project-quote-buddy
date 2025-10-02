@@ -9,7 +9,7 @@ import { Plus, BookOpen, Trash2, X } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { loadJournalEntries, saveJournalEntry, deleteJournalEntry } from '@/utils/accountingStorage';
 import { loadSettings } from '@/utils/settingsStorage';
-import { loadChartOfAccounts, addChartAccount } from '@/utils/chartOfAccountsStorage';
+import { loadChartOfAccounts, addChartAccount, generateNextAccountNumber } from '@/utils/chartOfAccountsStorage';
 import { JournalEntry, JournalEntryLine, AccountType } from '@/types/accounting';
 import { useToast } from '@/hooks/use-toast';
 
@@ -21,6 +21,12 @@ export default function Journal() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showNewAccountDialog, setShowNewAccountDialog] = useState<number | null>(null);
   const [newAccount, setNewAccount] = useState({ accountNumber: '', accountName: '', accountType: 'asset' as AccountType });
+  
+  // Update account number when account type changes
+  const handleAccountTypeChange = (accountType: AccountType) => {
+    const nextNumber = generateNextAccountNumber(accountType);
+    setNewAccount({ ...newAccount, accountType, accountNumber: nextNumber });
+  };
   
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -208,33 +214,20 @@ export default function Journal() {
                               </SelectContent>
                             </Select>
                             {showNewAccountDialog === index && (
-                              <Dialog open={true} onOpenChange={() => setShowNewAccountDialog(null)}>
+                              <Dialog open={true} onOpenChange={() => {
+                                setShowNewAccountDialog(null);
+                                setNewAccount({ accountNumber: '', accountName: '', accountType: 'asset' });
+                              }}>
                                 <DialogContent>
                                   <DialogHeader>
                                     <DialogTitle>Create New Account</DialogTitle>
                                   </DialogHeader>
                                   <div className="space-y-4">
                                     <div className="space-y-2">
-                                      <Label>Account Number</Label>
-                                      <Input
-                                        value={newAccount.accountNumber}
-                                        onChange={(e) => setNewAccount({ ...newAccount, accountNumber: e.target.value })}
-                                        placeholder="e.g., 507"
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label>Account Name</Label>
-                                      <Input
-                                        value={newAccount.accountName}
-                                        onChange={(e) => setNewAccount({ ...newAccount, accountName: e.target.value })}
-                                        placeholder="e.g., Marketing Expense"
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
                                       <Label>Account Type</Label>
                                       <Select
                                         value={newAccount.accountType}
-                                        onValueChange={(value: AccountType) => setNewAccount({ ...newAccount, accountType: value })}
+                                        onValueChange={(value: AccountType) => handleAccountTypeChange(value)}
                                       >
                                         <SelectTrigger>
                                           <SelectValue />
@@ -248,9 +241,28 @@ export default function Journal() {
                                         </SelectContent>
                                       </Select>
                                     </div>
+                                    <div className="space-y-2">
+                                      <Label>Account Number</Label>
+                                      <Input
+                                        value={newAccount.accountNumber}
+                                        disabled
+                                        className="bg-muted"
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label>Account Name</Label>
+                                      <Input
+                                        value={newAccount.accountName}
+                                        onChange={(e) => setNewAccount({ ...newAccount, accountName: e.target.value })}
+                                        placeholder="e.g., Marketing Expense"
+                                      />
+                                    </div>
                                   </div>
                                   <div className="flex justify-end gap-2">
-                                    <Button variant="outline" onClick={() => setShowNewAccountDialog(null)}>Cancel</Button>
+                                    <Button variant="outline" onClick={() => {
+                                      setShowNewAccountDialog(null);
+                                      setNewAccount({ accountNumber: '', accountName: '', accountType: 'asset' });
+                                    }}>Cancel</Button>
                                     <Button onClick={() => handleCreateAccount(index)}>Create</Button>
                                   </div>
                                 </DialogContent>

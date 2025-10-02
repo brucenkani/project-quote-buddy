@@ -7,6 +7,7 @@ import { LineItemsForm } from './quote/LineItemsForm';
 import { QuotePreview } from './quote/QuotePreview';
 import { Quote, ProjectDetails, IndustrySpecificFields, LineItem } from '@/types/quote';
 import { loadSettings } from '@/utils/settingsStorage';
+import { generateNextQuoteNumber } from '@/utils/quoteStorage';
 
 export const QuoteBuilder = () => {
   const settings = loadSettings();
@@ -33,7 +34,7 @@ export const QuoteBuilder = () => {
   const total = subtotal + taxAmount - discount;
   
   const currentQuote: Quote = {
-    id: crypto.randomUUID(),
+    id: generateNextQuoteNumber(),
     projectDetails,
     industryFields,
     lineItems,
