@@ -9,6 +9,7 @@ import { Plus, BookOpen, Trash2, X } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { loadJournalEntries, saveJournalEntry, deleteJournalEntry } from '@/utils/accountingStorage';
 import { loadSettings } from '@/utils/settingsStorage';
+import { loadChartOfAccounts, addChartAccount } from '@/utils/chartOfAccountsStorage';
 import { JournalEntry, JournalEntryLine, AccountType } from '@/types/accounting';
 import { useToast } from '@/hooks/use-toast';
 
@@ -16,7 +17,10 @@ export default function Journal() {
   const { toast } = useToast();
   const settings = loadSettings();
   const [entries, setEntries] = useState<JournalEntry[]>(loadJournalEntries());
+  const [chartAccounts, setChartAccounts] = useState(loadChartOfAccounts());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showNewAccountDialog, setShowNewAccountDialog] = useState<number | null>(null);
+  const [newAccount, setNewAccount] = useState({ accountNumber: '', accountName: '', accountType: 'asset' as AccountType });
   
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -43,6 +47,21 @@ export default function Journal() {
     const newLines = [...lines];
     newLines[index] = { ...newLines[index], [field]: value };
     setLines(newLines);
+  };
+
+  const handleCreateAccount = (lineIndex: number) => {
+    if (!newAccount.accountNumber || !newAccount.accountName) {
+      toast({ title: 'Please fill in account number and name', variant: 'destructive' });
+      return;
+    }
+    
+    const created = addChartAccount({ ...newAccount, isDefault: false });
+    setChartAccounts(loadChartOfAccounts());
+    updateLine(lineIndex, 'account', created.accountName);
+    updateLine(lineIndex, 'accountType', created.accountType);
+    setShowNewAccountDialog(null);
+    setNewAccount({ accountNumber: '', accountName: '', accountType: 'asset' });
+    toast({ title: 'Account created successfully' });
   };
 
   const totalDebit = lines.reduce((sum, line) => sum + (line.debit || 0), 0);
@@ -157,31 +176,87 @@ export default function Journal() {
                   <div className="space-y-2">
                     {lines.map((line, index) => (
                       <div key={index} className="grid grid-cols-12 gap-2 items-end">
-                        <div className="col-span-3">
+                        <div className="col-span-5">
                           <Label className="text-xs">Account</Label>
-                          <Input
-                            value={line.account}
-                            onChange={(e) => updateLine(index, 'account', e.target.value)}
-                            placeholder="Account name"
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <Label className="text-xs">Type</Label>
-                          <Select
-                            value={line.accountType}
-                            onValueChange={(value: AccountType) => updateLine(index, 'accountType', value)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="asset">Asset</SelectItem>
-                              <SelectItem value="liability">Liability</SelectItem>
-                              <SelectItem value="equity">Equity</SelectItem>
-                              <SelectItem value="revenue">Revenue</SelectItem>
-                              <SelectItem value="expense">Expense</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <div className="flex gap-2">
+                            <Select
+                              value={line.account}
+                              onValueChange={(value) => {
+                                if (value === '__new__') {
+                                  setShowNewAccountDialog(index);
+                                } else {
+                                  const account = chartAccounts.find(a => a.accountName === value);
+                                  if (account) {
+                                    updateLine(index, 'account', account.accountName);
+                                    updateLine(index, 'accountType', account.accountType);
+                                  }
+                                }
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select account" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {chartAccounts.map((acc) => (
+                                  <SelectItem key={acc.id} value={acc.accountName}>
+                                    {acc.accountNumber} - {acc.accountName}
+                                  </SelectItem>
+                                ))}
+                                <SelectItem value="__new__" className="text-primary font-semibold">
+                                  + Create New Account
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                            {showNewAccountDialog === index && (
+                              <Dialog open={true} onOpenChange={() => setShowNewAccountDialog(null)}>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Create New Account</DialogTitle>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <div className="space-y-2">
+                                      <Label>Account Number</Label>
+                                      <Input
+                                        value={newAccount.accountNumber}
+                                        onChange={(e) => setNewAccount({ ...newAccount, accountNumber: e.target.value })}
+                                        placeholder="e.g., 507"
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label>Account Name</Label>
+                                      <Input
+                                        value={newAccount.accountName}
+                                        onChange={(e) => setNewAccount({ ...newAccount, accountName: e.target.value })}
+                                        placeholder="e.g., Marketing Expense"
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label>Account Type</Label>
+                                      <Select
+                                        value={newAccount.accountType}
+                                        onValueChange={(value: AccountType) => setNewAccount({ ...newAccount, accountType: value })}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="asset">Asset</SelectItem>
+                                          <SelectItem value="liability">Liability</SelectItem>
+                                          <SelectItem value="equity">Equity</SelectItem>
+                                          <SelectItem value="revenue">Revenue</SelectItem>
+                                          <SelectItem value="expense">Expense</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </div>
+                                  <div className="flex justify-end gap-2">
+                                    <Button variant="outline" onClick={() => setShowNewAccountDialog(null)}>Cancel</Button>
+                                    <Button onClick={() => handleCreateAccount(index)}>Create</Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            )}
+                          </div>
                         </div>
                         <div className="col-span-2">
                           <Label className="text-xs">Debit</Label>

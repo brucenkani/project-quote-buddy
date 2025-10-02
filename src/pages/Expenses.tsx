@@ -10,15 +10,20 @@ import { Plus, Receipt, Pencil, Trash2 } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { loadExpenses, saveExpense, deleteExpense } from '@/utils/accountingStorage';
 import { loadSettings } from '@/utils/settingsStorage';
+import { loadChartOfAccounts, addChartAccount } from '@/utils/chartOfAccountsStorage';
 import { Expense } from '@/types/accounting';
+import { AccountType } from '@/types/accounting';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Expenses() {
   const { toast } = useToast();
   const settings = loadSettings();
   const [expenses, setExpenses] = useState<Expense[]>(loadExpenses());
+  const [chartAccounts, setChartAccounts] = useState(loadChartOfAccounts());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [showNewAccountDialog, setShowNewAccountDialog] = useState(false);
+  const [newAccount, setNewAccount] = useState({ accountNumber: '', accountName: '', accountType: 'expense' as AccountType });
 
   const [formData, setFormData] = useState<Partial<Expense>>({
     date: new Date().toISOString().split('T')[0],
@@ -31,18 +36,21 @@ export default function Expenses() {
     status: 'pending',
   });
 
-  const categories = [
-    'Office Supplies',
-    'Utilities',
-    'Rent',
-    'Equipment',
-    'Materials',
-    'Transportation',
-    'Professional Services',
-    'Marketing',
-    'Insurance',
-    'Other',
-  ];
+  const expenseAccounts = chartAccounts.filter(acc => acc.accountType === 'expense');
+
+  const handleCreateAccount = () => {
+    if (!newAccount.accountNumber || !newAccount.accountName) {
+      toast({ title: 'Please fill in account number and name', variant: 'destructive' });
+      return;
+    }
+    
+    const created = addChartAccount({ ...newAccount, isDefault: false });
+    setChartAccounts(loadChartOfAccounts());
+    setFormData({ ...formData, category: created.accountName });
+    setShowNewAccountDialog(false);
+    setNewAccount({ accountNumber: '', accountName: '', accountType: 'expense' });
+    toast({ title: 'Expense account created successfully' });
+  };
 
   const handleSubmit = () => {
     if (!formData.vendor || !formData.category || !formData.amount) {
@@ -149,15 +157,29 @@ export default function Expenses() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="category">Category *</Label>
-                  <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                  <Label htmlFor="category">Expense Account *</Label>
+                  <Select 
+                    value={formData.category} 
+                    onValueChange={(value) => {
+                      if (value === '__new__') {
+                        setShowNewAccountDialog(true);
+                      } else {
+                        setFormData({ ...formData, category: value });
+                      }
+                    }}
+                  >
                     <SelectTrigger id="category">
-                      <SelectValue placeholder="Select category" />
+                      <SelectValue placeholder="Select expense account" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      {expenseAccounts.map(acc => (
+                        <SelectItem key={acc.id} value={acc.accountName}>
+                          {acc.accountNumber} - {acc.accountName}
+                        </SelectItem>
                       ))}
+                      <SelectItem value="__new__" className="text-primary font-semibold">
+                        + Create New Expense Account
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -224,6 +246,36 @@ export default function Expenses() {
             </DialogContent>
           </Dialog>
         </div>
+
+        <Dialog open={showNewAccountDialog} onOpenChange={setShowNewAccountDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Expense Account</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Account Number</Label>
+                <Input
+                  value={newAccount.accountNumber}
+                  onChange={(e) => setNewAccount({ ...newAccount, accountNumber: e.target.value })}
+                  placeholder="e.g., 507"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Account Name</Label>
+                <Input
+                  value={newAccount.accountName}
+                  onChange={(e) => setNewAccount({ ...newAccount, accountName: e.target.value })}
+                  placeholder="e.g., Marketing Expense"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowNewAccountDialog(false)}>Cancel</Button>
+              <Button onClick={handleCreateAccount}>Create</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {expenses.length === 0 ? (
           <Card>
