@@ -10,12 +10,19 @@ import { loadInvoices } from '@/utils/invoiceStorage';
 type KPIType = 
   | 'revenue' 
   | 'netIncome' 
+  | 'grossMargin'
+  | 'netProfitMargin'
   | 'accountsReceivable' 
   | 'accountsPayable' 
   | 'inventory' 
   | 'workingCapital'
   | 'currentRatio'
-  | 'quickRatio';
+  | 'quickRatio'
+  | 'debtToEquity'
+  | 'debtRatio'
+  | 'roa'
+  | 'roe'
+  | 'assetTurnover';
 
 interface BreakdownLine {
   date: string;
@@ -281,6 +288,345 @@ const getKPIBreakdown = (
       };
     }
 
+    case 'grossMargin':
+    case 'netProfitMargin': {
+      // Revenue
+      let revenue = 0;
+      const revenueAccounts = accounts.filter(a => a.accountType === 'revenue');
+      revenueAccounts.forEach(account => {
+        periodData.journalEntries.forEach(entry => {
+          entry.entries.forEach(line => {
+            if (line.account === account.accountName && line.credit > 0) {
+              lines.push({
+                date: entry.date,
+                description: `Revenue: ${entry.description}`,
+                reference: entry.reference || '-',
+                amount: line.credit,
+                account: account.accountName,
+              });
+              revenue += line.credit;
+            }
+          });
+        });
+      });
+
+      // Expenses
+      let expenses = 0;
+      const expenseAccounts = accounts.filter(a => a.accountType === 'expense');
+      expenseAccounts.forEach(account => {
+        periodData.journalEntries.forEach(entry => {
+          entry.entries.forEach(line => {
+            if (line.account === account.accountName && line.debit > 0) {
+              lines.push({
+                date: entry.date,
+                description: `Expense: ${entry.description}`,
+                reference: entry.reference || '-',
+                amount: -line.debit,
+                account: account.accountName,
+              });
+              expenses += line.debit;
+            }
+          });
+        });
+
+        periodData.expenses.forEach(expense => {
+          if (expense.category === account.accountName) {
+            const netAmount = expense.includesVAT && expense.vatAmount 
+              ? expense.amount - expense.vatAmount 
+              : expense.amount;
+            lines.push({
+              date: expense.date,
+              description: `Expense: ${expense.description}`,
+              reference: expense.reference || '-',
+              amount: -netAmount,
+              account: account.accountName,
+            });
+            expenses += netAmount;
+          }
+        });
+      });
+
+      const netIncome = revenue - expenses;
+      const margin = revenue > 0 ? (netIncome / revenue) * 100 : 0;
+
+      lines.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      
+      // Add summary lines
+      lines.push({
+        date: periodData.endDate,
+        description: 'Total Revenue',
+        reference: 'Summary',
+        amount: revenue,
+      });
+      lines.push({
+        date: periodData.endDate,
+        description: 'Total Expenses',
+        reference: 'Summary',
+        amount: -expenses,
+      });
+      lines.push({
+        date: periodData.endDate,
+        description: 'Net Income',
+        reference: 'Summary',
+        amount: netIncome,
+      });
+
+      return { 
+        title: kpiType === 'grossMargin' ? 'Gross Margin Breakdown' : 'Net Profit Margin Breakdown', 
+        lines, 
+        total: margin 
+      };
+    }
+
+    case 'debtToEquity':
+    case 'debtRatio': {
+      // Liabilities
+      let totalLiabilities = 0;
+      const liabilityAccounts = accounts.filter(a => a.accountType === 'liability');
+      liabilityAccounts.forEach(account => {
+        const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
+        if (balance !== 0) {
+          lines.push({
+            date: periodData.endDate,
+            description: `Liability: ${account.accountName}`,
+            reference: 'Balance',
+            amount: balance,
+            account: account.accountName,
+          });
+          totalLiabilities += balance;
+        }
+      });
+
+      if (kpiType === 'debtToEquity') {
+        // Equity
+        let totalEquity = 0;
+        const equityAccounts = accounts.filter(a => a.accountType === 'equity');
+        equityAccounts.forEach(account => {
+          const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
+          if (balance !== 0) {
+            lines.push({
+              date: periodData.endDate,
+              description: `Equity: ${account.accountName}`,
+              reference: 'Balance',
+              amount: balance,
+              account: account.accountName,
+            });
+            totalEquity += balance;
+          }
+        });
+
+        const ratio = totalEquity > 0 ? totalLiabilities / totalEquity : 0;
+        return { title: 'Debt to Equity Ratio Breakdown', lines, total: ratio };
+      } else {
+        // Assets for debt ratio
+        let totalAssets = 0;
+        const assetAccounts = accounts.filter(a => a.accountType === 'asset');
+        assetAccounts.forEach(account => {
+          const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
+          if (balance !== 0) {
+            lines.push({
+              date: periodData.endDate,
+              description: `Asset: ${account.accountName}`,
+              reference: 'Balance',
+              amount: balance,
+              account: account.accountName,
+            });
+            totalAssets += balance;
+          }
+        });
+
+        const ratio = totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0;
+        return { title: 'Debt Ratio Breakdown', lines, total: ratio };
+      }
+    }
+
+    case 'roa':
+    case 'roe': {
+      // Net Income calculation
+      let revenue = 0;
+      let expenses = 0;
+
+      const revenueAccounts = accounts.filter(a => a.accountType === 'revenue');
+      revenueAccounts.forEach(account => {
+        periodData.journalEntries.forEach(entry => {
+          entry.entries.forEach(line => {
+            if (line.account === account.accountName && line.credit > 0) {
+              lines.push({
+                date: entry.date,
+                description: `Revenue: ${entry.description}`,
+                reference: entry.reference || '-',
+                amount: line.credit,
+                account: account.accountName,
+              });
+              revenue += line.credit;
+            }
+          });
+        });
+      });
+
+      const expenseAccounts = accounts.filter(a => a.accountType === 'expense');
+      expenseAccounts.forEach(account => {
+        periodData.journalEntries.forEach(entry => {
+          entry.entries.forEach(line => {
+            if (line.account === account.accountName && line.debit > 0) {
+              lines.push({
+                date: entry.date,
+                description: `Expense: ${entry.description}`,
+                reference: entry.reference || '-',
+                amount: -line.debit,
+                account: account.accountName,
+              });
+              expenses += line.debit;
+            }
+          });
+        });
+
+        periodData.expenses.forEach(expense => {
+          if (expense.category === account.accountName) {
+            const netAmount = expense.includesVAT && expense.vatAmount 
+              ? expense.amount - expense.vatAmount 
+              : expense.amount;
+            lines.push({
+              date: expense.date,
+              description: `Expense: ${expense.description}`,
+              reference: expense.reference || '-',
+              amount: -netAmount,
+              account: account.accountName,
+            });
+            expenses += netAmount;
+          }
+        });
+      });
+
+      const netIncome = revenue - expenses;
+
+      if (kpiType === 'roa') {
+        // Total Assets
+        let totalAssets = 0;
+        const assetAccounts = accounts.filter(a => a.accountType === 'asset');
+        assetAccounts.forEach(account => {
+          const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
+          if (balance !== 0) {
+            lines.push({
+              date: periodData.endDate,
+              description: `Asset: ${account.accountName}`,
+              reference: 'Balance',
+              amount: balance,
+              account: account.accountName,
+            });
+            totalAssets += balance;
+          }
+        });
+
+        const roa = totalAssets > 0 ? (netIncome / totalAssets) * 100 : 0;
+        
+        lines.push({
+          date: periodData.endDate,
+          description: 'Net Income',
+          reference: 'Summary',
+          amount: netIncome,
+        });
+        lines.push({
+          date: periodData.endDate,
+          description: 'Total Assets',
+          reference: 'Summary',
+          amount: totalAssets,
+        });
+
+        return { title: 'Return on Assets (ROA) Breakdown', lines, total: roa };
+      } else {
+        // Total Equity
+        let totalEquity = 0;
+        const equityAccounts = accounts.filter(a => a.accountType === 'equity');
+        equityAccounts.forEach(account => {
+          const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
+          if (balance !== 0) {
+            lines.push({
+              date: periodData.endDate,
+              description: `Equity: ${account.accountName}`,
+              reference: 'Balance',
+              amount: balance,
+              account: account.accountName,
+            });
+            totalEquity += balance;
+          }
+        });
+
+        const roe = totalEquity > 0 ? (netIncome / totalEquity) * 100 : 0;
+        
+        lines.push({
+          date: periodData.endDate,
+          description: 'Net Income',
+          reference: 'Summary',
+          amount: netIncome,
+        });
+        lines.push({
+          date: periodData.endDate,
+          description: 'Total Equity',
+          reference: 'Summary',
+          amount: totalEquity,
+        });
+
+        return { title: 'Return on Equity (ROE) Breakdown', lines, total: roe };
+      }
+    }
+
+    case 'assetTurnover': {
+      // Revenue
+      let revenue = 0;
+      const revenueAccounts = accounts.filter(a => a.accountType === 'revenue');
+      revenueAccounts.forEach(account => {
+        periodData.journalEntries.forEach(entry => {
+          entry.entries.forEach(line => {
+            if (line.account === account.accountName && line.credit > 0) {
+              lines.push({
+                date: entry.date,
+                description: `Revenue: ${entry.description}`,
+                reference: entry.reference || '-',
+                amount: line.credit,
+                account: account.accountName,
+              });
+              revenue += line.credit;
+            }
+          });
+        });
+      });
+
+      // Total Assets
+      let totalAssets = 0;
+      const assetAccounts = accounts.filter(a => a.accountType === 'asset');
+      assetAccounts.forEach(account => {
+        const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
+        if (balance !== 0) {
+          lines.push({
+            date: periodData.endDate,
+            description: `Asset: ${account.accountName}`,
+            reference: 'Balance',
+            amount: balance,
+            account: account.accountName,
+          });
+          totalAssets += balance;
+        }
+      });
+
+      const turnover = totalAssets > 0 ? revenue / totalAssets : 0;
+      
+      lines.push({
+        date: periodData.endDate,
+        description: 'Total Revenue',
+        reference: 'Summary',
+        amount: revenue,
+      });
+      lines.push({
+        date: periodData.endDate,
+        description: 'Total Assets',
+        reference: 'Summary',
+        amount: totalAssets,
+      });
+
+      return { title: 'Asset Turnover Breakdown', lines, total: turnover };
+    }
+
     default:
       return { title: 'KPI Breakdown', lines: [], total: 0 };
   }
@@ -312,8 +658,13 @@ export const generateKPIBreakdownPDF = (
   ]);
 
   // Add total row
-  if (kpiType === 'currentRatio' || kpiType === 'quickRatio') {
+  const isRatioType = ['currentRatio', 'quickRatio', 'debtToEquity', 'debtRatio', 'assetTurnover'].includes(kpiType);
+  const isPercentageType = ['grossMargin', 'netProfitMargin', 'roa', 'roe', 'debtRatio'].includes(kpiType);
+  
+  if (isRatioType && !isPercentageType) {
     tableData.push(['', '', '', 'RATIO', breakdown.total.toFixed(2)]);
+  } else if (isPercentageType) {
+    tableData.push(['', '', '', 'PERCENTAGE', `${breakdown.total.toFixed(2)}%`]);
   } else {
     tableData.push(['', '', '', 'TOTAL', `${settings.currencySymbol}${breakdown.total.toFixed(2)}`]);
   }
@@ -361,23 +712,16 @@ export const generateKPIBreakdownExcel = (
   }));
 
   // Add total row
-  if (kpiType === 'currentRatio' || kpiType === 'quickRatio') {
-    data.push({
-      Date: '',
-      Description: '',
-      Reference: '',
-      Account: 'RATIO',
-      Amount: breakdown.total,
-    });
-  } else {
-    data.push({
-      Date: '',
-      Description: '',
-      Reference: '',
-      Account: 'TOTAL',
-      Amount: breakdown.total,
-    });
-  }
+  const isRatioType = ['currentRatio', 'quickRatio', 'debtToEquity', 'assetTurnover'].includes(kpiType);
+  const isPercentageType = ['grossMargin', 'netProfitMargin', 'roa', 'roe', 'debtRatio'].includes(kpiType);
+  
+  data.push({
+    Date: '',
+    Description: '',
+    Reference: '',
+    Account: isRatioType && !isPercentageType ? 'RATIO' : isPercentageType ? 'PERCENTAGE' : 'TOTAL',
+    Amount: breakdown.total,
+  });
 
   const worksheet = XLSX.utils.json_to_sheet(data);
   const workbook = XLSX.utils.book_new();

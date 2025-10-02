@@ -132,6 +132,8 @@ export const KPIDashboard = ({ kpis, currencySymbol, companyType, onKPIClick }: 
             prior={kpis.prior.grossMargin}
             format="percentage"
             currencySymbol={currencySymbol}
+            onClick={() => onKPIClick?.('grossMargin')}
+            isClickable={!!onKPIClick}
           />
           <KPICard
             title="Net Profit Margin"
@@ -139,6 +141,8 @@ export const KPIDashboard = ({ kpis, currencySymbol, companyType, onKPIClick }: 
             prior={kpis.prior.netProfitMargin}
             format="percentage"
             currencySymbol={currencySymbol}
+            onClick={() => onKPIClick?.('netProfitMargin')}
+            isClickable={!!onKPIClick}
           />
         </div>
       </div>
@@ -214,6 +218,8 @@ export const KPIDashboard = ({ kpis, currencySymbol, companyType, onKPIClick }: 
             prior={kpis.prior.debtToEquity}
             format="ratio"
             currencySymbol={currencySymbol}
+            onClick={() => onKPIClick?.('debtToEquity')}
+            isClickable={!!onKPIClick}
           />
           <KPICard
             title="Debt Ratio"
@@ -221,6 +227,8 @@ export const KPIDashboard = ({ kpis, currencySymbol, companyType, onKPIClick }: 
             prior={kpis.prior.debtRatio}
             format="percentage"
             currencySymbol={currencySymbol}
+            onClick={() => onKPIClick?.('debtRatio')}
+            isClickable={!!onKPIClick}
           />
         </div>
       </div>
@@ -234,6 +242,8 @@ export const KPIDashboard = ({ kpis, currencySymbol, companyType, onKPIClick }: 
             prior={kpis.prior.roa}
             format="percentage"
             currencySymbol={currencySymbol}
+            onClick={() => onKPIClick?.('roa')}
+            isClickable={!!onKPIClick}
           />
           <KPICard
             title="Return on Equity (ROE)"
@@ -241,6 +251,8 @@ export const KPIDashboard = ({ kpis, currencySymbol, companyType, onKPIClick }: 
             prior={kpis.prior.roe}
             format="percentage"
             currencySymbol={currencySymbol}
+            onClick={() => onKPIClick?.('roe')}
+            isClickable={!!onKPIClick}
           />
           <KPICard
             title="Asset Turnover"
@@ -248,6 +260,8 @@ export const KPIDashboard = ({ kpis, currencySymbol, companyType, onKPIClick }: 
             prior={kpis.prior.assetTurnover}
             format="ratio"
             currencySymbol={currencySymbol}
+            onClick={() => onKPIClick?.('assetTurnover')}
+            isClickable={!!onKPIClick}
           />
         </div>
       </div>
