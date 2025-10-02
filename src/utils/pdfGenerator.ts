@@ -77,8 +77,8 @@ export const generateQuotePDF = (quote: Quote) => {
     item.description,
     item.quantity.toString(),
     item.unit,
-    `$${item.unitPrice.toFixed(2)}`,
-    `$${item.total.toFixed(2)}`,
+    `${settings.currencySymbol}${item.unitPrice.toFixed(2)}`,
+    `${settings.currencySymbol}${item.total.toFixed(2)}`,
   ]);
   
   autoTable(doc, {
@@ -108,15 +108,15 @@ export const generateQuotePDF = (quote: Quote) => {
   const finalY = (doc as any).lastAutoTable.finalY + 10;
   
   const summaryItems = [
-    ['Subtotal', `$${quote.subtotal.toFixed(2)}`],
-    ['Tax (' + (quote.taxRate * 100).toFixed(1) + '%)', `$${quote.taxAmount.toFixed(2)}`],
+    ['Subtotal', `${settings.currencySymbol}${quote.subtotal.toFixed(2)}`],
+    ['Tax (' + (quote.taxRate * 100).toFixed(1) + '%)', `${settings.currencySymbol}${quote.taxAmount.toFixed(2)}`],
   ];
   
   if (quote.discount > 0) {
-    summaryItems.push(['Discount', `-$${quote.discount.toFixed(2)}`]);
+    summaryItems.push(['Discount', `-${settings.currencySymbol}${quote.discount.toFixed(2)}`]);
   }
   
-  summaryItems.push(['Total', `$${quote.total.toFixed(2)}`]);
+  summaryItems.push(['Total', `${settings.currencySymbol}${quote.total.toFixed(2)}`]);
   
   const summaryX = pageWidth - 70;
   doc.setFontSize(10);
@@ -214,8 +214,8 @@ export const generateBillOfMaterialsPDF = (quote: Quote) => {
       item.description,
       item.quantity.toString(),
       item.unit,
-      `$${item.unitPrice.toFixed(2)}`,
-      `$${item.total.toFixed(2)}`,
+      `${settings.currencySymbol}${item.unitPrice.toFixed(2)}`,
+      `${settings.currencySymbol}${item.total.toFixed(2)}`,
     ]);
     
     autoTable(doc, {
@@ -248,7 +248,7 @@ export const generateBillOfMaterialsPDF = (quote: Quote) => {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
   doc.text('Total Materials Cost:', pageWidth - 70, currentY);
-  doc.text(`$${quote.subtotal.toFixed(2)}`, pageWidth - 14, currentY, { align: 'right' });
+  doc.text(`${settings.currencySymbol}${quote.subtotal.toFixed(2)}`, pageWidth - 14, currentY, { align: 'right' });
   
   return doc;
 };

@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings } from 'lucide-react';
+import { Navigation } from './Navigation';
 import { ProjectDetailsForm } from './quote/ProjectDetailsForm';
 import { LineItemsForm } from './quote/LineItemsForm';
 import { QuotePreview } from './quote/QuotePreview';
@@ -11,7 +9,6 @@ import { Quote, ProjectDetails, IndustrySpecificFields, LineItem } from '@/types
 import { loadSettings } from '@/utils/settingsStorage';
 
 export const QuoteBuilder = () => {
-  const navigate = useNavigate();
   const settings = loadSettings();
   const [activeTab, setActiveTab] = useState('details');
   const [projectDetails, setProjectDetails] = useState<ProjectDetails>({
@@ -51,27 +48,15 @@ export const QuoteBuilder = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
+      <Navigation />
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <div className="flex justify-end mb-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/settings')}
-              className="gap-2"
-            >
-              <Settings className="h-4 w-4" />
-              Settings
-            </Button>
-          </div>
-          <div className="text-center">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent mb-2">
-              QuoteBuilder Pro
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Create professional quotes and bills of materials for any industry
-            </p>
-          </div>
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent mb-2">
+            Quote Builder
+          </h1>
+          <p className="text-muted-foreground text-lg">
+            Create professional quotes and bills of materials
+          </p>
         </div>
 
         <Card className="shadow-[var(--shadow-elegant)] border-border/50 backdrop-blur-sm bg-card/80">
