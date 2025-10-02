@@ -40,17 +40,28 @@ export default function InvoiceCreditNote() {
       ...invoice,
       id: `CN-${Date.now()}`,
       invoiceNumber: `CN-${invoice.invoiceNumber}`,
+      type: 'credit-note',
       total: -Math.abs(creditAmount),
-      subtotal: -Math.abs(creditAmount / (1 + invoice.taxRate)),
-      taxAmount: -Math.abs((creditAmount / (1 + invoice.taxRate)) * invoice.taxRate),
+      subtotal: -Math.abs(creditAmount / (1 + invoice.taxRate / 100)),
+      taxAmount: -Math.abs((creditAmount / (1 + invoice.taxRate / 100)) * (invoice.taxRate / 100)),
       notes: `Credit Note for Invoice ${invoice.invoiceNumber}\nReason: ${creditNoteReason}`,
       issueDate: new Date().toISOString().split('T')[0],
+      payments: [],
+      creditNotes: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       status: 'unpaid',
     };
 
+    // Link credit note to original invoice
+    const updatedInvoice = {
+      ...invoice,
+      creditNotes: [...(invoice.creditNotes || []), creditNote.id],
+      updatedAt: new Date().toISOString(),
+    };
+
     saveInvoice(creditNote);
+    saveInvoice(updatedInvoice);
     toast({ title: 'Credit Note created successfully' });
     navigate('/invoices');
   };

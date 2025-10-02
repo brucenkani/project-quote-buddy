@@ -75,6 +75,7 @@ export default function InvoiceBuilder() {
     const invoice: Invoice = {
       id: id || crypto.randomUUID(),
       invoiceNumber: formData.invoiceNumber,
+      type: 'invoice',
       projectDetails: {
         clientName: formData.clientName,
         clientEmail: formData.clientEmail,
@@ -104,6 +105,8 @@ export default function InvoiceBuilder() {
       status: formData.status,
       paymentTerms: formData.paymentTerms,
       notes: formData.notes,
+      payments: [],
+      creditNotes: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

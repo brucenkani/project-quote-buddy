@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, BookOpen, Trash2, X } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Plus, BookOpen, X, Eye, Pencil, Trash2 } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { loadJournalEntries, saveJournalEntry, deleteJournalEntry } from '@/utils/accountingStorage';
 import { loadSettings } from '@/utils/settingsStorage';
@@ -22,7 +24,6 @@ export default function Journal() {
   const [showNewAccountDialog, setShowNewAccountDialog] = useState<number | null>(null);
   const [newAccount, setNewAccount] = useState({ accountNumber: '', accountName: '', accountType: 'asset' as AccountType });
   
-  // Update account number when account type changes
   const handleAccountTypeChange = (accountType: AccountType) => {
     const nextNumber = generateNextAccountNumber(accountType);
     setNewAccount({ ...newAccount, accountType, accountNumber: nextNumber });
@@ -100,7 +101,6 @@ export default function Journal() {
     setEntries(loadJournalEntries());
     setIsDialogOpen(false);
     
-    // Reset form
     setFormData({ date: new Date().toISOString().split('T')[0], reference: '', description: '' });
     setLines([
       { account: '', accountType: 'asset', debit: 0, credit: 0, description: '' },
@@ -140,6 +140,7 @@ export default function Journal() {
               <DialogHeader>
                 <DialogTitle>New Journal Entry</DialogTitle>
               </DialogHeader>
+              
               <div className="space-y-4 mt-4">
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
@@ -184,91 +185,89 @@ export default function Journal() {
                       <div key={index} className="grid grid-cols-12 gap-2 items-end">
                         <div className="col-span-5">
                           <Label className="text-xs">Account</Label>
-                          <div className="flex gap-2">
-                            <Select
-                              value={line.account}
-                              onValueChange={(value) => {
-                                if (value === '__new__') {
-                                  setShowNewAccountDialog(index);
-                                } else {
-                                  const account = chartAccounts.find(a => a.accountName === value);
-                                  if (account) {
-                                    updateLine(index, 'account', account.accountName);
-                                    updateLine(index, 'accountType', account.accountType);
-                                  }
+                          <Select
+                            value={line.account}
+                            onValueChange={(value) => {
+                              if (value === '__new__') {
+                                setShowNewAccountDialog(index);
+                              } else {
+                                const account = chartAccounts.find(a => a.accountName === value);
+                                if (account) {
+                                  updateLine(index, 'account', account.accountName);
+                                  updateLine(index, 'accountType', account.accountType);
                                 }
-                              }}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select account" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {chartAccounts.map((acc) => (
-                                  <SelectItem key={acc.id} value={acc.accountName}>
-                                    {acc.accountNumber} - {acc.accountName}
-                                  </SelectItem>
-                                ))}
-                                <SelectItem value="__new__" className="text-primary font-semibold">
-                                  + Create New Account
+                              }
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select account" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {chartAccounts.map((acc) => (
+                                <SelectItem key={acc.id} value={acc.accountName}>
+                                  {acc.accountNumber} - {acc.accountName}
                                 </SelectItem>
-                              </SelectContent>
-                            </Select>
-                            {showNewAccountDialog === index && (
-                              <Dialog open={true} onOpenChange={() => {
-                                setShowNewAccountDialog(null);
-                                setNewAccount({ accountNumber: '', accountName: '', accountType: 'asset' });
-                              }}>
-                                <DialogContent>
-                                  <DialogHeader>
-                                    <DialogTitle>Create New Account</DialogTitle>
-                                  </DialogHeader>
-                                  <div className="space-y-4">
-                                    <div className="space-y-2">
-                                      <Label>Account Type</Label>
-                                      <Select
-                                        value={newAccount.accountType}
-                                        onValueChange={(value: AccountType) => handleAccountTypeChange(value)}
-                                      >
-                                        <SelectTrigger>
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="asset">Asset</SelectItem>
-                                          <SelectItem value="liability">Liability</SelectItem>
-                                          <SelectItem value="equity">Equity</SelectItem>
-                                          <SelectItem value="revenue">Revenue</SelectItem>
-                                          <SelectItem value="expense">Expense</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label>Account Number</Label>
-                                      <Input
-                                        value={newAccount.accountNumber}
-                                        disabled
-                                        className="bg-muted"
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label>Account Name</Label>
-                                      <Input
-                                        value={newAccount.accountName}
-                                        onChange={(e) => setNewAccount({ ...newAccount, accountName: e.target.value })}
-                                        placeholder="e.g., Marketing Expense"
-                                      />
-                                    </div>
+                              ))}
+                              <SelectItem value="__new__" className="text-primary font-semibold">
+                                + Create New Account
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {showNewAccountDialog === index && (
+                            <Dialog open={true} onOpenChange={() => {
+                              setShowNewAccountDialog(null);
+                              setNewAccount({ accountNumber: '', accountName: '', accountType: 'asset' });
+                            }}>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Create New Account</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div className="space-y-2">
+                                    <Label>Account Type</Label>
+                                    <Select
+                                      value={newAccount.accountType}
+                                      onValueChange={(value: AccountType) => handleAccountTypeChange(value)}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="asset">Asset</SelectItem>
+                                        <SelectItem value="liability">Liability</SelectItem>
+                                        <SelectItem value="equity">Equity</SelectItem>
+                                        <SelectItem value="revenue">Revenue</SelectItem>
+                                        <SelectItem value="expense">Expense</SelectItem>
+                                      </SelectContent>
+                                    </Select>
                                   </div>
-                                  <div className="flex justify-end gap-2">
-                                    <Button variant="outline" onClick={() => {
-                                      setShowNewAccountDialog(null);
-                                      setNewAccount({ accountNumber: '', accountName: '', accountType: 'asset' });
-                                    }}>Cancel</Button>
-                                    <Button onClick={() => handleCreateAccount(index)}>Create</Button>
+                                  <div className="space-y-2">
+                                    <Label>Account Number</Label>
+                                    <Input
+                                      value={newAccount.accountNumber}
+                                      disabled
+                                      className="bg-muted"
+                                    />
                                   </div>
-                                </DialogContent>
-                              </Dialog>
-                            )}
-                          </div>
+                                  <div className="space-y-2">
+                                    <Label>Account Name</Label>
+                                    <Input
+                                      value={newAccount.accountName}
+                                      onChange={(e) => setNewAccount({ ...newAccount, accountName: e.target.value })}
+                                      placeholder="e.g., Marketing Expense"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <Button variant="outline" onClick={() => {
+                                    setShowNewAccountDialog(null);
+                                    setNewAccount({ accountNumber: '', accountName: '', accountType: 'asset' });
+                                  }}>Cancel</Button>
+                                  <Button onClick={() => handleCreateAccount(index)}>Create</Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          )}
                         </div>
                         <div className="col-span-2">
                           <Label className="text-xs">Debit</Label>
@@ -347,69 +346,62 @@ export default function Journal() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4">
-            {entries.map((entry) => (
-              <Card key={entry.id} className="shadow-[var(--shadow-elegant)] border-border/50">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg mb-2">{entry.description}</CardTitle>
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        <p><strong>Date:</strong> {new Date(entry.date).toLocaleDateString()}</p>
-                        <p><strong>Reference:</strong> {entry.reference}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xl font-bold text-primary">
-                        {settings.currencySymbol}{entry.totalDebit.toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="border rounded-lg overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead className="bg-muted">
-                        <tr>
-                          <th className="text-left p-2">Account</th>
-                          <th className="text-left p-2">Type</th>
-                          <th className="text-right p-2">Debit</th>
-                          <th className="text-right p-2">Credit</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {entry.entries.map((line) => (
-                          <tr key={line.id} className="border-t">
-                            <td className="p-2">{line.account}</td>
-                            <td className="p-2 capitalize">{line.accountType}</td>
-                            <td className="p-2 text-right">
-                              {line.debit > 0 ? `${settings.currencySymbol}${line.debit.toFixed(2)}` : '-'}
-                            </td>
-                            <td className="p-2 text-right">
-                              {line.credit > 0 ? `${settings.currencySymbol}${line.credit.toFixed(2)}` : '-'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(entry.id)}
-                      className="gap-2 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead>Date</TableHead>
+                  <TableHead>Reference</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Debit</TableHead>
+                  <TableHead className="text-right">Credit</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {entries.map((entry) => (
+                  <TableRow key={entry.id}>
+                    <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
+                    <TableCell className="font-medium">{entry.reference}</TableCell>
+                    <TableCell>{entry.description}</TableCell>
+                    <TableCell className="text-right">
+                      {settings.currencySymbol}{entry.totalDebit.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {settings.currencySymbol}{entry.totalCredit.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="gap-1">
+                            Actions
+                            <span className="ml-1">▼</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem>
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDelete(entry.id)} className="text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
         )}
       </div>
     </div>
   );
 }
+

@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FileText } from 'lucide-react';
+import { Plus, FileText, Calendar } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { loadInvoices, deleteInvoice } from '@/utils/invoiceStorage';
 import { Invoice } from '@/types/invoice';
 import { useToast } from '@/hooks/use-toast';
 import { loadSettings } from '@/utils/settingsStorage';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -29,7 +30,12 @@ export default function Invoices() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const settings = loadSettings();
-  const [invoices, setInvoices] = useState<Invoice[]>(loadInvoices());
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [activeTab, setActiveTab] = useState<'invoices' | 'credit-notes'>('invoices');
+
+  useEffect(() => {
+    setInvoices(loadInvoices());
+  }, []);
 
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this invoice?')) {
@@ -49,6 +55,31 @@ export default function Invoices() {
       : 'bg-orange-500/10 text-orange-700 dark:text-orange-400';
   };
 
+  const calculateAmountDue = (invoice: Invoice) => {
+    let amountDue = invoice.total;
+    
+    // Subtract payments
+    if (invoice.payments) {
+      const totalPaid = invoice.payments.reduce((sum, payment) => sum + payment.amount, 0);
+      amountDue -= totalPaid;
+    }
+    
+    // Subtract credit notes
+    if (invoice.creditNotes && invoice.creditNotes.length > 0) {
+      const creditNoteInvoices = invoices.filter(inv => 
+        invoice.creditNotes?.includes(inv.id) && inv.type === 'credit-note'
+      );
+      const totalCredit = creditNoteInvoices.reduce((sum, cn) => sum + Math.abs(cn.total), 0);
+      amountDue -= totalCredit;
+    }
+    
+    return Math.max(0, amountDue);
+  };
+
+  const displayInvoices = invoices.filter(inv => 
+    activeTab === 'invoices' ? (inv.type === 'invoice' || !inv.type) : inv.type === 'credit-note'
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
       <Navigation />
@@ -56,29 +87,44 @@ export default function Invoices() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
-              Customer Tax Invoices
+              Invoices
             </h1>
-            <p className="text-muted-foreground">Manage and track your invoices</p>
+            <p className="text-muted-foreground">Manage customer tax invoices and credit notes</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => navigate('/invoices/new')} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add a Tax Invoice
+            <Button variant="outline" className="gap-2" onClick={() => navigate('/invoices/recurring')}>
+              <Calendar className="h-4 w-4" />
+              Recurring Invoices
             </Button>
-            <Button variant="outline" onClick={() => navigate('/invoices/new')} className="gap-2">
+            <Button className="gap-2" onClick={() => navigate('/invoices/new')}>
               <Plus className="h-4 w-4" />
-              Add a Recurring Invoice
+              New Invoice
             </Button>
           </div>
         </div>
 
-        {invoices.length === 0 ? (
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'invoices' | 'credit-notes')} className="mb-6">
+          <TabsList className="grid w-[400px] grid-cols-2">
+            <TabsTrigger value="invoices">Invoices</TabsTrigger>
+            <TabsTrigger value="credit-notes">Credit Notes</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {displayInvoices.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No invoices yet</h3>
-              <p className="text-muted-foreground mb-4">Create your first invoice to get started</p>
-              <Button onClick={() => navigate('/invoices/new')}>Create Invoice</Button>
+              <h3 className="text-lg font-semibold mb-2">
+                {activeTab === 'invoices' ? 'No invoices yet' : 'No credit notes yet'}
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                {activeTab === 'invoices' 
+                  ? 'Create your first invoice to get started'
+                  : 'Credit notes will appear here when created from invoices'}
+              </p>
+              {activeTab === 'invoices' && (
+                <Button onClick={() => navigate('/invoices/new')}>Create Invoice</Button>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -103,7 +149,7 @@ export default function Invoices() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invoices.map((invoice) => (
+                  {displayInvoices.map((invoice) => (
                     <TableRow key={invoice.id}>
                       <TableCell>
                         <Checkbox />
@@ -119,10 +165,7 @@ export default function Invoices() {
                         {settings.currencySymbol}{invoice.total.toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {invoice.status === 'unpaid' 
-                          ? `${settings.currencySymbol}${invoice.total.toFixed(2)}`
-                          : `${settings.currencySymbol}0.00`
-                        }
+                        {settings.currencySymbol}{calculateAmountDue(invoice).toFixed(2)}
                       </TableCell>
                       <TableCell className="text-center">
                         <Checkbox checked={false} disabled />

@@ -16,6 +16,8 @@ import InvoiceEmail from "./pages/InvoiceEmail";
 import InvoiceHistory from "./pages/InvoiceHistory";
 import InvoiceCreditNote from "./pages/InvoiceCreditNote";
 import InvoiceDeliveryNote from "./pages/InvoiceDeliveryNote";
+import RecurringInvoices from "./pages/RecurringInvoices";
+import RecurringInvoiceBuilder from "./pages/RecurringInvoiceBuilder";
 import Inventory from "./pages/Inventory";
 import Journal from "./pages/Journal";
 import Expenses from "./pages/Expenses";
@@ -45,6 +47,8 @@ const App = () => (
           <Route path="/invoices/:id/credit-note" element={<InvoiceCreditNote />} />
           <Route path="/invoices/:id/delivery-note" element={<InvoiceDeliveryNote />} />
           <Route path="/invoices/:id/history" element={<InvoiceHistory />} />
+          <Route path="/invoices/recurring" element={<RecurringInvoices />} />
+          <Route path="/invoices/recurring/new" element={<RecurringInvoiceBuilder />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/journal" element={<Journal />} />
           <Route path="/expenses" element={<Expenses />} />
