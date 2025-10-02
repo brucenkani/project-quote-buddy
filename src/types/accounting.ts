@@ -30,9 +30,20 @@ export interface Expense {
   amount: number;
   paymentMethod: string;
   reference?: string;
+  supplierInvoiceRef?: string;
   attachmentUrl?: string;
   status: 'pending' | 'approved' | 'paid' | 'rejected' | 'partly-paid' | 'overdue';
   dueDate?: string;
+  payments?: ExpensePayment[];
+  supplierReturns?: string[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ExpensePayment {
+  id: string;
+  amount: number;
+  date: string;
+  method: string;
+  reference?: string;
 }

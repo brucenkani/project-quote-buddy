@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Receipt, Pencil, Trash2, Upload, Download, Check, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Navigation } from '@/components/Navigation';
@@ -18,9 +20,10 @@ import { Expense } from '@/types/accounting';
 import { AccountType } from '@/types/accounting';
 import { useToast } from '@/hooks/use-toast';
 import { recordExpense } from '@/utils/doubleEntryManager';
-import { calculateExpenseStatus } from '@/utils/expenseStatusCalculator';
+import { calculateExpenseStatus, calculateExpenseAmountDue } from '@/utils/expenseStatusCalculator';
 
 export default function Expenses() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const settings = loadSettings();
   const [expenses, setExpenses] = useState<Expense[]>(loadExpenses());
@@ -34,14 +37,16 @@ export default function Expenses() {
 
   const [formData, setFormData] = useState<Partial<Expense>>({
     date: new Date().toISOString().split('T')[0],
-    vendor: 'General Expense',
+    vendor: '',
     category: '',
     description: '',
     amount: 0,
     paymentMethod: 'cash',
     reference: '',
+    supplierInvoiceRef: '',
     status: 'pending',
-    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    payments: [],
   });
 
   const expenseAccounts = chartAccounts.filter(acc => acc.accountType === 'expense');
@@ -70,14 +75,16 @@ export default function Expenses() {
     const expense: Expense = {
       id: editingExpense?.id || crypto.randomUUID(),
       date: formData.date!,
-      vendor: 'General Expense',
+      vendor: formData.vendor || 'General Expense',
       category: formData.category!,
       description: formData.description || '',
       amount: formData.amount!,
       paymentMethod: formData.paymentMethod || 'cash',
-      reference: '',
+      reference: formData.reference || '',
+      supplierInvoiceRef: formData.supplierInvoiceRef,
       status: formData.status!,
       dueDate: formData.dueDate,
+      payments: editingExpense?.payments || [],
       createdAt: editingExpense?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -105,14 +112,16 @@ export default function Expenses() {
     setEditingExpense(null);
     setFormData({
       date: new Date().toISOString().split('T')[0],
-      vendor: 'General Expense',
+      vendor: '',
       category: '',
       description: '',
       amount: 0,
       paymentMethod: 'cash',
       reference: '',
+      supplierInvoiceRef: '',
       status: 'pending',
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      payments: [],
     });
     toast({ title: editingExpense ? 'Expense updated' : 'Expense recorded with journal entry' });
   };
@@ -274,7 +283,22 @@ export default function Expenses() {
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2" onClick={() => { setEditingExpense(null); setFormData({ date: new Date().toISOString().split('T')[0], vendor: 'General Expense', category: '', description: '', amount: 0, paymentMethod: 'cash', reference: '', status: 'pending', dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] }); }}>
+                <Button className="gap-2" onClick={() => { 
+                  setEditingExpense(null); 
+                  setFormData({ 
+                    date: new Date().toISOString().split('T')[0], 
+                    vendor: '', 
+                    category: '', 
+                    description: '', 
+                    amount: 0, 
+                    paymentMethod: 'cash', 
+                    reference: '', 
+                    supplierInvoiceRef: '',
+                    status: 'pending', 
+                    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    payments: []
+                  }); 
+                }}>
                   <Plus className="h-4 w-4" />
                   Add Expense
                 </Button>
@@ -291,6 +315,15 @@ export default function Expenses() {
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="vendor">Supplier Name *</Label>
+                  <Input
+                    id="vendor"
+                    value={formData.vendor}
+                    onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                    placeholder="Enter supplier name"
                   />
                 </div>
                 <div className="space-y-2">
@@ -319,6 +352,15 @@ export default function Expenses() {
                       </SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="supplierInvoiceRef">Supplier Invoice Ref</Label>
+                  <Input
+                    id="supplierInvoiceRef"
+                    value={formData.supplierInvoiceRef}
+                    onChange={(e) => setFormData({ ...formData, supplierInvoiceRef: e.target.value })}
+                    placeholder="Supplier's invoice number"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="amount">Amount ({settings.currencySymbol}) *</Label>
@@ -510,56 +552,111 @@ export default function Expenses() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4">
-            {expenses.map((expense) => (
-              <Card key={expense.id} className="shadow-[var(--shadow-elegant)] border-border/50">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CardTitle className="text-lg">{expense.vendor}</CardTitle>
-                        <Badge className={getStatusColor(expense.status)}>{expense.status}</Badge>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-muted-foreground">
-                        <p><strong>Date:</strong> {new Date(expense.date).toLocaleDateString()}</p>
-                        <p><strong>Category:</strong> {expense.category}</p>
-                        <p><strong>Payment:</strong> {expense.paymentMethod}</p>
-                        {expense.reference && <p><strong>Ref:</strong> {expense.reference}</p>}
-                        {expense.description && (
-                          <p className="col-span-2"><strong>Note:</strong> {expense.description}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xl font-bold text-primary">
-                        {settings.currencySymbol}{expense.amount.toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex gap-2 border-t pt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(expense)}
-                    className="gap-2"
-                  >
-                    <Pencil className="h-4 w-4" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(expense.id)}
-                    className="gap-2 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-[50px]">
+                      <Checkbox />
+                    </TableHead>
+                    <TableHead>Supplier Name</TableHead>
+                    <TableHead>Doc. No.</TableHead>
+                    <TableHead>Supp. Inv.</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="text-right">Amount Due</TableHead>
+                    <TableHead className="text-center">Printed</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {expenses.map((expense) => {
+                    const amountDue = expense.payments 
+                      ? expense.amount - expense.payments.reduce((sum, p) => sum + p.amount, 0)
+                      : expense.amount;
+                    
+                    return (
+                      <TableRow key={expense.id}>
+                        <TableCell>
+                          <Checkbox />
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {expense.vendor}
+                        </TableCell>
+                        <TableCell>{expense.reference || expense.id.substring(0, 8).toUpperCase()}</TableCell>
+                        <TableCell>{expense.supplierInvoiceRef || '-'}</TableCell>
+                        <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
+                        <TableCell>{expense.dueDate ? new Date(expense.dueDate).toLocaleDateString() : '-'}</TableCell>
+                        <TableCell className="text-right">
+                          {settings.currencySymbol}{expense.amount.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {settings.currencySymbol}{Math.max(0, amountDue).toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Checkbox checked={false} disabled />
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(expense.status)}>
+                            {expense.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="gap-1">
+                                Actions
+                                <span className="ml-1">▼</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => navigate(`/expenses/${expense.id}/preview`)}>
+                                Preview
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/expenses/${expense.id}/print`)}>
+                                Print
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEdit(expense)}>
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/expenses/${expense.id}/payment`)}>
+                                Create Payment
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                const newExpense = {
+                                  ...expense,
+                                  id: crypto.randomUUID(),
+                                  createdAt: new Date().toISOString(),
+                                  updatedAt: new Date().toISOString(),
+                                };
+                                delete newExpense.payments;
+                                setFormData(newExpense);
+                                setIsDialogOpen(true);
+                              }}>
+                                Copy Expense
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/expenses/${expense.id}/history`)}>
+                                View History
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleDelete(expense.id)}
+                                className="text-destructive"
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

@@ -22,6 +22,10 @@ import Statements from "./pages/Statements";
 import Inventory from "./pages/Inventory";
 import Journal from "./pages/Journal";
 import Expenses from "./pages/Expenses";
+import ExpensePreview from "./pages/ExpensePreview";
+import ExpensePrint from "./pages/ExpensePrint";
+import ExpensePayment from "./pages/ExpensePayment";
+import ExpenseHistory from "./pages/ExpenseHistory";
 import NotFound from "./pages/NotFound";
 import Reports from "./pages/Reports";
 
@@ -54,6 +58,11 @@ const App = () => (
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/journal" element={<Journal />} />
           <Route path="/expenses" element={<Expenses />} />
+          <Route path="/expenses/:id/preview" element={<ExpensePreview />} />
+          <Route path="/expenses/:id/print" element={<ExpensePrint />} />
+          <Route path="/expenses/:id/payment" element={<ExpensePayment />} />
+          <Route path="/expenses/:id/history" element={<ExpenseHistory />} />
+          <Route path="/expenses/:id" element={<Expenses />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

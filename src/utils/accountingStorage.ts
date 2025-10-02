@@ -47,9 +47,12 @@ export const loadExpenses = (): Expense[] => {
     const stored = localStorage.getItem(EXPENSE_KEY);
     if (stored) {
       const expenses = JSON.parse(stored);
-      // Recalculate status dynamically for each expense
+      // Recalculate status dynamically for each expense and ensure all fields exist
       return expenses.map((exp: Expense) => ({
         ...exp,
+        payments: exp.payments || [],
+        supplierReturns: exp.supplierReturns || [],
+        supplierInvoiceRef: exp.supplierInvoiceRef || '',
         status: calculateExpenseStatus(exp),
       }));
     }
