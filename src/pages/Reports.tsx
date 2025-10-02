@@ -43,13 +43,12 @@ export default function Reports() {
   // Calculate financial year dates based on year-end month
   const calculateFinancialYearDates = () => {
     const today = new Date();
-    const yearEndMonth = settings.financialYearEndMonth || 12;
+    const yearEndMonth = settings.financialYearEndMonth || 12; // 1-12 format
     const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth() + 1; // 1-12
+    const currentMonth = today.getMonth() + 1; // Convert to 1-12 format
 
     let fyStartYear, fyEndYear;
     
-    // If we're past the financial year end, we're in the next financial year
     if (currentMonth > yearEndMonth) {
       fyStartYear = currentYear;
       fyEndYear = currentYear + 1;
@@ -58,9 +57,14 @@ export default function Reports() {
       fyEndYear = currentYear;
     }
 
-    // Current financial year
-    const fyStart = new Date(fyStartYear, yearEndMonth, 1); // First day after year end
-    const fyEnd = new Date(fyEndYear, yearEndMonth, 0); // Last day of year end month
+    // Financial year starts on the day after year end
+    // e.g., if year ends in Feb (month 2), year starts on Mar 1
+    // Month is 0-indexed in JS Date, so yearEndMonth gives us the month after
+    const fyStart = new Date(fyStartYear, yearEndMonth, 1);
+    
+    // Year ends on last day of the year-end month
+    // Day 0 of next month = last day of this month
+    const fyEnd = new Date(fyEndYear, yearEndMonth, 0);
 
     // Prior financial year
     const priorFyStart = new Date(fyStartYear - 1, yearEndMonth, 1);
