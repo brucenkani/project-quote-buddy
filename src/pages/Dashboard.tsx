@@ -30,7 +30,7 @@ export default function Dashboard() {
 
   const calculateFinancialYearDates = () => {
     const today = new Date();
-    const yearEndMonth = settings.financialYearEndMonth || 12; // 1-12 format
+    const yearEndMonth = settings.financialYearEndMonth || 12; // 1-12 format (Feb = 2, Dec = 12)
     const currentYear = today.getFullYear();
     const currentMonth = today.getMonth() + 1; // Convert to 1-12 format
 
@@ -46,11 +46,12 @@ export default function Dashboard() {
 
     // Financial year starts on the day after year end
     // e.g., if year ends in Feb (month 2), year starts on Mar 1
-    // Month is 0-indexed in JS Date, so yearEndMonth gives us the month after
+    // JavaScript Date months are 0-indexed, so we don't subtract 1
+    // yearEndMonth = 2 (Feb) → new Date(year, 2, 1) = March 1
     const fyStart = new Date(fyStartYear, yearEndMonth, 1);
     
     // Year ends on last day of the year-end month
-    // Day 0 of next month = last day of this month
+    // yearEndMonth = 2 (Feb) → new Date(year, 2, 0) = last day of February
     const fyEnd = new Date(fyEndYear, yearEndMonth, 0);
 
     // Prior financial year
