@@ -10,10 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Receipt, Pencil, Trash2, Upload, Download, Check, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Navigation } from '@/components/Navigation';
-import { loadExpenses, saveExpense, deleteExpense } from '@/utils/accountingStorage';
+import { loadExpenses, saveExpense, deleteExpense, saveJournalEntry, loadJournalEntries } from '@/utils/accountingStorage';
 import { loadSettings } from '@/utils/settingsStorage';
 import { loadChartOfAccounts, addChartAccount } from '@/utils/chartOfAccountsStorage';
-import { Expense } from '@/types/accounting';
+import { Expense, JournalEntry, JournalEntryLine } from '@/types/accounting';
 import { AccountType } from '@/types/accounting';
 import { useToast } from '@/hooks/use-toast';
 
@@ -56,6 +56,59 @@ export default function Expenses() {
     toast({ title: 'Expense account created successfully' });
   };
 
+  const getPaymentAccount = (paymentMethod: string): string => {
+    // Map payment methods to chart of accounts
+    switch (paymentMethod) {
+      case 'cash':
+        return 'Cash on Hand';
+      case 'card':
+      case 'bank-transfer':
+        return 'Bank Account';
+      case 'check':
+        return 'Bank Account';
+      default:
+        return 'Cash on Hand';
+    }
+  };
+
+  const createJournalEntryForExpense = (expense: Expense) => {
+    // Create double-entry journal entry
+    const paymentAccount = getPaymentAccount(expense.paymentMethod);
+    
+    const journalLines: JournalEntryLine[] = [
+      {
+        id: crypto.randomUUID(),
+        account: expense.category,
+        accountType: 'expense',
+        debit: expense.amount,
+        credit: 0,
+        description: `${expense.vendor} - ${expense.description || 'Expense'}`,
+      },
+      {
+        id: crypto.randomUUID(),
+        account: paymentAccount,
+        accountType: 'asset',
+        debit: 0,
+        credit: expense.amount,
+        description: `Payment via ${expense.paymentMethod}`,
+      }
+    ];
+
+    const journalEntry: JournalEntry = {
+      id: crypto.randomUUID(),
+      date: expense.date,
+      reference: expense.reference || `EXP-${expense.id.slice(0, 8)}`,
+      description: `Expense: ${expense.vendor}`,
+      entries: journalLines,
+      totalDebit: expense.amount,
+      totalCredit: expense.amount,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    saveJournalEntry(journalEntry);
+  };
+
   const handleSubmit = () => {
     if (!formData.vendor || !formData.category || !formData.amount) {
       toast({ title: 'Please fill in all required fields', variant: 'destructive' });
@@ -77,6 +130,12 @@ export default function Expenses() {
     };
 
     saveExpense(expense);
+    
+    // Create corresponding journal entry for double-entry bookkeeping
+    if (!editingExpense) {
+      createJournalEntryForExpense(expense);
+    }
+    
     setExpenses(loadExpenses());
     setIsDialogOpen(false);
     setEditingExpense(null);
@@ -90,7 +149,7 @@ export default function Expenses() {
       reference: '',
       status: 'pending',
     });
-    toast({ title: editingExpense ? 'Expense updated' : 'Expense added successfully' });
+    toast({ title: editingExpense ? 'Expense updated' : 'Expense recorded with journal entry' });
   };
 
   const handleEdit = (expense: Expense) => {
@@ -203,6 +262,10 @@ export default function Expenses() {
           updatedAt: new Date().toISOString(),
         };
         saveExpense(expense);
+        
+        // Create corresponding journal entry for double-entry bookkeeping
+        createJournalEntryForExpense(expense);
+        
         savedCount++;
       }
     });
@@ -210,7 +273,7 @@ export default function Expenses() {
     setExpenses(loadExpenses());
     setBulkExpenses([]);
     setIsBulkUploadOpen(false);
-    toast({ title: `${savedCount} expenses saved successfully` });
+    toast({ title: `${savedCount} expenses saved with journal entries` });
   };
 
   return (
