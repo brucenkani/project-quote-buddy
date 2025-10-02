@@ -40,54 +40,42 @@ export default function Reports() {
     endDate: new Date(new Date().getFullYear() - 1, 11, 31).toISOString().split('T')[0],
   });
 
-  const [periodType, setPeriodType] = useState<'month' | 'quarter' | 'ytd'>('ytd');
   const [selectedAccount, setSelectedAccount] = useState<string>('');
 
-  // Calculate period dates based on type
-  const updatePeriods = (type: 'month' | 'quarter' | 'ytd') => {
+  // Calculate financial year dates based on year-end month
+  const calculateFinancialYearDates = () => {
     const today = new Date();
+    const yearEndMonth = settings.financialYearEndMonth || 12;
     const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth();
+    const currentMonth = today.getMonth() + 1; // 1-12
 
-    if (type === 'month') {
-      const startOfMonth = new Date(currentYear, currentMonth, 1);
-      const endOfMonth = new Date(currentYear, currentMonth + 1, 0);
-      setDateRange({
-        startDate: startOfMonth.toISOString().split('T')[0],
-        endDate: endOfMonth.toISOString().split('T')[0],
-      });
-      
-      const priorStartOfMonth = new Date(currentYear - 1, currentMonth, 1);
-      const priorEndOfMonth = new Date(currentYear - 1, currentMonth + 1, 0);
-      setPriorDateRange({
-        startDate: priorStartOfMonth.toISOString().split('T')[0],
-        endDate: priorEndOfMonth.toISOString().split('T')[0],
-      });
-    } else if (type === 'quarter') {
-      const quarter = Math.floor(currentMonth / 3);
-      const startOfQuarter = new Date(currentYear, quarter * 3, 1);
-      const endOfQuarter = new Date(currentYear, quarter * 3 + 3, 0);
-      setDateRange({
-        startDate: startOfQuarter.toISOString().split('T')[0],
-        endDate: endOfQuarter.toISOString().split('T')[0],
-      });
-      
-      const priorStartOfQuarter = new Date(currentYear - 1, quarter * 3, 1);
-      const priorEndOfQuarter = new Date(currentYear - 1, quarter * 3 + 3, 0);
-      setPriorDateRange({
-        startDate: priorStartOfQuarter.toISOString().split('T')[0],
-        endDate: priorEndOfQuarter.toISOString().split('T')[0],
-      });
+    let fyStartYear, fyEndYear;
+    
+    // If we're past the financial year end, we're in the next financial year
+    if (currentMonth > yearEndMonth) {
+      fyStartYear = currentYear;
+      fyEndYear = currentYear + 1;
     } else {
-      setDateRange({
-        startDate: new Date(currentYear, 0, 1).toISOString().split('T')[0],
-        endDate: today.toISOString().split('T')[0],
-      });
-      setPriorDateRange({
-        startDate: new Date(currentYear - 1, 0, 1).toISOString().split('T')[0],
-        endDate: new Date(currentYear - 1, 11, 31).toISOString().split('T')[0],
-      });
+      fyStartYear = currentYear - 1;
+      fyEndYear = currentYear;
     }
+
+    // Current financial year
+    const fyStart = new Date(fyStartYear, yearEndMonth, 1); // First day after year end
+    const fyEnd = new Date(fyEndYear, yearEndMonth, 0); // Last day of year end month
+
+    // Prior financial year
+    const priorFyStart = new Date(fyStartYear - 1, yearEndMonth, 1);
+    const priorFyEnd = new Date(fyEndYear - 1, yearEndMonth, 0);
+
+    setDateRange({
+      startDate: fyStart.toISOString().split('T')[0],
+      endDate: fyEnd.toISOString().split('T')[0],
+    });
+    setPriorDateRange({
+      startDate: priorFyStart.toISOString().split('T')[0],
+      endDate: priorFyEnd.toISOString().split('T')[0],
+    });
   };
 
   const getPeriodData = (startDate: string, endDate: string) => {
@@ -254,48 +242,20 @@ export default function Reports() {
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Period Selection</CardTitle>
+            <CardTitle>Financial Year Period</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex gap-2">
-                <Button
-                  variant={periodType === 'month' ? 'default' : 'outline'}
-                  onClick={() => {
-                    setPeriodType('month');
-                    updatePeriods('month');
-                  }}
-                  className="gap-2"
-                >
-                  <Calendar className="h-4 w-4" />
-                  Month
-                </Button>
-                <Button
-                  variant={periodType === 'quarter' ? 'default' : 'outline'}
-                  onClick={() => {
-                    setPeriodType('quarter');
-                    updatePeriods('quarter');
-                  }}
-                  className="gap-2"
-                >
-                  <Calendar className="h-4 w-4" />
-                  Quarter
-                </Button>
-                <Button
-                  variant={periodType === 'ytd' ? 'default' : 'outline'}
-                  onClick={() => {
-                    setPeriodType('ytd');
-                    updatePeriods('ytd');
-                  }}
-                  className="gap-2"
-                >
-                  <Calendar className="h-4 w-4" />
-                  Year to Date
-                </Button>
-              </div>
+              <Button
+                onClick={calculateFinancialYearDates}
+                className="gap-2"
+              >
+                <Calendar className="h-4 w-4" />
+                Set to Current Financial Year
+              </Button>
               <div className="text-sm text-muted-foreground">
-                <div>Current: {dateRange.startDate} to {dateRange.endDate}</div>
-                <div>Prior: {priorDateRange.startDate} to {priorDateRange.endDate}</div>
+                <div>Current Year: {dateRange.startDate} to {dateRange.endDate}</div>
+                <div>Prior Year: {priorDateRange.startDate} to {priorDateRange.endDate}</div>
               </div>
             </div>
           </CardContent>

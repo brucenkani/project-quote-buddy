@@ -21,7 +21,7 @@ export const generateTrialBalancePDF = (
   doc.text(`Period: ${dateRange.startDate} to ${dateRange.endDate}`, 105, 28, { align: 'center' });
   doc.text(settings.companyName, 105, 35, { align: 'center' });
 
-  // Calculate balances
+  // Calculate balances - single column format
   const balances = accounts.map(account => {
     let debit = 0;
     let credit = 0;
@@ -43,40 +43,40 @@ export const generateTrialBalancePDF = (
       }
     });
 
+    // Calculate net balance: positive for debit balance, negative for credit balance
+    const netBalance = debit - credit;
+
     return {
       code: account.accountNumber,
       name: account.accountName,
       type: account.accountType,
-      debit,
-      credit,
+      balance: netBalance,
     };
-  }).filter(b => b.debit !== 0 || b.credit !== 0);
+  }).filter(b => b.balance !== 0);
 
-  // Table data
+  // Table data - single column showing net balance
   const tableData = balances.map(b => [
     b.code,
     b.name,
     b.type,
-    `${settings.currencySymbol}${b.debit.toFixed(2)}`,
-    `${settings.currencySymbol}${b.credit.toFixed(2)}`,
+    `${settings.currencySymbol}${b.balance.toFixed(2)}`,
   ]);
 
-  const totalDebit = balances.reduce((sum, b) => sum + b.debit, 0);
-  const totalCredit = balances.reduce((sum, b) => sum + b.credit, 0);
+  const totalBalance = balances.reduce((sum, b) => sum + b.balance, 0);
 
   tableData.push([
     '', 'TOTAL', '',
-    `${settings.currencySymbol}${totalDebit.toFixed(2)}`,
-    `${settings.currencySymbol}${totalCredit.toFixed(2)}`,
+    `${settings.currencySymbol}${totalBalance.toFixed(2)}`,
   ]);
 
   autoTable(doc, {
     startY: 45,
-    head: [['Code', 'Account Name', 'Type', 'Debit', 'Credit']],
+    head: [['Code', 'Account Name', 'Type', 'Balance']],
     body: tableData,
     theme: 'grid',
     styles: { fontSize: 9 },
     headStyles: { fillColor: [59, 130, 246] },
+    footStyles: { fillColor: [200, 200, 200], fontStyle: 'bold' },
   });
 
   doc.save(`trial-balance-${dateRange.startDate}-to-${dateRange.endDate}.pdf`);
@@ -108,24 +108,24 @@ export const generateTrialBalanceExcel = (
       }
     });
 
+    // Calculate net balance: positive for debit, negative for credit
+    const netBalance = debit - credit;
+
     return {
       Code: account.accountNumber,
       'Account Name': account.accountName,
       Type: account.accountType,
-      Debit: debit,
-      Credit: credit,
+      Balance: netBalance,
     };
-  }).filter(b => b.Debit !== 0 || b.Credit !== 0);
+  }).filter(b => b.Balance !== 0);
 
-  const totalDebit = balances.reduce((sum, b) => sum + b.Debit, 0);
-  const totalCredit = balances.reduce((sum, b) => sum + b.Credit, 0);
+  const totalBalance = balances.reduce((sum, b) => sum + b.Balance, 0);
 
   balances.push({
     Code: '',
     'Account Name': 'TOTAL',
     Type: 'asset' as const,
-    Debit: totalDebit,
-    Credit: totalCredit,
+    Balance: totalBalance,
   });
 
   const worksheet = XLSX.utils.json_to_sheet(balances);

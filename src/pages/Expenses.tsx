@@ -32,13 +32,13 @@ export default function Expenses() {
 
   const [formData, setFormData] = useState<Partial<Expense>>({
     date: new Date().toISOString().split('T')[0],
-    vendor: '',
+    vendor: 'General Expense',
     category: '',
     description: '',
     amount: 0,
     paymentMethod: 'cash',
     reference: '',
-    status: 'pending',
+    status: 'paid',
   });
 
   const expenseAccounts = chartAccounts.filter(acc => acc.accountType === 'expense');
@@ -59,7 +59,7 @@ export default function Expenses() {
 
 
   const handleSubmit = () => {
-    if (!formData.vendor || !formData.category || !formData.amount) {
+    if (!formData.category || !formData.amount) {
       toast({ title: 'Please fill in all required fields', variant: 'destructive' });
       return;
     }
@@ -67,13 +67,13 @@ export default function Expenses() {
     const expense: Expense = {
       id: editingExpense?.id || crypto.randomUUID(),
       date: formData.date!,
-      vendor: formData.vendor!,
+      vendor: 'General Expense',
       category: formData.category!,
       description: formData.description || '',
       amount: formData.amount!,
       paymentMethod: formData.paymentMethod || 'cash',
-      reference: formData.reference,
-      status: formData.status || 'pending',
+      reference: '',
+      status: 'paid',
       createdAt: editingExpense?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -98,13 +98,13 @@ export default function Expenses() {
     setEditingExpense(null);
     setFormData({
       date: new Date().toISOString().split('T')[0],
-      vendor: '',
+      vendor: 'General Expense',
       category: '',
       description: '',
       amount: 0,
       paymentMethod: 'cash',
       reference: '',
-      status: 'pending',
+      status: 'paid',
     });
     toast({ title: editingExpense ? 'Expense updated' : 'Expense recorded with journal entry' });
   };
@@ -138,13 +138,8 @@ export default function Expenses() {
     const template = [
       {
         Date: '2024-01-15',
-        Vendor: 'Example Vendor',
-        Category: 'Office Supplies',
         Description: 'Office supplies purchase',
         Amount: 150.00,
-        PaymentMethod: 'cash',
-        Reference: 'REF-001',
-        Status: 'pending'
       }
     ];
 
@@ -171,13 +166,13 @@ export default function Expenses() {
 
         const parsedExpenses = data.map((row: any) => ({
           date: row.Date || new Date().toISOString().split('T')[0],
-          vendor: row.Vendor || '',
-          category: row.Category || '',
+          vendor: 'General Expense',
+          category: '',
           description: row.Description || '',
           amount: parseFloat(row.Amount) || 0,
-          paymentMethod: row.PaymentMethod || 'cash',
-          reference: row.Reference || '',
-          status: row.Status || 'pending',
+          paymentMethod: 'cash' as const,
+          reference: '',
+          status: 'paid' as Expense['status'],
         }));
 
         setBulkExpenses(parsedExpenses);
@@ -204,17 +199,17 @@ export default function Expenses() {
   const saveBulkExpenses = () => {
     let savedCount = 0;
     bulkExpenses.forEach((exp) => {
-      if (exp.vendor && exp.category && exp.amount) {
+      if (exp.category && exp.amount) {
         const expense: Expense = {
           id: crypto.randomUUID(),
           date: exp.date!,
-          vendor: exp.vendor!,
+          vendor: 'General Expense',
           category: exp.category!,
           description: exp.description || '',
           amount: exp.amount!,
-          paymentMethod: exp.paymentMethod || 'cash',
-          reference: exp.reference,
-          status: (exp.status as Expense['status']) || 'pending',
+          paymentMethod: 'cash',
+          reference: '',
+          status: 'paid',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -269,7 +264,7 @@ export default function Expenses() {
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2" onClick={() => { setEditingExpense(null); setFormData({ date: new Date().toISOString().split('T')[0], vendor: '', category: '', description: '', amount: 0, paymentMethod: 'cash', reference: '', status: 'pending' }); }}>
+                <Button className="gap-2" onClick={() => { setEditingExpense(null); setFormData({ date: new Date().toISOString().split('T')[0], vendor: 'General Expense', category: '', description: '', amount: 0, paymentMethod: 'cash', reference: '', status: 'paid' }); }}>
                   <Plus className="h-4 w-4" />
                   Add Expense
                 </Button>
@@ -286,14 +281,6 @@ export default function Expenses() {
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="vendor">Vendor *</Label>
-                  <Input
-                    id="vendor"
-                    value={formData.vendor}
-                    onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
@@ -347,28 +334,6 @@ export default function Expenses() {
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
-                    <SelectTrigger id="status">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
-                      <SelectItem value="paid">Paid</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reference">Reference Number</Label>
-                  <Input
-                    id="reference"
-                    value={formData.reference}
-                    onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                  />
                 </div>
                 <div className="space-y-2 col-span-2">
                   <Label htmlFor="description">Description</Label>

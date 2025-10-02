@@ -12,6 +12,7 @@ export interface CompanySettings {
   taxRate: number;
   currency: string;
   currencySymbol: string;
+  financialYearEndMonth: number; // 1-12, representing January-December
 }
 
 export const defaultSettings: CompanySettings = {
@@ -25,6 +26,7 @@ export const defaultSettings: CompanySettings = {
   taxRate: 0.08,
   currency: 'USD',
   currencySymbol: '$',
+  financialYearEndMonth: 12, // December
 };
 
 export const currencies = [

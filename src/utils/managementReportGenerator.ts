@@ -31,44 +31,62 @@ export const generateIncomeStatementPDF = (
   doc.text(`Current: ${currentPeriod.startDate} to ${currentPeriod.endDate}`, 105, 35, { align: 'center' });
   doc.text(`Prior: ${priorPeriod.startDate} to ${priorPeriod.endDate}`, 105, 42, { align: 'center' });
 
-  // Revenue section
+  // Revenue section with variance
   const revenueData = current.revenue.map(item => {
     const priorAmount = prior.revenue.find(p => p.account === item.account)?.amount || 0;
+    const variance = item.amount - priorAmount;
+    const variancePercent = priorAmount !== 0 ? ((variance / priorAmount) * 100) : 0;
     return [
       item.account,
       `${settings.currencySymbol}${item.amount.toFixed(2)}`,
       `${settings.currencySymbol}${priorAmount.toFixed(2)}`,
+      `${settings.currencySymbol}${variance.toFixed(2)}`,
+      `${variancePercent.toFixed(1)}%`,
     ];
   });
+
+  const revenueVariance = current.totalRevenue - prior.totalRevenue;
+  const revenueVariancePercent = prior.totalRevenue !== 0 ? ((revenueVariance / prior.totalRevenue) * 100) : 0;
 
   revenueData.push([
     'Total Revenue',
     `${settings.currencySymbol}${current.totalRevenue.toFixed(2)}`,
     `${settings.currencySymbol}${prior.totalRevenue.toFixed(2)}`,
+    `${settings.currencySymbol}${revenueVariance.toFixed(2)}`,
+    `${revenueVariancePercent.toFixed(1)}%`,
   ]);
 
-  // Expenses section
+  // Expenses section with variance
   const expenseData = current.expenses.map(item => {
     const priorAmount = prior.expenses.find(p => p.account === item.account)?.amount || 0;
+    const variance = item.amount - priorAmount;
+    const variancePercent = priorAmount !== 0 ? ((variance / priorAmount) * 100) : 0;
     return [
       item.account,
       `${settings.currencySymbol}${item.amount.toFixed(2)}`,
       `${settings.currencySymbol}${priorAmount.toFixed(2)}`,
+      `${settings.currencySymbol}${variance.toFixed(2)}`,
+      `${variancePercent.toFixed(1)}%`,
     ];
   });
+
+  const expenseVariance = current.totalExpenses - prior.totalExpenses;
+  const expenseVariancePercent = prior.totalExpenses !== 0 ? ((expenseVariance / prior.totalExpenses) * 100) : 0;
 
   expenseData.push([
     'Total Expenses',
     `${settings.currencySymbol}${current.totalExpenses.toFixed(2)}`,
     `${settings.currencySymbol}${prior.totalExpenses.toFixed(2)}`,
+    `${settings.currencySymbol}${expenseVariance.toFixed(2)}`,
+    `${expenseVariancePercent.toFixed(1)}%`,
   ]);
 
   autoTable(doc, {
     startY: 50,
-    head: [['Revenue', 'Current Period', 'Prior Period']],
+    head: [['Revenue', 'Current Year', 'Prior Year', 'Variance', 'Variance %']],
     body: revenueData,
     theme: 'grid',
-    styles: { fontSize: 9 },
+    styles: { fontSize: 8 },
     headStyles: { fillColor: [59, 130, 246] },
   });
 
@@ -76,14 +94,16 @@ export const generateIncomeStatementPDF = (
 
   autoTable(doc, {
     startY: finalY,
-    head: [['Expenses', 'Current Period', 'Prior Period']],
+    head: [['Expenses', 'Current Year', 'Prior Year', 'Variance', 'Variance %']],
     body: expenseData,
     theme: 'grid',
-    styles: { fontSize: 9 },
+    styles: { fontSize: 8 },
     headStyles: { fillColor: [59, 130, 246] },
   });
 
   const netIncomeY = (doc as any).lastAutoTable.finalY + 10;
+  const netIncomeVariance = current.netIncome - prior.netIncome;
+  const netIncomeVariancePercent = prior.netIncome !== 0 ? ((netIncomeVariance / prior.netIncome) * 100) : 0;
   
   autoTable(doc, {
     startY: netIncomeY,
@@ -91,6 +111,8 @@ export const generateIncomeStatementPDF = (
       'Net Income',
       `${settings.currencySymbol}${current.netIncome.toFixed(2)}`,
       `${settings.currencySymbol}${prior.netIncome.toFixed(2)}`,
+      `${settings.currencySymbol}${netIncomeVariance.toFixed(2)}`,
+      `${netIncomeVariancePercent.toFixed(1)}%`,
     ]],
     theme: 'grid',
     styles: { fontSize: 10, fontStyle: 'bold' },
@@ -110,47 +132,70 @@ export const generateIncomeStatementExcel = (
   const prior = generateIncomeStatement(accounts, priorPeriod);
 
   const data: any[] = [
-    { Item: 'REVENUE', 'Current Period': '', 'Prior Period': '' },
+    { Item: 'REVENUE', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' },
   ];
 
   current.revenue.forEach(item => {
     const priorAmount = prior.revenue.find(p => p.account === item.account)?.amount || 0;
+    const variance = item.amount - priorAmount;
+    const variancePercent = priorAmount !== 0 ? ((variance / priorAmount) * 100) : 0;
     data.push({
       Item: item.account,
-      'Current Period': item.amount,
-      'Prior Period': priorAmount,
+      'Current Year': item.amount,
+      'Prior Year': priorAmount,
+      'Variance': variance,
+      'Variance %': `${variancePercent.toFixed(1)}%`,
     });
   });
+
+  const revenueVariance = current.totalRevenue - prior.totalRevenue;
+  const revenueVariancePercent = prior.totalRevenue !== 0 ? ((revenueVariance / prior.totalRevenue) * 100) : 0;
 
   data.push({
     Item: 'Total Revenue',
-    'Current Period': current.totalRevenue,
-    'Prior Period': prior.totalRevenue,
+    'Current Year': current.totalRevenue,
+    'Prior Year': prior.totalRevenue,
+    'Variance': revenueVariance,
+    'Variance %': `${revenueVariancePercent.toFixed(1)}%`,
   });
 
-  data.push({ Item: '', 'Current Period': '', 'Prior Period': '' });
-  data.push({ Item: 'EXPENSES', 'Current Period': '', 'Prior Period': '' });
+  data.push({ Item: '', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' });
+  data.push({ Item: 'EXPENSES', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' });
 
   current.expenses.forEach(item => {
     const priorAmount = prior.expenses.find(p => p.account === item.account)?.amount || 0;
+    const variance = item.amount - priorAmount;
+    const variancePercent = priorAmount !== 0 ? ((variance / priorAmount) * 100) : 0;
     data.push({
       Item: item.account,
-      'Current Period': item.amount,
-      'Prior Period': priorAmount,
+      'Current Year': item.amount,
+      'Prior Year': priorAmount,
+      'Variance': variance,
+      'Variance %': `${variancePercent.toFixed(1)}%`,
     });
   });
 
+  const expenseVariance = current.totalExpenses - prior.totalExpenses;
+  const expenseVariancePercent = prior.totalExpenses !== 0 ? ((expenseVariance / prior.totalExpenses) * 100) : 0;
+
   data.push({
     Item: 'Total Expenses',
-    'Current Period': current.totalExpenses,
-    'Prior Period': prior.totalExpenses,
+    'Current Year': current.totalExpenses,
+    'Prior Year': prior.totalExpenses,
+    'Variance': expenseVariance,
+    'Variance %': `${expenseVariancePercent.toFixed(1)}%`,
   });
 
-  data.push({ Item: '', 'Current Period': '', 'Prior Period': '' });
+  const netIncomeVariance = current.netIncome - prior.netIncome;
+  const netIncomeVariancePercent = prior.netIncome !== 0 ? ((netIncomeVariance / prior.netIncome) * 100) : 0;
+
+  data.push({ Item: '', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' });
   data.push({
     Item: 'NET INCOME',
-    'Current Period': current.netIncome,
-    'Prior Period': prior.netIncome,
+    'Current Year': current.netIncome,
+    'Prior Year': prior.netIncome,
+    'Variance': netIncomeVariance,
+    'Variance %': `${netIncomeVariancePercent.toFixed(1)}%`,
   });
 
   const worksheet = XLSX.utils.json_to_sheet(data);
@@ -179,55 +224,109 @@ export const generateBalanceSheetPDF = (
   doc.text(settings.companyName, 105, 28, { align: 'center' });
   doc.text(`As of ${currentPeriod.endDate} vs ${priorPeriod.endDate}`, 105, 35, { align: 'center' });
 
-  // Assets
+  // Assets with variance
   const assetData = current.assets.map(item => {
     const priorAmount = prior.assets.find(p => p.account === item.account)?.amount || 0;
-    return [item.account, `${settings.currencySymbol}${item.amount.toFixed(2)}`, `${settings.currencySymbol}${priorAmount.toFixed(2)}`];
+    const variance = item.amount - priorAmount;
+    const variancePercent = priorAmount !== 0 ? ((variance / priorAmount) * 100) : 0;
+    return [
+      item.account, 
+      `${settings.currencySymbol}${item.amount.toFixed(2)}`, 
+      `${settings.currencySymbol}${priorAmount.toFixed(2)}`,
+      `${settings.currencySymbol}${variance.toFixed(2)}`,
+      `${variancePercent.toFixed(1)}%`
+    ];
   });
-  assetData.push(['Total Assets', `${settings.currencySymbol}${current.totalAssets.toFixed(2)}`, `${settings.currencySymbol}${prior.totalAssets.toFixed(2)}`]);
+  
+  const assetVariance = current.totalAssets - prior.totalAssets;
+  const assetVariancePercent = prior.totalAssets !== 0 ? ((assetVariance / prior.totalAssets) * 100) : 0;
+  
+  assetData.push([
+    'Total Assets', 
+    `${settings.currencySymbol}${current.totalAssets.toFixed(2)}`, 
+    `${settings.currencySymbol}${prior.totalAssets.toFixed(2)}`,
+    `${settings.currencySymbol}${assetVariance.toFixed(2)}`,
+    `${assetVariancePercent.toFixed(1)}%`
+  ]);
 
   autoTable(doc, {
     startY: 45,
-    head: [['Assets', 'Current', 'Prior']],
+    head: [['Assets', 'Current Year', 'Prior Year', 'Variance', 'Variance %']],
     body: assetData,
     theme: 'grid',
-    styles: { fontSize: 9 },
+    styles: { fontSize: 8 },
     headStyles: { fillColor: [59, 130, 246] },
   });
 
   let currentY = (doc as any).lastAutoTable.finalY + 10;
 
-  // Liabilities
+  // Liabilities with variance
   const liabilityData = current.liabilities.map(item => {
     const priorAmount = prior.liabilities.find(p => p.account === item.account)?.amount || 0;
-    return [item.account, `${settings.currencySymbol}${item.amount.toFixed(2)}`, `${settings.currencySymbol}${priorAmount.toFixed(2)}`];
+    const variance = item.amount - priorAmount;
+    const variancePercent = priorAmount !== 0 ? ((variance / priorAmount) * 100) : 0;
+    return [
+      item.account, 
+      `${settings.currencySymbol}${item.amount.toFixed(2)}`, 
+      `${settings.currencySymbol}${priorAmount.toFixed(2)}`,
+      `${settings.currencySymbol}${variance.toFixed(2)}`,
+      `${variancePercent.toFixed(1)}%`
+    ];
   });
-  liabilityData.push(['Total Liabilities', `${settings.currencySymbol}${current.totalLiabilities.toFixed(2)}`, `${settings.currencySymbol}${prior.totalLiabilities.toFixed(2)}`]);
+  
+  const liabilityVariance = current.totalLiabilities - prior.totalLiabilities;
+  const liabilityVariancePercent = prior.totalLiabilities !== 0 ? ((liabilityVariance / prior.totalLiabilities) * 100) : 0;
+  
+  liabilityData.push([
+    'Total Liabilities', 
+    `${settings.currencySymbol}${current.totalLiabilities.toFixed(2)}`, 
+    `${settings.currencySymbol}${prior.totalLiabilities.toFixed(2)}`,
+    `${settings.currencySymbol}${liabilityVariance.toFixed(2)}`,
+    `${liabilityVariancePercent.toFixed(1)}%`
+  ]);
 
   autoTable(doc, {
     startY: currentY,
-    head: [['Liabilities', 'Current', 'Prior']],
+    head: [['Liabilities', 'Current Year', 'Prior Year', 'Variance', 'Variance %']],
     body: liabilityData,
     theme: 'grid',
-    styles: { fontSize: 9 },
+    styles: { fontSize: 8 },
     headStyles: { fillColor: [59, 130, 246] },
   });
 
   currentY = (doc as any).lastAutoTable.finalY + 10;
 
-  // Equity
+  // Equity with variance
   const equityData = current.equity.map(item => {
     const priorAmount = prior.equity.find(p => p.account === item.account)?.amount || 0;
-    return [item.account, `${settings.currencySymbol}${item.amount.toFixed(2)}`, `${settings.currencySymbol}${priorAmount.toFixed(2)}`];
+    const variance = item.amount - priorAmount;
+    const variancePercent = priorAmount !== 0 ? ((variance / priorAmount) * 100) : 0;
+    return [
+      item.account, 
+      `${settings.currencySymbol}${item.amount.toFixed(2)}`, 
+      `${settings.currencySymbol}${priorAmount.toFixed(2)}`,
+      `${settings.currencySymbol}${variance.toFixed(2)}`,
+      `${variancePercent.toFixed(1)}%`
+    ];
   });
-  equityData.push(['Total Equity', `${settings.currencySymbol}${current.totalEquity.toFixed(2)}`, `${settings.currencySymbol}${prior.totalEquity.toFixed(2)}`]);
+  
+  const equityVariance = current.totalEquity - prior.totalEquity;
+  const equityVariancePercent = prior.totalEquity !== 0 ? ((equityVariance / prior.totalEquity) * 100) : 0;
+  
+  equityData.push([
+    'Total Equity', 
+    `${settings.currencySymbol}${current.totalEquity.toFixed(2)}`, 
+    `${settings.currencySymbol}${prior.totalEquity.toFixed(2)}`,
+    `${settings.currencySymbol}${equityVariance.toFixed(2)}`,
+    `${equityVariancePercent.toFixed(1)}%`
+  ]);
 
   autoTable(doc, {
     startY: currentY,
-    head: [['Equity', 'Current', 'Prior']],
+    head: [['Equity', 'Current Year', 'Prior Year', 'Variance', 'Variance %']],
     body: equityData,
     theme: 'grid',
-    styles: { fontSize: 9 },
+    styles: { fontSize: 8 },
     headStyles: { fillColor: [59, 130, 246] },
   });
 
@@ -244,31 +343,85 @@ export const generateBalanceSheetExcel = (
   const current = generateBalanceSheet(accounts, currentPeriod);
   const prior = generateBalanceSheet(accounts, priorPeriod);
 
-  const data: any[] = [{ Item: 'ASSETS', Current: '', Prior: '' }];
+  const data: any[] = [{ Item: 'ASSETS', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' }];
 
   current.assets.forEach(item => {
     const priorAmount = prior.assets.find(p => p.account === item.account)?.amount || 0;
-    data.push({ Item: item.account, Current: item.amount, Prior: priorAmount });
+    const variance = item.amount - priorAmount;
+    const variancePercent = priorAmount !== 0 ? ((variance / priorAmount) * 100) : 0;
+    data.push({ 
+      Item: item.account, 
+      'Current Year': item.amount, 
+      'Prior Year': priorAmount,
+      'Variance': variance,
+      'Variance %': `${variancePercent.toFixed(1)}%`
+    });
   });
-  data.push({ Item: 'Total Assets', Current: current.totalAssets, Prior: prior.totalAssets });
+  
+  const assetVariance = current.totalAssets - prior.totalAssets;
+  const assetVariancePercent = prior.totalAssets !== 0 ? ((assetVariance / prior.totalAssets) * 100) : 0;
+  
+  data.push({ 
+    Item: 'Total Assets', 
+    'Current Year': current.totalAssets, 
+    'Prior Year': prior.totalAssets,
+    'Variance': assetVariance,
+    'Variance %': `${assetVariancePercent.toFixed(1)}%`
+  });
 
-  data.push({ Item: '', Current: '', Prior: '' });
-  data.push({ Item: 'LIABILITIES', Current: '', Prior: '' });
+  data.push({ Item: '', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' });
+  data.push({ Item: 'LIABILITIES', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' });
 
   current.liabilities.forEach(item => {
     const priorAmount = prior.liabilities.find(p => p.account === item.account)?.amount || 0;
-    data.push({ Item: item.account, Current: item.amount, Prior: priorAmount });
+    const variance = item.amount - priorAmount;
+    const variancePercent = priorAmount !== 0 ? ((variance / priorAmount) * 100) : 0;
+    data.push({ 
+      Item: item.account, 
+      'Current Year': item.amount, 
+      'Prior Year': priorAmount,
+      'Variance': variance,
+      'Variance %': `${variancePercent.toFixed(1)}%`
+    });
   });
-  data.push({ Item: 'Total Liabilities', Current: current.totalLiabilities, Prior: prior.totalLiabilities });
+  
+  const liabilityVariance = current.totalLiabilities - prior.totalLiabilities;
+  const liabilityVariancePercent = prior.totalLiabilities !== 0 ? ((liabilityVariance / prior.totalLiabilities) * 100) : 0;
+  
+  data.push({ 
+    Item: 'Total Liabilities', 
+    'Current Year': current.totalLiabilities, 
+    'Prior Year': prior.totalLiabilities,
+    'Variance': liabilityVariance,
+    'Variance %': `${liabilityVariancePercent.toFixed(1)}%`
+  });
 
-  data.push({ Item: '', Current: '', Prior: '' });
-  data.push({ Item: 'EQUITY', Current: '', Prior: '' });
+  data.push({ Item: '', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' });
+  data.push({ Item: 'EQUITY', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' });
 
   current.equity.forEach(item => {
     const priorAmount = prior.equity.find(p => p.account === item.account)?.amount || 0;
-    data.push({ Item: item.account, Current: item.amount, Prior: priorAmount });
+    const variance = item.amount - priorAmount;
+    const variancePercent = priorAmount !== 0 ? ((variance / priorAmount) * 100) : 0;
+    data.push({ 
+      Item: item.account, 
+      'Current Year': item.amount, 
+      'Prior Year': priorAmount,
+      'Variance': variance,
+      'Variance %': `${variancePercent.toFixed(1)}%`
+    });
   });
-  data.push({ Item: 'Total Equity', Current: current.totalEquity, Prior: prior.totalEquity });
+  
+  const equityVariance = current.totalEquity - prior.totalEquity;
+  const equityVariancePercent = prior.totalEquity !== 0 ? ((equityVariance / prior.totalEquity) * 100) : 0;
+  
+  data.push({ 
+    Item: 'Total Equity', 
+    'Current Year': current.totalEquity, 
+    'Prior Year': prior.totalEquity,
+    'Variance': equityVariance,
+    'Variance %': `${equityVariancePercent.toFixed(1)}%`
+  });
 
   const worksheet = XLSX.utils.json_to_sheet(data);
   const workbook = XLSX.utils.book_new();
