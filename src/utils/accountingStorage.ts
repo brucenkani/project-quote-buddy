@@ -51,8 +51,6 @@ export const loadExpenses = (): Expense[] => {
       return expenses.map((exp: Expense) => ({
         ...exp,
         payments: exp.payments || [],
-        supplierReturns: exp.supplierReturns || [],
-        supplierInvoiceRef: exp.supplierInvoiceRef || '',
         status: calculateExpenseStatus(exp),
       }));
     }

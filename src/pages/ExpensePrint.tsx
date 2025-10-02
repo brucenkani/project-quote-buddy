@@ -62,9 +62,6 @@ export default function ExpensePrint() {
             <div>
               <h3 className="font-bold mb-2">Vendor Details</h3>
               <p><strong>Vendor:</strong> {expense.vendor}</p>
-              {expense.supplierInvoiceRef && (
-                <p><strong>Supplier Invoice:</strong> {expense.supplierInvoiceRef}</p>
-              )}
             </div>
             <div>
               <h3 className="font-bold mb-2">Expense Information</h3>

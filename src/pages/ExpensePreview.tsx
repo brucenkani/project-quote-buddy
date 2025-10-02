@@ -85,9 +85,6 @@ export default function ExpensePreview() {
                 <h4 className="font-semibold mb-3">Vendor Information</h4>
                 <div className="space-y-2 text-sm">
                   <p><strong>Vendor:</strong> {expense.vendor}</p>
-                  {expense.supplierInvoiceRef && (
-                    <p><strong>Supplier Invoice:</strong> {expense.supplierInvoiceRef}</p>
-                  )}
                 </div>
               </div>
 

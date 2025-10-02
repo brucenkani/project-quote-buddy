@@ -15,12 +15,6 @@ export const calculateExpenseStatus = (expense: Expense): Expense['status'] => {
     amountDue -= totalPaid;
   }
   
-  // Subtract supplier returns
-  if (expense.supplierReturns && expense.supplierReturns.length > 0) {
-    // This would need to fetch actual supplier return amounts
-    // For now, we'll leave it as is
-  }
-  
   // Fully paid
   if (amountDue <= 0) {
     return 'paid';
