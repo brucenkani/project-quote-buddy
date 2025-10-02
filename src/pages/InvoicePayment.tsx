@@ -12,6 +12,7 @@ import { Invoice } from '@/types/invoice';
 import { useToast } from '@/hooks/use-toast';
 import { recordPaymentReceived } from '@/utils/doubleEntryManager';
 import { loadSettings } from '@/utils/settingsStorage';
+import { calculateInvoiceStatus, calculateAmountDue } from '@/utils/invoiceStatusCalculator';
 
 export default function InvoicePayment() {
   const navigate = useNavigate();
@@ -43,24 +44,6 @@ export default function InvoicePayment() {
     }
   }, [id]);
 
-  const calculateAmountDue = (inv: Invoice, allInvoices: Invoice[]) => {
-    let amountDue = inv.total;
-    
-    if (inv.payments && inv.payments.length > 0) {
-      const totalPaid = inv.payments.reduce((sum, payment) => sum + payment.amount, 0);
-      amountDue -= totalPaid;
-    }
-    
-    if (inv.creditNotes && inv.creditNotes.length > 0) {
-      const creditNoteInvoices = allInvoices.filter(i => 
-        inv.creditNotes?.includes(i.id) && i.type === 'credit-note'
-      );
-      const totalCredit = creditNoteInvoices.reduce((sum, cn) => sum + Math.abs(cn.total), 0);
-      amountDue -= totalCredit;
-    }
-    
-    return Math.max(0, amountDue);
-  };
 
   const handleRecordPayment = () => {
     if (!invoice) return;
@@ -107,10 +90,14 @@ export default function InvoicePayment() {
       );
 
       // Update invoice status
+      // Calculate the updated status dynamically
+      const tempInvoice = { ...invoice, payments };
+      const updatedStatus = calculateInvoiceStatus(tempInvoice, invoices);
+
       const updatedInvoice: Invoice = {
         ...invoice,
         payments,
-        status: newAmountDue <= 0 ? 'paid' : 'unpaid',
+        status: updatedStatus,
         updatedAt: new Date().toISOString(),
       };
 

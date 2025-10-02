@@ -1,4 +1,5 @@
 import { JournalEntry, Expense } from '@/types/accounting';
+import { calculateExpenseStatus } from './expenseStatusCalculator';
 
 const JOURNAL_KEY = 'quotebuilder-journal';
 const EXPENSE_KEY = 'quotebuilder-expenses';
@@ -45,7 +46,12 @@ export const loadExpenses = (): Expense[] => {
   try {
     const stored = localStorage.getItem(EXPENSE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const expenses = JSON.parse(stored);
+      // Recalculate status dynamically for each expense
+      return expenses.map((exp: Expense) => ({
+        ...exp,
+        status: calculateExpenseStatus(exp),
+      }));
     }
   } catch (error) {
     console.error('Failed to load expenses:', error);

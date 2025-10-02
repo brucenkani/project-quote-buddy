@@ -9,6 +9,7 @@ import { loadInvoices, deleteInvoice } from '@/utils/invoiceStorage';
 import { Invoice } from '@/types/invoice';
 import { useToast } from '@/hooks/use-toast';
 import { loadSettings } from '@/utils/settingsStorage';
+import { calculateAmountDue } from '@/utils/invoiceStatusCalculator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
@@ -52,36 +53,29 @@ export default function Invoices() {
   };
 
   const getStatusColor = (status: Invoice['status']) => {
-    return status === 'paid' 
-      ? 'bg-green-500/10 text-green-700 dark:text-green-400'
-      : 'bg-orange-500/10 text-orange-700 dark:text-orange-400';
+    switch (status) {
+      case 'paid':
+        return 'bg-green-500/10 text-green-700 dark:text-green-400';
+      case 'partly-paid':
+        return 'bg-blue-500/10 text-blue-700 dark:text-blue-400';
+      case 'overdue':
+        return 'bg-red-500/10 text-red-700 dark:text-red-400';
+      default:
+        return 'bg-orange-500/10 text-orange-700 dark:text-orange-400';
+    }
   };
 
-  const calculateAmountDue = (invoice: Invoice) => {
-    // For credit notes, always return 0
-    if (invoice.type === 'credit-note') {
-      return 0;
+  const getStatusLabel = (status: Invoice['status']) => {
+    switch (status) {
+      case 'paid':
+        return 'Paid';
+      case 'partly-paid':
+        return 'Partly Paid';
+      case 'overdue':
+        return 'Overdue';
+      default:
+        return 'Unpaid';
     }
-
-    let amountDue = invoice.total;
-    
-    // Subtract payments
-    if (invoice.payments && invoice.payments.length > 0) {
-      const totalPaid = invoice.payments.reduce((sum, payment) => sum + payment.amount, 0);
-      amountDue -= totalPaid;
-    }
-    
-    // Subtract credit notes
-    if (invoice.creditNotes && invoice.creditNotes.length > 0) {
-      const creditNoteInvoices = invoices.filter(inv => 
-        invoice.creditNotes?.includes(inv.id) && inv.type === 'credit-note'
-      );
-      const totalCredit = creditNoteInvoices.reduce((sum, cn) => sum + Math.abs(cn.total), 0);
-      console.log(`Invoice ${invoice.invoiceNumber} - Total: ${invoice.total}, Credit applied: ${totalCredit}`);
-      amountDue -= totalCredit;
-    }
-    
-    return Math.max(0, amountDue);
   };
 
   const displayInvoices = invoices.filter(inv => {
@@ -190,14 +184,14 @@ export default function Invoices() {
                         {settings.currencySymbol}{invoice.total.toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {settings.currencySymbol}{calculateAmountDue(invoice).toFixed(2)}
+                        {settings.currencySymbol}{calculateAmountDue(invoice, invoices).toFixed(2)}
                       </TableCell>
                       <TableCell className="text-center">
                         <Checkbox checked={false} disabled />
                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(invoice.status)}>
-                          {invoice.status === 'paid' ? 'Paid' : 'Unpaid'}
+                          {getStatusLabel(invoice.status)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">

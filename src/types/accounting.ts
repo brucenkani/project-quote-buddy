@@ -31,7 +31,8 @@ export interface Expense {
   paymentMethod: string;
   reference?: string;
   attachmentUrl?: string;
-  status: 'pending' | 'approved' | 'paid' | 'rejected';
+  status: 'pending' | 'approved' | 'paid' | 'rejected' | 'partly-paid' | 'overdue';
+  dueDate?: string;
   createdAt: string;
   updatedAt: string;
 }

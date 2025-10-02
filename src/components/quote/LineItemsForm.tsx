@@ -177,8 +177,8 @@ export const LineItemsForm = ({
                   </TableCell>
                   <TableCell className="text-center">{item.quantity}</TableCell>
                   <TableCell>{item.unit}</TableCell>
-                  <TableCell className="text-right">${item.unitPrice.toFixed(2)}</TableCell>
-                  <TableCell className="text-right font-semibold">${item.total.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">{item.unitPrice.toFixed(2)}</TableCell>
+                  <TableCell className="text-right font-semibold">{item.total.toFixed(2)}</TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
@@ -196,7 +196,7 @@ export const LineItemsForm = ({
                   Subtotal
                 </TableCell>
                 <TableCell className="text-right font-bold text-lg">
-                  ${subtotal.toFixed(2)}
+                  {subtotal.toFixed(2)}
                 </TableCell>
                 <TableCell></TableCell>
               </TableRow>

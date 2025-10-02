@@ -1,4 +1,5 @@
 import { Invoice } from '@/types/invoice';
+import { calculateInvoiceStatus } from './invoiceStatusCalculator';
 
 const STORAGE_KEY = 'quotebuilder-invoices';
 
@@ -8,11 +9,17 @@ export const loadInvoices = (): Invoice[] => {
     if (stored) {
       const invoices = JSON.parse(stored);
       // Ensure all invoices have a type field for backward compatibility
-      return invoices.map((inv: any) => ({
+      const processedInvoices = invoices.map((inv: any) => ({
         ...inv,
         type: inv.type || (inv.invoiceNumber?.startsWith('CN-') ? 'credit-note' : 'invoice'),
         payments: inv.payments || [],
         creditNotes: inv.creditNotes || [],
+      }));
+      
+      // Recalculate status dynamically for each invoice
+      return processedInvoices.map((inv: Invoice) => ({
+        ...inv,
+        status: calculateInvoiceStatus(inv, processedInvoices),
       }));
     }
   } catch (error) {

@@ -18,6 +18,7 @@ import { Expense } from '@/types/accounting';
 import { AccountType } from '@/types/accounting';
 import { useToast } from '@/hooks/use-toast';
 import { recordExpense } from '@/utils/doubleEntryManager';
+import { calculateExpenseStatus } from '@/utils/expenseStatusCalculator';
 
 export default function Expenses() {
   const { toast } = useToast();
@@ -39,7 +40,8 @@ export default function Expenses() {
     amount: 0,
     paymentMethod: 'cash',
     reference: '',
-    status: 'paid',
+    status: 'pending',
+    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
   });
 
   const expenseAccounts = chartAccounts.filter(acc => acc.accountType === 'expense');
@@ -74,10 +76,14 @@ export default function Expenses() {
       amount: formData.amount!,
       paymentMethod: formData.paymentMethod || 'cash',
       reference: '',
-      status: 'paid',
+      status: formData.status!,
+      dueDate: formData.dueDate,
       createdAt: editingExpense?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+
+    // Calculate status dynamically
+    expense.status = calculateExpenseStatus(expense);
 
     saveExpense(expense);
     
@@ -105,7 +111,8 @@ export default function Expenses() {
       amount: 0,
       paymentMethod: 'cash',
       reference: '',
-      status: 'paid',
+      status: 'pending',
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     });
     toast({ title: editingExpense ? 'Expense updated' : 'Expense recorded with journal entry' });
   };
@@ -127,7 +134,9 @@ export default function Expenses() {
   const getStatusColor = (status: Expense['status']) => {
     switch (status) {
       case 'paid': return 'bg-green-500/10 text-green-700 dark:text-green-400';
+      case 'partly-paid': return 'bg-blue-500/10 text-blue-700 dark:text-blue-400';
       case 'approved': return 'bg-blue-500/10 text-blue-700 dark:text-blue-400';
+      case 'overdue': return 'bg-red-500/10 text-red-700 dark:text-red-400';
       case 'rejected': return 'bg-red-500/10 text-red-700 dark:text-red-400';
       default: return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400';
     }
@@ -265,7 +274,7 @@ export default function Expenses() {
             </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="gap-2" onClick={() => { setEditingExpense(null); setFormData({ date: new Date().toISOString().split('T')[0], vendor: 'General Expense', category: '', description: '', amount: 0, paymentMethod: 'cash', reference: '', status: 'paid' }); }}>
+                <Button className="gap-2" onClick={() => { setEditingExpense(null); setFormData({ date: new Date().toISOString().split('T')[0], vendor: 'General Expense', category: '', description: '', amount: 0, paymentMethod: 'cash', reference: '', status: 'pending', dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] }); }}>
                   <Plus className="h-4 w-4" />
                   Add Expense
                 </Button>
@@ -335,6 +344,29 @@ export default function Expenses() {
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+                    <SelectTrigger id="status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="dueDate">Due Date (Optional)</Label>
+                  <Input
+                    id="dueDate"
+                    type="date"
+                    value={formData.dueDate}
+                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2 col-span-2">
                   <Label htmlFor="description">Description</Label>
