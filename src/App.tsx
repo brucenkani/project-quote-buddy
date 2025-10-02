@@ -9,6 +9,10 @@ import Settings from "./pages/Settings";
 import Invoices from "./pages/Invoices";
 import InvoiceBuilder from "./pages/InvoiceBuilder";
 import InvoicePayment from "./pages/InvoicePayment";
+import InvoicePreview from "./pages/InvoicePreview";
+import InvoicePrint from "./pages/InvoicePrint";
+import InvoiceEmail from "./pages/InvoiceEmail";
+import InvoiceHistory from "./pages/InvoiceHistory";
 import Inventory from "./pages/Inventory";
 import Journal from "./pages/Journal";
 import Expenses from "./pages/Expenses";
@@ -31,6 +35,11 @@ const App = () => (
           <Route path="/invoices/new" element={<InvoiceBuilder />} />
           <Route path="/invoices/:id" element={<InvoiceBuilder />} />
           <Route path="/invoices/:id/payment" element={<InvoicePayment />} />
+          <Route path="/invoices/:id/preview" element={<InvoicePreview />} />
+          <Route path="/invoices/:id/print" element={<InvoicePrint />} />
+          <Route path="/invoices/:id/email" element={<InvoiceEmail />} />
+          <Route path="/invoices/:id/receipt" element={<InvoicePayment />} />
+          <Route path="/invoices/:id/history" element={<InvoiceHistory />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/journal" element={<Journal />} />
           <Route path="/expenses" element={<Expenses />} />

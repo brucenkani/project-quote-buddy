@@ -34,7 +34,7 @@ export default function InvoiceBuilder() {
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     paymentTerms: 'Net 30',
     notes: '',
-    status: 'draft' as Invoice['status'],
+    status: 'unpaid' as Invoice['status'],
   });
 
   const [lineItems, setLineItems] = useState([
@@ -111,7 +111,7 @@ export default function InvoiceBuilder() {
     saveInvoice(invoice);
     
     // Create double-entry journal entry for new invoices
-    if (!id && invoice.status !== 'draft' && invoice.status !== 'cancelled') {
+    if (!id && invoice.status === 'unpaid') {
       try {
         recordInvoice(invoice);
         toast({ title: 'Invoice and journal entry created successfully' });
@@ -203,11 +203,8 @@ export default function InvoiceBuilder() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="sent">Sent</SelectItem>
+                      <SelectItem value="unpaid">Unpaid</SelectItem>
                       <SelectItem value="paid">Paid</SelectItem>
-                      <SelectItem value="overdue">Overdue</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

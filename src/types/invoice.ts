@@ -13,7 +13,7 @@ export interface Invoice {
   total: number;
   dueDate: string;
   issueDate: string;
-  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  status: 'paid' | 'unpaid';
   paymentTerms: string;
   notes?: string;
   createdAt: string;
