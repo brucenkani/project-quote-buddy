@@ -21,6 +21,7 @@ export default function InvoicePayment() {
 
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [paymentData, setPaymentData] = useState({
+    amount: 0,
     paymentMethod: 'bank' as 'cash' | 'bank',
     paymentDate: new Date().toISOString().split('T')[0],
     paymentReference: '',
@@ -32,41 +33,103 @@ export default function InvoicePayment() {
       const found = invoices.find(inv => inv.id === id);
       if (found) {
         setInvoice(found);
+        const amountDue = calculateAmountDue(found, invoices);
         setPaymentData(prev => ({
           ...prev,
+          amount: amountDue,
           paymentReference: `PAY-${found.invoiceNumber}`,
         }));
       }
     }
   }, [id]);
 
+  const calculateAmountDue = (inv: Invoice, allInvoices: Invoice[]) => {
+    let amountDue = inv.total;
+    
+    if (inv.payments && inv.payments.length > 0) {
+      const totalPaid = inv.payments.reduce((sum, payment) => sum + payment.amount, 0);
+      amountDue -= totalPaid;
+    }
+    
+    if (inv.creditNotes && inv.creditNotes.length > 0) {
+      const creditNoteInvoices = allInvoices.filter(i => 
+        inv.creditNotes?.includes(i.id) && i.type === 'credit-note'
+      );
+      const totalCredit = creditNoteInvoices.reduce((sum, cn) => sum + Math.abs(cn.total), 0);
+      amountDue -= totalCredit;
+    }
+    
+    return Math.max(0, amountDue);
+  };
+
   const handleRecordPayment = () => {
     if (!invoice) return;
+
+    if (!paymentData.amount || paymentData.amount <= 0) {
+      toast({ title: 'Please enter a valid payment amount', variant: 'destructive' });
+      return;
+    }
 
     if (!paymentData.paymentDate || !paymentData.paymentReference) {
       toast({ title: 'Please fill in all payment details', variant: 'destructive' });
       return;
     }
 
+    const invoices = loadInvoices();
+    const currentAmountDue = calculateAmountDue(invoice, invoices);
+
+    if (paymentData.amount > currentAmountDue) {
+      toast({ 
+        title: 'Payment amount exceeds amount due', 
+        description: `Maximum payment allowed: ${settings.currencySymbol}${currentAmountDue.toFixed(2)}`,
+        variant: 'destructive' 
+      });
+      return;
+    }
+
     try {
-      // Create double-entry journal entry for payment
-      recordPaymentReceived(
-        invoice,
-        paymentData.paymentMethod,
-        paymentData.paymentDate,
-        paymentData.paymentReference
+      // Add payment to invoice
+      const newPayment = {
+        id: crypto.randomUUID(),
+        amount: paymentData.amount,
+        date: paymentData.paymentDate,
+        method: paymentData.paymentMethod === 'cash' ? 'Cash' : 'Bank Transfer',
+        reference: paymentData.paymentReference,
+      };
+
+      const payments = [...(invoice.payments || []), newPayment];
+      const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+      
+      // Calculate new amount due
+      const newAmountDue = calculateAmountDue(
+        { ...invoice, payments },
+        invoices
       );
 
-      // Update invoice status to paid
+      // Update invoice status
       const updatedInvoice: Invoice = {
         ...invoice,
-        status: 'paid',
+        payments,
+        status: newAmountDue <= 0 ? 'paid' : 'unpaid',
         updatedAt: new Date().toISOString(),
       };
 
       saveInvoice(updatedInvoice);
 
-      toast({ title: 'Payment recorded successfully with journal entry' });
+      // Create double-entry journal entry for payment
+      recordPaymentReceived(
+        { ...invoice, total: paymentData.amount },
+        paymentData.paymentMethod,
+        paymentData.paymentDate,
+        paymentData.paymentReference
+      );
+
+      toast({ 
+        title: 'Payment recorded successfully',
+        description: newAmountDue > 0 
+          ? `Remaining balance: ${settings.currencySymbol}${newAmountDue.toFixed(2)}`
+          : 'Invoice fully paid'
+      });
       navigate('/invoices');
     } catch (error) {
       toast({
@@ -119,12 +182,41 @@ export default function InvoicePayment() {
                   <span className="text-muted-foreground">Project:</span>
                   <span className="font-semibold">{invoice.projectDetails.projectName}</span>
                 </div>
-                <div className="flex justify-between text-lg">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Invoice Total:</span>
+                  <span className="font-semibold">{settings.currencySymbol}{invoice.total.toFixed(2)}</span>
+                </div>
+                {invoice.payments && invoice.payments.length > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Previous Payments:</span>
+                    <span className="font-semibold text-green-600">
+                      -{settings.currencySymbol}{invoice.payments.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between text-lg border-t pt-2">
                   <span className="text-muted-foreground">Amount Due:</span>
                   <span className="font-bold text-primary">
-                    {settings.currencySymbol}{invoice.total.toFixed(2)}
+                    {settings.currencySymbol}{calculateAmountDue(invoice, loadInvoices()).toFixed(2)}
                   </span>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="amount">Payment Amount</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  value={paymentData.amount}
+                  onChange={(e) =>
+                    setPaymentData({ ...paymentData, amount: parseFloat(e.target.value) || 0 })
+                  }
+                  placeholder="Enter payment amount"
+                />
+                <p className="text-xs text-muted-foreground">
+                  You can enter a partial payment amount
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -177,11 +269,11 @@ export default function InvoicePayment() {
                 <div className="text-sm space-y-1">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Debit: {paymentData.paymentMethod === 'cash' ? 'Cash' : 'Bank Account'}</span>
-                    <span>{settings.currencySymbol}{invoice.total.toFixed(2)}</span>
+                    <span>{settings.currencySymbol}{paymentData.amount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Credit: Accounts Receivable</span>
-                    <span>{settings.currencySymbol}{invoice.total.toFixed(2)}</span>
+                    <span>{settings.currencySymbol}{paymentData.amount.toFixed(2)}</span>
                   </div>
                 </div>
               </div>

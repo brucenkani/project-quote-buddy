@@ -31,7 +31,7 @@ export default function Invoices() {
   const { toast } = useToast();
   const settings = loadSettings();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [activeTab, setActiveTab] = useState<'invoices' | 'credit-notes'>('invoices');
+  const [activeTab, setActiveTab] = useState<'invoices' | 'credit-notes' | 'statements'>('invoices');
 
   useEffect(() => {
     const loadedInvoices = loadInvoices();
@@ -85,6 +85,7 @@ export default function Invoices() {
   };
 
   const displayInvoices = invoices.filter(inv => {
+    if (activeTab === 'statements') return false; // Don't show invoices in statements tab
     const isInvoice = inv.type === 'invoice' || !inv.type;
     const isCreditNote = inv.type === 'credit-note';
     console.log(`Invoice ${inv.invoiceNumber} - type: ${inv.type}, isInvoice: ${isInvoice}, isCreditNote: ${isCreditNote}`);
@@ -114,14 +115,27 @@ export default function Invoices() {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'invoices' | 'credit-notes')} className="mb-6">
-          <TabsList className="grid w-[400px] grid-cols-2">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'invoices' | 'credit-notes' | 'statements')} className="mb-6">
+          <TabsList className="grid w-[600px] grid-cols-3">
             <TabsTrigger value="invoices">Invoices</TabsTrigger>
             <TabsTrigger value="credit-notes">Credit Notes</TabsTrigger>
+            <TabsTrigger value="statements">Statements</TabsTrigger>
           </TabsList>
         </Tabs>
 
-        {displayInvoices.length === 0 ? (
+        {activeTab === 'statements' ? (
+          <Card>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Client Statements</h3>
+                <p className="text-muted-foreground">Generate statements for your clients showing their account activity, invoices, payments, and outstanding balances.</p>
+                <Button onClick={() => navigate('/invoices/statements')}>
+                  Generate Statement
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : displayInvoices.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <FileText className="h-12 w-12 text-muted-foreground mb-4" />
