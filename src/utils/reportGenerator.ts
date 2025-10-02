@@ -36,10 +36,13 @@ export const generateTrialBalancePDF = (
       });
     });
 
-    // From expenses
+    // From expenses (VAT-exclusive amounts)
     expenses.forEach(expense => {
       if (expense.category === account.accountName) {
-        debit += expense.amount;
+        const netAmount = expense.includesVAT && expense.vatAmount 
+          ? expense.amount - expense.vatAmount 
+          : expense.amount;
+        debit += netAmount;
       }
     });
 
@@ -104,7 +107,10 @@ export const generateTrialBalanceExcel = (
 
     expenses.forEach(expense => {
       if (expense.category === account.accountName) {
-        debit += expense.amount;
+        const netAmount = expense.includesVAT && expense.vatAmount 
+          ? expense.amount - expense.vatAmount 
+          : expense.amount;
+        debit += netAmount;
       }
     });
 
@@ -171,11 +177,14 @@ export const generateLedgerPDF = (
 
   expenses.forEach(expense => {
     if (expense.category === account.accountName) {
+      const netAmount = expense.includesVAT && expense.vatAmount 
+        ? expense.amount - expense.vatAmount 
+        : expense.amount;
       transactions.push({
         date: expense.date,
         description: expense.description,
         reference: expense.reference,
-        debit: expense.amount,
+        debit: netAmount,
         credit: 0,
       });
     }
@@ -235,11 +244,14 @@ export const generateLedgerExcel = (
 
   expenses.forEach(expense => {
     if (expense.category === account.accountName) {
+      const netAmount = expense.includesVAT && expense.vatAmount 
+        ? expense.amount - expense.vatAmount 
+        : expense.amount;
       transactions.push({
         Date: expense.date,
         Description: expense.description,
         Reference: expense.reference,
-        Debit: expense.amount,
+        Debit: netAmount,
         Credit: 0,
       });
     }

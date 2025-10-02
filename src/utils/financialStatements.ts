@@ -56,7 +56,11 @@ export const calculateAccountBalance = (
 
   expenses.forEach(expense => {
     if (expense.category === account.accountName) {
-      debit += expense.amount;
+      // Only recognize VAT-exclusive amount for expenses with VAT
+      const netAmount = expense.includesVAT && expense.vatAmount 
+        ? expense.amount - expense.vatAmount 
+        : expense.amount;
+      debit += netAmount;
     }
   });
 
