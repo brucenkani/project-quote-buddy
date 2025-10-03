@@ -8,6 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { BankTransaction } from '@/types/bankTransaction';
 import { loadBankTransactions, saveBankTransaction, deleteBankTransaction } from '@/utils/bankTransactionStorage';
 import { loadInvoices, saveInvoice } from '@/utils/invoiceStorage';
@@ -16,8 +19,8 @@ import { loadExpenses, saveExpense } from '@/utils/accountingStorage';
 import { savePurchasePayment } from '@/utils/purchasePaymentStorage';
 import { saveExpensePayment } from '@/utils/expensePaymentStorage';
 import { loadSettings } from '@/utils/settingsStorage';
-import { loadContacts } from '@/utils/contactsStorage';
-import { loadChartOfAccounts } from '@/utils/chartOfAccountsStorage';
+import { loadContacts, saveContact } from '@/utils/contactsStorage';
+import { loadChartOfAccounts, saveChartOfAccounts } from '@/utils/chartOfAccountsStorage';
 import * as XLSX from 'xlsx';
 
 type TransactionType = 'account' | 'supplier' | 'customer';
@@ -30,10 +33,19 @@ interface TransactionRow extends BankTransaction {
 
 export default function BankFeeds() {
   const [transactions, setTransactions] = useState<TransactionRow[]>(loadBankTransactions());
+  const [contacts, setContacts] = useState(loadContacts());
+  const [chartOfAccounts, setChartOfAccounts] = useState(loadChartOfAccounts());
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [createDialogType, setCreateDialogType] = useState<TransactionType | null>(null);
+  const [currentTransactionId, setCurrentTransactionId] = useState<string | null>(null);
+  const [newItemData, setNewItemData] = useState({
+    name: '',
+    email: '',
+    accountNumber: '',
+    accountName: '',
+  });
   const { toast } = useToast();
   const settings = loadSettings();
-  const contacts = loadContacts();
-  const chartOfAccounts = loadChartOfAccounts();
 
   const downloadTemplate = () => {
     const template = [
@@ -246,24 +258,113 @@ export default function BankFeeds() {
   
   const totalBalance = transactions.length > 0 ? transactions[transactions.length - 1].balance : 0;
 
+  const handleCreateNew = (transactionId: string, type: TransactionType) => {
+    setCurrentTransactionId(transactionId);
+    setCreateDialogType(type);
+    setCreateDialogOpen(true);
+    setNewItemData({ name: '', email: '', accountNumber: '', accountName: '' });
+  };
+
+  const handleCreateSubmit = () => {
+    if (!createDialogType || !currentTransactionId) return;
+
+    try {
+      if (createDialogType === 'customer' || createDialogType === 'supplier') {
+        if (!newItemData.name) {
+          toast({
+            title: "Error",
+            description: "Name is required",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const contactType = createDialogType === 'customer' ? 'client' : 'supplier';
+        const newContact = {
+          id: `CNT-${Date.now()}`,
+          name: newItemData.name,
+          email: newItemData.email || '',
+          phone: '',
+          address: '',
+          type: contactType as 'client' | 'supplier',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        saveContact(newContact);
+        const updatedContacts = [...contacts, newContact];
+        setContacts(updatedContacts);
+        updateTransaction(currentTransactionId, { selectionId: newContact.id });
+
+        toast({
+          title: "Success",
+          description: `${createDialogType === 'customer' ? 'Customer' : 'Supplier'} created successfully`,
+        });
+      } else if (createDialogType === 'account') {
+        if (!newItemData.accountNumber || !newItemData.accountName) {
+          toast({
+            title: "Error",
+            description: "Account number and name are required",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const newAccount = {
+          id: `ACC-${Date.now()}`,
+          accountNumber: newItemData.accountNumber,
+          accountName: newItemData.accountName,
+          accountType: 'expense' as const,
+          isDefault: false,
+          createdAt: new Date().toISOString(),
+        };
+
+        const updatedAccounts = [...chartOfAccounts, newAccount];
+        saveChartOfAccounts(updatedAccounts);
+        setChartOfAccounts(updatedAccounts);
+        updateTransaction(currentTransactionId, { selectionId: newAccount.id });
+
+        toast({
+          title: "Success",
+          description: "Account created successfully",
+        });
+      }
+
+      setCreateDialogOpen(false);
+      setCreateDialogType(null);
+      setCurrentTransactionId(null);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create item",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getSelectionOptions = (type: TransactionType | undefined) => {
+    const createNewOption = { value: 'CREATE_NEW', label: '+ Create New...' };
+
     if (type === 'customer') {
       const invoices = loadInvoices();
-      return invoices.map(inv => ({
+      const options = invoices.map(inv => ({
         value: inv.id,
         label: `${inv.invoiceNumber} - ${settings.currencySymbol}${inv.total.toFixed(2)}`,
       }));
+      return [...options, createNewOption];
     } else if (type === 'supplier') {
       const purchases = loadPurchases();
-      return purchases.map(p => ({
+      const options = purchases.map(p => ({
         value: p.id,
         label: `${p.purchaseNumber} - ${p.vendor} - ${settings.currencySymbol}${p.total.toFixed(2)}`,
       }));
+      return [...options, createNewOption];
     } else if (type === 'account') {
-      return chartOfAccounts.map(acc => ({
+      const options = chartOfAccounts.map(acc => ({
         value: acc.id,
         label: `${acc.accountNumber} - ${acc.accountName}`,
       }));
+      return [...options, createNewOption];
     }
     return [];
   };
@@ -363,7 +464,13 @@ export default function BankFeeds() {
                         <TableCell>
                           <Select
                             value={transaction.selectionId || ''}
-                            onValueChange={(value) => updateTransaction(transaction.id, { selectionId: value })}
+                            onValueChange={(value) => {
+                              if (value === 'CREATE_NEW') {
+                                handleCreateNew(transaction.id, transaction.transactionType!);
+                              } else {
+                                updateTransaction(transaction.id, { selectionId: value });
+                              }
+                            }}
                             disabled={!transaction.transactionType}
                           >
                             <SelectTrigger className="w-[200px]">
@@ -472,6 +579,70 @@ export default function BankFeeds() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                Create New {createDialogType === 'customer' ? 'Customer' : createDialogType === 'supplier' ? 'Supplier' : 'Account'}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {(createDialogType === 'customer' || createDialogType === 'supplier') ? (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name *</Label>
+                    <Input
+                      id="name"
+                      value={newItemData.name}
+                      onChange={(e) => setNewItemData({ ...newItemData, name: e.target.value })}
+                      placeholder="Enter name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={newItemData.email}
+                      onChange={(e) => setNewItemData({ ...newItemData, email: e.target.value })}
+                      placeholder="Enter email"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="accountNumber">Account Number *</Label>
+                    <Input
+                      id="accountNumber"
+                      value={newItemData.accountNumber}
+                      onChange={(e) => setNewItemData({ ...newItemData, accountNumber: e.target.value })}
+                      placeholder="Enter account number"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="accountName">Account Name *</Label>
+                    <Input
+                      id="accountName"
+                      value={newItemData.accountName}
+                      onChange={(e) => setNewItemData({ ...newItemData, accountName: e.target.value })}
+                      placeholder="Enter account name"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateSubmit}>
+                Create
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
