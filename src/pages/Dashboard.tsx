@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Navigation } from '@/components/Navigation';
 import { FileDown, Calendar, FileSpreadsheet } from 'lucide-react';
 import { loadChartOfAccounts } from '@/utils/chartOfAccountsStorage';
 import { loadJournalEntries, loadExpenses } from '@/utils/accountingStorage';
@@ -138,7 +137,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
-      <Navigation />
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-6">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
