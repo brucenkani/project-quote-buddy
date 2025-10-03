@@ -151,12 +151,26 @@ export default function BankFeeds() {
     setTransactions(transactions.map(t => t.id === id ? { ...t, ...updates } : t));
   };
 
-  const isValidDate = (dateString: string): boolean => {
-    const parsed = parse(dateString, 'yyyy-MM-dd', new Date());
-    return isValid(parsed);
+  const isValidDate = (dateValue: any): boolean => {
+    if (!dateValue) return false;
+    
+    // Convert to string if it's not already
+    const dateString = String(dateValue);
+    
+    try {
+      const parsed = parse(dateString, 'yyyy-MM-dd', new Date());
+      return isValid(parsed);
+    } catch {
+      return false;
+    }
   };
 
-  const formatDateForDisplay = (dateString: string): string => {
+  const formatDateForDisplay = (dateValue: any): string => {
+    if (!dateValue) return 'Invalid Date';
+    
+    // Convert to string if it's not already
+    const dateString = String(dateValue);
+    
     try {
       const parsed = parse(dateString, 'yyyy-MM-dd', new Date());
       if (isValid(parsed)) {
@@ -505,7 +519,7 @@ export default function BankFeeds() {
                               <PopoverContent className="w-auto p-0 bg-background z-50" align="start">
                                 <Calendar
                                   mode="single"
-                                  selected={dateIsValid ? parse(transaction.date, 'yyyy-MM-dd', new Date()) : undefined}
+                                  selected={dateIsValid ? parse(String(transaction.date), 'yyyy-MM-dd', new Date()) : undefined}
                                   onSelect={(date) => {
                                     if (date) {
                                       updateTransaction(transaction.id, { date: format(date, 'yyyy-MM-dd') });
