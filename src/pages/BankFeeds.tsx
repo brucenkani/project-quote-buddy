@@ -189,10 +189,29 @@ export default function BankFeeds() {
   };
 
   const confirmTransaction = (transaction: TransactionRow) => {
+    // Validate all required fields
+    if (!isValidDate(transaction.date)) {
+      toast({
+        title: "Error",
+        description: "Please correct the date before confirming",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!transaction.transactionType || !transaction.selectionId) {
       toast({
         title: "Error",
         description: "Please select Type and Selection",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (transaction.selectionId === 'CREATE_NEW') {
+      toast({
+        title: "Error",
+        description: "Please complete creating the new item before confirming",
         variant: "destructive",
       });
       return;
@@ -625,6 +644,7 @@ export default function BankFeeds() {
                               variant="default"
                               onClick={() => confirmTransaction(transaction)}
                               className="gap-1"
+                              disabled={!isValidDate(transaction.date) || !transaction.transactionType || !transaction.selectionId}
                             >
                               <Check className="h-3 w-3" />
                               Confirm
