@@ -3,14 +3,12 @@ import { Navigation } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Upload, DollarSign, Search } from 'lucide-react';
+import { Download, Upload, DollarSign, Check, X } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BankTransaction, AllocationType } from '@/types/bankTransaction';
+import { Checkbox } from '@/components/ui/checkbox';
+import { BankTransaction } from '@/types/bankTransaction';
 import { loadBankTransactions, saveBankTransaction, deleteBankTransaction } from '@/utils/bankTransactionStorage';
 import { loadInvoices, saveInvoice } from '@/utils/invoiceStorage';
 import { loadPurchases, savePurchase } from '@/utils/purchaseStorage';
@@ -18,19 +16,24 @@ import { loadExpenses, saveExpense } from '@/utils/accountingStorage';
 import { savePurchasePayment } from '@/utils/purchasePaymentStorage';
 import { saveExpensePayment } from '@/utils/expensePaymentStorage';
 import { loadSettings } from '@/utils/settingsStorage';
+import { loadContacts } from '@/utils/contactsStorage';
+import { loadChartOfAccounts } from '@/utils/chartOfAccountsStorage';
 import * as XLSX from 'xlsx';
 
+type TransactionType = 'account' | 'supplier' | 'customer';
+
+interface TransactionRow extends BankTransaction {
+  transactionType?: TransactionType;
+  selectionId?: string;
+  includesVAT?: boolean;
+}
+
 export default function BankFeeds() {
-  const [transactions, setTransactions] = useState<BankTransaction[]>(loadBankTransactions());
-  const [allocateDialog, setAllocateDialog] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<BankTransaction | null>(null);
-  const [allocationType, setAllocationType] = useState<AllocationType>('invoice');
-  const [allocationId, setAllocationId] = useState('');
-  const [allocationAmount, setAllocationAmount] = useState('');
-  const [allocationNotes, setAllocationNotes] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [transactions, setTransactions] = useState<TransactionRow[]>(loadBankTransactions());
   const { toast } = useToast();
   const settings = loadSettings();
+  const contacts = loadContacts();
+  const chartOfAccounts = loadChartOfAccounts();
 
   const downloadTemplate = () => {
     const template = [
@@ -101,48 +104,43 @@ export default function BankFeeds() {
     }
   };
 
-  const handleAllocate = () => {
-    if (!selectedTransaction || !allocationId || !allocationAmount) {
+  const updateTransaction = (id: string, updates: Partial<TransactionRow>) => {
+    setTransactions(transactions.map(t => t.id === id ? { ...t, ...updates } : t));
+  };
+
+  const confirmTransaction = (transaction: TransactionRow) => {
+    if (!transaction.transactionType || !transaction.selectionId) {
       toast({
         title: "Error",
-        description: "Please fill in all allocation details",
+        description: "Please select Type and Selection",
         variant: "destructive",
       });
       return;
     }
 
-    const amount = parseFloat(allocationAmount);
-    const remainingAmount = selectedTransaction.amount - selectedTransaction.allocations.reduce((sum, a) => sum + a.amount, 0);
-
-    if (amount > remainingAmount) {
-      toast({
-        title: "Error",
-        description: "Allocation amount exceeds available amount",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Record payment based on allocation type
     try {
-      if (allocationType === 'invoice') {
+      const amount = transaction.amount;
+      const transactionType = transaction.transactionType;
+      const selectionId = transaction.selectionId;
+
+      // Process based on transaction type
+      if (transactionType === 'customer' && transaction.type === 'credit') {
+        // Customer payment - allocate to invoice
         const invoices = loadInvoices();
-        const invoice = invoices.find(inv => inv.invoiceNumber === allocationId);
+        const invoice = invoices.find(inv => inv.id === selectionId || inv.invoiceNumber === selectionId);
         if (!invoice) throw new Error('Invoice not found');
 
-        // Add payment to invoice
         const payment = {
-          id: `${selectedTransaction.id}-${Date.now()}`,
+          id: `${transaction.id}-${Date.now()}`,
           amount,
-          date: selectedTransaction.date,
+          date: transaction.date,
           method: 'bank-transfer',
-          reference: selectedTransaction.reference,
+          reference: transaction.reference,
         };
         
         invoice.payments = invoice.payments || [];
         invoice.payments.push(payment);
         
-        // Update invoice status
         const totalPaid = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
         if (totalPaid >= invoice.total) {
           invoice.status = 'paid';
@@ -152,75 +150,74 @@ export default function BankFeeds() {
         
         saveInvoice(invoice);
 
-      } else if (allocationType === 'purchase') {
+      } else if (transactionType === 'supplier' && transaction.type === 'debit') {
+        // Supplier payment - allocate to purchase
         const purchases = loadPurchases();
-        const purchase = purchases.find(p => p.purchaseNumber === allocationId);
+        const purchase = purchases.find(p => p.id === selectionId || p.purchaseNumber === selectionId);
         if (!purchase) throw new Error('Purchase not found');
 
-        // Record payment
         savePurchasePayment({
-          id: `${selectedTransaction.id}-${Date.now()}`,
+          id: `${transaction.id}-${Date.now()}`,
           purchaseId: purchase.id,
           amount,
-          date: selectedTransaction.date,
+          date: transaction.date,
           method: 'bank-transfer',
-          reference: selectedTransaction.reference,
-          notes: allocationNotes,
+          reference: transaction.reference,
+          notes: '',
           createdAt: new Date().toISOString(),
         });
 
-      } else if (allocationType === 'expense') {
-        const expenses = loadExpenses();
-        const expense = expenses.find(e => e.reference === allocationId || e.id === allocationId);
-        if (!expense) throw new Error('Expense not found');
+      } else if (transactionType === 'account') {
+        // Direct account allocation - create expense entry
+        const account = chartOfAccounts.find(acc => acc.id === selectionId);
+        if (!account) throw new Error('Account not found');
 
-        // Record payment
-        saveExpensePayment({
-          id: `${selectedTransaction.id}-${Date.now()}`,
-          expenseId: expense.id,
+        const expense = {
+          id: `EXP-${Date.now()}`,
+          date: transaction.date,
+          vendor: 'Bank Transaction',
+          category: account.accountName,
+          description: transaction.description,
           amount,
-          date: selectedTransaction.date,
-          method: 'bank-transfer',
-          reference: selectedTransaction.reference,
-          notes: allocationNotes,
-        });
+          paymentMethod: 'bank-transfer',
+          reference: transaction.reference,
+          status: 'paid' as const,
+          includesVAT: transaction.includesVAT || false,
+          vatRate: transaction.includesVAT ? 0.15 : 0,
+          vatAmount: transaction.includesVAT ? amount * (0.15 / 1.15) : 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        
+        saveExpense(expense);
       }
 
-      // Update transaction allocation
+      // Mark transaction as reviewed
       const updatedTransaction = {
-        ...selectedTransaction,
-        allocations: [
-          ...selectedTransaction.allocations,
-          {
-            id: `${selectedTransaction.id}-${Date.now()}`,
-            allocationType,
-            allocationId,
-            amount,
-            allocatedAt: new Date().toISOString(),
-            notes: allocationNotes,
-          },
-        ],
+        ...transaction,
+        status: 'allocated' as const,
+        allocations: [{
+          id: `${transaction.id}-${Date.now()}`,
+          allocationType: transactionType === 'customer' ? 'invoice' as const : 
+                         transactionType === 'supplier' ? 'purchase' as const : 'expense' as const,
+          allocationId: selectionId,
+          amount,
+          allocatedAt: new Date().toISOString(),
+        }],
       };
 
-      const totalAllocated = updatedTransaction.allocations.reduce((sum, a) => sum + a.amount, 0);
-      updatedTransaction.status = totalAllocated >= updatedTransaction.amount ? 'allocated' : 'partially-allocated';
-
       saveBankTransaction(updatedTransaction);
-      setTransactions(transactions.map(t => t.id === updatedTransaction.id ? updatedTransaction : t));
+      setTransactions(transactions.map(t => t.id === transaction.id ? updatedTransaction : t));
 
       toast({
-        title: "Allocation Successful",
-        description: `Transaction allocated to ${allocationType}`,
+        title: "Transaction Confirmed",
+        description: `Transaction allocated successfully`,
       });
 
-      setAllocateDialog(false);
-      setAllocationId('');
-      setAllocationAmount('');
-      setAllocationNotes('');
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to allocate transaction",
+        description: error.message || "Failed to confirm transaction",
         variant: "destructive",
       });
     }
@@ -237,21 +234,32 @@ export default function BankFeeds() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "outline"> = {
-      unallocated: "outline",
-      'partially-allocated': "secondary",
-      allocated: "default",
-    };
-    return <Badge variant={variants[status]}>{status.replace('-', ' ')}</Badge>;
+  const newTransactions = transactions.filter(t => t.status === 'unallocated');
+  const reviewedTransactions = transactions.filter(t => t.status !== 'unallocated');
+  
+  const totalBalance = transactions.length > 0 ? transactions[transactions.length - 1].balance : 0;
+
+  const getSelectionOptions = (type: TransactionType | undefined) => {
+    if (type === 'customer') {
+      const invoices = loadInvoices();
+      return invoices.map(inv => ({
+        value: inv.id,
+        label: `${inv.invoiceNumber} - ${settings.currencySymbol}${inv.total.toFixed(2)}`,
+      }));
+    } else if (type === 'supplier') {
+      const purchases = loadPurchases();
+      return purchases.map(p => ({
+        value: p.id,
+        label: `${p.purchaseNumber} - ${p.vendor} - ${settings.currencySymbol}${p.total.toFixed(2)}`,
+      }));
+    } else if (type === 'account') {
+      return chartOfAccounts.map(acc => ({
+        value: acc.id,
+        label: `${acc.accountNumber} - ${acc.accountName}`,
+      }));
+    }
+    return [];
   };
-
-  const filteredTransactions = transactions.filter(t =>
-    t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.reference.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const totalUnallocated = transactions.filter(t => t.status === 'unallocated').length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -261,10 +269,10 @@ export default function BankFeeds() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
-              Bank Feeds
+              Banking
             </h1>
             <p className="text-muted-foreground mt-2">
-              Import and allocate bank transactions
+              Import and review bank transactions
             </p>
           </div>
           <div className="flex gap-2">
@@ -274,7 +282,7 @@ export default function BankFeeds() {
             </Button>
             <Button onClick={() => document.getElementById('bank-upload')?.click()} className="gap-2">
               <Upload className="h-4 w-4" />
-              Upload Statement
+              Import Bank Statements
             </Button>
             <input
               id="bank-upload"
@@ -286,161 +294,177 @@ export default function BankFeeds() {
           </div>
         </div>
 
-        <Card className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Unallocated Transactions</p>
-              <p className="text-3xl font-bold">{totalUnallocated}</p>
-            </div>
-            <DollarSign className="h-12 w-12 text-primary opacity-50" />
-          </div>
-        </Card>
-
-        <div className="flex gap-4 items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search transactions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Card className="p-4">
+            <p className="text-sm text-muted-foreground">Bank Balance</p>
+            <p className="text-3xl font-bold">{settings.currencySymbol}{totalBalance.toFixed(2)}</p>
+          </Card>
+          <Card className="p-4">
+            <p className="text-sm text-muted-foreground">To be Reviewed</p>
+            <p className="text-3xl font-bold">{newTransactions.length} Transactions</p>
+          </Card>
         </div>
 
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Reference</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="text-right">Balance</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTransactions.map((transaction) => (
-                <TableRow key={transaction.id}>
-                  <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
-                  <TableCell>{transaction.description}</TableCell>
-                  <TableCell>{transaction.reference}</TableCell>
-                  <TableCell>
-                    <Badge variant={transaction.type === 'credit' ? 'default' : 'secondary'}>
-                      {transaction.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {settings.currencySymbol}{transaction.amount.toFixed(2)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {settings.currencySymbol}{transaction.balance.toFixed(2)}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(transaction.status)}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex gap-2 justify-end">
-                      {transaction.status !== 'allocated' && (
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            setSelectedTransaction(transaction);
-                            setAllocateDialog(true);
-                          }}
-                        >
-                          Allocate
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDelete(transaction.id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+        <Tabs defaultValue="new" className="w-full">
+          <TabsList>
+            <TabsTrigger value="new">New Transactions</TabsTrigger>
+            <TabsTrigger value="reviewed">Reviewed Transactions</TabsTrigger>
+          </TabsList>
 
-        <Dialog open={allocateDialog} onOpenChange={setAllocateDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Allocate Transaction</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              {selectedTransaction && (
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground">Transaction Amount</p>
-                  <p className="text-2xl font-bold">
-                    {settings.currencySymbol}{selectedTransaction.amount.toFixed(2)}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Remaining: {settings.currencySymbol}
-                    {(selectedTransaction.amount - selectedTransaction.allocations.reduce((sum, a) => sum + a.amount, 0)).toFixed(2)}
-                  </p>
-                </div>
-              )}
+          <TabsContent value="new" className="space-y-4">
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Selection</TableHead>
+                    <TableHead>VAT</TableHead>
+                    <TableHead className="text-right">Spent</TableHead>
+                    <TableHead className="text-right">Received</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {newTransactions.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                        You have no new Bank Statement transactions to review. Import your Bank Statements or manually enter banking transactions below.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    newTransactions.map((transaction) => (
+                      <TableRow key={transaction.id}>
+                        <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
+                        <TableCell>{transaction.description}</TableCell>
+                        <TableCell>
+                          <Select
+                            value={transaction.transactionType || ''}
+                            onValueChange={(value: TransactionType) => updateTransaction(transaction.id, { transactionType: value, selectionId: undefined })}
+                          >
+                            <SelectTrigger className="w-[140px]">
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-background z-50">
+                              <SelectItem value="account">Account</SelectItem>
+                              <SelectItem value="supplier">Supplier</SelectItem>
+                              <SelectItem value="customer">Customer</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={transaction.selectionId || ''}
+                            onValueChange={(value) => updateTransaction(transaction.id, { selectionId: value })}
+                            disabled={!transaction.transactionType}
+                          >
+                            <SelectTrigger className="w-[200px]">
+                              <SelectValue placeholder="Select..." />
+                            </SelectTrigger>
+                            <SelectContent className="bg-background z-50">
+                              {getSelectionOptions(transaction.transactionType).map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Checkbox
+                            checked={transaction.includesVAT || false}
+                            onCheckedChange={(checked) => updateTransaction(transaction.id, { includesVAT: checked as boolean })}
+                          />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {transaction.type === 'debit' ? `${settings.currencySymbol}${transaction.amount.toFixed(2)}` : '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {transaction.type === 'credit' ? `${settings.currencySymbol}${transaction.amount.toFixed(2)}` : '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-2 justify-end">
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => confirmTransaction(transaction)}
+                              className="gap-1"
+                            >
+                              <Check className="h-3 w-3" />
+                              Confirm
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDelete(transaction.id)}
+                              className="gap-1"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </Card>
+          </TabsContent>
 
-              <div className="space-y-2">
-                <Label>Allocation Type</Label>
-                <Select value={allocationType} onValueChange={(value: AllocationType) => setAllocationType(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="invoice">Invoice</SelectItem>
-                    <SelectItem value="purchase">Purchase</SelectItem>
-                    <SelectItem value="expense">Expense</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>{allocationType === 'invoice' ? 'Invoice' : allocationType === 'purchase' ? 'Purchase' : 'Expense'} Number</Label>
-                <Input
-                  placeholder={`Enter ${allocationType} number`}
-                  value={allocationId}
-                  onChange={(e) => setAllocationId(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Amount</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={allocationAmount}
-                  onChange={(e) => setAllocationAmount(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Notes (Optional)</Label>
-                <Input
-                  placeholder="Add notes..."
-                  value={allocationNotes}
-                  onChange={(e) => setAllocationNotes(e.target.value)}
-                />
-              </div>
-
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setAllocateDialog(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleAllocate}>
-                  Allocate
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+          <TabsContent value="reviewed" className="space-y-4">
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Reference</TableHead>
+                    <TableHead className="text-right">Spent</TableHead>
+                    <TableHead className="text-right">Received</TableHead>
+                    <TableHead className="text-right">Balance</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reviewedTransactions.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        No reviewed transactions yet
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    reviewedTransactions.map((transaction) => (
+                      <TableRow key={transaction.id}>
+                        <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
+                        <TableCell>{transaction.description}</TableCell>
+                        <TableCell>{transaction.reference}</TableCell>
+                        <TableCell className="text-right">
+                          {transaction.type === 'debit' ? `${settings.currencySymbol}${transaction.amount.toFixed(2)}` : '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {transaction.type === 'credit' ? `${settings.currencySymbol}${transaction.amount.toFixed(2)}` : '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {settings.currencySymbol}{transaction.balance.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDelete(transaction.id)}
+                          >
+                            Delete
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
