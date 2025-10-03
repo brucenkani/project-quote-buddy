@@ -16,6 +16,8 @@ export default function CompanySettings() {
   const [settings, setSettings] = useState<CompanySettings>(loadSettings());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const selectedCountry = countries.find(c => c.code === settings.country);
+
   const handleChange = (field: keyof CompanySettings, value: string | number) => {
     setSettings(prev => ({ ...prev, [field]: value }));
   };
@@ -175,6 +177,56 @@ export default function CompanySettings() {
                   onChange={(e) => handleChange('address', e.target.value)}
                   placeholder="123 Business St, City, Province, Postal Code"
                 />
+              </div>
+            </div>
+
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-semibold mb-4">Tax Registration Details</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Enter your tax registration numbers as required by {selectedCountry?.name} authorities
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="vatNumber">{selectedCountry?.vatLabel || 'VAT Number'}</Label>
+                  <Input
+                    id="vatNumber"
+                    value={settings.vatNumber || ''}
+                    onChange={(e) => handleChange('vatNumber', e.target.value)}
+                    placeholder={
+                      settings.country === 'ZA' ? 'e.g., 4123456789' :
+                      settings.country === 'ZW' ? 'e.g., 10123456' :
+                      'e.g., 1234567890'
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="incomeTaxNumber">{selectedCountry?.incomeTaxLabel || 'Income Tax Number'}</Label>
+                  <Input
+                    id="incomeTaxNumber"
+                    value={settings.incomeTaxNumber || ''}
+                    onChange={(e) => handleChange('incomeTaxNumber', e.target.value)}
+                    placeholder={
+                      settings.country === 'ZA' ? 'e.g., 9876543210' :
+                      settings.country === 'ZW' ? 'e.g., 123456789' :
+                      'e.g., 1234567890'
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="companyRegistrationNumber">{selectedCountry?.companyRegLabel || 'Company Registration Number'}</Label>
+                  <Input
+                    id="companyRegistrationNumber"
+                    value={settings.companyRegistrationNumber || ''}
+                    onChange={(e) => handleChange('companyRegistrationNumber', e.target.value)}
+                    placeholder={
+                      settings.country === 'ZA' ? 'e.g., 2023/123456/07 or K2023123456' :
+                      settings.country === 'ZW' ? 'e.g., 123/2023' :
+                      'e.g., 123456'
+                    }
+                  />
+                </div>
               </div>
             </div>
 

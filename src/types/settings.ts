@@ -14,7 +14,10 @@ export interface CompanySettings {
   taxRate: number;
   currency: string;
   currencySymbol: string;
-  financialYearEndMonth: number; // 1-12, representing January-December
+  financialYearEndMonth: number;
+  vatNumber?: string; // VAT registration number (country-specific)
+  incomeTaxNumber?: string; // Income tax number (country-specific)
+  companyRegistrationNumber?: string; // Company registration number (country-specific)
 }
 
 export const defaultSettings: CompanySettings = {
@@ -33,9 +36,33 @@ export const defaultSettings: CompanySettings = {
 };
 
 export const countries = [
-  { code: 'ZA' as Country, name: 'South Africa', currency: 'ZAR', symbol: 'R' },
-  { code: 'ZW' as Country, name: 'Zimbabwe', currency: 'ZWL', symbol: 'Z$' },
-  { code: 'ZM' as Country, name: 'Zambia', currency: 'ZMW', symbol: 'ZK' },
+  { 
+    code: 'ZA' as Country, 
+    name: 'South Africa', 
+    currency: 'ZAR', 
+    symbol: 'R',
+    vatLabel: 'VAT Number',
+    incomeTaxLabel: 'Income Tax Reference Number',
+    companyRegLabel: 'Company Registration Number (CK/CIPC)'
+  },
+  { 
+    code: 'ZW' as Country, 
+    name: 'Zimbabwe', 
+    currency: 'ZWL', 
+    symbol: 'Z$',
+    vatLabel: 'VAT Registration Number',
+    incomeTaxLabel: 'TIN (Tax Identification Number)',
+    companyRegLabel: 'Company Registration Number'
+  },
+  { 
+    code: 'ZM' as Country, 
+    name: 'Zambia', 
+    currency: 'ZMW', 
+    symbol: 'ZK',
+    vatLabel: 'VAT Registration Number',
+    incomeTaxLabel: 'TPIN (Taxpayer Identification Number)',
+    companyRegLabel: 'PACRA Registration Number'
+  },
 ];
 
 export const currencies = [
