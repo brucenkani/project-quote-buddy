@@ -3,7 +3,10 @@ import { Navigation } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Upload, DollarSign, Check, X } from 'lucide-react';
+import { Download, Upload, DollarSign, Check, X, CalendarIcon } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format, parse, isValid } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,6 +24,7 @@ import { saveExpensePayment } from '@/utils/expensePaymentStorage';
 import { loadSettings } from '@/utils/settingsStorage';
 import { loadContacts, saveContact } from '@/utils/contactsStorage';
 import { loadChartOfAccounts, saveChartOfAccounts } from '@/utils/chartOfAccountsStorage';
+import { cn } from '@/lib/utils';
 import * as XLSX from 'xlsx';
 
 type TransactionType = 'account' | 'supplier' | 'customer';
@@ -84,13 +88,33 @@ export default function BankFeeds() {
         const row = jsonData[i];
         if (!row[0] || row[2] === undefined || row[2] === '') continue;
 
+        // Parse date properly - Excel stores dates as serial numbers
+        let dateValue: string;
+        if (typeof row[0] === 'number') {
+          // Excel serial date - convert to JavaScript date
+          const excelDate = new Date((row[0] - 25569) * 86400 * 1000);
+          dateValue = format(excelDate, 'yyyy-MM-dd');
+        } else if (typeof row[0] === 'string') {
+          // Try to parse string date in various formats
+          const parsedDate = parse(row[0], 'yyyy-MM-dd', new Date());
+          if (isValid(parsedDate)) {
+            dateValue = format(parsedDate, 'yyyy-MM-dd');
+          } else {
+            // Try other common formats
+            const altDate = new Date(row[0]);
+            dateValue = isValid(altDate) ? format(altDate, 'yyyy-MM-dd') : row[0];
+          }
+        } else {
+          dateValue = String(row[0]);
+        }
+
         const amount = parseFloat(row[2]) || 0;
         const absAmount = Math.abs(amount);
         runningBalance += amount;
 
         const transaction: BankTransaction = {
           id: `BT-${Date.now()}-${i}`,
-          date: row[0],
+          date: dateValue,
           description: row[1] || '',
           reference: `BT-${Date.now()}-${i}`,
           type: amount >= 0 ? 'credit' : 'debit',
@@ -125,6 +149,23 @@ export default function BankFeeds() {
 
   const updateTransaction = (id: string, updates: Partial<TransactionRow>) => {
     setTransactions(transactions.map(t => t.id === id ? { ...t, ...updates } : t));
+  };
+
+  const isValidDate = (dateString: string): boolean => {
+    const parsed = parse(dateString, 'yyyy-MM-dd', new Date());
+    return isValid(parsed);
+  };
+
+  const formatDateForDisplay = (dateString: string): string => {
+    try {
+      const parsed = parse(dateString, 'yyyy-MM-dd', new Date());
+      if (isValid(parsed)) {
+        return format(parsed, 'dd/MM/yyyy');
+      }
+      return 'Invalid Date';
+    } catch {
+      return 'Invalid Date';
+    }
   };
 
   const confirmTransaction = (transaction: TransactionRow) => {
@@ -442,11 +483,42 @@ export default function BankFeeds() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    newTransactions.map((transaction) => (
-                      <TableRow key={transaction.id}>
-                        <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
-                        <TableCell>{transaction.description}</TableCell>
-                        <TableCell>
+                    newTransactions.map((transaction) => {
+                      const dateIsValid = isValidDate(transaction.date);
+                      return (
+                        <TableRow key={transaction.id}>
+                          <TableCell>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className={cn(
+                                    "justify-start text-left font-normal w-[140px]",
+                                    !dateIsValid && "text-destructive border-destructive"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {formatDateForDisplay(transaction.date)}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0 bg-background z-50" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={dateIsValid ? parse(transaction.date, 'yyyy-MM-dd', new Date()) : undefined}
+                                  onSelect={(date) => {
+                                    if (date) {
+                                      updateTransaction(transaction.id, { date: format(date, 'yyyy-MM-dd') });
+                                    }
+                                  }}
+                                  initialFocus
+                                  className={cn("p-3 pointer-events-auto")}
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </TableCell>
+                          <TableCell>{transaction.description}</TableCell>
+                          <TableCell>
                           <Select
                             value={transaction.transactionType || ''}
                             onValueChange={(value: TransactionType) => updateTransaction(transaction.id, { transactionType: value, selectionId: undefined })}
@@ -519,7 +591,8 @@ export default function BankFeeds() {
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>
@@ -548,9 +621,11 @@ export default function BankFeeds() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    reviewedTransactions.map((transaction) => (
-                      <TableRow key={transaction.id}>
-                        <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
+                    reviewedTransactions.map((transaction) => {
+                      const dateIsValid = isValidDate(transaction.date);
+                      return (
+                        <TableRow key={transaction.id}>
+                          <TableCell>{formatDateForDisplay(transaction.date)}</TableCell>
                         <TableCell>{transaction.description}</TableCell>
                         <TableCell>{transaction.reference}</TableCell>
                         <TableCell className="text-right">
@@ -572,7 +647,8 @@ export default function BankFeeds() {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>
