@@ -37,9 +37,11 @@ export default function BankFeeds() {
 
   const downloadTemplate = () => {
     const template = [
-      ['Date (YYYY-MM-DD)', 'Description', 'Reference', 'Type (debit/credit)', 'Amount', 'Balance'],
-      ['2024-01-15', 'Payment from ABC Corp', 'REF001', 'credit', '5000', '25000'],
-      ['2024-01-16', 'Payment to XYZ Suppliers', 'REF002', 'debit', '2000', '23000'],
+      ['Date (YYYY-MM-DD)', 'Description', 'Amount'],
+      ['2024-01-15', 'Payment from ABC Corp', '5000'],
+      ['2024-01-16', 'Payment to XYZ Suppliers', '-2000'],
+      ['2024-01-17', 'Monthly rental income', '3500'],
+      ['2024-01-18', 'Utility bill payment', '-450'],
     ];
 
     const ws = XLSX.utils.aoa_to_sheet(template);
@@ -64,19 +66,24 @@ export default function BankFeeds() {
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
 
       const newTransactions: BankTransaction[] = [];
+      let runningBalance = transactions.length > 0 ? transactions[transactions.length - 1].balance : 0;
       
       for (let i = 1; i < jsonData.length; i++) {
         const row = jsonData[i];
-        if (!row[0] || !row[3] || !row[4]) continue;
+        if (!row[0] || row[2] === undefined || row[2] === '') continue;
+
+        const amount = parseFloat(row[2]) || 0;
+        const absAmount = Math.abs(amount);
+        runningBalance += amount;
 
         const transaction: BankTransaction = {
           id: `BT-${Date.now()}-${i}`,
           date: row[0],
           description: row[1] || '',
-          reference: row[2] || '',
-          type: row[3].toLowerCase() === 'debit' ? 'debit' : 'credit',
-          amount: parseFloat(row[4]) || 0,
-          balance: parseFloat(row[5]) || 0,
+          reference: `BT-${Date.now()}-${i}`,
+          type: amount >= 0 ? 'credit' : 'debit',
+          amount: absAmount,
+          balance: runningBalance,
           status: 'unallocated',
           allocations: [],
           importedAt: new Date().toISOString(),
