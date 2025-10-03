@@ -42,6 +42,7 @@ import ExpensePreview from "./pages/ExpensePreview";
 import ExpensePrint from "./pages/ExpensePrint";
 import ExpensePayment from "./pages/ExpensePayment";
 import ExpenseHistory from "./pages/ExpenseHistory";
+import BankFeeds from "./pages/BankFeeds";
 import NotFound from "./pages/NotFound";
 import Reports from "./pages/Reports";
 
@@ -93,6 +94,7 @@ const App = () => (
           <Route path="/expenses/:id/preview" element={<ExpensePreview />} />
           <Route path="/expenses/:id/print" element={<ExpensePrint />} />
           <Route path="/expenses/:id/payment" element={<ExpensePayment />} />
+          <Route path="/bank-feeds" element={<BankFeeds />} />
           <Route path="/expenses/:id/history" element={<ExpenseHistory />} />
           <Route path="/expenses/:id" element={<Expenses />} />
           <Route path="/reports" element={<Reports />} />

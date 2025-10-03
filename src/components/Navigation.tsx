@@ -166,9 +166,11 @@ export const Navigation = () => {
                       </DropdownMenuItem>
                     );
                   })}
-                  <DropdownMenuItem disabled>
-                    <Building2 className="h-4 w-4 mr-2" />
-                    Bank Feeds (Coming Soon)
+                  <DropdownMenuItem asChild>
+                    <Link to="/bank-feeds" className="flex items-center gap-2 cursor-pointer">
+                      <Building2 className="h-4 w-4" />
+                      Bank Feeds
+                    </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
