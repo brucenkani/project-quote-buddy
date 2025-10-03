@@ -10,6 +10,9 @@ import Auth from "./pages/Auth";
 import Landing from "./pages/Landing";
 import AccountingDashboard from "./pages/AccountingDashboard";
 import PayrollDashboard from "./pages/PayrollDashboard";
+import Employees from "./pages/Employees";
+import Payroll from "./pages/Payroll";
+import LeaveManagement from "./pages/LeaveManagement";
 import Settings from "./pages/Settings";
 import Invoices from "./pages/Invoices";
 import InvoiceBuilder from "./pages/InvoiceBuilder";
@@ -47,6 +50,9 @@ const App = () => (
           <Route path="/landing" element={<Landing />} />
           <Route path="/accounting" element={<AccountingDashboard />} />
           <Route path="/payroll" element={<PayrollDashboard />} />
+          <Route path="/payroll/employees" element={<Employees />} />
+          <Route path="/payroll/payroll" element={<Payroll />} />
+          <Route path="/payroll/leave" element={<LeaveManagement />} />
           <Route path="/quotes" element={<QuoteBuilder />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/invoices" element={<Invoices />} />
