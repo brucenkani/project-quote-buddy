@@ -124,10 +124,6 @@ export const Navigation = () => {
                         </DropdownMenuItem>
                       );
                     })}
-                    <DropdownMenuItem disabled>
-                      <FileText className="h-4 w-4 mr-2" />
-                      Purchase Orders (Coming Soon)
-                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
