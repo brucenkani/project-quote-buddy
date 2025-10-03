@@ -1,8 +1,10 @@
 export type CompanyType = 'trading' | 'manufacturer' | 'contractor' | 'professional-services';
+export type Country = 'ZA' | 'ZW' | 'ZM';
 
 export interface CompanySettings {
   companyName: string;
   companyType: CompanyType;
+  country: Country;
   email: string;
   phone: string;
   address: string;
@@ -18,16 +20,23 @@ export interface CompanySettings {
 export const defaultSettings: CompanySettings = {
   companyName: 'QuoteBuilder Pro',
   companyType: 'contractor',
+  country: 'ZA',
   email: 'professional@quotebuilder.com',
   phone: '',
   address: '',
   website: '',
   primaryColor: '#3b82f6',
-  taxRate: 0.08,
-  currency: 'USD',
-  currencySymbol: '$',
+  taxRate: 0.15,
+  currency: 'ZAR',
+  currencySymbol: 'R',
   financialYearEndMonth: 12, // December
 };
+
+export const countries = [
+  { code: 'ZA' as Country, name: 'South Africa', currency: 'ZAR', symbol: 'R' },
+  { code: 'ZW' as Country, name: 'Zimbabwe', currency: 'ZWL', symbol: 'Z$' },
+  { code: 'ZM' as Country, name: 'Zambia', currency: 'ZMW', symbol: 'ZK' },
+];
 
 export const currencies = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },

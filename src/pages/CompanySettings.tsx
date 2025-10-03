@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Save, Upload, X } from 'lucide-react';
-import { type CompanySettings, currencies } from '@/types/settings';
+import { type CompanySettings, countries } from '@/types/settings';
 import { loadSettings, saveSettings } from '@/utils/settingsStorage';
 import { useToast } from '@/hooks/use-toast';
 
@@ -87,6 +87,38 @@ export default function CompanySettings() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="country">Country</Label>
+                <Select
+                  value={settings.country}
+                  onValueChange={(value) => {
+                    const country = countries.find(c => c.code === value);
+                    if (country) {
+                      setSettings(prev => ({
+                        ...prev,
+                        country: country.code,
+                        currency: country.currency,
+                        currencySymbol: country.symbol,
+                      }));
+                    }
+                  }}
+                >
+                  <SelectTrigger id="country">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map(c => (
+                      <SelectItem key={c.code} value={c.code}>
+                        {c.name} ({c.symbol})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Currency will be automatically set based on country
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="companyType">Company Type</Label>
                 <Select
                   value={settings.companyType}
@@ -147,7 +179,7 @@ export default function CompanySettings() {
             </div>
 
             <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">Branding & Global Preferences</h3>
+              <h3 className="text-lg font-semibold mb-4">Branding</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2 md:col-span-2">
                   <Label>Company Logo</Label>
@@ -196,34 +228,6 @@ export default function CompanySettings() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="currency">Currency</Label>
-                  <Select
-                    value={settings.currency}
-                    onValueChange={(value) => {
-                      const currency = currencies.find(c => c.code === value);
-                      if (currency) {
-                        setSettings(prev => ({
-                          ...prev,
-                          currency: currency.code,
-                          currencySymbol: currency.symbol,
-                        }));
-                      }
-                    }}
-                  >
-                    <SelectTrigger id="currency">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {currencies.map(c => (
-                        <SelectItem key={c.code} value={c.code}>
-                          {c.symbol} - {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
                   <Label htmlFor="primaryColor">Primary Brand Color</Label>
                   <div className="flex gap-2">
                     <Input
@@ -239,32 +243,6 @@ export default function CompanySettings() {
                       placeholder="#3b82f6"
                     />
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="financialYearEnd">Financial Year End</Label>
-                  <Select
-                    value={settings.financialYearEndMonth?.toString() || '12'}
-                    onValueChange={(value) => handleChange('financialYearEndMonth', parseInt(value))}
-                  >
-                    <SelectTrigger id="financialYearEnd">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">January</SelectItem>
-                      <SelectItem value="2">February</SelectItem>
-                      <SelectItem value="3">March</SelectItem>
-                      <SelectItem value="4">April</SelectItem>
-                      <SelectItem value="5">May</SelectItem>
-                      <SelectItem value="6">June</SelectItem>
-                      <SelectItem value="7">July</SelectItem>
-                      <SelectItem value="8">August</SelectItem>
-                      <SelectItem value="9">September</SelectItem>
-                      <SelectItem value="10">October</SelectItem>
-                      <SelectItem value="11">November</SelectItem>
-                      <SelectItem value="12">December</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
             </div>

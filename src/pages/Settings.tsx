@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -11,6 +12,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [taxRate, setTaxRate] = useState(0.15);
+  const [financialYearEnd, setFinancialYearEnd] = useState(12);
 
   const handleSave = () => {
     toast({
@@ -63,6 +65,35 @@ export default function Settings() {
                 />
                 <p className="text-xs text-muted-foreground">
                   This rate will be applied by default to all invoices and quotes
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="financialYearEnd">Financial Year End</Label>
+                <Select
+                  value={financialYearEnd.toString()}
+                  onValueChange={(value) => setFinancialYearEnd(parseInt(value))}
+                >
+                  <SelectTrigger id="financialYearEnd">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">January</SelectItem>
+                    <SelectItem value="2">February</SelectItem>
+                    <SelectItem value="3">March</SelectItem>
+                    <SelectItem value="4">April</SelectItem>
+                    <SelectItem value="5">May</SelectItem>
+                    <SelectItem value="6">June</SelectItem>
+                    <SelectItem value="7">July</SelectItem>
+                    <SelectItem value="8">August</SelectItem>
+                    <SelectItem value="9">September</SelectItem>
+                    <SelectItem value="10">October</SelectItem>
+                    <SelectItem value="11">November</SelectItem>
+                    <SelectItem value="12">December</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Sets the end month for your accounting year
                 </p>
               </div>
             </div>
