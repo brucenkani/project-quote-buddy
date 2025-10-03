@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Navigation } from '@/components/Navigation';
+import { PayrollNavigation } from '@/components/PayrollNavigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, DollarSign, Calendar, FileText } from 'lucide-react';
 
@@ -45,7 +45,7 @@ export default function PayrollDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <PayrollNavigation />
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">HR & Payroll Dashboard</h1>
