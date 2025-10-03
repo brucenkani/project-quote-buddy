@@ -21,6 +21,7 @@ import { loadPurchases, savePurchase } from '@/utils/purchaseStorage';
 import { loadExpenses, saveExpense } from '@/utils/accountingStorage';
 import { savePurchasePayment } from '@/utils/purchasePaymentStorage';
 import { saveExpensePayment } from '@/utils/expensePaymentStorage';
+import { recordPaymentReceived, recordSupplierPayment } from '@/utils/doubleEntryManager';
 import { loadSettings } from '@/utils/settingsStorage';
 import { loadContacts, saveContact } from '@/utils/contactsStorage';
 import { loadChartOfAccounts, saveChartOfAccounts, generateNextAccountNumber } from '@/utils/chartOfAccountsStorage';
@@ -230,16 +231,36 @@ export default function BankFeeds() {
         const customer = contacts.find(c => c.id === selectionId && c.type === 'client');
         if (!customer) throw new Error('Customer not found');
 
-        // Record the payment allocated to this customer
-        // Note: Invoice allocation happens in the customer account page, not here
+        // Record the payment in double-entry accounting
+        // Debit: Bank Account (Asset ↑)
+        // Credit: Accounts Receivable (Asset ↓)
+        recordPaymentReceived(
+          {
+            invoiceNumber: transaction.reference,
+            total: amount,
+            projectDetails: { clientName: customer.name },
+            issueDate: transaction.date,
+          } as any,
+          'bank',
+          transaction.date,
+          transaction.reference
+        );
 
       } else if (transactionType === 'supplier' && transaction.type === 'debit') {
         // Supplier payment - verify supplier exists
         const supplier = contacts.find(c => c.id === selectionId && c.type === 'supplier');
         if (!supplier) throw new Error('Supplier not found');
 
-        // Record the payment allocated to this supplier
-        // Note: Purchase allocation happens in the supplier account page, not here
+        // Record the payment in double-entry accounting
+        // Debit: Accounts Payable (Liability ↓)
+        // Credit: Bank Account (Asset ↓)
+        recordSupplierPayment(
+          transaction.date,
+          supplier.name,
+          amount,
+          transaction.reference,
+          'bank'
+        );
 
       } else if (transactionType === 'account') {
         // Direct account allocation - create expense entry
