@@ -24,6 +24,7 @@ import { saveExpensePayment } from '@/utils/expensePaymentStorage';
 import { loadSettings } from '@/utils/settingsStorage';
 import { loadContacts, saveContact } from '@/utils/contactsStorage';
 import { loadChartOfAccounts, saveChartOfAccounts, generateNextAccountNumber } from '@/utils/chartOfAccountsStorage';
+import { Contact } from '@/types/contacts';
 import { cn } from '@/lib/utils';
 import * as XLSX from 'xlsx';
 
@@ -372,20 +373,25 @@ export default function BankFeeds() {
         }
 
         const contactType = createDialogType === 'customer' ? 'client' : 'supplier';
-        const newContact = {
-          id: `CNT-${Date.now()}`,
+        const newContact: Contact = {
+          id: crypto.randomUUID(),
           name: newItemData.name,
           email: newItemData.email || '',
           phone: '',
           address: '',
-          type: contactType as 'client' | 'supplier',
+          type: contactType,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
 
+        // Save contact using the storage utility
         saveContact(newContact);
-        const updatedContacts = [...contacts, newContact];
-        setContacts(updatedContacts);
+        
+        // Reload all contacts to ensure we have the latest data
+        const refreshedContacts = loadContacts();
+        setContacts(refreshedContacts);
+        
+        // Update the transaction with the new contact ID
         updateTransaction(currentTransactionId, { selectionId: newContact.id });
 
         toast({
@@ -403,7 +409,7 @@ export default function BankFeeds() {
         }
 
         const newAccount = {
-          id: `ACC-${Date.now()}`,
+          id: crypto.randomUUID(),
           accountNumber: newItemData.accountNumber,
           accountName: newItemData.accountName,
           accountType: newItemData.accountType,
@@ -413,7 +419,11 @@ export default function BankFeeds() {
 
         const updatedAccounts = [...chartOfAccounts, newAccount];
         saveChartOfAccounts(updatedAccounts);
-        setChartOfAccounts(updatedAccounts);
+        
+        // Reload chart of accounts to ensure consistency
+        const refreshedAccounts = loadChartOfAccounts();
+        setChartOfAccounts(refreshedAccounts);
+        
         updateTransaction(currentTransactionId, { selectionId: newAccount.id });
 
         toast({
@@ -425,6 +435,13 @@ export default function BankFeeds() {
       setCreateDialogOpen(false);
       setCreateDialogType(null);
       setCurrentTransactionId(null);
+      setNewItemData({ 
+        name: '', 
+        email: '', 
+        accountNumber: '', 
+        accountName: '',
+        accountType: 'expense',
+      });
     } catch (error: any) {
       toast({
         title: "Error",
