@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { BankTransaction } from '@/types/bankTransaction';
+import { BankTransaction, AllocationType } from '@/types/bankTransaction';
 import { loadBankTransactions, saveBankTransaction, deleteBankTransaction } from '@/utils/bankTransactionStorage';
 import { loadInvoices, saveInvoice } from '@/utils/invoiceStorage';
 import { loadPurchases, savePurchase } from '@/utils/purchaseStorage';
@@ -226,47 +226,20 @@ export default function BankFeeds() {
 
       // Process based on transaction type
       if (transactionType === 'customer' && transaction.type === 'credit') {
-        // Customer payment - allocate to invoice
-        const invoices = loadInvoices();
-        const invoice = invoices.find(inv => inv.id === selectionId || inv.invoiceNumber === selectionId);
-        if (!invoice) throw new Error('Invoice not found');
+        // Customer payment - verify customer exists
+        const customer = contacts.find(c => c.id === selectionId && c.type === 'client');
+        if (!customer) throw new Error('Customer not found');
 
-        const payment = {
-          id: `${transaction.id}-${Date.now()}`,
-          amount,
-          date: transaction.date,
-          method: 'bank-transfer',
-          reference: transaction.reference,
-        };
-        
-        invoice.payments = invoice.payments || [];
-        invoice.payments.push(payment);
-        
-        const totalPaid = invoice.payments.reduce((sum, p) => sum + p.amount, 0);
-        if (totalPaid >= invoice.total) {
-          invoice.status = 'paid';
-        } else if (totalPaid > 0) {
-          invoice.status = 'partly-paid';
-        }
-        
-        saveInvoice(invoice);
+        // Record the payment allocated to this customer
+        // Note: Invoice allocation happens in the customer account page, not here
 
       } else if (transactionType === 'supplier' && transaction.type === 'debit') {
-        // Supplier payment - allocate to purchase
-        const purchases = loadPurchases();
-        const purchase = purchases.find(p => p.id === selectionId || p.purchaseNumber === selectionId);
-        if (!purchase) throw new Error('Purchase not found');
+        // Supplier payment - verify supplier exists
+        const supplier = contacts.find(c => c.id === selectionId && c.type === 'supplier');
+        if (!supplier) throw new Error('Supplier not found');
 
-        savePurchasePayment({
-          id: `${transaction.id}-${Date.now()}`,
-          purchaseId: purchase.id,
-          amount,
-          date: transaction.date,
-          method: 'bank-transfer',
-          reference: transaction.reference,
-          notes: '',
-          createdAt: new Date().toISOString(),
-        });
+        // Record the payment allocated to this supplier
+        // Note: Purchase allocation happens in the supplier account page, not here
 
       } else if (transactionType === 'account') {
         // Direct account allocation - create expense entry
@@ -303,8 +276,7 @@ export default function BankFeeds() {
         status: 'allocated' as const,
         allocations: [{
           id: `${transaction.id}-${Date.now()}`,
-          allocationType: transactionType === 'customer' ? 'invoice' as const : 
-                         transactionType === 'supplier' ? 'purchase' as const : 'expense' as const,
+          allocationType: transactionType as AllocationType,
           allocationId: selectionId,
           amount,
           allocatedAt: new Date().toISOString(),
@@ -455,17 +427,17 @@ export default function BankFeeds() {
     const createNewOption = { value: 'CREATE_NEW', label: '+ Create New...' };
 
     if (type === 'customer') {
-      const invoices = loadInvoices();
-      const options = invoices.map(inv => ({
-        value: inv.id,
-        label: `${inv.invoiceNumber} - ${settings.currencySymbol}${inv.total.toFixed(2)}`,
+      const customers = contacts.filter(c => c.type === 'client');
+      const options = customers.map(customer => ({
+        value: customer.id,
+        label: `${customer.name} - ${customer.email}`,
       }));
       return [...options, createNewOption];
     } else if (type === 'supplier') {
-      const purchases = loadPurchases();
-      const options = purchases.map(p => ({
-        value: p.id,
-        label: `${p.purchaseNumber} - ${p.vendor} - ${settings.currencySymbol}${p.total.toFixed(2)}`,
+      const suppliers = contacts.filter(c => c.type === 'supplier');
+      const options = suppliers.map(supplier => ({
+        value: supplier.id,
+        label: `${supplier.name} - ${supplier.email}`,
       }));
       return [...options, createNewOption];
     } else if (type === 'account') {
