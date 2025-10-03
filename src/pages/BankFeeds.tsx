@@ -35,6 +35,12 @@ interface TransactionRow extends BankTransaction {
   includesVAT?: boolean;
 }
 
+const calculateVATFromInclusive = (amount: number, vatRate: number = 0.15) => {
+  const vatAmount = amount * (vatRate / (1 + vatRate));
+  const netAmount = amount - vatAmount;
+  return { vatAmount, netAmount };
+};
+
 export default function BankFeeds() {
   const [transactions, setTransactions] = useState<TransactionRow[]>(loadBankTransactions());
   const [contacts, setContacts] = useState(loadContacts());
@@ -246,6 +252,10 @@ export default function BankFeeds() {
         const account = chartOfAccounts.find(acc => acc.id === selectionId);
         if (!account) throw new Error('Account not found');
 
+        const { vatAmount, netAmount } = transaction.includesVAT 
+          ? calculateVATFromInclusive(amount)
+          : { vatAmount: 0, netAmount: amount };
+
         const expense = {
           id: `EXP-${Date.now()}`,
           date: transaction.date,
@@ -258,7 +268,7 @@ export default function BankFeeds() {
           status: 'paid' as const,
           includesVAT: transaction.includesVAT || false,
           vatRate: transaction.includesVAT ? 0.15 : 0,
-          vatAmount: transaction.includesVAT ? amount * (0.15 / 1.15) : 0,
+          vatAmount,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -572,16 +582,41 @@ export default function BankFeeds() {
                           </Select>
                         </TableCell>
                         <TableCell>
-                          <Checkbox
-                            checked={transaction.includesVAT || false}
-                            onCheckedChange={(checked) => updateTransaction(transaction.id, { includesVAT: checked as boolean })}
-                          />
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              checked={transaction.includesVAT || false}
+                              onCheckedChange={(checked) => updateTransaction(transaction.id, { includesVAT: checked as boolean })}
+                            />
+                            {transaction.includesVAT && (
+                              <span className="text-xs text-muted-foreground">
+                                VAT: {settings.currencySymbol}{calculateVATFromInclusive(transaction.amount).vatAmount.toFixed(2)}
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          {transaction.type === 'debit' ? `${settings.currencySymbol}${transaction.amount.toFixed(2)}` : '-'}
+                          {transaction.type === 'debit' ? (
+                            <div>
+                              <div className="font-medium">{settings.currencySymbol}{transaction.amount.toFixed(2)}</div>
+                              {transaction.includesVAT && (
+                                <div className="text-xs text-muted-foreground">
+                                  Net: {settings.currencySymbol}{calculateVATFromInclusive(transaction.amount).netAmount.toFixed(2)}
+                                </div>
+                              )}
+                            </div>
+                          ) : '-'}
                         </TableCell>
                         <TableCell className="text-right">
-                          {transaction.type === 'credit' ? `${settings.currencySymbol}${transaction.amount.toFixed(2)}` : '-'}
+                          {transaction.type === 'credit' ? (
+                            <div>
+                              <div className="font-medium">{settings.currencySymbol}{transaction.amount.toFixed(2)}</div>
+                              {transaction.includesVAT && (
+                                <div className="text-xs text-muted-foreground">
+                                  Net: {settings.currencySymbol}{calculateVATFromInclusive(transaction.amount).netAmount.toFixed(2)}
+                                </div>
+                              )}
+                            </div>
+                          ) : '-'}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-2 justify-end">
