@@ -23,7 +23,7 @@ import { savePurchasePayment } from '@/utils/purchasePaymentStorage';
 import { saveExpensePayment } from '@/utils/expensePaymentStorage';
 import { loadSettings } from '@/utils/settingsStorage';
 import { loadContacts, saveContact } from '@/utils/contactsStorage';
-import { loadChartOfAccounts, saveChartOfAccounts } from '@/utils/chartOfAccountsStorage';
+import { loadChartOfAccounts, saveChartOfAccounts, generateNextAccountNumber } from '@/utils/chartOfAccountsStorage';
 import { cn } from '@/lib/utils';
 import * as XLSX from 'xlsx';
 
@@ -53,6 +53,7 @@ export default function BankFeeds() {
     email: '',
     accountNumber: '',
     accountName: '',
+    accountType: 'expense' as 'asset' | 'liability' | 'equity' | 'revenue' | 'expense',
   });
   const { toast } = useToast();
   const settings = loadSettings();
@@ -346,7 +347,14 @@ export default function BankFeeds() {
     setCurrentTransactionId(transactionId);
     setCreateDialogType(type);
     setCreateDialogOpen(true);
-    setNewItemData({ name: '', email: '', accountNumber: '', accountName: '' });
+    const accountType = 'expense';
+    setNewItemData({ 
+      name: '', 
+      email: '', 
+      accountNumber: generateNextAccountNumber(accountType), 
+      accountName: '',
+      accountType,
+    });
   };
 
   const handleCreateSubmit = () => {
@@ -398,7 +406,7 @@ export default function BankFeeds() {
           id: `ACC-${Date.now()}`,
           accountNumber: newItemData.accountNumber,
           accountName: newItemData.accountName,
-          accountType: 'expense' as const,
+          accountType: newItemData.accountType,
           isDefault: false,
           createdAt: new Date().toISOString(),
         };
@@ -758,12 +766,38 @@ export default function BankFeeds() {
               ) : (
                 <>
                   <div className="space-y-2">
+                    <Label htmlFor="accountType">Account Type *</Label>
+                    <Select
+                      value={newItemData.accountType}
+                      onValueChange={(value: any) => {
+                        const nextNumber = generateNextAccountNumber(value);
+                        setNewItemData({ 
+                          ...newItemData, 
+                          accountType: value,
+                          accountNumber: nextNumber,
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="asset">Asset</SelectItem>
+                        <SelectItem value="liability">Liability</SelectItem>
+                        <SelectItem value="equity">Equity</SelectItem>
+                        <SelectItem value="revenue">Revenue</SelectItem>
+                        <SelectItem value="expense">Expense</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="accountNumber">Account Number *</Label>
                     <Input
                       id="accountNumber"
                       value={newItemData.accountNumber}
                       onChange={(e) => setNewItemData({ ...newItemData, accountNumber: e.target.value })}
                       placeholder="Enter account number"
+                      disabled
                     />
                   </div>
                   <div className="space-y-2">
