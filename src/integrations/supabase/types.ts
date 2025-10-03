@@ -14,16 +14,399 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      employees: {
+        Row: {
+          account_number: string | null
+          account_type: string | null
+          address: string | null
+          bank_name: string | null
+          basic_salary: number
+          created_at: string | null
+          date_of_birth: string
+          department: string | null
+          email: string
+          employee_number: string
+          end_date: string | null
+          first_name: string
+          id: string
+          id_number: string
+          last_name: string
+          phone: string | null
+          position: string
+          start_date: string
+          status: string | null
+          tax_number: string | null
+          uif_number: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          account_number?: string | null
+          account_type?: string | null
+          address?: string | null
+          bank_name?: string | null
+          basic_salary: number
+          created_at?: string | null
+          date_of_birth: string
+          department?: string | null
+          email: string
+          employee_number: string
+          end_date?: string | null
+          first_name: string
+          id?: string
+          id_number: string
+          last_name: string
+          phone?: string | null
+          position: string
+          start_date: string
+          status?: string | null
+          tax_number?: string | null
+          uif_number?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          account_number?: string | null
+          account_type?: string | null
+          address?: string | null
+          bank_name?: string | null
+          basic_salary?: number
+          created_at?: string | null
+          date_of_birth?: string
+          department?: string | null
+          email?: string
+          employee_number?: string
+          end_date?: string | null
+          first_name?: string
+          id?: string
+          id_number?: string
+          last_name?: string
+          phone?: string | null
+          position?: string
+          start_date?: string
+          status?: string | null
+          tax_number?: string | null
+          uif_number?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      leave_balances: {
+        Row: {
+          available_days: number
+          created_at: string | null
+          employee_id: string
+          id: string
+          leave_type_id: string
+          total_days: number
+          updated_at: string | null
+          used_days: number | null
+          year: number
+        }
+        Insert: {
+          available_days: number
+          created_at?: string | null
+          employee_id: string
+          id?: string
+          leave_type_id: string
+          total_days: number
+          updated_at?: string | null
+          used_days?: number | null
+          year: number
+        }
+        Update: {
+          available_days?: number
+          created_at?: string | null
+          employee_id?: string
+          id?: string
+          leave_type_id?: string
+          total_days?: number
+          updated_at?: string | null
+          used_days?: number | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_balances_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_balances_leave_type_id_fkey"
+            columns: ["leave_type_id"]
+            isOneToOne: false
+            referencedRelation: "leave_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leave_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          days_requested: number
+          employee_id: string
+          end_date: string
+          id: string
+          leave_type_id: string
+          notes: string | null
+          reason: string | null
+          start_date: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          days_requested: number
+          employee_id: string
+          end_date: string
+          id?: string
+          leave_type_id: string
+          notes?: string | null
+          reason?: string | null
+          start_date: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          days_requested?: number
+          employee_id?: string
+          end_date?: string
+          id?: string
+          leave_type_id?: string
+          notes?: string | null
+          reason?: string | null
+          start_date?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_requests_leave_type_id_fkey"
+            columns: ["leave_type_id"]
+            isOneToOne: false
+            referencedRelation: "leave_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leave_types: {
+        Row: {
+          carry_over: boolean | null
+          created_at: string | null
+          days_per_year: number
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          carry_over?: boolean | null
+          created_at?: string | null
+          days_per_year: number
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          carry_over?: boolean | null
+          created_at?: string | null
+          days_per_year?: number
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      payroll: {
+        Row: {
+          allowances: number | null
+          basic_salary: number
+          bonuses: number | null
+          created_at: string | null
+          employee_id: string
+          gross_salary: number
+          id: string
+          net_salary: number
+          notes: string | null
+          other_deductions: number | null
+          overtime: number | null
+          paye: number | null
+          payment_date: string | null
+          period_end: string
+          period_start: string
+          status: string | null
+          total_deductions: number
+          uif: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          allowances?: number | null
+          basic_salary: number
+          bonuses?: number | null
+          created_at?: string | null
+          employee_id: string
+          gross_salary: number
+          id?: string
+          net_salary: number
+          notes?: string | null
+          other_deductions?: number | null
+          overtime?: number | null
+          paye?: number | null
+          payment_date?: string | null
+          period_end: string
+          period_start: string
+          status?: string | null
+          total_deductions: number
+          uif?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          allowances?: number | null
+          basic_salary?: number
+          bonuses?: number | null
+          created_at?: string | null
+          employee_id?: string
+          gross_salary?: number
+          id?: string
+          net_salary?: number
+          notes?: string | null
+          other_deductions?: number | null
+          overtime?: number | null
+          paye?: number | null
+          payment_date?: string | null
+          period_end?: string
+          period_start?: string
+          status?: string | null
+          total_deductions?: number
+          uif?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      sars_tax_brackets: {
+        Row: {
+          age_group: string
+          bracket_max: number | null
+          bracket_min: number
+          created_at: string | null
+          id: string
+          rate: number
+          rebate: number | null
+          threshold: number
+          year: number
+        }
+        Insert: {
+          age_group: string
+          bracket_max?: number | null
+          bracket_min: number
+          created_at?: string | null
+          id?: string
+          rate: number
+          rebate?: number | null
+          threshold: number
+          year: number
+        }
+        Update: {
+          age_group?: string
+          bracket_max?: number | null
+          bracket_min?: number
+          created_at?: string | null
+          id?: string
+          rate?: number
+          rebate?: number | null
+          threshold?: number
+          year?: number
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_owner: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "owner" | "accountant" | "employee"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +533,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["owner", "accountant", "employee"],
+    },
   },
 } as const

@@ -6,6 +6,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QuoteBuilder } from '@/components/QuoteBuilder';
 import Index from "./pages/Index";
+import Auth from "./pages/Auth";
+import Landing from "./pages/Landing";
+import AccountingDashboard from "./pages/AccountingDashboard";
+import PayrollDashboard from "./pages/PayrollDashboard";
 import Settings from "./pages/Settings";
 import Invoices from "./pages/Invoices";
 import InvoiceBuilder from "./pages/InvoiceBuilder";
@@ -39,6 +43,10 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/landing" element={<Landing />} />
+          <Route path="/accounting" element={<AccountingDashboard />} />
+          <Route path="/payroll" element={<PayrollDashboard />} />
           <Route path="/quotes" element={<QuoteBuilder />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/invoices" element={<Invoices />} />

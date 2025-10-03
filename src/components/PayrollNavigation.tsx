@@ -1,22 +1,18 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { FileText, DollarSign, Package, BookOpen, Receipt, Settings, BarChart3, LayoutDashboard, ArrowLeft } from 'lucide-react';
-import { loadSettings } from '@/utils/settingsStorage';
+import { Users, DollarSign, Calendar, Settings, LayoutDashboard, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
-export const Navigation = () => {
+export const PayrollNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const settings = loadSettings();
   
   const navItems = [
-    { path: '/accounting', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/quotes', label: 'Quotes', icon: FileText },
-    { path: '/invoices', label: 'Invoices', icon: DollarSign },
-    { path: '/inventory', label: 'Inventory', icon: Package },
-    { path: '/journal', label: 'Journal', icon: BookOpen },
-    { path: '/expenses', label: 'Expenses', icon: Receipt },
-    { path: '/reports', label: 'Reports', icon: BarChart3 },
+    { path: '/payroll', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/payroll/employees', label: 'Employees', icon: Users },
+    { path: '/payroll/payroll', label: 'Payroll', icon: DollarSign },
+    { path: '/payroll/leave', label: 'Leave', icon: Calendar },
     { path: '/settings', label: 'Settings', icon: Settings },
   ];
 
@@ -34,14 +30,9 @@ export const Navigation = () => {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
-            <div className="flex items-center gap-3">
-              {settings.logoUrl && (
-                <img src={settings.logoUrl} alt="Logo" className="h-8 w-auto object-contain" />
-              )}
-              <h1 className="text-xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
-                Accounting
-              </h1>
-            </div>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
+              HR & Payroll
+            </h1>
           </div>
           
           <div className="flex items-center gap-2">
