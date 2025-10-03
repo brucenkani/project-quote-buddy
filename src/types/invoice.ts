@@ -21,6 +21,14 @@ export interface Invoice {
   creditNotes?: string[]; // IDs of related credit notes
   createdAt: string;
   updatedAt: string;
+  // Tax compliance fields
+  fiscalData?: {
+    qrCode?: string; // For ZRA (Zambia) and ZIMRA (Zimbabwe)
+    fiscalSignature?: string; // For ZIMRA fiscal devices
+    smartInvoiceId?: string; // ZRA Smart Invoice ID
+    fiscalDeviceId?: string; // ZIMRA fiscal device ID
+    verificationUrl?: string; // URL for QR code verification
+  };
 }
 
 export interface Payment {

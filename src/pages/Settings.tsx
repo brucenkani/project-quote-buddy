@@ -5,12 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { loadSettings } from '@/utils/settingsStorage';
 
 export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const settings = loadSettings();
   const [taxRate, setTaxRate] = useState(0.15);
   const [financialYearEnd, setFinancialYearEnd] = useState(12);
 
@@ -42,7 +44,7 @@ export default function Settings() {
           </div>
         </div>
 
-        <Card className="shadow-[var(--shadow-elegant)] border-border/50 backdrop-blur-sm bg-card/80">
+        <Card className="shadow-[var(--shadow-elegant)] border-border/50 backdrop-blur-sm bg-card/80 mb-6">
           <CardHeader>
             <CardTitle>Tax & Accounting Preferences</CardTitle>
             <CardDescription>
@@ -104,6 +106,24 @@ export default function Settings() {
                 Save Settings
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-[var(--shadow-elegant)] border-border/50 backdrop-blur-sm bg-card/80">
+          <CardHeader>
+            <CardTitle>Tax Compliance Integration</CardTitle>
+            <CardDescription>
+              Configure tax authority requirements for {settings.country === 'ZA' ? 'South Africa (SARS)' : settings.country === 'ZW' ? 'Zimbabwe (ZIMRA)' : 'Zambia (ZRA)'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Manage invoice compliance settings, QR codes, and tax authority API integrations.
+            </p>
+            <Button onClick={() => navigate('/tax-compliance')} className="gap-2">
+              <Shield className="h-4 w-4" />
+              Configure Tax Compliance
+            </Button>
           </CardContent>
         </Card>
       </div>

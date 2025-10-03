@@ -15,6 +15,7 @@ import Payroll from "./pages/Payroll";
 import LeaveManagement from "./pages/LeaveManagement";
 import PayrollSettings from "./pages/PayrollSettings";
 import Settings from "./pages/Settings";
+import TaxComplianceSettings from "./pages/TaxComplianceSettings";
 import CompanySettings from "./pages/CompanySettings";
 import Invoices from "./pages/Invoices";
 import InvoiceBuilder from "./pages/InvoiceBuilder";
@@ -58,6 +59,7 @@ const App = () => (
           <Route path="/payroll/settings" element={<PayrollSettings />} />
           <Route path="/quotes" element={<QuoteBuilder />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/tax-compliance" element={<TaxComplianceSettings />} />
           <Route path="/company-settings" element={<CompanySettings />} />
           <Route path="/invoices" element={<Invoices />} />
           <Route path="/invoices/new" element={<InvoiceBuilder />} />
