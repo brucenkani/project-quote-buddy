@@ -13,6 +13,7 @@ import PayrollDashboard from "./pages/PayrollDashboard";
 import Employees from "./pages/Employees";
 import Payroll from "./pages/Payroll";
 import LeaveManagement from "./pages/LeaveManagement";
+import PayrollSettings from "./pages/PayrollSettings";
 import Settings from "./pages/Settings";
 import Invoices from "./pages/Invoices";
 import InvoiceBuilder from "./pages/InvoiceBuilder";
@@ -53,6 +54,7 @@ const App = () => (
           <Route path="/payroll/employees" element={<Employees />} />
           <Route path="/payroll/payroll" element={<Payroll />} />
           <Route path="/payroll/leave" element={<LeaveManagement />} />
+          <Route path="/payroll/settings" element={<PayrollSettings />} />
           <Route path="/quotes" element={<QuoteBuilder />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/invoices" element={<Invoices />} />

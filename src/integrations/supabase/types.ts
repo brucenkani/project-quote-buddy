@@ -307,6 +307,36 @@ export type Database = {
           },
         ]
       }
+      payroll_settings: {
+        Row: {
+          country: string
+          created_at: string
+          currency: string
+          currency_symbol: string
+          current_tax_year: number
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          country?: string
+          created_at?: string
+          currency?: string
+          currency_symbol?: string
+          current_tax_year?: number
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          currency?: string
+          currency_symbol?: string
+          current_tax_year?: number
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -331,11 +361,12 @@ export type Database = {
         }
         Relationships: []
       }
-      sars_tax_brackets: {
+      tax_brackets: {
         Row: {
           age_group: string
           bracket_max: number | null
           bracket_min: number
+          country: string
           created_at: string | null
           id: string
           rate: number
@@ -347,6 +378,7 @@ export type Database = {
           age_group: string
           bracket_max?: number | null
           bracket_min: number
+          country?: string
           created_at?: string | null
           id?: string
           rate: number
@@ -358,6 +390,7 @@ export type Database = {
           age_group?: string
           bracket_max?: number | null
           bracket_min?: number
+          country?: string
           created_at?: string | null
           id?: string
           rate?: number

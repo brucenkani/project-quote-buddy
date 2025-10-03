@@ -49,7 +49,7 @@ export default function Payroll() {
     const [payrollResult, employeesResult, taxResult] = await Promise.all([
       supabase.from('payroll').select('*, employees(*)').order('created_at', { ascending: false }),
       supabase.from('employees').select('*').eq('status', 'active'),
-      supabase.from('sars_tax_brackets').select('*'),
+      supabase.from('tax_brackets').select('*'),
     ]);
 
     if (payrollResult.error) {
