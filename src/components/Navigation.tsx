@@ -17,11 +17,20 @@ export const Navigation = () => {
     { path: '/invoices/statements', label: 'Statements', icon: FileText },
   ];
 
+  const supplierMenuItems = [
+    { path: '/purchases', label: 'Purchases', icon: ShoppingCart },
+  ];
+
   const bankingMenuItems = [
     { path: '/expenses', label: 'Expenses', icon: Receipt },
   ];
 
+  // Business type dependent menu visibility
+  const showInventory = settings.companyType !== 'professional-services';
+  const showSuppliers = settings.companyType !== 'professional-services';
+
   const isCustomerMenuActive = customerMenuItems.some(item => location.pathname.startsWith(item.path));
+  const isSupplierMenuActive = supplierMenuItems.some(item => location.pathname.startsWith(item.path));
   const isBankingMenuActive = bankingMenuItems.some(item => location.pathname.startsWith(item.path));
 
   const handleSignOut = async () => {
@@ -89,41 +98,52 @@ export const Navigation = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="gap-1"
-                  >
-                    <ShoppingCart className="h-4 w-4" />
-                    <span className="hidden md:inline">Suppliers</span>
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem disabled>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Purchase Orders (Coming Soon)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem disabled>
-                    <Receipt className="h-4 w-4 mr-2" />
-                    Purchases (Coming Soon)
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {showSuppliers && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant={isSupplierMenuActive ? 'default' : 'ghost'}
+                      size="sm"
+                      className="gap-1"
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                      <span className="hidden md:inline">Suppliers</span>
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {supplierMenuItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <DropdownMenuItem key={item.path} asChild>
+                          <Link to={item.path} className="flex items-center gap-2 cursor-pointer">
+                            <Icon className="h-4 w-4" />
+                            {item.label}
+                          </Link>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                    <DropdownMenuItem disabled>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Purchase Orders (Coming Soon)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
 
-              <Button
-                variant={location.pathname === '/inventory' ? 'default' : 'ghost'}
-                size="sm"
-                asChild
-                className="gap-2"
-              >
-                <Link to="/inventory">
-                  <Package className="h-4 w-4" />
-                  <span className="hidden md:inline">Inventory</span>
-                </Link>
-              </Button>
+              {showInventory && (
+                <Button
+                  variant={location.pathname === '/inventory' ? 'default' : 'ghost'}
+                  size="sm"
+                  asChild
+                  className="gap-2"
+                >
+                  <Link to="/inventory">
+                    <Package className="h-4 w-4" />
+                    <span className="hidden md:inline">Inventory</span>
+                  </Link>
+                </Button>
+              )}
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
