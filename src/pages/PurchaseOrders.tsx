@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,30 +8,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, ShoppingCart, Search, Pencil, Trash2, Package, Eye, DollarSign, History } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Plus, FileText, Search, Pencil, Trash2, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
-import { loadPurchases, savePurchase, deletePurchase, generatePurchaseNumber } from '@/utils/purchaseStorage';
+import { loadPurchaseOrders, savePurchaseOrder, deletePurchaseOrder, generatePONumber } from '@/utils/purchaseOrderStorage';
+import { savePurchase, generatePurchaseNumber } from '@/utils/purchaseStorage';
 import { loadSettings } from '@/utils/settingsStorage';
 import { loadInventory } from '@/utils/inventoryStorage';
+import { PurchaseOrder, PurchaseOrderLineItem } from '@/types/purchaseOrder';
 import { Purchase, PurchaseLineItem } from '@/types/purchase';
 import { useToast } from '@/hooks/use-toast';
 import { ContactSelector } from '@/components/ContactSelector';
 import { Contact } from '@/types/contacts';
 import { recordPurchase } from '@/utils/purchaseDoubleEntry';
 
-export default function Purchases() {
+export default function PurchaseOrders() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const settings = loadSettings();
   const inventory = loadInventory();
-  const [purchases, setPurchases] = useState<Purchase[]>(loadPurchases());
+  const [orders, setOrders] = useState<PurchaseOrder[]>(loadPurchaseOrders());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null);
+  const [editingOrder, setEditingOrder] = useState<PurchaseOrder | null>(null);
   const [selectedVendor, setSelectedVendor] = useState<Contact | null>(null);
 
-  const [formData, setFormData] = useState<Partial<Purchase>>({
-    purchaseNumber: generatePurchaseNumber(),
+  const [formData, setFormData] = useState<Partial<PurchaseOrder>>({
+    poNumber: generatePONumber(),
     vendor: '',
     date: new Date().toISOString().split('T')[0],
     lineItems: [],
@@ -40,15 +43,13 @@ export default function Purchases() {
     taxAmount: 0,
     discount: 0,
     total: 0,
-    status: 'pending',
-    inventoryMethod: 'perpetual',
+    status: 'draft',
   });
 
-  const [lineItems, setLineItems] = useState<PurchaseLineItem[]>([]);
-  const [currentLineItem, setCurrentLineItem] = useState<Partial<PurchaseLineItem>>({
+  const [lineItems, setLineItems] = useState<PurchaseOrderLineItem[]>([]);
+  const [currentLineItem, setCurrentLineItem] = useState<Partial<PurchaseOrderLineItem>>({
     description: '',
     quantity: 1,
-    receivedQuantity: 0,
     unitCost: 0,
     total: 0,
   });
@@ -59,11 +60,10 @@ export default function Purchases() {
       return;
     }
 
-    const item: PurchaseLineItem = {
+    const item: PurchaseOrderLineItem = {
       id: crypto.randomUUID(),
       description: currentLineItem.description!,
       quantity: currentLineItem.quantity!,
-      receivedQuantity: currentLineItem.receivedQuantity || 0,
       unitCost: currentLineItem.unitCost!,
       total: currentLineItem.quantity! * currentLineItem.unitCost!,
       inventoryItemId: currentLineItem.inventoryItemId,
@@ -78,7 +78,6 @@ export default function Purchases() {
     setCurrentLineItem({
       description: '',
       quantity: 1,
-      receivedQuantity: 0,
       unitCost: 0,
       total: 0,
     });
@@ -90,7 +89,7 @@ export default function Purchases() {
     calculateTotals(updatedItems);
   };
 
-  const calculateTotals = (items: PurchaseLineItem[]) => {
+  const calculateTotals = (items: PurchaseOrderLineItem[]) => {
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);
     const taxAmount = subtotal * (formData.taxRate || 0);
     const total = subtotal + taxAmount - (formData.discount || 0);
@@ -110,13 +109,13 @@ export default function Purchases() {
       return;
     }
 
-    const purchase: Purchase = {
-      id: editingPurchase?.id || crypto.randomUUID(),
-      purchaseNumber: formData.purchaseNumber!,
+    const order: PurchaseOrder = {
+      id: editingOrder?.id || crypto.randomUUID(),
+      poNumber: formData.poNumber!,
       vendor: formData.vendor!,
       vendorContact: selectedVendor?.email,
       date: formData.date!,
-      dueDate: formData.dueDate,
+      expectedDelivery: formData.expectedDelivery,
       lineItems,
       subtotal: formData.subtotal!,
       taxRate: formData.taxRate!,
@@ -126,33 +125,70 @@ export default function Purchases() {
       status: formData.status!,
       notes: formData.notes,
       projectId: formData.projectId,
-      inventoryMethod: formData.inventoryMethod!,
-      createdAt: editingPurchase?.createdAt || new Date().toISOString(),
+      terms: formData.terms,
+      deliveryAddress: formData.deliveryAddress,
+      createdAt: editingOrder?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    savePurchaseOrder(order);
+    setOrders(loadPurchaseOrders());
+    toast({ title: editingOrder ? 'Purchase order updated' : 'Purchase order created' });
+    setIsDialogOpen(false);
+    resetForm();
+  };
+
+  const handleConvertToPurchase = (order: PurchaseOrder) => {
+    if (order.status === 'converted') {
+      toast({ title: 'This PO has already been converted', variant: 'destructive' });
+      return;
+    }
+
+    const purchase: Purchase = {
+      id: crypto.randomUUID(),
+      purchaseNumber: generatePurchaseNumber(),
+      vendor: order.vendor,
+      vendorContact: order.vendorContact,
+      date: new Date().toISOString().split('T')[0],
+      dueDate: order.expectedDelivery,
+      lineItems: order.lineItems.map(item => ({
+        ...item,
+        receivedQuantity: 0,
+      } as PurchaseLineItem)),
+      subtotal: order.subtotal,
+      taxRate: order.taxRate,
+      taxAmount: order.taxAmount,
+      discount: order.discount,
+      total: order.total,
+      status: 'pending',
+      notes: `Converted from PO ${order.poNumber}`,
+      projectId: order.projectId,
+      inventoryMethod: 'perpetual',
+      createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
     savePurchase(purchase);
 
-    // Record double-entry accounting
+    // Record in accounting
     try {
       recordPurchase(purchase, settings.companyType);
-      toast({ title: editingPurchase ? 'Purchase updated' : 'Purchase created and recorded in journals' });
     } catch (error) {
-      toast({ 
-        title: 'Purchase saved but accounting entry failed', 
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive' 
-      });
+      console.error('Failed to record purchase:', error);
     }
 
-    setPurchases(loadPurchases());
-    setIsDialogOpen(false);
-    resetForm();
+    // Update PO status
+    const updatedOrder = { ...order, status: 'converted' as const, convertedToPurchaseId: purchase.id, updatedAt: new Date().toISOString() };
+    savePurchaseOrder(updatedOrder);
+    setOrders(loadPurchaseOrders());
+
+    toast({ title: 'Converted to purchase', description: `Purchase ${purchase.purchaseNumber} created` });
+    navigate('/purchases');
   };
 
   const resetForm = () => {
     setFormData({
-      purchaseNumber: generatePurchaseNumber(),
+      poNumber: generatePONumber(),
       vendor: '',
       date: new Date().toISOString().split('T')[0],
       lineItems: [],
@@ -161,51 +197,49 @@ export default function Purchases() {
       taxAmount: 0,
       discount: 0,
       total: 0,
-      status: 'pending',
-      inventoryMethod: 'perpetual',
+      status: 'draft',
     });
     setLineItems([]);
-    setEditingPurchase(null);
+    setEditingOrder(null);
     setSelectedVendor(null);
   };
 
-  const handleEdit = (purchase: Purchase) => {
-    setEditingPurchase(purchase);
-    setFormData(purchase);
-    setLineItems(purchase.lineItems);
+  const handleEdit = (order: PurchaseOrder) => {
+    setEditingOrder(order);
+    setFormData(order);
+    setLineItems(order.lineItems);
     setIsDialogOpen(true);
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this purchase?')) {
-      deletePurchase(id);
-      setPurchases(loadPurchases());
-      toast({ title: 'Purchase deleted' });
+    if (confirm('Are you sure you want to delete this purchase order?')) {
+      deletePurchaseOrder(id);
+      setOrders(loadPurchaseOrders());
+      toast({ title: 'Purchase order deleted' });
     }
   };
 
-  const filteredPurchases = purchases.filter(p =>
-    p.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.purchaseNumber.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleStatusChange = (order: PurchaseOrder, status: PurchaseOrder['status']) => {
+    const updatedOrder = { ...order, status, updatedAt: new Date().toISOString() };
+    savePurchaseOrder(updatedOrder);
+    setOrders(loadPurchaseOrders());
+    toast({ title: `Status updated to ${status}` });
+  };
+
+  const filteredOrders = orders.filter(o =>
+    o.vendor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    o.poNumber.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getStatusBadge = (status: Purchase['status']) => {
+  const getStatusBadge = (status: PurchaseOrder['status']) => {
     const variants = {
-      pending: 'secondary',
-      received: 'default',
-      'partly-received': 'outline',
-      cancelled: 'destructive',
+      draft: 'secondary',
+      sent: 'outline',
+      approved: 'default',
+      rejected: 'destructive',
+      converted: 'default',
     } as const;
-    return <Badge variant={variants[status]}>{status.replace('-', ' ').toUpperCase()}</Badge>;
-  };
-
-  const getBusinessTypeLabel = () => {
-    switch (settings.companyType) {
-      case 'trading': return 'Trading Business - Purchases to Inventory';
-      case 'contractor': return 'Contractor Business - Purchases to Projects/Inventory';
-      case 'manufacturer': return 'Manufacturing Business - Purchases to Raw Materials';
-      default: return 'Purchases';
-    }
+    return <Badge variant={variants[status]}>{status.toUpperCase()}</Badge>;
   };
 
   return (
@@ -215,28 +249,28 @@ export default function Purchases() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
-              Purchases
+              Purchase Orders
             </h1>
-            <p className="text-muted-foreground mt-1">{getBusinessTypeLabel()}</p>
+            <p className="text-muted-foreground mt-1">Manage purchase orders and convert to purchases</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={resetForm}>
                 <Plus className="mr-2 h-4 w-4" />
-                New Purchase
+                New Purchase Order
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>{editingPurchase ? 'Edit Purchase' : 'Create Purchase'}</DialogTitle>
+                <DialogTitle>{editingOrder ? 'Edit Purchase Order' : 'Create Purchase Order'}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Purchase Number</Label>
+                    <Label>PO Number</Label>
                     <Input
-                      value={formData.purchaseNumber}
-                      onChange={(e) => setFormData({ ...formData, purchaseNumber: e.target.value })}
+                      value={formData.poNumber}
+                      onChange={(e) => setFormData({ ...formData, poNumber: e.target.value })}
                     />
                   </div>
                   <div>
@@ -264,27 +298,18 @@ export default function Purchases() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Inventory Method</Label>
-                    <Select
-                      value={formData.inventoryMethod}
-                      onValueChange={(value: 'perpetual' | 'periodic') =>
-                        setFormData({ ...formData, inventoryMethod: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="perpetual">Perpetual</SelectItem>
-                        <SelectItem value="periodic">Periodic</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label>Expected Delivery</Label>
+                    <Input
+                      type="date"
+                      value={formData.expectedDelivery || ''}
+                      onChange={(e) => setFormData({ ...formData, expectedDelivery: e.target.value })}
+                    />
                   </div>
                   <div>
                     <Label>Status</Label>
                     <Select
                       value={formData.status}
-                      onValueChange={(value: Purchase['status']) =>
+                      onValueChange={(value: PurchaseOrder['status']) =>
                         setFormData({ ...formData, status: value })
                       }
                     >
@@ -292,10 +317,10 @@ export default function Purchases() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="received">Received</SelectItem>
-                        <SelectItem value="partly-received">Partly Received</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="sent">Sent</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -414,8 +439,17 @@ export default function Purchases() {
                 </div>
 
                 <div>
+                  <Label>Terms & Conditions</Label>
+                  <Textarea
+                    value={formData.terms || ''}
+                    onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
+                    placeholder="Payment terms, delivery conditions, etc."
+                  />
+                </div>
+
+                <div>
                   <Label>Notes</Label>
-                  <Input
+                  <Textarea
                     value={formData.notes || ''}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     placeholder="Additional notes"
@@ -423,7 +457,7 @@ export default function Purchases() {
                 </div>
 
                 <Button onClick={handleSubmit} className="w-full">
-                  {editingPurchase ? 'Update Purchase' : 'Create Purchase'}
+                  {editingOrder ? 'Update Purchase Order' : 'Create Purchase Order'}
                 </Button>
               </div>
             </DialogContent>
@@ -436,7 +470,7 @@ export default function Purchases() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
-                  placeholder="Search purchases..."
+                  placeholder="Search purchase orders..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -445,68 +479,81 @@ export default function Purchases() {
             </div>
           </CardHeader>
           <CardContent>
-            {filteredPurchases.length === 0 ? (
+            {filteredOrders.length === 0 ? (
               <div className="text-center py-12">
-                <ShoppingCart className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No purchases yet</h3>
-                <p className="text-muted-foreground">Create your first purchase to get started</p>
+                <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">No purchase orders found</p>
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Purchase #</TableHead>
-                    <TableHead>Date</TableHead>
+                    <TableHead>PO Number</TableHead>
                     <TableHead>Vendor</TableHead>
-                    <TableHead>Items</TableHead>
+                    <TableHead>Date</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead></TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPurchases.map(purchase => (
-                    <TableRow key={purchase.id}>
-                      <TableCell className="font-medium">{purchase.purchaseNumber}</TableCell>
-                      <TableCell>{new Date(purchase.date).toLocaleDateString()}</TableCell>
-                      <TableCell>{purchase.vendor}</TableCell>
-                      <TableCell>{purchase.lineItems.length} items</TableCell>
-                      <TableCell>{settings.currencySymbol}{purchase.total.toFixed(2)}</TableCell>
-                      <TableCell>{getStatusBadge(purchase.status)}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{purchase.inventoryMethod}</Badge>
-                      </TableCell>
+                  {filteredOrders.map(order => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-medium">{order.poNumber}</TableCell>
+                      <TableCell>{order.vendor}</TableCell>
+                      <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
+                      <TableCell>{settings.currencySymbol}{order.total.toFixed(2)}</TableCell>
+                      <TableCell>{getStatusBadge(order.status)}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => navigate(`/purchase-preview/${purchase.id}`)}
-                            title="Preview"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => navigate(`/purchase-payment/${purchase.id}`)}
-                            title="Payment"
-                          >
-                            <DollarSign className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => navigate(`/purchase-history/${purchase.id}`)}
-                            title="History"
-                          >
-                            <History className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(purchase)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(purchase.id)}>
+                          {order.status !== 'converted' && (
+                            <>
+                              <Button variant="ghost" size="sm" onClick={() => handleEdit(order)}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              {order.status === 'approved' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleConvertToPurchase(order)}
+                                  title="Convert to Purchase"
+                                >
+                                  <ArrowRight className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {order.status === 'draft' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleStatusChange(order, 'sent')}
+                                  title="Mark as Sent"
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {order.status === 'sent' && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleStatusChange(order, 'approved')}
+                                    title="Approve"
+                                  >
+                                    <CheckCircle className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleStatusChange(order, 'rejected')}
+                                    title="Reject"
+                                  >
+                                    <XCircle className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              )}
+                            </>
+                          )}
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(order.id)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>

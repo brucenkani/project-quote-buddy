@@ -18,6 +18,7 @@ export const Navigation = () => {
   ];
 
   const supplierMenuItems = [
+    { path: '/purchase-orders', label: 'Purchase Orders', icon: FileText },
     { path: '/purchases', label: 'Purchases', icon: ShoppingCart },
   ];
 
