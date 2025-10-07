@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,10 +10,12 @@ import { toast } from '@/hooks/use-toast';
 
 export default function Auth() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [invitationData, setInvitationData] = useState<any>(null);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -31,12 +33,53 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // Check for invitation token in URL
+  useEffect(() => {
+    const invitationToken = searchParams.get('invitation');
+    if (invitationToken) {
+      fetchInvitation(invitationToken);
+    }
+  }, [searchParams]);
+
+  const fetchInvitation = async (token: string) => {
+    try {
+      const { data, error } = await supabase.rpc('get_invitation_by_token', {
+        _token: token
+      });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const invitation = data[0];
+        setInvitationData(invitation);
+        setEmail(invitation.email);
+        toast({
+          title: 'Invitation Found',
+          description: `You've been invited to join as ${invitation.role}. Please create your account.`,
+        });
+      } else {
+        toast({
+          title: 'Invalid Invitation',
+          description: 'This invitation link is invalid or has expired.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error fetching invitation:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load invitation details.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: authData, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -48,6 +91,36 @@ export default function Auth() {
       });
 
       if (error) throw error;
+
+      // If signing up via invitation, update the invitation status
+      if (invitationData && authData.user) {
+        const invitationToken = searchParams.get('invitation');
+        
+        // Update invitation status to accepted
+        const { error: updateError } = await supabase
+          .from('invitations')
+          .update({ 
+            status: 'accepted',
+            accepted_at: new Date().toISOString()
+          })
+          .eq('token', invitationToken);
+
+        if (updateError) {
+          console.error('Error updating invitation:', updateError);
+        }
+
+        // Assign the role from the invitation
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: authData.user.id,
+            role: invitationData.role
+          });
+
+        if (roleError) {
+          console.error('Error assigning role:', roleError);
+        }
+      }
 
       toast({
         title: 'Success!',
@@ -91,10 +164,15 @@ export default function Auth() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Welcome to BizCounting</CardTitle>
-          <CardDescription>Sign in to access your account</CardDescription>
+          <CardDescription>
+            {invitationData 
+              ? `You've been invited to join as ${invitationData.role}. Create your account below.`
+              : 'Sign in to access your account'
+            }
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs defaultValue={invitationData ? "signup" : "signin"} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -152,6 +230,7 @@ export default function Auth() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    disabled={!!invitationData}
                   />
                 </div>
                 <div className="space-y-2">
