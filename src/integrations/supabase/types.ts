@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      custom_payroll_items: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string
+          id: string
+          item_type: string
+          payroll_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description: string
+          id?: string
+          item_type: string
+          payroll_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string
+          id?: string
+          item_type?: string
+          payroll_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       employees: {
         Row: {
           account_number: string | null
