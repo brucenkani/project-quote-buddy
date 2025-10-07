@@ -52,7 +52,7 @@ export default function Landing() {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">QuoteBuilder ERP</h1>
+          <h1 className="text-2xl font-bold">BizCounting</h1>
           <div className="flex items-center gap-4">
             <Button onClick={() => navigate('/')} variant="ghost" size="sm" className="gap-2">
               <Home className="h-4 w-4" />
@@ -80,7 +80,7 @@ export default function Landing() {
 
       <main className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4">Welcome to QuoteBuilder ERP</h2>
+          <h2 className="text-4xl font-bold mb-4">Welcome to BizCounting</h2>
           <p className="text-xl text-muted-foreground">
             Complete business management solution for accounting and HR
           </p>

@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail } from 'lucide-react';
+import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -44,6 +44,11 @@ export default function Index() {
     }
   };
 
+  const handleWhatsAppContact = () => {
+    const message = encodeURIComponent("Hi, I'm interested in learning more about BizCounting's services.");
+    window.open(`https://wa.me/27123456789?text=${message}`, '_blank');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       {/* Header */}
@@ -51,9 +56,13 @@ export default function Index() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Calculator className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">QuoteBuilder ERP</h1>
+            <h1 className="text-2xl font-bold">BizCounting</h1>
           </div>
           <div className="flex gap-3">
+            <Button variant="outline" size="lg" className="gap-2" onClick={handleWhatsAppContact}>
+              <MessageCircle className="h-4 w-4" />
+              WhatsApp Us
+            </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="lg" className="gap-2">
@@ -263,7 +272,7 @@ export default function Index() {
         <div className="max-w-3xl mx-auto text-center">
           <h3 className="text-3xl font-bold mb-6">100% Free for Business Owners</h3>
           <p className="text-lg text-muted-foreground mb-8">
-            QuoteBuilder ERP is completely free to use. We generate revenue by offering optional 
+            BizCounting is completely free to use. We generate revenue by offering optional 
             professional accounting services to help you manage your finances even better.
           </p>
           
@@ -298,17 +307,17 @@ export default function Index() {
       <section className="container mx-auto px-4 py-20 text-center">
         <h3 className="text-4xl font-bold mb-6">Ready to Streamline Your Business?</h3>
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Join hundreds of businesses already using QuoteBuilder ERP to manage their operations efficiently.
+          Join hundreds of businesses already using BizCounting to manage their operations efficiently.
         </p>
         <Button onClick={() => navigate('/auth')} size="lg" className="gap-2">
-          Start Using QuoteBuilder ERP Free
+          Start Using BizCounting Free
         </Button>
       </section>
 
       {/* Footer */}
       <footer className="border-t py-8 mt-20">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>&copy; 2025 QuoteBuilder ERP. All rights reserved.</p>
+          <p>&copy; 2025 BizCounting. All rights reserved.</p>
         </div>
       </footer>
     </div>
