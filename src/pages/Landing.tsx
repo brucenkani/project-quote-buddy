@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Calculator, Users, Settings } from 'lucide-react';
+import { Building2, Calculator, Users, Settings, Shield } from 'lucide-react';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -52,6 +52,10 @@ export default function Landing() {
             <Button onClick={() => navigate('/invite')} variant="ghost" size="sm" className="gap-2">
               <Users className="h-4 w-4" />
               Invite Users
+            </Button>
+            <Button onClick={() => navigate('/permissions')} variant="ghost" size="sm" className="gap-2">
+              <Shield className="h-4 w-4" />
+              Permissions
             </Button>
             <Button onClick={() => navigate('/company-settings')} variant="ghost" size="sm" className="gap-2">
               <Settings className="h-4 w-4" />

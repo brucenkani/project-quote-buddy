@@ -46,6 +46,7 @@ import BankFeeds from "./pages/BankFeeds";
 import NotFound from "./pages/NotFound";
 import Reports from "./pages/Reports";
 import InviteUsers from "./pages/InviteUsers";
+import PermissionsManager from "./pages/PermissionsManager";
 
 const queryClient = new QueryClient();
 
@@ -100,6 +101,7 @@ const App = () => (
           <Route path="/expenses/:id" element={<Expenses />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/invite" element={<InviteUsers />} />
+          <Route path="/permissions" element={<PermissionsManager />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

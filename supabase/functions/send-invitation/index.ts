@@ -11,7 +11,7 @@ const corsHeaders = {
 
 interface InvitationRequest {
   email: string;
-  role: "owner" | "accountant";
+  role: "admin" | "accountant" | "employee";
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -84,7 +84,7 @@ const handler = async (req: Request): Promise<Response> => {
       subject: "You've been invited to QuoteBuilder ERP",
       html: `
         <h1>Welcome to QuoteBuilder ERP!</h1>
-        <p>You've been invited to join as ${role === "owner" ? "an Owner" : "an Accountant"}.</p>
+        <p>You've been invited to join as ${role === "admin" ? "an Admin" : role === "accountant" ? "an Accountant" : "an Employee"}.</p>
         <p>Click the link below to accept your invitation and create your account:</p>
         <a href="${inviteUrl}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">Accept Invitation</a>
         <p>This invitation will expire in 7 days.</p>

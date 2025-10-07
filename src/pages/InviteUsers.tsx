@@ -13,7 +13,7 @@ export default function InviteUsers() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'owner' | 'accountant'>('accountant');
+  const [role, setRole] = useState<'admin' | 'accountant' | 'employee'>('accountant');
   const [loading, setLoading] = useState(false);
 
   const handleInvite = async (e: React.FormEvent) => {
@@ -81,19 +81,22 @@ export default function InviteUsers() {
 
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
-                <Select value={role} onValueChange={(value: 'owner' | 'accountant') => setRole(value)}>
+                <Select value={role} onValueChange={(value: 'admin' | 'accountant' | 'employee') => setRole(value)}>
                   <SelectTrigger id="role">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="accountant">Accountant</SelectItem>
-                    <SelectItem value="owner">Owner</SelectItem>
+                    <SelectItem value="employee">Employee</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-muted-foreground">
-                  {role === 'owner' 
-                    ? 'Owners have full access to all features and settings' 
-                    : 'Accountants can manage financial records but cannot change settings'}
+                  {role === 'admin' 
+                    ? 'Admins have full access to all features and settings' 
+                    : role === 'accountant'
+                    ? 'Accountants can manage financial records'
+                    : 'Employees have limited access based on permissions'}
                 </p>
               </div>
 
