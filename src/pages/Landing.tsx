@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Calculator, Users, Settings, Shield } from 'lucide-react';
+import { Building2, Calculator, Users, Settings, Shield, Home } from 'lucide-react';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -49,6 +49,10 @@ export default function Landing() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">QuoteBuilder ERP</h1>
           <div className="flex items-center gap-4">
+            <Button onClick={() => navigate('/')} variant="ghost" size="sm" className="gap-2">
+              <Home className="h-4 w-4" />
+              Home
+            </Button>
             <Button onClick={() => navigate('/invite')} variant="ghost" size="sm" className="gap-2">
               <Users className="h-4 w-4" />
               Invite Users
