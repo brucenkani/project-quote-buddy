@@ -32,6 +32,8 @@ export default function Payroll() {
     other_deductions: '0',
     notes: '',
   });
+  const [customIncome, setCustomIncome] = useState<{ description: string; amount: string }[]>([]);
+  const [customDeductions, setCustomDeductions] = useState<{ description: string; amount: string }[]>([]);
 
   useEffect(() => {
     checkAuth();
@@ -77,12 +79,18 @@ export default function Payroll() {
     const bonuses = parseFloat(formData.bonuses);
     const otherDeductions = parseFloat(formData.other_deductions);
 
-    const grossSalary = calculateGrossSalary(basicSalary, allowances, overtime, bonuses);
+    // Add custom income to gross salary
+    const customIncomeTotal = customIncome.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+    const grossSalary = calculateGrossSalary(basicSalary, allowances, overtime, bonuses) + customIncomeTotal;
+    
     const age = calculateAge(employee.date_of_birth);
     const paye = calculateMonthlyPAYE(grossSalary, age, taxBrackets);
     const uif = calculateUIF(grossSalary);
-    const totalDeductions = paye + uif + otherDeductions;
-    const netSalary = calculateNetSalary(grossSalary, paye, uif, otherDeductions);
+    
+    // Add custom deductions to total deductions
+    const customDeductionsTotal = customDeductions.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+    const totalDeductions = paye + uif + otherDeductions + customDeductionsTotal;
+    const netSalary = calculateNetSalary(grossSalary, paye, uif, otherDeductions + customDeductionsTotal);
 
     return {
       basic_salary: basicSalary,
@@ -104,7 +112,7 @@ export default function Payroll() {
     }
 
     try {
-      const { error } = await supabase.from('payroll').insert([{
+      const { data: payrollData, error: payrollError } = await supabase.from('payroll').insert([{
         employee_id: formData.employee_id,
         period_start: formData.period_start,
         period_end: formData.period_end,
@@ -120,9 +128,43 @@ export default function Payroll() {
         net_salary: calculations.net_salary,
         status: 'pending',
         notes: formData.notes,
-      }]);
+      }]).select();
 
-      if (error) throw error;
+      if (payrollError) throw payrollError;
+
+      // Insert custom income items
+      if (customIncome.length > 0 && payrollData && payrollData[0]) {
+        const customIncomeItems = customIncome
+          .filter(item => item.description && parseFloat(item.amount) > 0)
+          .map(item => ({
+            payroll_id: payrollData[0].id,
+            item_type: 'income',
+            description: item.description,
+            amount: parseFloat(item.amount),
+          }));
+        
+        if (customIncomeItems.length > 0) {
+          const { error: incomeError } = await supabase.from('custom_payroll_items').insert(customIncomeItems);
+          if (incomeError) console.error('Error saving custom income:', incomeError);
+        }
+      }
+
+      // Insert custom deduction items
+      if (customDeductions.length > 0 && payrollData && payrollData[0]) {
+        const customDeductionItems = customDeductions
+          .filter(item => item.description && parseFloat(item.amount) > 0)
+          .map(item => ({
+            payroll_id: payrollData[0].id,
+            item_type: 'deduction',
+            description: item.description,
+            amount: parseFloat(item.amount),
+          }));
+        
+        if (customDeductionItems.length > 0) {
+          const { error: deductionError } = await supabase.from('custom_payroll_items').insert(customDeductionItems);
+          if (deductionError) console.error('Error saving custom deductions:', deductionError);
+        }
+      }
 
       toast({ title: 'Success', description: 'Payroll record created successfully' });
       setShowDialog(false);
@@ -169,6 +211,8 @@ export default function Payroll() {
       other_deductions: '0',
       notes: '',
     });
+    setCustomIncome([]);
+    setCustomDeductions([]);
   };
 
   const selectedEmployee = employees.find(e => e.id === formData.employee_id);
@@ -284,6 +328,104 @@ export default function Payroll() {
                       onChange={(e) => setFormData({ ...formData, other_deductions: e.target.value })}
                     />
                   </div>
+                </div>
+
+                {/* Custom Income Section */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label>Custom Income Items</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCustomIncome([...customIncome, { description: '', amount: '0' }])}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add Income
+                    </Button>
+                  </div>
+                  {customIncome.map((item, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        placeholder="Description"
+                        value={item.description}
+                        onChange={(e) => {
+                          const newItems = [...customIncome];
+                          newItems[index].description = e.target.value;
+                          setCustomIncome(newItems);
+                        }}
+                      />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="Amount"
+                        value={item.amount}
+                        onChange={(e) => {
+                          const newItems = [...customIncome];
+                          newItems[index].amount = e.target.value;
+                          setCustomIncome(newItems);
+                        }}
+                        className="w-32"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCustomIncome(customIncome.filter((_, i) => i !== index))}
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Custom Deductions Section */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <Label>Custom Deductions</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCustomDeductions([...customDeductions, { description: '', amount: '0' }])}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add Deduction
+                    </Button>
+                  </div>
+                  {customDeductions.map((item, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        placeholder="Description"
+                        value={item.description}
+                        onChange={(e) => {
+                          const newItems = [...customDeductions];
+                          newItems[index].description = e.target.value;
+                          setCustomDeductions(newItems);
+                        }}
+                      />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="Amount"
+                        value={item.amount}
+                        onChange={(e) => {
+                          const newItems = [...customDeductions];
+                          newItems[index].amount = e.target.value;
+                          setCustomDeductions(newItems);
+                        }}
+                        className="w-32"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCustomDeductions(customDeductions.filter((_, i) => i !== index))}
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
                 </div>
 
                 {previewCalculations && (
