@@ -19,6 +19,7 @@ export default function Employees() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
+  const [canManage, setCanManage] = useState(false);
   const [formData, setFormData] = useState({
     employee_number: '',
     first_name: '',
@@ -54,6 +55,20 @@ export default function Employees() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       navigate('/auth');
+      return;
+    }
+    await fetchRoles(session.user.id);
+  };
+
+  const fetchRoles = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId);
+    if (!error) {
+      setCanManage((data || []).some((r: any) => r.role === 'owner' || r.role === 'accountant'));
+    } else {
+      setCanManage(false);
     }
   };
 
@@ -74,8 +89,10 @@ export default function Employees() {
     e.preventDefault();
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       const dataToSubmit = {
         ...formData,
+        user_id: user?.id || undefined,
         basic_salary: parseFloat(formData.basic_salary),
         annual_leave_days: parseFloat(formData.annual_leave_days),
         sick_leave_days: parseFloat(formData.sick_leave_days),
@@ -195,7 +212,7 @@ export default function Employees() {
           </div>
           <Dialog open={showDialog} onOpenChange={setShowDialog}>
             <DialogTrigger asChild>
-              <Button onClick={() => { resetForm(); setEditingEmployee(null); }}>
+              <Button onClick={() => { resetForm(); setEditingEmployee(null); }} disabled={!canManage} title={!canManage ? 'You do not have permission to add employees' : undefined}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Employee
               </Button>
@@ -476,14 +493,16 @@ export default function Employees() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(employee)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(employee.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
+                      {canManage ? (
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(employee)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(employee.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 ))}
