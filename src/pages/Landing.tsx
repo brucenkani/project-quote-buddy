@@ -17,6 +17,8 @@ export default function Landing() {
       setLoading(false);
       if (!session) {
         navigate('/auth');
+      } else if (session && window.location.pathname === '/') {
+        navigate('/dashboard');
       }
     });
 
@@ -25,6 +27,8 @@ export default function Landing() {
       setLoading(false);
       if (!session) {
         navigate('/auth');
+      } else if (session && window.location.pathname === '/') {
+        navigate('/dashboard');
       }
     });
 
@@ -33,6 +37,7 @@ export default function Landing() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    navigate('/');
   };
 
   if (loading) {

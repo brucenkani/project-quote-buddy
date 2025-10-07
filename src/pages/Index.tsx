@@ -1,10 +1,48 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function Index() {
   const navigate = useNavigate();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    company: '',
+    phone: '',
+    message: ''
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('contact_inquiries')
+        .insert([formData]);
+
+      if (error) throw error;
+
+      toast.success('Thank you for your inquiry! We will get back to you soon.');
+      setFormData({ name: '', email: '', company: '', phone: '', message: '' });
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error('Error submitting contact form:', error);
+      toast.error('Failed to submit inquiry. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -15,9 +53,88 @@ export default function Index() {
             <Calculator className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold">QuoteBuilder ERP</h1>
           </div>
-          <Button onClick={() => navigate('/auth')} size="lg">
-            Sign In / Sign Up
-          </Button>
+          <div className="flex gap-3">
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="lg" className="gap-2">
+                  <Mail className="h-4 w-4" />
+                  Contact Us
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Contact Our Team</DialogTitle>
+                  <DialogDescription>
+                    Interested in our professional accounting services? Send us a message and we'll get back to you soon.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name *</Label>
+                    <Input
+                      id="name"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Your full name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="your@email.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="company">Company</Label>
+                    <Input
+                      id="company"
+                      value={formData.company}
+                      onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                      placeholder="Your company name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="Your phone number"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="message">Message *</Label>
+                    <Textarea
+                      id="message"
+                      required
+                      value={formData.message}
+                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      placeholder="Tell us about your accounting needs..."
+                      rows={4}
+                    />
+                  </div>
+                  <div className="flex gap-3 justify-end">
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? 'Sending...' : 'Send Message'}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+            <Button onClick={() => navigate('/auth')} size="lg">
+              Sign In / Sign Up
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -160,10 +277,18 @@ export default function Index() {
                 While the platform is free to use, you can hire our team of professional accountants 
                 to manage your books, ensure compliance, and provide strategic financial guidance.
               </p>
-              <div className="flex items-center gap-2 justify-center text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 justify-center text-sm text-muted-foreground mb-4">
                 <FileText className="h-4 w-4" />
                 <span>Custom pricing based on your business needs</span>
               </div>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="lg" className="gap-2">
+                    <Mail className="h-4 w-4" />
+                    Contact Us for Pricing
+                  </Button>
+                </DialogTrigger>
+              </Dialog>
             </CardContent>
           </Card>
         </div>
