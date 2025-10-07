@@ -49,6 +49,10 @@ export default function Landing() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">QuoteBuilder ERP</h1>
           <div className="flex items-center gap-4">
+            <Button onClick={() => navigate('/invite')} variant="ghost" size="sm" className="gap-2">
+              <Users className="h-4 w-4" />
+              Invite Users
+            </Button>
             <Button onClick={() => navigate('/company-settings')} variant="ghost" size="sm" className="gap-2">
               <Settings className="h-4 w-4" />
               Company Settings
