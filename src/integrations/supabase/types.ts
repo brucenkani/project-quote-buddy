@@ -49,6 +49,7 @@ export type Database = {
           account_number: string | null
           account_type: string | null
           address: string | null
+          annual_leave_days: number | null
           bank_name: string | null
           basic_salary: number
           created_at: string | null
@@ -57,14 +58,18 @@ export type Database = {
           email: string
           employee_number: string
           end_date: string | null
+          family_responsibility_leave_days: number | null
           first_name: string
           id: string
           id_number: string
           last_name: string
+          maternity_leave_days: number | null
           phone: string | null
           position: string
+          sick_leave_days: number | null
           start_date: string
           status: string | null
+          study_leave_days: number | null
           tax_number: string | null
           uif_number: string | null
           updated_at: string | null
@@ -74,6 +79,7 @@ export type Database = {
           account_number?: string | null
           account_type?: string | null
           address?: string | null
+          annual_leave_days?: number | null
           bank_name?: string | null
           basic_salary: number
           created_at?: string | null
@@ -82,14 +88,18 @@ export type Database = {
           email: string
           employee_number: string
           end_date?: string | null
+          family_responsibility_leave_days?: number | null
           first_name: string
           id?: string
           id_number: string
           last_name: string
+          maternity_leave_days?: number | null
           phone?: string | null
           position: string
+          sick_leave_days?: number | null
           start_date: string
           status?: string | null
+          study_leave_days?: number | null
           tax_number?: string | null
           uif_number?: string | null
           updated_at?: string | null
@@ -99,6 +109,7 @@ export type Database = {
           account_number?: string | null
           account_type?: string | null
           address?: string | null
+          annual_leave_days?: number | null
           bank_name?: string | null
           basic_salary?: number
           created_at?: string | null
@@ -107,14 +118,18 @@ export type Database = {
           email?: string
           employee_number?: string
           end_date?: string | null
+          family_responsibility_leave_days?: number | null
           first_name?: string
           id?: string
           id_number?: string
           last_name?: string
+          maternity_leave_days?: number | null
           phone?: string | null
           position?: string
+          sick_leave_days?: number | null
           start_date?: string
           status?: string | null
+          study_leave_days?: number | null
           tax_number?: string | null
           uif_number?: string | null
           updated_at?: string | null

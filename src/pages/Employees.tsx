@@ -38,6 +38,11 @@ export default function Employees() {
     tax_number: '',
     uif_number: '',
     status: 'active',
+    annual_leave_days: '21',
+    sick_leave_days: '30',
+    family_responsibility_leave_days: '3',
+    maternity_leave_days: '0',
+    study_leave_days: '0',
   });
 
   useEffect(() => {
@@ -72,6 +77,11 @@ export default function Employees() {
       const dataToSubmit = {
         ...formData,
         basic_salary: parseFloat(formData.basic_salary),
+        annual_leave_days: parseFloat(formData.annual_leave_days),
+        sick_leave_days: parseFloat(formData.sick_leave_days),
+        family_responsibility_leave_days: parseFloat(formData.family_responsibility_leave_days),
+        maternity_leave_days: parseFloat(formData.maternity_leave_days),
+        study_leave_days: parseFloat(formData.study_leave_days),
       };
 
       if (editingEmployee) {
@@ -121,6 +131,11 @@ export default function Employees() {
       tax_number: employee.tax_number || '',
       uif_number: employee.uif_number || '',
       status: employee.status,
+      annual_leave_days: employee.annual_leave_days || '21',
+      sick_leave_days: employee.sick_leave_days || '30',
+      family_responsibility_leave_days: employee.family_responsibility_leave_days || '3',
+      maternity_leave_days: employee.maternity_leave_days || '0',
+      study_leave_days: employee.study_leave_days || '0',
     });
     setShowDialog(true);
   };
@@ -161,6 +176,11 @@ export default function Employees() {
       tax_number: '',
       uif_number: '',
       status: 'active',
+      annual_leave_days: '21',
+      sick_leave_days: '30',
+      family_responsibility_leave_days: '3',
+      maternity_leave_days: '0',
+      study_leave_days: '0',
     });
   };
 
@@ -353,6 +373,63 @@ export default function Employees() {
                     />
                   </div>
                 </div>
+                
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg">Annual Leave Allocations (Days)</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="annual_leave_days">Annual Leave</Label>
+                      <Input
+                        id="annual_leave_days"
+                        type="number"
+                        step="0.5"
+                        value={formData.annual_leave_days}
+                        onChange={(e) => setFormData({ ...formData, annual_leave_days: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="sick_leave_days">Sick Leave</Label>
+                      <Input
+                        id="sick_leave_days"
+                        type="number"
+                        step="0.5"
+                        value={formData.sick_leave_days}
+                        onChange={(e) => setFormData({ ...formData, sick_leave_days: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="family_responsibility_leave_days">Family Responsibility Leave</Label>
+                      <Input
+                        id="family_responsibility_leave_days"
+                        type="number"
+                        step="0.5"
+                        value={formData.family_responsibility_leave_days}
+                        onChange={(e) => setFormData({ ...formData, family_responsibility_leave_days: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="maternity_leave_days">Maternity Leave</Label>
+                      <Input
+                        id="maternity_leave_days"
+                        type="number"
+                        step="0.5"
+                        value={formData.maternity_leave_days}
+                        onChange={(e) => setFormData({ ...formData, maternity_leave_days: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="study_leave_days">Study Leave</Label>
+                      <Input
+                        id="study_leave_days"
+                        type="number"
+                        step="0.5"
+                        value={formData.study_leave_days}
+                        onChange={(e) => setFormData({ ...formData, study_leave_days: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
                     Cancel
