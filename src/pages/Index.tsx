@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle } from 'lucide-react';
+import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle, Phone, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -45,8 +45,13 @@ export default function Index() {
   };
 
   const handleWhatsAppContact = () => {
-    const message = encodeURIComponent("Hi, I'm interested in learning more about BizCounting's services.");
-    window.open(`https://wa.me/27123456789?text=${message}`, '_blank');
+    const phoneNumber = '27123456789';
+    const message = encodeURIComponent("Hi, I'm interested in learning more about BizCounting's professional accounting services.");
+    window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+  };
+
+  const handlePhoneCall = () => {
+    window.location.href = 'tel:+27123456789';
   };
 
   return (
@@ -159,20 +164,151 @@ export default function Index() {
 
       {/* 100% Free Message - Prominent Section */}
       <section className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <h3 className="text-3xl font-bold text-center mb-4">100% Free for Business Owners</h3>
-          <p className="text-lg text-center text-muted-foreground mb-4">
+          <p className="text-lg text-center text-muted-foreground mb-8">
             BizCounting is completely free to use. We generate revenue by offering optional professional 
             accounting services to help you manage your finances even better.
           </p>
-          <div className="flex justify-center mb-4">
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="lg" className="gap-2">
-                  Hire Us
-                </Button>
-              </DialogTrigger>
-            </Dialog>
+          
+          {/* Hire Us Section with Contact Options */}
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
+            {/* Static Hire Us Button */}
+            <div className="flex-shrink-0">
+              <Button size="lg" variant="default" className="text-lg px-8 py-6 h-auto shadow-lg hover:shadow-xl transition-all">
+                Hire Us
+              </Button>
+            </div>
+
+            {/* Animated Arrow */}
+            <div className="flex-shrink-0 hidden md:block">
+              <ArrowRight className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+
+            {/* Contact Options */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* Phone/WhatsApp Button */}
+              <Card className="group hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer border-2">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Phone className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
+                    <span className="font-semibold">Call or WhatsApp</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={handlePhoneCall}
+                      className="gap-2 hover:bg-primary hover:text-primary-foreground"
+                    >
+                      <Phone className="h-4 w-4" />
+                      Call
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={handleWhatsAppContact}
+                      className="gap-2 hover:bg-green-600 hover:text-white hover:border-green-600"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      WhatsApp
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">+27 123 456 789</p>
+                </CardContent>
+              </Card>
+
+              {/* Email Button */}
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Card className="group hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer border-2">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Mail className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
+                        <span className="font-semibold">Send Message</span>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        className="w-full gap-2"
+                      >
+                        <Mail className="h-4 w-4" />
+                        Email Us
+                      </Button>
+                      <p className="text-sm text-muted-foreground mt-2">info@bizcounting.co.za</p>
+                    </CardContent>
+                  </Card>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px]">
+                  <DialogHeader>
+                    <DialogTitle>Contact Our Team</DialogTitle>
+                    <DialogDescription>
+                      Interested in our professional accounting services? Send us a message and we'll get back to you soon.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Name *</Label>
+                      <Input
+                        id="name"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="Your full name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="your@email.com"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="company">Company</Label>
+                      <Input
+                        id="company"
+                        value={formData.company}
+                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                        placeholder="Your company name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        placeholder="Your phone number"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="message">Message *</Label>
+                      <Textarea
+                        id="message"
+                        required
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                        placeholder="Tell us about your accounting needs..."
+                        rows={4}
+                      />
+                    </div>
+                    <div className="flex gap-3 justify-end">
+                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? 'Sending...' : 'Send Message'}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </div>
       </section>
