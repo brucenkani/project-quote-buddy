@@ -315,11 +315,22 @@ export default function Index() {
 
             {/* Right: Bruce's Profile Picture */}
             <div className="flex-shrink-0">
-              <img 
-                src={bruceProfile} 
-                alt="Bruce - Professional Accountant" 
-                className="w-32 h-32 rounded-full object-cover border-4 border-primary/20 shadow-lg"
-              />
+              <Dialog>
+                <DialogTrigger asChild>
+                  <img 
+                    src={bruceProfile} 
+                    alt="Bruce - Professional Accountant" 
+                    className="w-32 h-32 rounded-full object-cover border-4 border-primary/20 shadow-lg cursor-pointer hover:scale-105 transition-transform"
+                  />
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-2xl">
+                  <img 
+                    src={bruceProfile} 
+                    alt="Bruce - Professional Accountant" 
+                    className="w-full h-auto rounded-lg"
+                  />
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>
