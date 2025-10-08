@@ -179,33 +179,6 @@ export default function Index() {
               </DialogTrigger>
             </Dialog>
           </div>
-          
-          <Card className="border-2 border-primary/30">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Optional Professional Support</CardTitle>
-              <CardDescription>Need an expert accountant?</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-center text-muted-foreground">
-                While the platform is free to use, you can hire our team of professional accountants 
-                to manage your books, ensure compliance, and provide strategic financial guidance.
-              </p>
-              <div className="flex items-center gap-2 justify-center text-sm text-muted-foreground">
-                <FileText className="h-4 w-4" />
-                <span>Custom pricing based on your business needs</span>
-              </div>
-              <div className="flex justify-center">
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="lg" className="gap-2">
-                      <Mail className="h-4 w-4" />
-                      Contact Us for Pricing
-                    </Button>
-                  </DialogTrigger>
-                </Dialog>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </section>
 
