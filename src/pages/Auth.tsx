@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
+import { Calculator, ArrowLeft } from 'lucide-react';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -160,7 +161,23 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen bg-background">
+      {/* Header Navigation */}
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Calculator className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold">BizCounting</h1>
+          </div>
+          <Button variant="ghost" onClick={() => navigate('/')} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Button>
+        </div>
+      </header>
+
+      {/* Auth Form */}
+      <div className="flex items-center justify-center p-4 py-16">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Welcome to BizCounting</CardTitle>
@@ -253,6 +270,7 @@ export default function Auth() {
           </Tabs>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
