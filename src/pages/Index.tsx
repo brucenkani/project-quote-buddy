@@ -154,17 +154,17 @@ export default function Index() {
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 text-center">
+      <section className="container mx-auto px-4 py-12 text-center">
         <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
           Complete Business Management Platform
         </h2>
-        <p className="text-xl text-muted-foreground mb-4 max-w-3xl mx-auto">
+        <p className="text-xl text-muted-foreground mb-2 max-w-3xl mx-auto">
           Streamline your accounting and HR operations with our comprehensive ERP solution.
         </p>
       </section>
 
       {/* 100% Free Message - Prominent Section */}
-      <section className="container mx-auto px-4 py-4">
+      <section className="container mx-auto px-4 py-2">
         <div className="max-w-5xl mx-auto">
           <h3 className="text-3xl font-bold text-center mb-4">100% Free for Business Owners</h3>
           <p className="text-lg text-center text-muted-foreground mb-8">
