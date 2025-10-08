@@ -148,13 +148,12 @@ export default function Index() {
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
+      <section className="container mx-auto px-4 py-16 text-center">
         <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
           Complete Business Management Platform
         </h2>
         <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-          Streamline your accounting and HR operations with our comprehensive ERP solution. 
-          100% free for business owners, with optional professional accounting services.
+          Streamline your accounting and HR operations with our comprehensive ERP solution.
         </p>
         <div className="flex gap-4 justify-center">
           <Button onClick={() => navigate('/auth')} size="lg" className="gap-2">
@@ -163,11 +162,49 @@ export default function Index() {
         </div>
       </section>
 
+      {/* 100% Free Message - Prominent Section */}
+      <section className="container mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto">
+          <h3 className="text-3xl font-bold text-center mb-4">100% Free for Business Owners</h3>
+          <p className="text-lg text-center text-muted-foreground mb-8">
+            BizCounting is completely free to use. We generate revenue by offering optional professional 
+            accounting services to help you manage your finances even better.
+          </p>
+          
+          <Card className="border-2 border-primary/30">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">Optional Professional Support</CardTitle>
+              <CardDescription>Need an expert accountant?</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-center text-muted-foreground">
+                While the platform is free to use, you can hire our team of professional accountants 
+                to manage your books, ensure compliance, and provide strategic financial guidance.
+              </p>
+              <div className="flex items-center gap-2 justify-center text-sm text-muted-foreground">
+                <FileText className="h-4 w-4" />
+                <span>Custom pricing based on your business needs</span>
+              </div>
+              <div className="flex justify-center">
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="lg" className="gap-2">
+                      <Mail className="h-4 w-4" />
+                      Contact Us for Pricing
+                    </Button>
+                  </DialogTrigger>
+                </Dialog>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
       {/* Features Grid */}
-      <section className="container mx-auto px-4 py-16">
-        <h3 className="text-3xl font-bold text-center mb-12">Everything You Need to Run Your Business</h3>
+      <section className="container mx-auto px-4 py-12">
+        <h3 className="text-3xl font-bold text-center mb-10">Everything You Need to Run Your Business</h3>
         
-        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-16">
+        <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto mb-12">
           <Card className="border-2 hover:border-primary/50 transition-colors">
             <CardHeader>
               <Calculator className="h-12 w-12 mb-4 text-primary" />
@@ -267,57 +304,21 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="container mx-auto px-4 py-16 bg-muted/30 rounded-lg my-16">
-        <div className="max-w-3xl mx-auto text-center">
-          <h3 className="text-3xl font-bold mb-6">100% Free for Business Owners</h3>
-          <p className="text-lg text-muted-foreground mb-8">
-            BizCounting is completely free to use. We generate revenue by offering optional 
-            professional accounting services to help you manage your finances even better.
-          </p>
-          
-          <Card className="border-2 border-primary/50">
-            <CardHeader>
-              <CardTitle className="text-2xl">Optional Professional Support</CardTitle>
-              <CardDescription>Need an expert accountant?</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">
-                While the platform is free to use, you can hire our team of professional accountants 
-                to manage your books, ensure compliance, and provide strategic financial guidance.
-              </p>
-              <div className="flex items-center gap-2 justify-center text-sm text-muted-foreground mb-4">
-                <FileText className="h-4 w-4" />
-                <span>Custom pricing based on your business needs</span>
-              </div>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="lg" className="gap-2">
-                    <Mail className="h-4 w-4" />
-                    Contact Us for Pricing
-                  </Button>
-                </DialogTrigger>
-              </Dialog>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
-        <h3 className="text-4xl font-bold mb-6">Ready to Streamline Your Business?</h3>
-        <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Join hundreds of businesses already using BizCounting to manage their operations efficiently.
-        </p>
-        <Button onClick={() => navigate('/auth')} size="lg" className="gap-2">
-          Start Using BizCounting Free
-        </Button>
-      </section>
 
       {/* Footer */}
-      <footer className="border-t py-8 mt-20">
-        <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>&copy; 2025 BizCounting. All rights reserved.</p>
+      <footer className="border-t py-8 mt-16">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-muted-foreground text-sm">
+            <p>&copy; 2025 Nkani Business Solutions (Pty) Ltd. All rights reserved.</p>
+            <div className="flex gap-6">
+              <button onClick={() => navigate('/terms')} className="hover:text-primary transition-colors">
+                Terms & Conditions
+              </button>
+              <button onClick={() => navigate('/privacy')} className="hover:text-primary transition-colors">
+                Privacy Policy
+              </button>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
