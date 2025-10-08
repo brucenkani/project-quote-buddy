@@ -104,11 +104,11 @@ const App = () => (
           <Route path="/expenses/:id/history" element={<ExpenseHistory />} />
           <Route path="/expenses/:id" element={<Expenses />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/calculators" element={<Calculators />} />
           <Route path="/invite" element={<InviteUsers />} />
           <Route path="/permissions" element={<PermissionsManager />} />
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/calculators" element={<Calculators />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
