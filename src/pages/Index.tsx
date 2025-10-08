@@ -156,7 +156,7 @@ export default function Index() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-12 text-center">
         <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-          Complete Business Management Platform
+          Accounting & Payroll Systems
         </h2>
         <p className="text-xl text-muted-foreground mb-2 max-w-3xl mx-auto">
           Streamline your accounting and HR operations with our comprehensive ERP solution.
