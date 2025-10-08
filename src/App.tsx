@@ -49,6 +49,7 @@ import InviteUsers from "./pages/InviteUsers";
 import PermissionsManager from "./pages/PermissionsManager";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Calculators from "./pages/Calculators";
 
 const queryClient = new QueryClient();
 
@@ -107,6 +108,7 @@ const App = () => (
           <Route path="/permissions" element={<PermissionsManager />} />
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/calculators" element={<Calculators />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

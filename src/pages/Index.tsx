@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle, Phone, ArrowRight } from 'lucide-react';
+import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle, Phone, ArrowRight, Binary } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import bruceProfile from '@/assets/bruce-profile.png';
@@ -340,8 +340,8 @@ export default function Index() {
       <section className="container mx-auto px-4 py-8">
         <h3 className="text-3xl font-bold text-center mb-10">Everything You Need to Run Your Business</h3>
         
-        <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto mb-12">
-          <Card className="border-2 hover:border-primary/50 transition-colors">
+        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-12">
+          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/accounting')}>
             <CardHeader>
               <Calculator className="h-12 w-12 mb-4 text-primary" />
               <CardTitle>Accounting System</CardTitle>
@@ -373,7 +373,7 @@ export default function Index() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 hover:border-primary/50 transition-colors">
+          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/payroll')}>
             <CardHeader>
               <Users className="h-12 w-12 mb-4 text-primary" />
               <CardTitle>Payroll & HR System</CardTitle>
@@ -400,6 +400,38 @@ export default function Index() {
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <span>HR dashboard & analytics</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/calculators')}>
+            <CardHeader>
+              <Binary className="h-12 w-12 mb-4 text-primary" />
+              <CardTitle>Business Calculators</CardTitle>
+              <CardDescription>Essential calculation tools for your business</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Tax & SARS calculators</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Financial planning tools</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Accounting calculators</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Property & asset tools</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Engineering calculators</span>
                 </li>
               </ul>
             </CardContent>
