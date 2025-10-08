@@ -163,14 +163,14 @@ export default function Index() {
       </section>
 
       {/* 100% Free Message - Prominent Section */}
-      <section className="container mx-auto px-4 py-12">
+      <section className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <h3 className="text-3xl font-bold text-center mb-4">100% Free for Business Owners</h3>
           <p className="text-lg text-center text-muted-foreground mb-4">
             BizCounting is completely free to use. We generate revenue by offering optional professional 
             accounting services to help you manage your finances even better.
           </p>
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-4">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="lg" className="gap-2">
@@ -183,7 +183,7 @@ export default function Index() {
       </section>
 
       {/* Features Grid */}
-      <section className="container mx-auto px-4 py-12">
+      <section className="container mx-auto px-4 py-8">
         <h3 className="text-3xl font-bold text-center mb-10">Everything You Need to Run Your Business</h3>
         
         <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto mb-12">
