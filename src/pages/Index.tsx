@@ -173,10 +173,10 @@ export default function Index() {
           
           {/* Hire Us Section with Contact Options */}
           <div className="flex flex-col md:flex-row items-center justify-center gap-6 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
-            {/* Static Hire Us Button */}
+            {/* Static Hire Me Button */}
             <div className="flex-shrink-0">
               <Button size="lg" variant="default" className="text-lg px-8 py-6 h-auto shadow-lg hover:shadow-xl transition-all">
-                Hire Us
+                Hire Me, Bruce.
               </Button>
             </div>
 
