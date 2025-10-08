@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle, Phone, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import bruceProfile from '@/assets/bruce-profile.png';
 
 export default function Index() {
   const navigate = useNavigate();
@@ -172,20 +173,22 @@ export default function Index() {
           </p>
           
           {/* Hire Us Section with Contact Options */}
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
-            {/* Static Hire Me Button */}
-            <div className="flex-shrink-0">
-              <Button size="lg" variant="default" className="text-lg px-8 py-6 h-auto shadow-lg hover:shadow-xl transition-all">
-                Hire Me, Bruce.
-              </Button>
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
+            {/* Left: Static Hire Me Button and Arrow */}
+            <div className="flex items-center gap-6">
+              <div className="flex-shrink-0">
+                <Button size="lg" variant="default" className="text-lg px-8 py-6 h-auto shadow-lg hover:shadow-xl transition-all">
+                  Hire Me, Bruce.
+                </Button>
+              </div>
+
+              {/* Animated Arrow */}
+              <div className="flex-shrink-0 hidden lg:block">
+                <ArrowRight className="h-8 w-8 text-primary animate-pulse" />
+              </div>
             </div>
 
-            {/* Animated Arrow */}
-            <div className="flex-shrink-0 hidden md:block">
-              <ArrowRight className="h-8 w-8 text-primary animate-pulse" />
-            </div>
-
-            {/* Contact Options */}
+            {/* Middle: Contact Options */}
             <div className="flex flex-col sm:flex-row gap-4">
               {/* Phone/WhatsApp Button */}
               <Card className="group hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer border-2">
@@ -308,6 +311,15 @@ export default function Index() {
                   </form>
                 </DialogContent>
               </Dialog>
+            </div>
+
+            {/* Right: Bruce's Profile Picture */}
+            <div className="flex-shrink-0">
+              <img 
+                src={bruceProfile} 
+                alt="Bruce - Professional Accountant" 
+                className="w-32 h-32 rounded-full object-cover border-4 border-primary/20 shadow-lg"
+              />
             </div>
           </div>
         </div>
