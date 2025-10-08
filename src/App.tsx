@@ -50,6 +50,12 @@ import PermissionsManager from "./pages/PermissionsManager";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Calculators from "./pages/Calculators";
+import TaxCalculators from "./pages/calculators/TaxCalculators";
+import FinancialCalculators from "./pages/calculators/FinancialCalculators";
+import AccountingCalculators from "./pages/calculators/AccountingCalculators";
+import BusinessMetrics from "./pages/calculators/BusinessMetrics";
+import PropertyCalculators from "./pages/calculators/PropertyCalculators";
+import EngineeringCalculators from "./pages/calculators/EngineeringCalculators";
 
 const queryClient = new QueryClient();
 
@@ -105,6 +111,12 @@ const App = () => (
           <Route path="/expenses/:id" element={<Expenses />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/calculators" element={<Calculators />} />
+          <Route path="/calculators/tax" element={<TaxCalculators />} />
+          <Route path="/calculators/financial" element={<FinancialCalculators />} />
+          <Route path="/calculators/accounting" element={<AccountingCalculators />} />
+          <Route path="/calculators/business-metrics" element={<BusinessMetrics />} />
+          <Route path="/calculators/property" element={<PropertyCalculators />} />
+          <Route path="/calculators/engineering" element={<EngineeringCalculators />} />
           <Route path="/invite" element={<InviteUsers />} />
           <Route path="/permissions" element={<PermissionsManager />} />
           <Route path="/terms" element={<TermsAndConditions />} />

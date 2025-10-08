@@ -12,6 +12,7 @@ export default function Calculators() {
       title: "Tax Calculators",
       icon: Percent,
       description: "SARS and tax calculation tools",
+      route: "/calculators/tax",
       calculators: [
         "Income Tax Calculator",
         "VAT Calculator",
@@ -24,6 +25,7 @@ export default function Calculators() {
       title: "Financial Calculators",
       icon: DollarSign,
       description: "Financial planning and analysis tools",
+      route: "/calculators/financial",
       calculators: [
         "Loan Repayment Calculator",
         "Interest Rate Calculator",
@@ -36,6 +38,7 @@ export default function Calculators() {
       title: "Accounting Calculators",
       icon: Calculator,
       description: "Essential accounting calculations",
+      route: "/calculators/accounting",
       calculators: [
         "Depreciation Calculator",
         "Markup & Margin Calculator",
@@ -48,6 +51,7 @@ export default function Calculators() {
       title: "Business Metrics",
       icon: TrendingUp,
       description: "Key performance indicators",
+      route: "/calculators/business-metrics",
       calculators: [
         "Revenue Growth Calculator",
         "Customer Acquisition Cost",
@@ -60,6 +64,7 @@ export default function Calculators() {
       title: "Property & Asset Calculators",
       icon: Building2,
       description: "Real estate and asset calculations",
+      route: "/calculators/property",
       calculators: [
         "Property Transfer Duty",
         "Rental Yield Calculator",
@@ -72,6 +77,7 @@ export default function Calculators() {
       title: "Engineering Calculators",
       icon: Wrench,
       description: "Technical and project calculations",
+      route: "/calculators/engineering",
       calculators: [
         "Project Cost Calculator",
         "Material Quantity Estimator",
@@ -132,7 +138,11 @@ export default function Calculators() {
                       </li>
                     ))}
                   </ul>
-                  <Button className="w-full mt-4" variant="outline">
+                  <Button 
+                    className="w-full mt-4" 
+                    variant="outline"
+                    onClick={() => navigate(category.route)}
+                  >
                     Explore Tools
                   </Button>
                 </CardContent>
