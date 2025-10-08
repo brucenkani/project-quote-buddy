@@ -45,13 +45,13 @@ export default function Index() {
   };
 
   const handleWhatsAppContact = () => {
-    const phoneNumber = '27123456789';
+    const phoneNumber = '27659672215';
     const message = encodeURIComponent("Hi, I'm interested in learning more about BizCounting's professional accounting services.");
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
   };
 
   const handlePhoneCall = () => {
-    window.location.href = 'tel:+27123456789';
+    window.location.href = 'tel:+27659672215';
   };
 
   return (
@@ -214,7 +214,7 @@ export default function Index() {
                       WhatsApp
                     </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-2">+27 123 456 789</p>
+                  <p className="text-sm text-muted-foreground mt-2">+27 65 967 2215</p>
                 </CardContent>
               </Card>
 
@@ -234,7 +234,7 @@ export default function Index() {
                         <Mail className="h-4 w-4" />
                         Email Us
                       </Button>
-                      <p className="text-sm text-muted-foreground mt-2">info@bizcounting.co.za</p>
+                      <p className="text-sm text-muted-foreground mt-2">bruce@nkani.co.za</p>
                     </CardContent>
                   </Card>
                 </DialogTrigger>
