@@ -52,25 +52,25 @@ export default function InvoicePrint() {
       
       {/* Header with Company Branding */}
       <div className="p-8 pb-4 mb-4 border-b-2" style={{ borderColor: settings.primaryColor }}>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
             {settings.logoUrl && (
-              <img src={settings.logoUrl} alt={settings.companyName} className="w-auto max-w-[200px] h-auto" style={{ width: 'fit-content' }} />
+              <img src={settings.logoUrl} alt={settings.companyName} className="w-auto max-w-[200px] h-auto mb-4" style={{ width: 'fit-content' }} />
             )}
-            <h1 className="text-2xl font-bold" style={{ color: settings.primaryColor }}>
-              Tax Invoice
-            </h1>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-8 text-xs">
-          <div>
-            <p className="font-semibold">{settings.companyName}</p>
-            {settings.address && <p>{settings.address}</p>}
-            {settings.vatNumber && <p>VAT No: {settings.vatNumber}</p>}
+            <div className="text-xs space-y-0.5">
+              <p className="font-semibold text-sm">{settings.companyName}</p>
+              {settings.address && <p>{settings.address}</p>}
+              {settings.vatNumber && <p>VAT No: {settings.vatNumber}</p>}
+            </div>
           </div>
           <div className="text-right">
-            <p className="font-semibold">Number: {invoice.invoiceNumber}</p>
-            <p>Date: {new Date(invoice.issueDate).toLocaleDateString()}</p>
+            <h1 className="text-2xl font-bold mb-2" style={{ color: settings.primaryColor }}>
+              Tax Invoice
+            </h1>
+            <div className="text-xs space-y-0.5">
+              <p className="font-semibold">Number: {invoice.invoiceNumber}</p>
+              <p>Date: {new Date(invoice.issueDate).toLocaleDateString()}</p>
+            </div>
           </div>
         </div>
       </div>
