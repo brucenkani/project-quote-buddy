@@ -116,7 +116,17 @@ export default function InvoicePrint() {
         )}
 
         <div className="border-t-2 pt-4" style={{ borderColor: settings.primaryColor }}>
-          <div className="flex justify-end">
+          <div className="flex justify-between items-start">
+            <div className="text-xs space-y-1">
+              {settings.bankName && (
+                <>
+                  <p className="font-semibold">Bank: {settings.bankName}</p>
+                  {settings.accountNumber && <p>Account: {settings.accountNumber}</p>}
+                  {settings.branchCode && <p>Branch Code: {settings.branchCode}</p>}
+                </>
+              )}
+            </div>
+            
             <div className="w-64 space-y-1 text-sm">
               <div className="flex justify-between font-bold text-base mb-2">
                 <span>Total Due:</span>

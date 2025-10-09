@@ -18,6 +18,9 @@ export interface CompanySettings {
   vatNumber?: string; // VAT registration number (country-specific)
   incomeTaxNumber?: string; // Income tax number (country-specific)
   companyRegistrationNumber?: string; // Company registration number (country-specific)
+  bankName?: string; // Bank name for invoices
+  accountNumber?: string; // Bank account number
+  branchCode?: string; // Bank branch code
 }
 
 export const defaultSettings: CompanySettings = {
