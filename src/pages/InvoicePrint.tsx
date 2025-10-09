@@ -42,6 +42,11 @@ export default function InvoicePrint() {
             margin: 1.5cm;
           }
           .no-print { display: none; }
+          /* Hide browser's default header/footer */
+          @page {
+            margin-top: 1.5cm;
+            margin-bottom: 1.5cm;
+          }
         }
       `}</style>
       
