@@ -53,7 +53,7 @@ export default function InvoicePrint() {
       {/* Header with Company Branding */}
       <div className="p-8 pb-4 mb-4 border-b-2" style={{ borderColor: settings.primaryColor }}>
         {settings.logoUrl && (
-          <img src={settings.logoUrl} alt={settings.companyName} className="h-12 mb-3" />
+          <img src={settings.logoUrl} alt={settings.companyName} className="w-auto max-w-[200px] h-auto mb-3" style={{ width: 'fit-content' }} />
         )}
         <h1 className="text-2xl font-bold mb-2" style={{ color: settings.primaryColor }}>
           TAX INVOICE
