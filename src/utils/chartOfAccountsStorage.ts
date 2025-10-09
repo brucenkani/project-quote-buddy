@@ -2,42 +2,96 @@ import { ChartAccount, defaultChartOfAccounts } from '@/types/chartOfAccounts';
 
 const CHART_KEY = 'quotebuilder-chart-of-accounts';
 
-// Migration function to update old account types to new format
+// Migration function to update old account types and numbers to new format
 const migrateAccountTypes = (accounts: ChartAccount[]): ChartAccount[] => {
-  return accounts.map(account => {
-    let newAccountType = account.accountType;
-    
-    // Map old types to new types based on account number or name
-    if (account.accountType === 'asset' as any) {
-      // Current assets: 100-149
-      // Non-current assets: 150-199
-      const accountNum = parseInt(account.accountNumber);
-      if (accountNum >= 100 && accountNum < 150) {
-        newAccountType = 'current-asset';
-      } else if (accountNum >= 150 && accountNum < 200) {
-        newAccountType = 'non-current-asset';
-      } else {
-        // Default based on account name
-        const currentAssetNames = ['Cash', 'Cash on Hand', 'Bank Account', 'Accounts Receivable', 'Inventory', 'Prepaid Expenses'];
-        newAccountType = currentAssetNames.includes(account.accountName) ? 'current-asset' : 'non-current-asset';
+  // Canonical mapping by account name
+  const nameToType: Record<string, string> = {
+    // Current Assets
+    'Cash': 'current-asset',
+    'Cash on Hand': 'current-asset',
+    'Bank Account': 'current-asset',
+    'Accounts Receivable': 'current-asset',
+    'Inventory': 'current-asset',
+    'Prepaid Expenses': 'current-asset',
+    // Non-current Assets
+    'Equipment': 'non-current-asset',
+    'Furniture': 'non-current-asset',
+    'Buildings': 'non-current-asset',
+    // Liabilities
+    'Accounts Payable': 'current-liability',
+    'Salaries Payable': 'current-liability',
+    'Taxes Payable': 'current-liability',
+    'Loan Payable': 'non-current-liability',
+  };
+
+  // Canonical numbering for built-in accounts
+  const nameToNumber: Record<string, string> = {
+    'Cash': '101',
+    'Cash on Hand': '102',
+    'Bank Account': '103',
+    'Accounts Receivable': '104',
+    'Inventory': '105',
+    'Prepaid Expenses': '106',
+    'Equipment': '151',
+    'Furniture': '152',
+    'Buildings': '153',
+    'Accounts Payable': '201',
+    'Salaries Payable': '202',
+    'Taxes Payable': '203',
+    'Loan Payable': '251',
+  };
+
+  const mapOldType = (account: ChartAccount): string => {
+    const nameType = nameToType[account.accountName];
+    if (nameType) return nameType;
+
+    // Fallbacks for legacy values using number ranges
+    const numericPart = parseInt(String(account.accountNumber).toString().split('-')[0], 10);
+    const oldType = account.accountType as unknown as string;
+
+    if (oldType === 'asset') {
+      if (!isNaN(numericPart)) {
+        return numericPart >= 150 ? 'non-current-asset' : 'current-asset';
       }
-    } else if (account.accountType === 'liability' as any) {
-      // Current liabilities: 200-249
-      // Non-current liabilities: 250-299
-      const accountNum = parseInt(account.accountNumber);
-      if (accountNum >= 200 && accountNum < 250) {
-        newAccountType = 'current-liability';
-      } else if (accountNum >= 250 && accountNum < 300) {
-        newAccountType = 'non-current-liability';
-      } else {
-        // Default based on account name
-        const currentLiabilityNames = ['Accounts Payable', 'Salaries Payable', 'Taxes Payable'];
-        newAccountType = currentLiabilityNames.includes(account.accountName) ? 'current-liability' : 'non-current-liability';
-      }
+      return 'current-asset';
     }
-    
-    return { ...account, accountType: newAccountType };
+    if (oldType === 'liability') {
+      if (!isNaN(numericPart)) {
+        return numericPart >= 250 ? 'non-current-liability' : 'current-liability';
+      }
+      return 'current-liability';
+    }
+    // Already new type or other category
+    return (account.accountType as unknown as string);
+  };
+
+  // Perform migration with renumbering when we know canonical numbers
+  let updated = accounts.map((account) => {
+    const newType = mapOldType(account) as any;
+    const canonicalNumber = nameToNumber[account.accountName];
+
+    let newNumber = account.accountNumber;
+    if (canonicalNumber) {
+      newNumber = canonicalNumber;
+    }
+
+    return { ...account, accountType: newType, accountNumber: newNumber } as ChartAccount;
   });
+
+  // Ensure unique account numbers by appending suffix if collision
+  const seen: Record<string, number> = {};
+  updated = updated.map((acc) => {
+    const base = acc.accountNumber;
+    if (!seen[base]) {
+      seen[base] = 1;
+      return acc;
+    }
+    // collision: append -{n}
+    const n = ++seen[base];
+    return { ...acc, accountNumber: `${base}-${n}` };
+  });
+
+  return updated;
 };
 
 export const loadChartOfAccounts = (): ChartAccount[] => {
