@@ -315,11 +315,7 @@ export const generateInvoicePDF = async (invoice: Invoice) => {
   // General Footer
   doc.setFontSize(8);
   doc.setTextColor(128, 128, 128);
-  doc.text('Thank you for your business!', pageWidth / 2, pageHeight - 15, { align: 'center' });
-  
-  if (settings.website) {
-    doc.text(settings.website, pageWidth / 2, pageHeight - 10, { align: 'center' });
-  }
+  doc.text(`BizCounting Systems (Registered to ${settings.companyName})`, pageWidth / 2, pageHeight - 10, { align: 'center' });
   
   return doc;
 };
