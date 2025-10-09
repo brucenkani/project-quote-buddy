@@ -56,7 +56,10 @@ export default function Settings() {
   };
 
   const handleDownloadPDF = () => {
-    generateChartOfAccountsPDF(accounts);
+    // Reload to ensure migration is applied and we export the latest data
+    const latest = loadChartOfAccounts();
+    setAccounts(latest);
+    generateChartOfAccountsPDF(latest);
     toast({
       title: "PDF Downloaded",
       description: "Chart of accounts has been exported to PDF.",
@@ -64,7 +67,9 @@ export default function Settings() {
   };
 
   const handleDownloadExcel = () => {
-    generateChartOfAccountsExcel(accounts);
+    const latest = loadChartOfAccounts();
+    setAccounts(latest);
+    generateChartOfAccountsExcel(latest);
     toast({
       title: "Excel Downloaded",
       description: "Chart of accounts has been exported to Excel.",
