@@ -1,156 +1,127 @@
 import { ChartAccount, defaultChartOfAccounts } from '@/types/chartOfAccounts';
+import { supabase } from '@/integrations/supabase/client';
 
-const CHART_KEY = 'quotebuilder-chart-of-accounts';
+// MIGRATED TO SUPABASE - Chart of accounts now stored in database
+// Using in-memory cache for synchronous access pattern required by existing code
 
-// Migration function to update old account types and numbers to new format
-const migrateAccountTypes = (accounts: ChartAccount[]): ChartAccount[] => {
-  // Canonical mapping by account name
-  const nameToType: Record<string, string> = {
-    // Current Assets
-    'Cash': 'current-asset',
-    'Cash on Hand': 'current-asset',
-    'Bank Account': 'current-asset',
-    'Accounts Receivable': 'current-asset',
-    'Inventory': 'current-asset',
-    'Prepaid Expenses': 'current-asset',
-    // Non-current Assets
-    'Equipment': 'non-current-asset',
-    'Furniture': 'non-current-asset',
-    'Buildings': 'non-current-asset',
-    // Liabilities
-    'Accounts Payable': 'current-liability',
-    'Salaries Payable': 'current-liability',
-    'Taxes Payable': 'current-liability',
-    'Loan Payable': 'non-current-liability',
-  };
+let chartCache: ChartAccount[] = [];
+let cacheInitialized = false;
 
-  // Canonical numbering for built-in accounts
-  const nameToNumber: Record<string, string> = {
-    'Cash': '101',
-    'Cash on Hand': '102',
-    'Bank Account': '103',
-    'Accounts Receivable': '104',
-    'Inventory': '105',
-    'Prepaid Expenses': '106',
-    'Equipment': '151',
-    'Furniture': '152',
-    'Buildings': '153',
-    'Accounts Payable': '201',
-    'Salaries Payable': '202',
-    'Taxes Payable': '203',
-    'Loan Payable': '251',
-  };
-
-  const mapOldType = (account: ChartAccount): string => {
-    const nameType = nameToType[account.accountName];
-    if (nameType) return nameType;
-
-    // Fallbacks for legacy values using number ranges
-    const numericPart = parseInt(String(account.accountNumber).toString().split('-')[0], 10);
-    const oldType = account.accountType as unknown as string;
-
-    if (oldType === 'asset') {
-      if (!isNaN(numericPart)) {
-        return numericPart >= 150 ? 'non-current-asset' : 'current-asset';
-      }
-      return 'current-asset';
-    }
-    if (oldType === 'liability') {
-      if (!isNaN(numericPart)) {
-        return numericPart >= 250 ? 'non-current-liability' : 'current-liability';
-      }
-      return 'current-liability';
-    }
-    // Already new type or other category
-    return (account.accountType as unknown as string);
-  };
-
-  // Perform migration with renumbering when we know canonical numbers
-  let updated = accounts.map((account) => {
-    const newType = mapOldType(account) as any;
-    const canonicalNumber = nameToNumber[account.accountName];
-
-    let newNumber = account.accountNumber;
-    if (canonicalNumber) {
-      newNumber = canonicalNumber;
-    }
-
-    return { ...account, accountType: newType, accountNumber: newNumber } as ChartAccount;
-  });
-
-  // Ensure unique account numbers by appending suffix if collision
-  const seen: Record<string, number> = {};
-  updated = updated.map((acc) => {
-    const base = acc.accountNumber;
-    if (!seen[base]) {
-      seen[base] = 1;
-      return acc;
-    }
-    // collision: append -{n}
-    const n = ++seen[base];
-    return { ...acc, accountNumber: `${base}-${n}` };
-  });
-
-  return updated;
-};
-
-export const loadChartOfAccounts = (): ChartAccount[] => {
+const initializeCache = async () => {
+  if (cacheInitialized) return;
+  
   try {
-    const stored = localStorage.getItem(CHART_KEY);
-    if (stored) {
-      const accounts = JSON.parse(stored);
-      // Run migration
-      const migratedAccounts = migrateAccountTypes(accounts);
-      // Save migrated data back
-      saveChartOfAccounts(migratedAccounts);
-      return migratedAccounts;
-    } else {
-      // Initialize with default accounts
-      const accounts = defaultChartOfAccounts.map(acc => ({
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      chartCache = [];
+      cacheInitialized = true;
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('chart_of_accounts')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('account_number');
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      // Initialize with defaults
+      chartCache = defaultChartOfAccounts.map(acc => ({
         ...acc,
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
       }));
-      saveChartOfAccounts(accounts);
-      return accounts;
+      await saveChartOfAccountsToDb(chartCache);
+    } else {
+      chartCache = data.map(row => ({
+        id: row.id,
+        accountNumber: row.account_number,
+        accountName: row.account_name,
+        accountType: row.account_type as any,
+        isDefault: false,
+        openingBalance: Number(row.opening_balance),
+        createdAt: row.created_at || new Date().toISOString(),
+      }));
+    }
+    
+    cacheInitialized = true;
+  } catch (error) {
+    console.error('Failed to initialize chart cache:', error);
+    chartCache = [];
+    cacheInitialized = true;
+  }
+};
+
+const saveChartOfAccountsToDb = async (accounts: ChartAccount[]): Promise<void> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await supabase.from('chart_of_accounts').delete().eq('user_id', user.id);
+
+    if (accounts.length > 0) {
+      await supabase.from('chart_of_accounts').insert(
+        accounts.map(acc => ({
+          id: acc.id,
+          user_id: user.id,
+          account_number: acc.accountNumber,
+          account_name: acc.accountName,
+          account_type: acc.accountType,
+          is_active: true,
+          opening_balance: acc.openingBalance || 0,
+        }))
+      );
     }
   } catch (error) {
-    console.error('Failed to load chart of accounts:', error);
+    console.error('Failed to save to database:', error);
+  }
+};
+
+// Initialize on module load
+initializeCache();
+
+export const loadChartOfAccounts = (): ChartAccount[] => {
+  if (!cacheInitialized) {
+    // Return empty and trigger async init
+    initializeCache();
     return [];
   }
+  return chartCache;
 };
 
 export const saveChartOfAccounts = (accounts: ChartAccount[]): void => {
-  try {
-    localStorage.setItem(CHART_KEY, JSON.stringify(accounts));
-  } catch (error) {
-    console.error('Failed to save chart of accounts:', error);
-  }
+  chartCache = accounts;
+  saveChartOfAccountsToDb(accounts).catch(err => 
+    console.error('Failed to sync chart of accounts:', err)
+  );
 };
 
 export const addChartAccount = (account: Omit<ChartAccount, 'id' | 'createdAt'>): ChartAccount => {
-  const accounts = loadChartOfAccounts();
   const newAccount: ChartAccount = {
     ...account,
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
   };
-  accounts.push(newAccount);
-  saveChartOfAccounts(accounts);
+  chartCache.push(newAccount);
+  saveChartOfAccountsToDb(chartCache).catch(err =>
+    console.error('Failed to add account to database:', err)
+  );
   return newAccount;
 };
 
 export const deleteChartAccount = (id: string): void => {
-  const accounts = loadChartOfAccounts().filter(acc => acc.id !== id);
-  saveChartOfAccounts(accounts);
+  chartCache = chartCache.filter(acc => acc.id !== id);
+  saveChartOfAccountsToDb(chartCache).catch(err =>
+    console.error('Failed to delete account from database:', err)
+  );
 };
 
 export const generateNextAccountNumber = (accountType: string): string => {
-  const accounts = loadChartOfAccounts();
-  const typeAccounts = accounts.filter(acc => acc.accountType === accountType);
+  const typeAccounts = chartCache.filter(acc => acc.accountType === accountType);
   
   if (typeAccounts.length === 0) {
-    // Starting numbers for each account type (standard chart of accounts)
     const startingNumbers: Record<string, number> = {
       'current-asset': 100,
       'non-current-asset': 150,
@@ -163,13 +134,10 @@ export const generateNextAccountNumber = (accountType: string): string => {
     return String(startingNumbers[accountType] || 100);
   }
   
-  // Extract numbers from existing account numbers
   const numbers = typeAccounts
     .map(acc => parseInt(acc.accountNumber, 10))
     .filter(n => !isNaN(n));
   
   const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
-  const nextNumber = maxNumber + 1;
-  
-  return String(nextNumber);
+  return String(maxNumber + 1);
 };
