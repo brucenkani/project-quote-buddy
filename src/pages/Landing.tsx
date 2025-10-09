@@ -51,42 +51,44 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">BizCounting</h1>
-          <div className="flex items-center gap-4">
-            <Button onClick={() => navigate('/')} variant="ghost" size="sm" className="gap-2">
-              <Home className="h-4 w-4" />
-              Home
-            </Button>
-            <Button onClick={() => navigate('/invite')} variant="ghost" size="sm" className="gap-2">
-              <Users className="h-4 w-4" />
-              Invite Users
-            </Button>
-            <Button onClick={() => navigate('/permissions')} variant="ghost" size="sm" className="gap-2">
-              <Shield className="h-4 w-4" />
-              Permissions
-            </Button>
-            <Button onClick={() => navigate('/company-settings')} variant="ghost" size="sm" className="gap-2">
-              <Settings className="h-4 w-4" />
-              Company Settings
-            </Button>
-            <span className="text-sm text-muted-foreground">{user?.email}</span>
-            <Button onClick={handleSignOut} variant="outline">
-              Sign Out
-            </Button>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h1 className="text-2xl font-bold">BizCounting</h1>
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4">
+              <Button onClick={() => navigate('/')} variant="ghost" size="sm" className="gap-2">
+                <Home className="h-4 w-4" />
+                <span className="hidden sm:inline">Home</span>
+              </Button>
+              <Button onClick={() => navigate('/invite')} variant="ghost" size="sm" className="gap-2">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Invite</span>
+              </Button>
+              <Button onClick={() => navigate('/permissions')} variant="ghost" size="sm" className="gap-2">
+                <Shield className="h-4 w-4" />
+                <span className="hidden sm:inline">Permissions</span>
+              </Button>
+              <Button onClick={() => navigate('/company-settings')} variant="ghost" size="sm" className="gap-2">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Settings</span>
+              </Button>
+              <span className="text-sm text-muted-foreground hidden md:inline">{user?.email}</span>
+              <Button onClick={handleSignOut} variant="outline" size="sm">
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4">Welcome to BizCounting</h2>
-          <p className="text-xl text-muted-foreground">
+      <main className="container mx-auto px-4 py-8 sm:py-12">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4">Welcome to BizCounting</h2>
+          <p className="text-lg sm:text-xl text-muted-foreground px-4">
             Complete business management solution for accounting and HR
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/accounting')}>
             <CardHeader>
               <Calculator className="h-12 w-12 mb-4 text-primary" />

@@ -1,7 +1,9 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { FileText, DollarSign, Package, BookOpen, Receipt, Settings, BarChart3, LayoutDashboard, ArrowLeft, Users, ShoppingCart, Building2, ChevronDown } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { FileText, DollarSign, Package, BookOpen, Receipt, Settings, BarChart3, LayoutDashboard, ArrowLeft, Users, ShoppingCart, Building2, ChevronDown, Menu, X } from 'lucide-react';
 import { loadSettings } from '@/utils/settingsStorage';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -9,6 +11,7 @@ export const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const settings = loadSettings();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const customerMenuItems = [
     { path: '/quotes', label: 'Quotes', icon: FileText },
@@ -43,22 +46,23 @@ export const Navigation = () => {
     <div className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/landing')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+          <div className="flex items-center gap-2 md:gap-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/landing')} className="gap-1 md:gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Back</span>
             </Button>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
               {settings.logoUrl && (
-                <img src={settings.logoUrl} alt="Logo" className="h-8 w-auto object-contain" />
+                <img src={settings.logoUrl} alt="Logo" className="h-6 md:h-8 w-auto object-contain" />
               )}
-              <h1 className="text-xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
+              <h1 className="text-lg md:text-xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
                 Accounting
               </h1>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          {/* Desktop Navigation */}
+          <div className="hidden lg:flex items-center gap-2">
             <nav className="flex gap-2">
               <Button
                 variant={location.pathname === '/accounting' ? 'default' : 'ghost'}
@@ -68,7 +72,7 @@ export const Navigation = () => {
               >
                 <Link to="/accounting">
                   <LayoutDashboard className="h-4 w-4" />
-                  <span className="hidden md:inline">Dashboard</span>
+                  <span>Dashboard</span>
                 </Link>
               </Button>
 
@@ -80,7 +84,7 @@ export const Navigation = () => {
                     className="gap-1"
                   >
                     <Users className="h-4 w-4" />
-                    <span className="hidden md:inline">Customers</span>
+                    <span>Customers</span>
                     <ChevronDown className="h-3 w-3" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -108,7 +112,7 @@ export const Navigation = () => {
                       className="gap-1"
                     >
                       <ShoppingCart className="h-4 w-4" />
-                      <span className="hidden md:inline">Suppliers</span>
+                      <span>Suppliers</span>
                       <ChevronDown className="h-3 w-3" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -137,7 +141,7 @@ export const Navigation = () => {
                 >
                   <Link to="/inventory">
                     <Package className="h-4 w-4" />
-                    <span className="hidden md:inline">Inventory</span>
+                    <span>Inventory</span>
                   </Link>
                 </Button>
               )}
@@ -150,7 +154,7 @@ export const Navigation = () => {
                     className="gap-1"
                   >
                     <Building2 className="h-4 w-4" />
-                    <span className="hidden md:inline">Banking</span>
+                    <span>Banking</span>
                     <ChevronDown className="h-3 w-3" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -183,7 +187,7 @@ export const Navigation = () => {
               >
                 <Link to="/journal">
                   <BookOpen className="h-4 w-4" />
-                  <span className="hidden md:inline">Journals</span>
+                  <span>Journals</span>
                 </Link>
               </Button>
 
@@ -195,7 +199,7 @@ export const Navigation = () => {
               >
                 <Link to="/reports">
                   <BarChart3 className="h-4 w-4" />
-                  <span className="hidden md:inline">Reports</span>
+                  <span>Reports</span>
                 </Link>
               </Button>
 
@@ -207,7 +211,7 @@ export const Navigation = () => {
               >
                 <Link to="/settings">
                   <Settings className="h-4 w-4" />
-                  <span className="hidden md:inline">Settings</span>
+                  <span>Settings</span>
                 </Link>
               </Button>
             </nav>
@@ -215,6 +219,169 @@ export const Navigation = () => {
               Sign Out
             </Button>
           </div>
+
+          {/* Mobile Menu Toggle */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild className="lg:hidden">
+              <Button variant="ghost" size="sm">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[280px] sm:w-[350px]">
+              <nav className="flex flex-col gap-4 mt-8">
+                <Button
+                  variant={location.pathname === '/accounting' ? 'default' : 'ghost'}
+                  asChild
+                  className="justify-start gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Link to="/accounting">
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
+                  </Link>
+                </Button>
+
+                <div className="space-y-2">
+                  <div className="px-3 py-2 text-sm font-semibold text-muted-foreground">Customers</div>
+                  {customerMenuItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Button
+                        key={item.path}
+                        variant={location.pathname.startsWith(item.path) ? 'secondary' : 'ghost'}
+                        asChild
+                        className="justify-start gap-2 w-full"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Link to={item.path}>
+                          <Icon className="h-4 w-4" />
+                          {item.label}
+                        </Link>
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                {showSuppliers && (
+                  <div className="space-y-2">
+                    <div className="px-3 py-2 text-sm font-semibold text-muted-foreground">Suppliers</div>
+                    {supplierMenuItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Button
+                          key={item.path}
+                          variant={location.pathname.startsWith(item.path) ? 'secondary' : 'ghost'}
+                          asChild
+                          className="justify-start gap-2 w-full"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Link to={item.path}>
+                            <Icon className="h-4 w-4" />
+                            {item.label}
+                          </Link>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {showInventory && (
+                  <Button
+                    variant={location.pathname === '/inventory' ? 'default' : 'ghost'}
+                    asChild
+                    className="justify-start gap-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Link to="/inventory">
+                      <Package className="h-4 w-4" />
+                      Inventory
+                    </Link>
+                  </Button>
+                )}
+
+                <div className="space-y-2">
+                  <div className="px-3 py-2 text-sm font-semibold text-muted-foreground">Banking</div>
+                  {bankingMenuItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Button
+                        key={item.path}
+                        variant={location.pathname.startsWith(item.path) ? 'secondary' : 'ghost'}
+                        asChild
+                        className="justify-start gap-2 w-full"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Link to={item.path}>
+                          <Icon className="h-4 w-4" />
+                          {item.label}
+                        </Link>
+                      </Button>
+                    );
+                  })}
+                  <Button
+                    variant={location.pathname === '/bank-feeds' ? 'secondary' : 'ghost'}
+                    asChild
+                    className="justify-start gap-2 w-full"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Link to="/bank-feeds">
+                      <Building2 className="h-4 w-4" />
+                      Bank Feeds
+                    </Link>
+                  </Button>
+                </div>
+
+                <Button
+                  variant={location.pathname === '/journal' ? 'default' : 'ghost'}
+                  asChild
+                  className="justify-start gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Link to="/journal">
+                    <BookOpen className="h-4 w-4" />
+                    Journals
+                  </Link>
+                </Button>
+
+                <Button
+                  variant={location.pathname === '/reports' ? 'default' : 'ghost'}
+                  asChild
+                  className="justify-start gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Link to="/reports">
+                    <BarChart3 className="h-4 w-4" />
+                    Reports
+                  </Link>
+                </Button>
+
+                <Button
+                  variant={location.pathname === '/settings' ? 'default' : 'ghost'}
+                  asChild
+                  className="justify-start gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Link to="/settings">
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </Link>
+                </Button>
+
+                <div className="pt-4 border-t">
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={() => {
+                      handleSignOut();
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    Sign Out
+                  </Button>
+                </div>
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </div>
