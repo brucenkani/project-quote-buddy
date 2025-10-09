@@ -52,12 +52,14 @@ export default function InvoicePrint() {
       
       {/* Header with Company Branding */}
       <div className="p-8 pb-4 mb-4 border-b-2" style={{ borderColor: settings.primaryColor }}>
-        {settings.logoUrl && (
-          <img src={settings.logoUrl} alt={settings.companyName} className="w-auto max-w-[200px] h-auto mb-3" style={{ width: 'fit-content' }} />
-        )}
-        <h1 className="text-2xl font-bold mb-2" style={{ color: settings.primaryColor }}>
-          TAX INVOICE
-        </h1>
+        <div className="flex items-center gap-6 mb-3">
+          {settings.logoUrl && (
+            <img src={settings.logoUrl} alt={settings.companyName} className="w-auto max-w-[200px] h-auto" style={{ width: 'fit-content' }} />
+          )}
+          <h1 className="text-2xl font-bold" style={{ color: settings.primaryColor }}>
+            TAX INVOICE
+          </h1>
+        </div>
         <div className="text-xs">
           <p className="font-semibold">{settings.companyName}</p>
           {settings.address && <p>{settings.address}</p>}
