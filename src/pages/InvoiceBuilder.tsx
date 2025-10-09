@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Navigation } from '@/components/Navigation';
 import { Plus, X, Save, FileText } from 'lucide-react';
 import { loadSettings } from '@/utils/settingsStorage';
@@ -17,29 +21,45 @@ import { Contact } from '@/types/contacts';
 import { recordInvoice } from '@/utils/doubleEntryManager';
 import { generateNextInvoiceNumber, loadInvoices } from '@/utils/invoiceStorage';
 
+const invoiceFormSchema = z.object({
+  invoiceNumber: z.string(),
+  clientName: z.string().min(1, 'Client name is required'),
+  clientEmail: z.string().optional(),
+  clientPhone: z.string().optional(),
+  clientAddress: z.string().optional(),
+  projectName: z.string().min(1, 'Project name is required'),
+  issueDate: z.string(),
+  dueDate: z.string(),
+  paymentTerms: z.string(),
+  notes: z.string().optional(),
+});
+
 export default function InvoiceBuilder() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const settings = loadSettings();
   const { id } = useParams();
 
-  const [formData, setFormData] = useState({
-    invoiceNumber: generateNextInvoiceNumber(),
-    clientName: '',
-    clientEmail: '',
-    clientPhone: '',
-    clientAddress: '',
-    projectName: '',
-    issueDate: new Date().toISOString().split('T')[0],
-    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    paymentTerms: 'Net 30',
-    notes: '',
-    
+  const form = useForm<z.infer<typeof invoiceFormSchema>>({
+    resolver: zodResolver(invoiceFormSchema),
+    defaultValues: {
+      invoiceNumber: generateNextInvoiceNumber(),
+      clientName: '',
+      clientEmail: '',
+      clientPhone: '',
+      clientAddress: '',
+      projectName: '',
+      issueDate: new Date().toISOString().split('T')[0],
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      paymentTerms: 'Net 30',
+      notes: '',
+    },
   });
 
   const [lineItems, setLineItems] = useState([
     { description: '', quantity: 1, unit: 'item', unitPrice: 0, total: 0 },
   ]);
+  const [lineItemErrors, setLineItemErrors] = useState<string[]>([]);
 
   const [discount, setDiscount] = useState(0);
   const [existingInvoice, setExistingInvoice] = useState<Invoice | null>(null);
@@ -52,7 +72,7 @@ export default function InvoiceBuilder() {
       
       if (invoice) {
         setExistingInvoice(invoice);
-        setFormData({
+        form.reset({
           invoiceNumber: invoice.invoiceNumber,
           clientName: invoice.projectDetails.clientName,
           clientEmail: invoice.projectDetails.clientEmail || '',
@@ -82,7 +102,7 @@ export default function InvoiceBuilder() {
         navigate('/invoices');
       }
     }
-  }, [id, navigate, toast]);
+  }, [id, navigate, toast, form]);
 
   const addLineItem = () => {
     setLineItems([...lineItems, { description: '', quantity: 1, unit: 'item', unitPrice: 0, total: 0 }]);
@@ -107,26 +127,34 @@ export default function InvoiceBuilder() {
   const taxAmount = (subtotal - discount) * settings.taxRate;
   const total = subtotal - discount + taxAmount;
 
-  const handleSave = () => {
-    if (!formData.clientName || !formData.projectName || lineItems.some(item => !item.description)) {
-      toast({ title: 'Please fill in all required fields', variant: 'destructive' });
+  const handleSave = form.handleSubmit((data) => {
+    // Validate line items
+    const errors = lineItems.map(item => item.description ? '' : 'Description is required');
+    setLineItemErrors(errors);
+    
+    if (errors.some(error => error !== '')) {
+      toast({ 
+        title: 'Validation Error', 
+        description: 'Please fill in all line item descriptions',
+        variant: 'destructive' 
+      });
       return;
     }
 
     const invoice: Invoice = {
       id: id || crypto.randomUUID(),
-      invoiceNumber: formData.invoiceNumber,
+      invoiceNumber: data.invoiceNumber,
       type: existingInvoice?.type || 'invoice',
       projectDetails: {
-        clientName: formData.clientName,
-        clientEmail: formData.clientEmail,
-        clientPhone: formData.clientPhone,
-        projectName: formData.projectName,
-        projectAddress: formData.clientAddress,
+        clientName: data.clientName,
+        clientEmail: data.clientEmail || '',
+        clientPhone: data.clientPhone || '',
+        projectName: data.projectName,
+        projectAddress: data.clientAddress || '',
         industry: 'professional-services',
-        startDate: formData.issueDate,
+        startDate: data.issueDate,
         estimatedDuration: '',
-        additionalNotes: formData.notes || '',
+        additionalNotes: data.notes || '',
       },
       lineItems: lineItems.map((item) => ({
         id: crypto.randomUUID(),
@@ -141,11 +169,11 @@ export default function InvoiceBuilder() {
       taxAmount,
       discount,
       total,
-      issueDate: formData.issueDate,
-      dueDate: formData.dueDate,
-      status: existingInvoice?.status || 'unpaid', // Preserve existing status or default to unpaid
-      paymentTerms: formData.paymentTerms,
-      notes: formData.notes,
+      issueDate: data.issueDate,
+      dueDate: data.dueDate,
+      status: existingInvoice?.status || 'unpaid',
+      paymentTerms: data.paymentTerms,
+      notes: data.notes || '',
       payments: existingInvoice?.payments || [],
       creditNotes: existingInvoice?.creditNotes || [],
       createdAt: existingInvoice?.createdAt || new Date().toISOString(),
@@ -154,7 +182,6 @@ export default function InvoiceBuilder() {
 
     saveInvoice(invoice);
     
-    // Create double-entry journal entry for new invoices
     if (!id && invoice.status === 'unpaid') {
       try {
         recordInvoice(invoice);
@@ -171,7 +198,7 @@ export default function InvoiceBuilder() {
     }
     
     navigate('/invoices');
-  };
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
@@ -192,117 +219,157 @@ export default function InvoiceBuilder() {
           </Button>
         </div>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Invoice Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="invoiceNumber">Invoice Number</Label>
-                  <Input
-                    id="invoiceNumber"
-                    value={formData.invoiceNumber}
-                    disabled
-                    className="bg-muted"
+        <Form {...form}>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Invoice Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="invoiceNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Invoice Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} disabled className="bg-muted" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="issueDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Issue Date</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="date" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="dueDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Due Date</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="date" />
+                        </FormControl>
+                      </FormItem>
+                    )}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="issueDate">Issue Date</Label>
-                  <Input
-                    id="issueDate"
-                    type="date"
-                    value={formData.issueDate}
-                    onChange={(e) => setFormData({ ...formData, issueDate: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dueDate">Due Date</Label>
-                  <Input
-                    id="dueDate"
-                    type="date"
-                    value={formData.dueDate}
-                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="paymentTerms">Payment Terms</Label>
-                <Select value={formData.paymentTerms} onValueChange={(value) => setFormData({ ...formData, paymentTerms: value })}>
-                  <SelectTrigger id="paymentTerms">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
-                    <SelectItem value="Net 15">Net 15</SelectItem>
-                    <SelectItem value="Net 30">Net 30</SelectItem>
-                    <SelectItem value="Net 60">Net 60</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
+                <FormField
+                  control={form.control}
+                  name="paymentTerms"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payment Terms</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
+                          <SelectItem value="Net 15">Net 15</SelectItem>
+                          <SelectItem value="Net 30">Net 30</SelectItem>
+                          <SelectItem value="Net 60">Net 60</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Client Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="clientName">Client Name *</Label>
-                  <ContactSelector
-                    type="client"
-                    value=""
-                    onSelect={(contact: Contact) => {
-                      setFormData({
-                        ...formData,
-                        clientName: contact.name,
-                        clientEmail: contact.email,
-                        clientPhone: contact.phone,
-                        clientAddress: contact.address,
-                      });
-                    }}
-                    placeholder="Select or add client"
+            <Card>
+              <CardHeader>
+                <CardTitle>Client Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="clientName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Client Name *</FormLabel>
+                        <FormControl>
+                          <ContactSelector
+                            type="client"
+                            value={field.value}
+                            onSelect={(contact: Contact) => {
+                              form.setValue('clientName', contact.name);
+                              form.setValue('clientEmail', contact.email);
+                              form.setValue('clientPhone', contact.phone);
+                              form.setValue('clientAddress', contact.address);
+                            }}
+                            placeholder="Select or add client"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="projectName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Project Name *</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="clientEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="email" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="clientPhone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="clientAddress"
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel>Address</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="projectName">Project Name *</Label>
-                  <Input
-                    id="projectName"
-                    value={formData.projectName}
-                    onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="clientEmail">Email</Label>
-                  <Input
-                    id="clientEmail"
-                    type="email"
-                    value={formData.clientEmail}
-                    onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="clientPhone">Phone</Label>
-                  <Input
-                    id="clientPhone"
-                    value={formData.clientPhone}
-                    onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor="clientAddress">Address</Label>
-                  <Input
-                    id="clientAddress"
-                    value={formData.clientAddress}
-                    onChange={(e) => setFormData({ ...formData, clientAddress: e.target.value })}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
           <Card>
             <CardHeader>
@@ -321,9 +388,20 @@ export default function InvoiceBuilder() {
                     <Label className="text-xs">Description *</Label>
                     <Input
                       value={item.description}
-                      onChange={(e) => updateLineItem(index, 'description', e.target.value)}
+                      onChange={(e) => {
+                        updateLineItem(index, 'description', e.target.value);
+                        setLineItemErrors(prev => {
+                          const newErrors = [...prev];
+                          newErrors[index] = '';
+                          return newErrors;
+                        });
+                      }}
                       placeholder="Item description"
+                      className={lineItemErrors[index] ? 'border-destructive' : ''}
                     />
+                    {lineItemErrors[index] && (
+                      <p className="text-sm text-destructive mt-1">{lineItemErrors[index]}</p>
+                    )}
                   </div>
                   <div className="col-span-2">
                     <Label className="text-xs">Quantity</Label>
@@ -399,28 +477,38 @@ export default function InvoiceBuilder() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Additional Notes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Any additional notes or payment instructions..."
-                rows={4}
-              />
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Additional Notes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          placeholder="Any additional notes or payment instructions..."
+                          rows={4}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
 
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => navigate('/invoices')}>Cancel</Button>
-            <Button onClick={handleSave} className="gap-2">
-              <Save className="h-4 w-4" />
-              Save Invoice
-            </Button>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => navigate('/invoices')}>Cancel</Button>
+              <Button onClick={handleSave} className="gap-2">
+                <Save className="h-4 w-4" />
+                Save Invoice
+              </Button>
+            </div>
           </div>
-        </div>
+        </Form>
       </div>
     </div>
   );
