@@ -7,6 +7,7 @@ export interface ChartAccount {
   accountType: AccountType;
   isDefault: boolean;
   createdAt: string;
+  openingBalance?: number;
 }
 
 export const defaultChartOfAccounts: Omit<ChartAccount, 'id' | 'createdAt'>[] = [

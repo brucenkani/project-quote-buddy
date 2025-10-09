@@ -21,6 +21,12 @@ export interface CompanySettings {
   bankName?: string; // Bank name for invoices
   accountNumber?: string; // Bank account number
   branchCode?: string; // Bank branch code
+  invoicePrefix?: string;
+  invoiceStartNumber?: number;
+  quotePrefix?: string;
+  quoteStartNumber?: number;
+  purchasePrefix?: string;
+  purchaseStartNumber?: number;
 }
 
 export const defaultSettings: CompanySettings = {

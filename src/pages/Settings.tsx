@@ -5,22 +5,77 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save, Shield } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ArrowLeft, Save, Shield, FileDown, FileSpreadsheet, Database } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { loadSettings } from '@/utils/settingsStorage';
+import { loadSettings, saveSettings } from '@/utils/settingsStorage';
+import { loadChartOfAccounts, saveChartOfAccounts } from '@/utils/chartOfAccountsStorage';
+import { generateChartOfAccountsPDF, generateChartOfAccountsExcel } from '@/utils/chartOfAccountsReports';
 
 export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const settings = loadSettings();
-  const [taxRate, setTaxRate] = useState(0.15);
+  const [settings, setSettings] = useState(() => loadSettings());
+  const [taxRate, setTaxRate] = useState(settings.taxRate || 0.15);
   const [financialYearEnd, setFinancialYearEnd] = useState(12);
+  const [invoicePrefix, setInvoicePrefix] = useState(settings.invoicePrefix || 'INV-');
+  const [invoiceStartNumber, setInvoiceStartNumber] = useState(settings.invoiceStartNumber || 1);
+  const [quotePrefix, setQuotePrefix] = useState(settings.quotePrefix || 'QT-');
+  const [quoteStartNumber, setQuoteStartNumber] = useState(settings.quoteStartNumber || 1);
+  const [purchasePrefix, setPurchasePrefix] = useState(settings.purchasePrefix || 'PO-');
+  const [purchaseStartNumber, setPurchaseStartNumber] = useState(settings.purchaseStartNumber || 1);
+  const [accounts, setAccounts] = useState(() => loadChartOfAccounts());
+  const [openingBalances, setOpeningBalances] = useState<Record<string, number>>({});
+  const [showOpeningBalances, setShowOpeningBalances] = useState(false);
 
   const handleSave = () => {
+    const updatedSettings = {
+      ...settings,
+      taxRate,
+      invoicePrefix,
+      invoiceStartNumber,
+      quotePrefix,
+      quoteStartNumber,
+      purchasePrefix,
+      purchaseStartNumber,
+    };
+    saveSettings(updatedSettings);
+    
+    // Save opening balances to accounts
+    const updatedAccounts = accounts.map(acc => ({
+      ...acc,
+      openingBalance: openingBalances[acc.id] || acc.openingBalance || 0
+    }));
+    saveChartOfAccounts(updatedAccounts);
+    setAccounts(updatedAccounts);
+    
     toast({
       title: "Settings saved",
       description: "Your accounting settings have been updated successfully.",
     });
+  };
+
+  const handleDownloadPDF = () => {
+    generateChartOfAccountsPDF(accounts);
+    toast({
+      title: "PDF Downloaded",
+      description: "Chart of accounts has been exported to PDF.",
+    });
+  };
+
+  const handleDownloadExcel = () => {
+    generateChartOfAccountsExcel(accounts);
+    toast({
+      title: "Excel Downloaded",
+      description: "Chart of accounts has been exported to Excel.",
+    });
+  };
+
+  const handleOpeningBalanceChange = (accountId: string, value: string) => {
+    setOpeningBalances(prev => ({
+      ...prev,
+      [accountId]: parseFloat(value) || 0
+    }));
   };
 
   return (
@@ -99,15 +154,161 @@ export default function Settings() {
                 </p>
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="flex justify-end pt-4">
-              <Button onClick={handleSave} className="gap-2">
-                <Save className="h-4 w-4" />
-                Save Settings
+        <Card className="shadow-[var(--shadow-elegant)] border-border/50 backdrop-blur-sm bg-card/80 mb-6">
+          <CardHeader>
+            <CardTitle>Chart of Accounts</CardTitle>
+            <CardDescription>
+              Download your chart of accounts and manage opening balances
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-4">
+              <Button onClick={handleDownloadPDF} variant="outline" className="gap-2">
+                <FileDown className="h-4 w-4" />
+                Download PDF
               </Button>
+              <Button onClick={handleDownloadExcel} variant="outline" className="gap-2">
+                <FileSpreadsheet className="h-4 w-4" />
+                Download Excel
+              </Button>
+              <Dialog open={showOpeningBalances} onOpenChange={setShowOpeningBalances}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Database className="h-4 w-4" />
+                    Set Opening Balances
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Set Opening Balances</DialogTitle>
+                    <DialogDescription>
+                      Enter opening balances for each account. Leave blank or zero if no opening balance.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    {accounts.map((account) => (
+                      <div key={account.id} className="grid grid-cols-2 gap-4 items-center">
+                        <Label htmlFor={`balance-${account.id}`} className="text-sm">
+                          {account.accountNumber} - {account.accountName}
+                        </Label>
+                        <Input
+                          id={`balance-${account.id}`}
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          defaultValue={account.openingBalance || 0}
+                          onChange={(e) => handleOpeningBalanceChange(account.id, e.target.value)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setShowOpeningBalances(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={() => {
+                      handleSave();
+                      setShowOpeningBalances(false);
+                    }}>
+                      Save Balances
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </CardContent>
         </Card>
+
+        <Card className="shadow-[var(--shadow-elegant)] border-border/50 backdrop-blur-sm bg-card/80 mb-6">
+          <CardHeader>
+            <CardTitle>Document Sequence Numbers</CardTitle>
+            <CardDescription>
+              Configure starting numbers and prefixes for your documents
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h3 className="font-semibold">Invoices</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="invoicePrefix">Prefix</Label>
+                  <Input
+                    id="invoicePrefix"
+                    value={invoicePrefix}
+                    onChange={(e) => setInvoicePrefix(e.target.value)}
+                    placeholder="INV-"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="invoiceStart">Starting Number</Label>
+                  <Input
+                    id="invoiceStart"
+                    type="number"
+                    min="1"
+                    value={invoiceStartNumber}
+                    onChange={(e) => setInvoiceStartNumber(parseInt(e.target.value) || 1)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="font-semibold">Quotes</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="quotePrefix">Prefix</Label>
+                  <Input
+                    id="quotePrefix"
+                    value={quotePrefix}
+                    onChange={(e) => setQuotePrefix(e.target.value)}
+                    placeholder="QT-"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="quoteStart">Starting Number</Label>
+                  <Input
+                    id="quoteStart"
+                    type="number"
+                    min="1"
+                    value={quoteStartNumber}
+                    onChange={(e) => setQuoteStartNumber(parseInt(e.target.value) || 1)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="font-semibold">Purchase Orders</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="purchasePrefix">Prefix</Label>
+                  <Input
+                    id="purchasePrefix"
+                    value={purchasePrefix}
+                    onChange={(e) => setPurchasePrefix(e.target.value)}
+                    placeholder="PO-"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="purchaseStart">Starting Number</Label>
+                  <Input
+                    id="purchaseStart"
+                    type="number"
+                    min="1"
+                    value={purchaseStartNumber}
+                    onChange={(e) => setPurchaseStartNumber(parseInt(e.target.value) || 1)}
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end mb-6">
+          <Button onClick={handleSave} className="gap-2">
+            <Save className="h-4 w-4" />
+            Save All Settings
+          </Button>
+        </div>
 
         <Card className="shadow-[var(--shadow-elegant)] border-border/50 backdrop-blur-sm bg-card/80">
           <CardHeader>
