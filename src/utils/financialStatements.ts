@@ -354,11 +354,11 @@ export const calculateEnhancedKPIs = (
 
   // Current assets and liabilities for liquidity ratios
   const currentAssets = currentBalance.assets.filter(a => 
-    ['Cash on Hand', 'Bank Account', 'Accounts Receivable', 'Inventory', 'Prepaid Expenses'].includes(a.account)
+    ['Cash', 'Cash on Hand', 'Bank Account', 'Accounts Receivable', 'Inventory', 'Prepaid Expenses'].includes(a.account)
   ).reduce((sum, item) => sum + item.amount, 0);
   
   const priorCurrentAssets = priorBalance.assets.filter(a => 
-    ['Cash on Hand', 'Bank Account', 'Accounts Receivable', 'Inventory', 'Prepaid Expenses'].includes(a.account)
+    ['Cash', 'Cash on Hand', 'Bank Account', 'Accounts Receivable', 'Inventory', 'Prepaid Expenses'].includes(a.account)
   ).reduce((sum, item) => sum + item.amount, 0);
 
   const currentLiabilities = currentBalance.liabilities.reduce((sum, item) => sum + item.amount, 0);
