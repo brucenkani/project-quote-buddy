@@ -216,7 +216,7 @@ const getKPIBreakdown = (
       });
 
       // Current Liabilities
-      const liabilityAccounts = accounts.filter(a => a.accountType === 'liability');
+      const liabilityAccounts = accounts.filter(a => a.accountType === 'current-liability' || a.accountType === 'non-current-liability');
       liabilityAccounts.forEach(account => {
         const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
         if (balance !== 0) {
@@ -261,7 +261,7 @@ const getKPIBreakdown = (
       });
 
       // Current Liabilities
-      const liabilityAccounts = accounts.filter(a => a.accountType === 'liability');
+      const liabilityAccounts = accounts.filter(a => a.accountType === 'current-liability' || a.accountType === 'non-current-liability');
       let currentLiabilities = 0;
       liabilityAccounts.forEach(account => {
         const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
@@ -382,7 +382,7 @@ const getKPIBreakdown = (
     case 'debtRatio': {
       // Liabilities
       let totalLiabilities = 0;
-      const liabilityAccounts = accounts.filter(a => a.accountType === 'liability');
+      const liabilityAccounts = accounts.filter(a => a.accountType === 'current-liability' || a.accountType === 'non-current-liability');
       liabilityAccounts.forEach(account => {
         const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
         if (balance !== 0) {
@@ -420,7 +420,7 @@ const getKPIBreakdown = (
       } else {
         // Assets for debt ratio
         let totalAssets = 0;
-        const assetAccounts = accounts.filter(a => a.accountType === 'asset');
+        const assetAccounts = accounts.filter(a => a.accountType === 'current-asset' || a.accountType === 'non-current-asset');
         assetAccounts.forEach(account => {
           const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
           if (balance !== 0) {
@@ -503,7 +503,7 @@ const getKPIBreakdown = (
       if (kpiType === 'roa') {
         // Total Assets
         let totalAssets = 0;
-        const assetAccounts = accounts.filter(a => a.accountType === 'asset');
+        const assetAccounts = accounts.filter(a => a.accountType === 'current-asset' || a.accountType === 'non-current-asset');
         assetAccounts.forEach(account => {
           const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
           if (balance !== 0) {
@@ -594,7 +594,7 @@ const getKPIBreakdown = (
 
       // Total Assets
       let totalAssets = 0;
-      const assetAccounts = accounts.filter(a => a.accountType === 'asset');
+      const assetAccounts = accounts.filter(a => a.accountType === 'current-asset' || a.accountType === 'non-current-asset');
       assetAccounts.forEach(account => {
         const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
         if (balance !== 0) {

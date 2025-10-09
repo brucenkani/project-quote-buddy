@@ -22,7 +22,7 @@ export default function Journal() {
   const [chartAccounts, setChartAccounts] = useState(loadChartOfAccounts());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showNewAccountDialog, setShowNewAccountDialog] = useState<number | null>(null);
-  const [newAccount, setNewAccount] = useState({ accountNumber: '', accountName: '', accountType: 'asset' as AccountType });
+  const [newAccount, setNewAccount] = useState({ accountNumber: '', accountName: '', accountType: 'current-asset' as AccountType });
   
   const handleAccountTypeChange = (accountType: AccountType) => {
     const nextNumber = generateNextAccountNumber(accountType);
@@ -36,12 +36,12 @@ export default function Journal() {
   });
 
   const [lines, setLines] = useState<Omit<JournalEntryLine, 'id'>[]>([
-    { account: '', accountType: 'asset' as AccountType, debit: 0, credit: 0, description: '' },
-    { account: '', accountType: 'asset' as AccountType, debit: 0, credit: 0, description: '' },
+    { account: '', accountType: 'current-asset' as AccountType, debit: 0, credit: 0, description: '' },
+    { account: '', accountType: 'current-asset' as AccountType, debit: 0, credit: 0, description: '' },
   ]);
 
   const addLine = () => {
-    setLines([...lines, { account: '', accountType: 'asset', debit: 0, credit: 0, description: '' }]);
+    setLines([...lines, { account: '', accountType: 'current-asset', debit: 0, credit: 0, description: '' }]);
   };
 
   const removeLine = (index: number) => {
@@ -67,7 +67,7 @@ export default function Journal() {
     updateLine(lineIndex, 'account', created.accountName);
     updateLine(lineIndex, 'accountType', created.accountType);
     setShowNewAccountDialog(null);
-    setNewAccount({ accountNumber: '', accountName: '', accountType: 'asset' });
+    setNewAccount({ accountNumber: '', accountName: '', accountType: 'current-asset' });
     toast({ title: 'Account created successfully' });
   };
 
@@ -103,8 +103,8 @@ export default function Journal() {
     
     setFormData({ date: new Date().toISOString().split('T')[0], reference: '', description: '' });
     setLines([
-      { account: '', accountType: 'asset', debit: 0, credit: 0, description: '' },
-      { account: '', accountType: 'asset', debit: 0, credit: 0, description: '' },
+      { account: '', accountType: 'current-asset', debit: 0, credit: 0, description: '' },
+      { account: '', accountType: 'current-asset', debit: 0, credit: 0, description: '' },
     ]);
     
     toast({ title: 'Journal entry added successfully' });
@@ -216,7 +216,7 @@ export default function Journal() {
                           {showNewAccountDialog === index && (
                             <Dialog open={true} onOpenChange={() => {
                               setShowNewAccountDialog(null);
-                              setNewAccount({ accountNumber: '', accountName: '', accountType: 'asset' });
+                              setNewAccount({ accountNumber: '', accountName: '', accountType: 'current-asset' });
                             }}>
                               <DialogContent>
                                 <DialogHeader>
@@ -261,7 +261,7 @@ export default function Journal() {
                                 <div className="flex justify-end gap-2">
                                   <Button variant="outline" onClick={() => {
                                     setShowNewAccountDialog(null);
-                                    setNewAccount({ accountNumber: '', accountName: '', accountType: 'asset' });
+                                    setNewAccount({ accountNumber: '', accountName: '', accountType: 'current-asset' });
                                   }}>Cancel</Button>
                                   <Button onClick={() => handleCreateAccount(index)}>Create</Button>
                                 </div>

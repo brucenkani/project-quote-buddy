@@ -130,7 +130,7 @@ export const generateTrialBalanceExcel = (
   balances.push({
     Code: '',
     'Account Name': 'TOTAL',
-    Type: 'asset' as const,
+    Type: 'current-asset' as const,
     Balance: totalBalance,
   });
 

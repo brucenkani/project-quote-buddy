@@ -55,7 +55,7 @@ export const recordTradingPurchase = (purchase: Purchase): JournalEntry => {
     {
       id: crypto.randomUUID(),
       account: 'Inventory - Finished Goods',
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: purchase.total,
       credit: 0,
       description: `Purchase ${purchase.purchaseNumber} - ${purchase.vendor}`,
@@ -63,7 +63,7 @@ export const recordTradingPurchase = (purchase: Purchase): JournalEntry => {
     {
       id: crypto.randomUUID(),
       account: 'Accounts Payable',
-      accountType: 'liability',
+      accountType: 'current-liability',
       debit: 0,
       credit: purchase.total,
       description: `Payable to ${purchase.vendor}`,
@@ -96,7 +96,7 @@ export const recordContractorPurchase = (purchase: Purchase): JournalEntry => {
     entries.push({
       id: crypto.randomUUID(),
       account: `Work-in-Progress - Project ${purchase.projectId}`,
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: purchase.total,
       credit: 0,
       description: `Materials for Project ${purchase.projectId}`,
@@ -106,7 +106,7 @@ export const recordContractorPurchase = (purchase: Purchase): JournalEntry => {
     entries.push({
       id: crypto.randomUUID(),
       account: 'Inventory - Raw Materials',
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: purchase.total,
       credit: 0,
       description: `Purchase ${purchase.purchaseNumber} - ${purchase.vendor}`,
@@ -120,7 +120,7 @@ export const recordContractorPurchase = (purchase: Purchase): JournalEntry => {
   entries.push({
     id: crypto.randomUUID(),
     account: 'Accounts Payable',
-    accountType: 'liability',
+    accountType: 'current-liability',
     debit: 0,
     credit: purchase.total,
     description: `Payable to ${purchase.vendor}`,
@@ -144,7 +144,7 @@ export const recordManufacturingPurchase = (purchase: Purchase): JournalEntry =>
     {
       id: crypto.randomUUID(),
       account: 'Inventory - Raw Materials',
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: purchase.total,
       credit: 0,
       description: `Purchase ${purchase.purchaseNumber} - ${purchase.vendor}`,
@@ -152,7 +152,7 @@ export const recordManufacturingPurchase = (purchase: Purchase): JournalEntry =>
     {
       id: crypto.randomUUID(),
       account: 'Accounts Payable',
-      accountType: 'liability',
+      accountType: 'current-liability',
       debit: 0,
       credit: purchase.total,
       description: `Payable to ${purchase.vendor}`,
@@ -185,7 +185,7 @@ export const recordMaterialsToProduction = (
     {
       id: crypto.randomUUID(),
       account: 'Work-in-Progress',
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: materialCost,
       credit: 0,
       description: `Materials issued to production - ${productionBatch}`,
@@ -193,7 +193,7 @@ export const recordMaterialsToProduction = (
     {
       id: crypto.randomUUID(),
       account: 'Inventory - Raw Materials',
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: 0,
       credit: materialCost,
       description: `Materials issued from stock`,
@@ -222,7 +222,7 @@ export const recordProductionCompletion = (
     {
       id: crypto.randomUUID(),
       account: 'Inventory - Finished Goods',
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: productionCost,
       credit: 0,
       description: `Production completed - ${productionBatch}`,
@@ -230,7 +230,7 @@ export const recordProductionCompletion = (
     {
       id: crypto.randomUUID(),
       account: 'Work-in-Progress',
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: 0,
       credit: productionCost,
       description: `WIP transferred to finished goods`,
@@ -274,7 +274,7 @@ export const recordCOGS = (
     {
       id: crypto.randomUUID(),
       account: inventoryAccount,
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: 0,
       credit: cost,
       description: `Inventory reduction for ${invoiceNumber}`,

@@ -1,4 +1,4 @@
-export type AccountType = 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
+export type AccountType = 'current-asset' | 'non-current-asset' | 'current-liability' | 'non-current-liability' | 'equity' | 'revenue' | 'expense';
 
 export interface JournalEntry {
   id: string;

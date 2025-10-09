@@ -85,7 +85,7 @@ export default function PurchasePayment() {
       {
         id: crypto.randomUUID(),
         account: 'Accounts Payable',
-        accountType: 'liability',
+        accountType: 'current-liability',
         debit: formData.amount,
         credit: 0,
         description: `Payment for ${purchase.purchaseNumber}`,
@@ -93,7 +93,7 @@ export default function PurchasePayment() {
       {
         id: crypto.randomUUID(),
         account: 'Bank',
-        accountType: 'asset',
+        accountType: 'current-asset',
         debit: 0,
         credit: formData.amount,
         description: `Payment via ${formData.method}`,

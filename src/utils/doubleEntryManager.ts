@@ -55,7 +55,7 @@ export const recordInvoice = (invoice: Invoice): JournalEntry => {
     {
       id: crypto.randomUUID(),
       account: 'Accounts Receivable',
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: invoice.total,
       credit: 0,
       description: `Invoice ${invoice.invoiceNumber} - ${invoice.projectDetails.clientName}`,
@@ -75,7 +75,7 @@ export const recordInvoice = (invoice: Invoice): JournalEntry => {
     entries.push({
       id: crypto.randomUUID(),
       account: 'Taxes Payable',
-      accountType: 'liability',
+      accountType: 'current-liability',
       debit: 0,
       credit: invoice.taxAmount,
       description: `Tax on Invoice ${invoice.invoiceNumber}`,
@@ -107,7 +107,7 @@ export const recordPaymentReceived = (
     {
       id: crypto.randomUUID(),
       account: paymentAccount,
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: invoice.total,
       credit: 0,
       description: `Payment received from ${invoice.projectDetails.clientName}`,
@@ -115,7 +115,7 @@ export const recordPaymentReceived = (
     {
       id: crypto.randomUUID(),
       account: 'Accounts Receivable',
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: 0,
       credit: invoice.total,
       description: `Payment for Invoice ${invoice.invoiceNumber}`,
@@ -148,7 +148,7 @@ export const recordExpense = (expense: Expense): JournalEntry => {
     {
       id: crypto.randomUUID(),
       account: 'Accounts Payable',
-      accountType: 'liability',
+      accountType: 'current-liability',
       debit: 0,
       credit: expense.amount,
       description: `Payable for ${expense.category}`,
@@ -181,7 +181,7 @@ export const recordExpensePayment = (
     {
       id: crypto.randomUUID(),
       account: 'Accounts Payable',
-      accountType: 'liability',
+      accountType: 'current-liability',
       debit: paymentAmount,
       credit: 0,
       description: `Payment for ${expense.category}`,
@@ -189,7 +189,7 @@ export const recordExpensePayment = (
     {
       id: crypto.randomUUID(),
       account: paymentAccount,
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: 0,
       credit: paymentAmount,
       description: `Payment via ${paymentMethod}`,
@@ -213,7 +213,7 @@ export const recordPurchaseOnCredit = (
   date: string,
   vendor: string,
   account: string,
-  accountType: 'expense' | 'asset',
+  accountType: 'expense' | 'current-asset' | 'non-current-asset',
   amount: number,
   reference: string
 ): JournalEntry => {
@@ -229,7 +229,7 @@ export const recordPurchaseOnCredit = (
     {
       id: crypto.randomUUID(),
       account: 'Accounts Payable',
-      accountType: 'liability',
+      accountType: 'current-liability',
       debit: 0,
       credit: amount,
       description: `Payable to ${vendor}`,
@@ -262,7 +262,7 @@ export const recordLoanReceived = (
     {
       id: crypto.randomUUID(),
       account: assetAccount,
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: amount,
       credit: 0,
       description: `Loan received from ${lender}`,
@@ -270,7 +270,7 @@ export const recordLoanReceived = (
     {
       id: crypto.randomUUID(),
       account: 'Loan Payable',
-      accountType: 'liability',
+      accountType: 'non-current-liability',
       debit: 0,
       credit: amount,
       description: `Loan from ${lender}`,
@@ -306,7 +306,7 @@ export const recordLoanRepayment = (
     {
       id: crypto.randomUUID(),
       account: 'Loan Payable',
-      accountType: 'liability',
+      accountType: 'non-current-liability',
       debit: principal,
       credit: 0,
       description: `Loan repayment to ${lender} (Principal)`,
@@ -327,7 +327,7 @@ export const recordLoanRepayment = (
   entries.push({
     id: crypto.randomUUID(),
     account: assetAccount,
-    accountType: 'asset',
+    accountType: 'current-asset',
     debit: 0,
     credit: totalPayment,
     description: `Loan payment to ${lender}`,
@@ -359,7 +359,7 @@ export const recordCapitalContribution = (
     {
       id: crypto.randomUUID(),
       account: assetAccount,
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: amount,
       credit: 0,
       description: `Capital contribution by ${ownerName}`,
@@ -408,7 +408,7 @@ export const recordOwnerDrawing = (
     {
       id: crypto.randomUUID(),
       account: assetAccount,
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: 0,
       credit: amount,
       description: `Withdrawal by ${ownerName}`,
@@ -441,7 +441,7 @@ export const recordSupplierPayment = (
     {
       id: crypto.randomUUID(),
       account: 'Accounts Payable',
-      accountType: 'liability',
+      accountType: 'current-liability',
       debit: amount,
       credit: 0,
       description: `Payment to ${vendor}`,
@@ -449,7 +449,7 @@ export const recordSupplierPayment = (
     {
       id: crypto.randomUUID(),
       account: assetAccount,
-      accountType: 'asset',
+      accountType: 'current-asset',
       debit: 0,
       credit: amount,
       description: `Payment to supplier ${vendor}`,

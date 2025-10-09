@@ -65,7 +65,7 @@ export const calculateAccountBalance = (
   });
 
   // For normal balance: Assets/Expenses = Debit, Liabilities/Equity/Revenue = Credit
-  if (account.accountType === 'asset' || account.accountType === 'expense') {
+  if (account.accountType === 'current-asset' || account.accountType === 'non-current-asset' || account.accountType === 'expense') {
     return debit - credit;
   } else {
     return credit - debit;
@@ -111,9 +111,9 @@ export const generateBalanceSheet = (
     
     if (balance === 0) return;
 
-    if (account.accountType === 'asset') {
+    if (account.accountType === 'current-asset' || account.accountType === 'non-current-asset') {
       assets.push({ account: account.accountName, amount: balance });
-    } else if (account.accountType === 'liability') {
+    } else if (account.accountType === 'current-liability' || account.accountType === 'non-current-liability') {
       liabilities.push({ account: account.accountName, amount: balance });
     } else if (account.accountType === 'equity') {
       equity.push({ account: account.accountName, amount: balance });
@@ -353,16 +353,21 @@ export const calculateEnhancedKPIs = (
   }
 
   // Current assets and liabilities for liquidity ratios
-  const currentAssets = currentBalance.assets.filter(a => 
-    ['Cash', 'Cash on Hand', 'Bank Account', 'Accounts Receivable', 'Inventory', 'Prepaid Expenses'].includes(a.account)
-  ).reduce((sum, item) => sum + item.amount, 0);
+  const currentAssets = accounts
+    .filter(a => a.accountType === 'current-asset')
+    .reduce((sum, acc) => sum + calculateAccountBalance(acc, currentPeriod.journalEntries, currentPeriod.expenses), 0);
   
-  const priorCurrentAssets = priorBalance.assets.filter(a => 
-    ['Cash', 'Cash on Hand', 'Bank Account', 'Accounts Receivable', 'Inventory', 'Prepaid Expenses'].includes(a.account)
-  ).reduce((sum, item) => sum + item.amount, 0);
+  const priorCurrentAssets = accounts
+    .filter(a => a.accountType === 'current-asset')
+    .reduce((sum, acc) => sum + calculateAccountBalance(acc, priorPeriod.journalEntries, priorPeriod.expenses), 0);
 
-  const currentLiabilities = currentBalance.liabilities.reduce((sum, item) => sum + item.amount, 0);
-  const priorCurrentLiabilities = priorBalance.liabilities.reduce((sum, item) => sum + item.amount, 0);
+  const currentLiabilities = accounts
+    .filter(a => a.accountType === 'current-liability')
+    .reduce((sum, acc) => sum + calculateAccountBalance(acc, currentPeriod.journalEntries, currentPeriod.expenses), 0);
+    
+  const priorCurrentLiabilities = accounts
+    .filter(a => a.accountType === 'current-liability')
+    .reduce((sum, acc) => sum + calculateAccountBalance(acc, priorPeriod.journalEntries, priorPeriod.expenses), 0);
 
   // Profitability ratios
   const currentGrossMargin = currentIncome.totalRevenue > 0 

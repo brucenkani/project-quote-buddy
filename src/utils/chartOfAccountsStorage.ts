@@ -55,13 +55,15 @@ export const generateNextAccountNumber = (accountType: string): string => {
   if (typeAccounts.length === 0) {
     // Starting numbers for each account type (standard chart of accounts)
     const startingNumbers: Record<string, number> = {
-      asset: 1000,
-      liability: 2000,
-      equity: 3000,
-      revenue: 4000,
-      expense: 5000,
+      'current-asset': 100,
+      'non-current-asset': 150,
+      'current-liability': 200,
+      'non-current-liability': 250,
+      equity: 300,
+      revenue: 400,
+      expense: 500,
     };
-    return String(startingNumbers[accountType] || 1000);
+    return String(startingNumbers[accountType] || 100);
   }
   
   // Extract numbers from existing account numbers

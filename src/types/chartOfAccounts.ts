@@ -11,22 +11,26 @@ export interface ChartAccount {
 }
 
 export const defaultChartOfAccounts: Omit<ChartAccount, 'id' | 'createdAt'>[] = [
-  // Assets
-  { accountNumber: '101', accountName: 'Cash', accountType: 'asset', isDefault: true },
-  { accountNumber: '101-1', accountName: 'Cash on Hand', accountType: 'asset', isDefault: true },
-  { accountNumber: '102', accountName: 'Bank Account', accountType: 'asset', isDefault: true },
-  { accountNumber: '103', accountName: 'Accounts Receivable', accountType: 'asset', isDefault: true },
-  { accountNumber: '104', accountName: 'Inventory', accountType: 'asset', isDefault: true },
-  { accountNumber: '105', accountName: 'Prepaid Expenses', accountType: 'asset', isDefault: true },
-  { accountNumber: '106', accountName: 'Equipment', accountType: 'asset', isDefault: true },
-  { accountNumber: '107', accountName: 'Furniture', accountType: 'asset', isDefault: true },
-  { accountNumber: '108', accountName: 'Buildings', accountType: 'asset', isDefault: true },
+  // Current Assets (100-149)
+  { accountNumber: '101', accountName: 'Cash', accountType: 'current-asset', isDefault: true },
+  { accountNumber: '102', accountName: 'Cash on Hand', accountType: 'current-asset', isDefault: true },
+  { accountNumber: '103', accountName: 'Bank Account', accountType: 'current-asset', isDefault: true },
+  { accountNumber: '104', accountName: 'Accounts Receivable', accountType: 'current-asset', isDefault: true },
+  { accountNumber: '105', accountName: 'Inventory', accountType: 'current-asset', isDefault: true },
+  { accountNumber: '106', accountName: 'Prepaid Expenses', accountType: 'current-asset', isDefault: true },
   
-  // Liabilities
-  { accountNumber: '201', accountName: 'Accounts Payable', accountType: 'liability', isDefault: true },
-  { accountNumber: '202', accountName: 'Salaries Payable', accountType: 'liability', isDefault: true },
-  { accountNumber: '203', accountName: 'Taxes Payable', accountType: 'liability', isDefault: true },
-  { accountNumber: '204', accountName: 'Loan Payable', accountType: 'liability', isDefault: true },
+  // Non-current Assets (150-199)
+  { accountNumber: '151', accountName: 'Equipment', accountType: 'non-current-asset', isDefault: true },
+  { accountNumber: '152', accountName: 'Furniture', accountType: 'non-current-asset', isDefault: true },
+  { accountNumber: '153', accountName: 'Buildings', accountType: 'non-current-asset', isDefault: true },
+  
+  // Current Liabilities (200-249)
+  { accountNumber: '201', accountName: 'Accounts Payable', accountType: 'current-liability', isDefault: true },
+  { accountNumber: '202', accountName: 'Salaries Payable', accountType: 'current-liability', isDefault: true },
+  { accountNumber: '203', accountName: 'Taxes Payable', accountType: 'current-liability', isDefault: true },
+  
+  // Non-current Liabilities (250-299)
+  { accountNumber: '251', accountName: 'Loan Payable', accountType: 'non-current-liability', isDefault: true },
   
   // Equity
   { accountNumber: '301', accountName: "Owner's Capital", accountType: 'equity', isDefault: true },

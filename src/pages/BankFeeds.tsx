@@ -55,7 +55,7 @@ export default function BankFeeds() {
     email: '',
     accountNumber: '',
     accountName: '',
-    accountType: 'expense' as 'asset' | 'liability' | 'equity' | 'revenue' | 'expense',
+    accountType: 'expense' as 'current-asset' | 'non-current-asset' | 'current-liability' | 'non-current-liability' | 'equity' | 'revenue' | 'expense',
   });
   const { toast } = useToast();
   const settings = loadSettings();
