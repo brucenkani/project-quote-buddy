@@ -52,42 +52,34 @@ export default function InvoicePrint() {
       
       {/* Header with Company Branding */}
       <div className="p-8 pb-4 mb-4 border-b-2" style={{ borderColor: settings.primaryColor }}>
-        <div className="flex items-center gap-6 mb-3">
-          {settings.logoUrl && (
-            <img src={settings.logoUrl} alt={settings.companyName} className="w-auto max-w-[200px] h-auto" style={{ width: 'fit-content' }} />
-          )}
-          <h1 className="text-2xl font-bold" style={{ color: settings.primaryColor }}>
-            TAX INVOICE
-          </h1>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-6">
+            {settings.logoUrl && (
+              <img src={settings.logoUrl} alt={settings.companyName} className="w-auto max-w-[200px] h-auto" style={{ width: 'fit-content' }} />
+            )}
+            <h1 className="text-2xl font-bold" style={{ color: settings.primaryColor }}>
+              Tax Invoice
+            </h1>
+          </div>
         </div>
-        <div className="text-xs">
-          <p className="font-semibold">{settings.companyName}</p>
-          {settings.address && <p>{settings.address}</p>}
-          {settings.phone && <p>Phone: {settings.phone}</p>}
-          {settings.email && <p>Email: {settings.email}</p>}
+        <div className="grid grid-cols-2 gap-8 text-xs">
+          <div>
+            <p className="font-semibold">{settings.companyName}</p>
+            {settings.address && <p>{settings.address}</p>}
+            {settings.vatNumber && <p>VAT No: {settings.vatNumber}</p>}
+          </div>
+          <div className="text-right">
+            <p className="font-semibold">Number: {invoice.invoiceNumber}</p>
+            <p>Date: {new Date(invoice.issueDate).toLocaleDateString()}</p>
+          </div>
         </div>
       </div>
 
-      <div className="px-8 mb-4">
-        <p className="text-lg font-semibold">Invoice #{invoice.invoiceNumber}</p>
-      </div>
-
-      <div className="px-8 grid grid-cols-2 gap-6 mb-6">
-        <div>
-          <h2 className="font-semibold mb-2">Bill To:</h2>
+      <div className="px-8 mb-6">
+        <div className="border p-4 text-xs">
           <p className="font-medium">{invoice.projectDetails.clientName}</p>
           <p className="text-sm">{invoice.projectDetails.clientEmail}</p>
           <p className="text-sm">{invoice.projectDetails.clientPhone}</p>
-        </div>
-        <div>
-          <div className="mb-2">
-            <p className="text-sm text-gray-600">Issue Date</p>
-            <p className="font-medium">{new Date(invoice.issueDate).toLocaleDateString()}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Due Date</p>
-            <p className="font-medium">{new Date(invoice.dueDate).toLocaleDateString()}</p>
-          </div>
         </div>
       </div>
 
@@ -95,10 +87,10 @@ export default function InvoicePrint() {
         <table className="w-full mb-6">
           <thead>
             <tr className="border-b-2" style={{ borderColor: settings.primaryColor }}>
-              <th className="text-left py-2 text-sm">Description</th>
-              <th className="text-right py-2 text-sm">Qty</th>
-              <th className="text-right py-2 text-sm">Rate</th>
-              <th className="text-right py-2 text-sm">Amount</th>
+              <th className="text-left py-2 text-sm font-semibold">Description</th>
+              <th className="text-right py-2 text-sm font-semibold">Quantity</th>
+              <th className="text-right py-2 text-sm font-semibold">Incl. Price</th>
+              <th className="text-right py-2 text-sm font-semibold">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -112,47 +104,49 @@ export default function InvoicePrint() {
             ))}
           </tbody>
         </table>
+      </div>
 
-        <div className="flex justify-end mb-6">
-          <div className="w-56 space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span>Subtotal:</span>
-              <span>{settings.currencySymbol}{invoice.subtotal.toFixed(2)}</span>
-            </div>
-            {invoice.discount > 0 && (
-              <div className="flex justify-between">
-                <span>Discount:</span>
-                <span>-{settings.currencySymbol}{invoice.discount.toFixed(2)}</span>
-              </div>
-            )}
-            <div className="flex justify-between">
-              <span>Tax ({(invoice.taxRate * 100).toFixed(0)}%):</span>
-              <span>{settings.currencySymbol}{invoice.taxAmount.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between font-bold text-base border-t-2 pt-1 mt-1" style={{ borderColor: settings.primaryColor }}>
-              <span>TOTAL:</span>
-              <span>{settings.currencySymbol}{invoice.total.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
-
+      {/* Notes and Totals - Pushed to bottom */}
+      <div className="px-8 pb-4 mt-auto">
         {invoice.notes && (
-          <div className="mb-4">
+          <div className="mb-6">
             <h3 className="font-semibold mb-1 text-sm">Notes:</h3>
             <p className="text-xs">{invoice.notes}</p>
           </div>
         )}
 
-        {invoice.paymentTerms && (
-          <div className="mb-6">
-            <h3 className="font-semibold mb-1 text-sm">Payment Terms:</h3>
-            <p className="text-xs">{invoice.paymentTerms}</p>
+        <div className="border-t-2 pt-4" style={{ borderColor: settings.primaryColor }}>
+          <div className="flex justify-end">
+            <div className="w-64 space-y-1 text-sm">
+              <div className="flex justify-between font-bold text-base mb-2">
+                <span>Total Due:</span>
+                <span>{settings.currencySymbol}{invoice.total.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span>Total Exclusive:</span>
+                <span>{settings.currencySymbol}{invoice.subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span>Total VAT ({(invoice.taxRate * 100).toFixed(0)}%):</span>
+                <span>{settings.currencySymbol}{invoice.taxAmount.toFixed(2)}</span>
+              </div>
+              {invoice.discount > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span>Total Discount:</span>
+                  <span>-{settings.currencySymbol}{invoice.discount.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-semibold border-t pt-1">
+                <span>Sub Total:</span>
+                <span>{settings.currencySymbol}{invoice.total.toFixed(2)}</span>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Footer - Always at bottom */}
-      <div className="px-8 pb-8 pt-4 border-t border-gray-300 text-center text-xs text-gray-600 mt-auto">
+      <div className="px-8 pb-8 pt-4 border-t border-gray-300 text-center text-xs text-gray-600">
         <p>BizCounting Systems (Registered to {settings.companyName})</p>
       </div>
     </div>
