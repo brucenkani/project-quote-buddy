@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QuoteBuilder } from '@/components/QuoteBuilder';
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Landing from "./pages/Landing";
@@ -68,48 +69,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/dashboard" element={<Landing />} />
-          <Route path="/landing" element={<Landing />} />
-          <Route path="/accounting" element={<AccountingDashboard />} />
-          <Route path="/payroll" element={<PayrollDashboard />} />
-          <Route path="/payroll/employees" element={<Employees />} />
-          <Route path="/payroll/payroll" element={<Payroll />} />
-          <Route path="/payroll/leave" element={<LeaveManagement />} />
-          <Route path="/payroll/settings" element={<PayrollSettings />} />
-          <Route path="/quotes" element={<QuoteBuilder />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/tax-compliance" element={<TaxComplianceSettings />} />
-          <Route path="/purchases" element={<Purchases />} />
-          <Route path="/purchase-orders" element={<PurchaseOrders />} />
-          <Route path="/purchase-history/:id" element={<PurchaseHistory />} />
-          <Route path="/purchase-preview/:id" element={<PurchasePreview />} />
-          <Route path="/purchase-print/:id" element={<PurchasePrint />} />
-          <Route path="/purchase-payment/:id" element={<PurchasePayment />} />
-          <Route path="/company-settings" element={<CompanySettings />} />
-          <Route path="/invoices" element={<Invoices />} />
-          <Route path="/invoices/new" element={<InvoiceBuilder />} />
-          <Route path="/invoices/:id" element={<InvoiceBuilder />} />
-          <Route path="/invoices/:id/payment" element={<InvoicePayment />} />
-          <Route path="/invoices/:id/preview" element={<InvoicePreview />} />
-          <Route path="/invoices/:id/print" element={<InvoicePrint />} />
-          <Route path="/invoices/:id/email" element={<InvoiceEmail />} />
-          <Route path="/invoices/:id/receipt" element={<InvoicePayment />} />
-          <Route path="/invoices/:id/credit-note" element={<InvoiceCreditNote />} />
-          <Route path="/invoices/:id/delivery-note" element={<InvoiceDeliveryNote />} />
-          <Route path="/invoices/:id/history" element={<InvoiceHistory />} />
-            <Route path="/invoices/recurring" element={<RecurringInvoices />} />
-            <Route path="/invoices/recurring/new" element={<RecurringInvoiceBuilder />} />
-            <Route path="/invoices/statements" element={<Statements />} />
-          <Route path="/inventory" element={<Inventory />} />
-          <Route path="/journal" element={<Journal />} />
-          <Route path="/expenses" element={<Expenses />} />
-          <Route path="/expenses/:id/preview" element={<ExpensePreview />} />
-          <Route path="/expenses/:id/print" element={<ExpensePrint />} />
-          <Route path="/expenses/:id/payment" element={<ExpensePayment />} />
-          <Route path="/bank-feeds" element={<BankFeeds />} />
-          <Route path="/expenses/:id/history" element={<ExpenseHistory />} />
-          <Route path="/expenses/:id" element={<Expenses />} />
-          <Route path="/reports" element={<Reports />} />
+          <Route path="/terms" element={<TermsAndConditions />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/calculators" element={<Calculators />} />
           <Route path="/calculators/tax" element={<TaxCalculators />} />
           <Route path="/calculators/financial" element={<FinancialCalculators />} />
@@ -117,10 +78,52 @@ const App = () => (
           <Route path="/calculators/business-metrics" element={<BusinessMetrics />} />
           <Route path="/calculators/property" element={<PropertyCalculators />} />
           <Route path="/calculators/engineering" element={<EngineeringCalculators />} />
-          <Route path="/invite" element={<InviteUsers />} />
-          <Route path="/permissions" element={<PermissionsManager />} />
-          <Route path="/terms" element={<TermsAndConditions />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
+          
+          <Route path="/dashboard" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
+          <Route path="/landing" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
+          <Route path="/accounting" element={<ProtectedRoute><AccountingDashboard /></ProtectedRoute>} />
+          <Route path="/payroll" element={<ProtectedRoute><PayrollDashboard /></ProtectedRoute>} />
+          <Route path="/payroll/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
+          <Route path="/payroll/payroll" element={<ProtectedRoute><Payroll /></ProtectedRoute>} />
+          <Route path="/payroll/leave" element={<ProtectedRoute><LeaveManagement /></ProtectedRoute>} />
+          <Route path="/payroll/settings" element={<ProtectedRoute><PayrollSettings /></ProtectedRoute>} />
+          <Route path="/quotes" element={<ProtectedRoute><QuoteBuilder /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/tax-compliance" element={<ProtectedRoute><TaxComplianceSettings /></ProtectedRoute>} />
+          <Route path="/purchases" element={<ProtectedRoute><Purchases /></ProtectedRoute>} />
+          <Route path="/purchase-orders" element={<ProtectedRoute><PurchaseOrders /></ProtectedRoute>} />
+          <Route path="/purchase-history/:id" element={<ProtectedRoute><PurchaseHistory /></ProtectedRoute>} />
+          <Route path="/purchase-preview/:id" element={<ProtectedRoute><PurchasePreview /></ProtectedRoute>} />
+          <Route path="/purchase-print/:id" element={<ProtectedRoute><PurchasePrint /></ProtectedRoute>} />
+          <Route path="/purchase-payment/:id" element={<ProtectedRoute><PurchasePayment /></ProtectedRoute>} />
+          <Route path="/company-settings" element={<ProtectedRoute><CompanySettings /></ProtectedRoute>} />
+          <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
+          <Route path="/invoices/new" element={<ProtectedRoute><InvoiceBuilder /></ProtectedRoute>} />
+          <Route path="/invoices/:id" element={<ProtectedRoute><InvoiceBuilder /></ProtectedRoute>} />
+          <Route path="/invoices/:id/payment" element={<ProtectedRoute><InvoicePayment /></ProtectedRoute>} />
+          <Route path="/invoices/:id/preview" element={<ProtectedRoute><InvoicePreview /></ProtectedRoute>} />
+          <Route path="/invoices/:id/print" element={<ProtectedRoute><InvoicePrint /></ProtectedRoute>} />
+          <Route path="/invoices/:id/email" element={<ProtectedRoute><InvoiceEmail /></ProtectedRoute>} />
+          <Route path="/invoices/:id/receipt" element={<ProtectedRoute><InvoicePayment /></ProtectedRoute>} />
+          <Route path="/invoices/:id/credit-note" element={<ProtectedRoute><InvoiceCreditNote /></ProtectedRoute>} />
+          <Route path="/invoices/:id/delivery-note" element={<ProtectedRoute><InvoiceDeliveryNote /></ProtectedRoute>} />
+          <Route path="/invoices/:id/history" element={<ProtectedRoute><InvoiceHistory /></ProtectedRoute>} />
+          <Route path="/invoices/recurring" element={<ProtectedRoute><RecurringInvoices /></ProtectedRoute>} />
+          <Route path="/invoices/recurring/new" element={<ProtectedRoute><RecurringInvoiceBuilder /></ProtectedRoute>} />
+          <Route path="/invoices/statements" element={<ProtectedRoute><Statements /></ProtectedRoute>} />
+          <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
+          <Route path="/journal" element={<ProtectedRoute><Journal /></ProtectedRoute>} />
+          <Route path="/expenses" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
+          <Route path="/expenses/:id/preview" element={<ProtectedRoute><ExpensePreview /></ProtectedRoute>} />
+          <Route path="/expenses/:id/print" element={<ProtectedRoute><ExpensePrint /></ProtectedRoute>} />
+          <Route path="/expenses/:id/payment" element={<ProtectedRoute><ExpensePayment /></ProtectedRoute>} />
+          <Route path="/bank-feeds" element={<ProtectedRoute><BankFeeds /></ProtectedRoute>} />
+          <Route path="/expenses/:id/history" element={<ProtectedRoute><ExpenseHistory /></ProtectedRoute>} />
+          <Route path="/expenses/:id" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+          <Route path="/invite" element={<ProtectedRoute><InviteUsers /></ProtectedRoute>} />
+          <Route path="/permissions" element={<ProtectedRoute><PermissionsManager /></ProtectedRoute>} />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
