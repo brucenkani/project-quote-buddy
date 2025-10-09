@@ -6,20 +6,26 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Save, Upload, X } from 'lucide-react';
-import { type CompanySettings, countries } from '@/types/settings';
-import { loadSettings, saveSettings } from '@/utils/settingsStorage';
+import { countries } from '@/types/settings';
+import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
 
 export default function CompanySettings() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [settings, setSettings] = useState<CompanySettings>(loadSettings());
+  const { settings, loading, saveSettings: saveToContext } = useSettings();
+  const [localSettings, setLocalSettings] = useState(settings);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const selectedCountry = countries.find(c => c.code === settings.country);
+  // Update local settings when context settings change
+  useState(() => {
+    setLocalSettings(settings);
+  });
 
-  const handleChange = (field: keyof CompanySettings, value: string | number) => {
-    setSettings(prev => ({ ...prev, [field]: value }));
+  const selectedCountry = countries.find(c => c.code === localSettings.country);
+
+  const handleChange = (field: keyof typeof localSettings, value: string | number) => {
+    setLocalSettings(prev => ({ ...prev, [field]: value }));
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,26 +33,42 @@ export default function CompanySettings() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setSettings(prev => ({ ...prev, logoUrl: reader.result as string }));
+        setLocalSettings(prev => ({ ...prev, logoUrl: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
   };
 
   const removeLogo = () => {
-    setSettings(prev => ({ ...prev, logoUrl: undefined }));
+    setLocalSettings(prev => ({ ...prev, logoUrl: undefined }));
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
-  const handleSave = () => {
-    saveSettings(settings);
-    toast({
-      title: "Settings saved",
-      description: "Your company settings have been updated successfully and will apply to both Accounting and Payroll systems.",
-    });
+  const handleSave = async () => {
+    try {
+      await saveToContext(localSettings);
+      toast({
+        title: "Settings saved",
+        description: "Your company settings have been updated successfully and will apply to both Accounting and Payroll systems.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading settings...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
@@ -82,7 +104,7 @@ export default function CompanySettings() {
                 <Label htmlFor="companyName">Company Name</Label>
                 <Input
                   id="companyName"
-                  value={settings.companyName}
+                  value={localSettings.companyName}
                   onChange={(e) => handleChange('companyName', e.target.value)}
                   placeholder="Your Company Name"
                 />
@@ -91,11 +113,11 @@ export default function CompanySettings() {
               <div className="space-y-2">
                 <Label htmlFor="country">Country</Label>
                 <Select
-                  value={settings.country}
+                  value={localSettings.country}
                   onValueChange={(value) => {
                     const country = countries.find(c => c.code === value);
                     if (country) {
-                      setSettings(prev => ({
+                      setLocalSettings(prev => ({
                         ...prev,
                         country: country.code,
                         currency: country.currency,
@@ -123,7 +145,7 @@ export default function CompanySettings() {
               <div className="space-y-2">
                 <Label htmlFor="companyType">Company Type</Label>
                 <Select
-                  value={settings.companyType}
+                  value={localSettings.companyType}
                   onValueChange={(value) => handleChange('companyType', value)}
                 >
                   <SelectTrigger id="companyType">
@@ -143,7 +165,7 @@ export default function CompanySettings() {
                 <Input
                   id="email"
                   type="email"
-                  value={settings.email}
+                  value={localSettings.email}
                   onChange={(e) => handleChange('email', e.target.value)}
                   placeholder="contact@company.com"
                 />
@@ -153,7 +175,7 @@ export default function CompanySettings() {
                 <Label htmlFor="phone">Phone</Label>
                 <Input
                   id="phone"
-                  value={settings.phone}
+                  value={localSettings.phone}
                   onChange={(e) => handleChange('phone', e.target.value)}
                   placeholder="+27 12 345 6789"
                 />
@@ -163,7 +185,7 @@ export default function CompanySettings() {
                 <Label htmlFor="website">Website</Label>
                 <Input
                   id="website"
-                  value={settings.website}
+                  value={localSettings.website}
                   onChange={(e) => handleChange('website', e.target.value)}
                   placeholder="www.yourcompany.com"
                 />
@@ -173,7 +195,7 @@ export default function CompanySettings() {
                 <Label htmlFor="address">Address</Label>
                 <Input
                   id="address"
-                  value={settings.address}
+                  value={localSettings.address}
                   onChange={(e) => handleChange('address', e.target.value)}
                   placeholder="123 Business St, City, Province, Postal Code"
                 />
@@ -190,11 +212,11 @@ export default function CompanySettings() {
                   <Label htmlFor="vatNumber">{selectedCountry?.vatLabel || 'VAT Number'}</Label>
                   <Input
                     id="vatNumber"
-                    value={settings.vatNumber || ''}
+                    value={localSettings.vatNumber || ''}
                     onChange={(e) => handleChange('vatNumber', e.target.value)}
                     placeholder={
-                      settings.country === 'ZA' ? 'e.g., 4123456789' :
-                      settings.country === 'ZW' ? 'e.g., 10123456' :
+                      localSettings.country === 'ZA' ? 'e.g., 4123456789' :
+                      localSettings.country === 'ZW' ? 'e.g., 10123456' :
                       'e.g., 1234567890'
                     }
                   />
@@ -204,11 +226,11 @@ export default function CompanySettings() {
                   <Label htmlFor="incomeTaxNumber">{selectedCountry?.incomeTaxLabel || 'Income Tax Number'}</Label>
                   <Input
                     id="incomeTaxNumber"
-                    value={settings.incomeTaxNumber || ''}
+                    value={localSettings.incomeTaxNumber || ''}
                     onChange={(e) => handleChange('incomeTaxNumber', e.target.value)}
                     placeholder={
-                      settings.country === 'ZA' ? 'e.g., 9876543210' :
-                      settings.country === 'ZW' ? 'e.g., 123456789' :
+                      localSettings.country === 'ZA' ? 'e.g., 9876543210' :
+                      localSettings.country === 'ZW' ? 'e.g., 123456789' :
                       'e.g., 1234567890'
                     }
                   />
@@ -218,11 +240,11 @@ export default function CompanySettings() {
                   <Label htmlFor="companyRegistrationNumber">{selectedCountry?.companyRegLabel || 'Company Registration Number'}</Label>
                   <Input
                     id="companyRegistrationNumber"
-                    value={settings.companyRegistrationNumber || ''}
+                    value={localSettings.companyRegistrationNumber || ''}
                     onChange={(e) => handleChange('companyRegistrationNumber', e.target.value)}
                     placeholder={
-                      settings.country === 'ZA' ? 'e.g., 2023/123456/07 or K2023123456' :
-                      settings.country === 'ZW' ? 'e.g., 123/2023' :
+                      localSettings.country === 'ZA' ? 'e.g., 2023/123456/07 or K2023123456' :
+                      localSettings.country === 'ZW' ? 'e.g., 123/2023' :
                       'e.g., 123456'
                     }
                   />
@@ -236,10 +258,10 @@ export default function CompanySettings() {
                 <div className="space-y-2 md:col-span-2">
                   <Label>Company Logo</Label>
                   <div className="flex items-start gap-4">
-                    {settings.logoUrl ? (
+                    {localSettings.logoUrl ? (
                       <div className="relative">
                         <img 
-                          src={settings.logoUrl} 
+                          src={localSettings.logoUrl} 
                           alt="Company logo" 
                           className="h-24 w-auto object-contain border rounded-lg p-2"
                         />
@@ -270,7 +292,7 @@ export default function CompanySettings() {
                         className="gap-2"
                       >
                         <Upload className="h-4 w-4" />
-                        {settings.logoUrl ? 'Change Logo' : 'Upload Logo'}
+                        {localSettings.logoUrl ? 'Change Logo' : 'Upload Logo'}
                       </Button>
                       <p className="text-sm text-muted-foreground mt-2">
                         Recommended: PNG or SVG, max 2MB
@@ -285,12 +307,12 @@ export default function CompanySettings() {
                     <Input
                       id="primaryColor"
                       type="color"
-                      value={settings.primaryColor}
+                      value={localSettings.primaryColor}
                       onChange={(e) => handleChange('primaryColor', e.target.value)}
                       className="w-20 h-10"
                     />
                     <Input
-                      value={settings.primaryColor}
+                      value={localSettings.primaryColor}
                       onChange={(e) => handleChange('primaryColor', e.target.value)}
                       placeholder="#3b82f6"
                     />
