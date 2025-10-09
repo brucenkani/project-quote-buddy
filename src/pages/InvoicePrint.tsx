@@ -28,7 +28,7 @@ export default function InvoicePrint() {
   }
 
   return (
-    <div className="max-w-[21cm] mx-auto bg-white text-black">
+    <div className="max-w-[21cm] mx-auto bg-white text-black min-h-screen flex flex-col">
       <style>{`
         @media print {
           html, body { 
@@ -58,7 +58,6 @@ export default function InvoicePrint() {
           {settings.address && <p>{settings.address}</p>}
           {settings.phone && <p>Phone: {settings.phone}</p>}
           {settings.email && <p>Email: {settings.email}</p>}
-          {settings.website && <p>Website: {settings.website}</p>}
         </div>
       </div>
 
@@ -85,7 +84,7 @@ export default function InvoicePrint() {
         </div>
       </div>
 
-      <div className="px-8">
+      <div className="px-8 flex-grow">
         <table className="w-full mb-6">
           <thead>
             <tr className="border-b-2" style={{ borderColor: settings.primaryColor }}>
@@ -145,8 +144,8 @@ export default function InvoicePrint() {
         )}
       </div>
 
-      {/* Footer */}
-      <div className="px-8 pb-8 pt-4 border-t border-gray-300 text-center text-xs text-gray-600">
+      {/* Footer - Always at bottom */}
+      <div className="px-8 pb-8 pt-4 border-t border-gray-300 text-center text-xs text-gray-600 mt-auto">
         <p>BizCounting Systems (Registered to {settings.companyName})</p>
       </div>
     </div>
