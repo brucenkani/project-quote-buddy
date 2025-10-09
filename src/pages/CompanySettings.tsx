@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,22 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Save, Upload, X } from 'lucide-react';
-import { type CompanySettings, defaultSettings, countries } from '@/types/settings';
+import { type CompanySettings, countries } from '@/types/settings';
 import { loadSettings, saveSettings } from '@/utils/settingsStorage';
 import { useToast } from '@/hooks/use-toast';
 
 export default function CompanySettings() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [settings, setSettings] = useState<CompanySettings>(defaultSettings);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadSettings().then(data => {
-      setSettings(data);
-      setLoading(false);
-    });
-  }, []);
+  const [settings, setSettings] = useState<CompanySettings>(loadSettings());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const selectedCountry = countries.find(c => c.code === settings.country);
@@ -48,29 +40,13 @@ export default function CompanySettings() {
     }
   };
 
-  const handleSave = async () => {
-    try {
-      await saveSettings(settings);
-      toast({
-        title: "Settings saved",
-        description: "Your company settings have been updated successfully and will apply to both Accounting and Payroll systems.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save settings. Please try again.",
-        variant: "destructive",
-      });
-    }
+  const handleSave = () => {
+    saveSettings(settings);
+    toast({
+      title: "Settings saved",
+      description: "Your company settings have been updated successfully and will apply to both Accounting and Payroll systems.",
+    });
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading settings...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
