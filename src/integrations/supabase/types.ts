@@ -248,6 +248,13 @@ export type Database = {
             foreignKeyName: "leave_balances_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "employee_safe_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_balances_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
@@ -307,6 +314,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "leave_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_safe_view"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "leave_requests_employee_id_fkey"
             columns: ["employee_id"]
@@ -415,6 +429,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "payroll_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_safe_view"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payroll_employee_id_fkey"
             columns: ["employee_id"]
@@ -567,9 +588,98 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      employee_safe_view: {
+        Row: {
+          annual_leave_days: number | null
+          created_at: string | null
+          department: string | null
+          email: string | null
+          employee_number: string | null
+          end_date: string | null
+          family_responsibility_leave_days: number | null
+          first_name: string | null
+          id: string | null
+          last_name: string | null
+          maternity_leave_days: number | null
+          phone: string | null
+          position: string | null
+          sick_leave_days: number | null
+          start_date: string | null
+          status: string | null
+          study_leave_days: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          annual_leave_days?: number | null
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          employee_number?: string | null
+          end_date?: string | null
+          family_responsibility_leave_days?: number | null
+          first_name?: string | null
+          id?: string | null
+          last_name?: string | null
+          maternity_leave_days?: number | null
+          phone?: string | null
+          position?: string | null
+          sick_leave_days?: number | null
+          start_date?: string | null
+          status?: string | null
+          study_leave_days?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          annual_leave_days?: number | null
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          employee_number?: string | null
+          end_date?: string | null
+          family_responsibility_leave_days?: number | null
+          first_name?: string | null
+          id?: string | null
+          last_name?: string | null
+          maternity_leave_days?: number | null
+          phone?: string | null
+          position?: string | null
+          sick_leave_days?: number | null
+          start_date?: string | null
+          status?: string | null
+          study_leave_days?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      get_employee_safe_profile: {
+        Args: { employee_user_id: string }
+        Returns: {
+          annual_leave_days: number | null
+          created_at: string | null
+          department: string | null
+          email: string | null
+          employee_number: string | null
+          end_date: string | null
+          family_responsibility_leave_days: number | null
+          first_name: string | null
+          id: string | null
+          last_name: string | null
+          maternity_leave_days: number | null
+          phone: string | null
+          position: string | null
+          sick_leave_days: number | null
+          start_date: string | null
+          status: string | null
+          study_leave_days: number | null
+          updated_at: string | null
+          user_id: string | null
+        }[]
+      }
       get_invitation_by_token: {
         Args: { _token: string }
         Returns: {

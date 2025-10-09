@@ -73,15 +73,39 @@ export default function Employees() {
   };
 
   const loadEmployees = async () => {
-    const { data, error } = await supabase
-      .from('employees')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
 
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    // Check if user is owner or accountant
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', session.user.id);
+    
+    const isPrivileged = (roles || []).some((r: any) => r.role === 'owner' || r.role === 'accountant');
+
+    if (isPrivileged) {
+      // Owners and accountants can see all employee data including sensitive info
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      } else {
+        setEmployees(data || []);
+      }
     } else {
-      setEmployees(data || []);
+      // Regular employees only see their limited profile via secure view
+      const { data, error } = await supabase
+        .rpc('get_employee_safe_profile', { employee_user_id: session.user.id });
+
+      if (error) {
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      } else {
+        setEmployees(data || []);
+      }
     }
   };
 
