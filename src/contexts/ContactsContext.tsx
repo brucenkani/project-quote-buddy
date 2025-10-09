@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Contact, ContactType } from '@/types/contacts';
 import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from './CompanyContext';
 
 interface ContactsContextType {
   contacts: Contact[];
@@ -15,11 +16,11 @@ const ContactsContext = createContext<ContactsContextType | undefined>(undefined
 export function ContactsProvider({ children }: { children: ReactNode }) {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
+  const { activeCompany } = useCompany();
 
   const loadContacts = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      if (!activeCompany) {
         setContacts([]);
         setLoading(false);
         return;
@@ -28,7 +29,7 @@ export function ContactsProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase
         .from('contacts')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('company_id', activeCompany.id)
         .order('name');
 
       if (error) throw error;
@@ -57,18 +58,19 @@ export function ContactsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadContacts();
-  }, []);
+  }, [activeCompany]);
 
   const saveContact = async (contact: Contact) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user || !activeCompany) throw new Error('User not authenticated or no active company');
 
       const { error } = await supabase
         .from('contacts')
         .upsert({
           id: contact.id,
           user_id: user.id,
+          company_id: activeCompany.id,
           name: contact.name,
           email: contact.email,
           phone: contact.phone,

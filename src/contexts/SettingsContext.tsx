@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { CompanySettings, defaultSettings } from '@/types/settings';
 import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from './CompanyContext';
 
 interface SettingsContextType {
   settings: CompanySettings;
@@ -14,11 +15,11 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<CompanySettings>(defaultSettings);
   const [loading, setLoading] = useState(true);
+  const { activeCompany } = useCompany();
 
   const loadSettings = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      if (!activeCompany) {
         setSettings(defaultSettings);
         setLoading(false);
         return;
@@ -27,7 +28,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase
         .from('company_settings')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('company_id', activeCompany.id)
         .maybeSingle();
 
       if (error) {
@@ -76,17 +77,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [activeCompany]);
 
   const saveSettings = async (newSettings: CompanySettings) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user || !activeCompany) throw new Error('User not authenticated or no active company');
 
       const { error } = await supabase
         .from('company_settings')
         .upsert({
           user_id: user.id,
+          company_id: activeCompany.id,
           company_name: newSettings.companyName,
           company_type: newSettings.companyType,
           email: newSettings.email,
@@ -110,7 +112,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           purchase_start_number: newSettings.purchaseStartNumber || 1,
           financial_year_end: '12-31',
         }, {
-          onConflict: 'user_id'
+          onConflict: 'user_id,company_id'
         });
 
       if (error) throw error;

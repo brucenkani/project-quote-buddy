@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { InventoryItem, InventoryType } from '@/types/inventory';
 import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from './CompanyContext';
 
 interface InventoryContextType {
   inventory: InventoryItem[];
@@ -15,11 +16,11 @@ const InventoryContext = createContext<InventoryContextType | undefined>(undefin
 export function InventoryProvider({ children }: { children: ReactNode }) {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const { activeCompany } = useCompany();
 
   const loadInventory = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      if (!activeCompany) {
         setInventory([]);
         setLoading(false);
         return;
@@ -28,7 +29,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase
         .from('inventory_items')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('company_id', activeCompany.id)
         .order('name');
 
       if (error) throw error;
@@ -62,18 +63,19 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadInventory();
-  }, []);
+  }, [activeCompany]);
 
   const saveItem = async (item: InventoryItem) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user || !activeCompany) throw new Error('User not authenticated or no active company');
 
       const { error } = await supabase
         .from('inventory_items')
         .upsert({
           id: item.id,
           user_id: user.id,
+          company_id: activeCompany.id,
           name: item.name,
           description: item.description,
           sku: item.sku,

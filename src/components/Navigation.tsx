@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { FileText, DollarSign, Package, BookOpen, Receipt, Settings, BarChart3, LayoutDashboard, ArrowLeft, Users, ShoppingCart, Building2, ChevronDown, Menu, X } from 'lucide-react';
 import { loadSettings } from '@/utils/settingsStorage';
 import { supabase } from '@/integrations/supabase/client';
+import { CompanySelector } from './CompanySelector';
 
 export const Navigation = () => {
   const location = useLocation();
@@ -60,6 +61,7 @@ export const Navigation = () => {
                 Accounting
               </h1>
             </div>
+            <CompanySelector />
           </div>
           
           {/* Desktop Navigation */}
