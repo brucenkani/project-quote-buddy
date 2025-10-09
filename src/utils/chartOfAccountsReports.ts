@@ -6,6 +6,20 @@ import { ChartAccount } from '@/types/chartOfAccounts';
 export const generateChartOfAccountsPDF = (accounts: ChartAccount[]) => {
   const doc = new jsPDF();
   
+  // Helper function to format account type
+  const formatAccountType = (type: string) => {
+    const typeMap: Record<string, string> = {
+      'current-asset': 'Current Asset',
+      'non-current-asset': 'Non-Current Asset',
+      'current-liability': 'Current Liability',
+      'non-current-liability': 'Non-Current Liability',
+      'equity': 'Equity',
+      'revenue': 'Revenue',
+      'expense': 'Expense'
+    };
+    return typeMap[type] || type.charAt(0).toUpperCase() + type.slice(1);
+  };
+  
   // Title
   doc.setFontSize(18);
   doc.text('Chart of Accounts', 14, 20);
@@ -17,7 +31,7 @@ export const generateChartOfAccountsPDF = (accounts: ChartAccount[]) => {
   const tableData = accounts.map(account => [
     account.accountNumber,
     account.accountName,
-    account.accountType.charAt(0).toUpperCase() + account.accountType.slice(1),
+    formatAccountType(account.accountType),
     account.openingBalance ? `R ${account.openingBalance.toFixed(2)}` : 'R 0.00'
   ]);
   
@@ -36,7 +50,7 @@ export const generateChartOfAccountsPDF = (accounts: ChartAccount[]) => {
     columnStyles: {
       0: { cellWidth: 30 },
       1: { cellWidth: 80 },
-      2: { cellWidth: 35 },
+      2: { cellWidth: 40 },
       3: { cellWidth: 40, halign: 'right' }
     }
   });
@@ -46,11 +60,25 @@ export const generateChartOfAccountsPDF = (accounts: ChartAccount[]) => {
 };
 
 export const generateChartOfAccountsExcel = (accounts: ChartAccount[]) => {
+  // Helper function to format account type
+  const formatAccountType = (type: string) => {
+    const typeMap: Record<string, string> = {
+      'current-asset': 'Current Asset',
+      'non-current-asset': 'Non-Current Asset',
+      'current-liability': 'Current Liability',
+      'non-current-liability': 'Non-Current Liability',
+      'equity': 'Equity',
+      'revenue': 'Revenue',
+      'expense': 'Expense'
+    };
+    return typeMap[type] || type.charAt(0).toUpperCase() + type.slice(1);
+  };
+  
   // Prepare data
   const data = accounts.map(account => ({
     'Account Number': account.accountNumber,
     'Account Name': account.accountName,
-    'Account Type': account.accountType.charAt(0).toUpperCase() + account.accountType.slice(1),
+    'Account Type': formatAccountType(account.accountType),
     'Opening Balance': account.openingBalance || 0,
     'Created Date': new Date(account.createdAt).toLocaleDateString()
   }));
@@ -63,7 +91,7 @@ export const generateChartOfAccountsExcel = (accounts: ChartAccount[]) => {
   ws['!cols'] = [
     { wch: 15 },  // Account Number
     { wch: 35 },  // Account Name
-    { wch: 15 },  // Account Type
+    { wch: 20 },  // Account Type
     { wch: 18 },  // Opening Balance
     { wch: 15 }   // Created Date
   ];
