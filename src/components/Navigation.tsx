@@ -26,6 +26,7 @@ export const Navigation = () => {
   ];
 
   const bankingMenuItems = [
+    { path: '/bank-accounts', label: 'Bank Accounts', icon: Building2 },
     { path: '/expenses', label: 'Expenses', icon: Receipt },
   ];
 

@@ -44,6 +44,7 @@ import ExpensePrint from "./pages/ExpensePrint";
 import ExpensePayment from "./pages/ExpensePayment";
 import ExpenseHistory from "./pages/ExpenseHistory";
 import BankFeeds from "./pages/BankFeeds";
+import BankAccounts from "./pages/BankAccounts";
 import NotFound from "./pages/NotFound";
 import Reports from "./pages/Reports";
 import InviteUsers from "./pages/InviteUsers";
@@ -118,6 +119,7 @@ const App = () => (
           <Route path="/expenses/:id/print" element={<ProtectedRoute><ExpensePrint /></ProtectedRoute>} />
           <Route path="/expenses/:id/payment" element={<ProtectedRoute><ExpensePayment /></ProtectedRoute>} />
           <Route path="/bank-feeds" element={<ProtectedRoute><BankFeeds /></ProtectedRoute>} />
+          <Route path="/bank-accounts" element={<ProtectedRoute><BankAccounts /></ProtectedRoute>} />
           <Route path="/expenses/:id/history" element={<ProtectedRoute><ExpenseHistory /></ProtectedRoute>} />
           <Route path="/expenses/:id" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
