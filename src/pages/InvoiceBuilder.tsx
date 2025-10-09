@@ -27,7 +27,6 @@ const invoiceFormSchema = z.object({
   clientEmail: z.string().optional(),
   clientPhone: z.string().optional(),
   clientAddress: z.string().optional(),
-  projectName: z.string().min(1, 'Project name is required'),
   issueDate: z.string(),
   dueDate: z.string(),
   paymentTerms: z.string(),
@@ -48,7 +47,6 @@ export default function InvoiceBuilder() {
       clientEmail: '',
       clientPhone: '',
       clientAddress: '',
-      projectName: '',
       issueDate: new Date().toISOString().split('T')[0],
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       paymentTerms: 'Net 30',
@@ -78,7 +76,6 @@ export default function InvoiceBuilder() {
           clientEmail: invoice.projectDetails.clientEmail || '',
           clientPhone: invoice.projectDetails.clientPhone || '',
           clientAddress: invoice.projectDetails.projectAddress || '',
-          projectName: invoice.projectDetails.projectName || '',
           issueDate: invoice.issueDate,
           dueDate: invoice.dueDate,
           paymentTerms: invoice.paymentTerms,
@@ -149,7 +146,7 @@ export default function InvoiceBuilder() {
         clientName: data.clientName,
         clientEmail: data.clientEmail || '',
         clientPhone: data.clientPhone || '',
-        projectName: data.projectName,
+        projectName: '',
         projectAddress: data.clientAddress || '',
         industry: 'professional-services',
         startDate: data.issueDate,
@@ -313,19 +310,6 @@ export default function InvoiceBuilder() {
                             }}
                             placeholder="Select or add client"
                           />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="projectName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Project Name *</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
