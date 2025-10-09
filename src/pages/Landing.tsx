@@ -86,7 +86,7 @@ export default function Landing() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/accounting')}>
             <CardHeader>
               <Calculator className="h-12 w-12 mb-4 text-primary" />
@@ -121,6 +121,25 @@ export default function Landing() {
                 <li>• Leave Management</li>
                 <li>• Payslip Generation</li>
                 <li>• HR Dashboard</li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/calculators')}>
+            <CardHeader>
+              <Calculator className="h-12 w-12 mb-4 text-primary" />
+              <CardTitle>Business Calculators</CardTitle>
+              <CardDescription>
+                Essential calculators for business, finance, and engineering
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>• Financial Calculators</li>
+                <li>• Tax Calculators</li>
+                <li>• Property Calculators</li>
+                <li>• Engineering Tools</li>
+                <li>• Business Metrics</li>
               </ul>
             </CardContent>
           </Card>
