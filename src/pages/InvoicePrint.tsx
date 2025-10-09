@@ -76,6 +76,7 @@ export default function InvoicePrint() {
       </div>
 
       <div className="px-8 mb-6">
+        <h3 className="font-semibold text-sm mb-2">Bill To:</h3>
         <div className="border p-4 text-xs">
           <p className="font-medium">{invoice.projectDetails.clientName}</p>
           <p className="text-sm">{invoice.projectDetails.clientEmail}</p>
