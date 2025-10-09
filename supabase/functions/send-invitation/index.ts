@@ -79,9 +79,9 @@ const handler = async (req: Request): Promise<Response> => {
     const inviteUrl = `${Deno.env.get("SITE_URL") || "http://localhost:8080"}/auth?invitation=${token}`;
     
     const emailResponse = await resend.emails.send({
-      from: "QuoteBuilder ERP <onboarding@resend.dev>",
+      from: "BizCounting <hello@bizcounting.co.za>",
       to: [email],
-      subject: "You've been invited to QuoteBuilder ERP",
+      subject: "You've been invited to BizCounting",
       html: `
         <h1>Welcome to QuoteBuilder ERP!</h1>
         <p>You've been invited to join as ${role === "admin" ? "an Admin" : role === "accountant" ? "an Accountant" : "an Employee"}.</p>
