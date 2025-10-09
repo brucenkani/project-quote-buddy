@@ -1,39 +1,84 @@
 import { Contact } from '@/types/contacts';
+import { supabase } from '@/integrations/supabase/client';
 
-const STORAGE_KEY = 'quotebuilder-contacts';
-
-export const loadContacts = (): Contact[] => {
+export const loadContacts = async (): Promise<Contact[]> => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('name');
+
+    if (error) throw error;
+
+    return (data || []).map(row => ({
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      phone: row.phone || '',
+      address: row.address || '',
+      city: row.city || '',
+      state: row.state || '',
+      postalCode: row.postal_code || '',
+      country: row.country || 'ZA',
+      type: row.type as 'customer' | 'supplier' | 'both',
+      taxNumber: row.tax_number || '',
+      notes: row.notes || '',
+    }));
   } catch (error) {
     console.error('Failed to load contacts:', error);
+    return [];
   }
-  return [];
 };
 
-export const saveContacts = (contacts: Contact[]): void => {
+export const saveContacts = async (contacts: Contact[]): Promise<void> => {
+  // Not used anymore - use saveContact instead
+  console.warn('saveContacts is deprecated, use saveContact instead');
+};
+
+export const saveContact = async (contact: Contact): Promise<void> => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(contacts));
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { error } = await supabase
+      .from('contacts')
+      .upsert({
+        id: contact.id,
+        user_id: user.id,
+        name: contact.name,
+        email: contact.email,
+        phone: contact.phone,
+        address: contact.address,
+        city: contact.city,
+        state: contact.state,
+        postal_code: contact.postalCode,
+        country: contact.country,
+        type: contact.type,
+        tax_number: contact.taxNumber,
+        notes: contact.notes,
+      });
+
+    if (error) throw error;
   } catch (error) {
-    console.error('Failed to save contacts:', error);
+    console.error('Failed to save contact:', error);
+    throw error;
   }
 };
 
-export const saveContact = (contact: Contact): void => {
-  const contacts = loadContacts();
-  const index = contacts.findIndex(c => c.id === contact.id);
-  if (index >= 0) {
-    contacts[index] = contact;
-  } else {
-    contacts.push(contact);
-  }
-  saveContacts(contacts);
-};
+export const deleteContact = async (id: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('contacts')
+      .delete()
+      .eq('id', id);
 
-export const deleteContact = (id: string): void => {
-  const contacts = loadContacts().filter(c => c.id !== id);
-  saveContacts(contacts);
+    if (error) throw error;
+  } catch (error) {
+    console.error('Failed to delete contact:', error);
+    throw error;
+  }
 };

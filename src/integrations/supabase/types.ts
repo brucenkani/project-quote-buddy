@@ -14,6 +14,180 @@ export type Database = {
   }
   public: {
     Tables: {
+      bank_transactions: {
+        Row: {
+          account_id: string | null
+          balance: number
+          category: string | null
+          created_at: string | null
+          credit: number | null
+          date: string
+          debit: number | null
+          description: string
+          id: string
+          is_reconciled: boolean | null
+          reference: string | null
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          balance: number
+          category?: string | null
+          created_at?: string | null
+          credit?: number | null
+          date: string
+          debit?: number | null
+          description: string
+          id?: string
+          is_reconciled?: boolean | null
+          reference?: string | null
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          balance?: number
+          category?: string | null
+          created_at?: string | null
+          credit?: number | null
+          date?: string
+          debit?: number | null
+          description?: string
+          id?: string
+          is_reconciled?: boolean | null
+          reference?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chart_of_accounts: {
+        Row: {
+          account_name: string
+          account_number: string
+          account_type: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          opening_balance: number | null
+          parent_account: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          account_type: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          opening_balance?: number | null
+          parent_account?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          account_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          opening_balance?: number | null
+          parent_account?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      company_settings: {
+        Row: {
+          address: string
+          city: string
+          company_name: string
+          company_type: string
+          country: string
+          created_at: string | null
+          currency: string
+          currency_symbol: string
+          email: string
+          financial_year_end: string
+          id: string
+          invoice_prefix: string
+          invoice_start_number: number
+          logo_url: string | null
+          phone: string
+          postal_code: string
+          purchase_prefix: string
+          purchase_start_number: number
+          quote_prefix: string
+          quote_start_number: number
+          registration_number: string
+          state: string
+          tax_number: string
+          tax_rate: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          address?: string
+          city?: string
+          company_name?: string
+          company_type?: string
+          country?: string
+          created_at?: string | null
+          currency?: string
+          currency_symbol?: string
+          email?: string
+          financial_year_end?: string
+          id?: string
+          invoice_prefix?: string
+          invoice_start_number?: number
+          logo_url?: string | null
+          phone?: string
+          postal_code?: string
+          purchase_prefix?: string
+          purchase_start_number?: number
+          quote_prefix?: string
+          quote_start_number?: number
+          registration_number?: string
+          state?: string
+          tax_number?: string
+          tax_rate?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          company_name?: string
+          company_type?: string
+          country?: string
+          created_at?: string | null
+          currency?: string
+          currency_symbol?: string
+          email?: string
+          financial_year_end?: string
+          id?: string
+          invoice_prefix?: string
+          invoice_start_number?: number
+          logo_url?: string | null
+          phone?: string
+          postal_code?: string
+          purchase_prefix?: string
+          purchase_start_number?: number
+          quote_prefix?: string
+          quote_start_number?: number
+          registration_number?: string
+          state?: string
+          tax_number?: string
+          tax_rate?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       contact_inquiries: {
         Row: {
           company: string | null
@@ -47,6 +221,60 @@ export type Database = {
           phone?: string | null
           status?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      contacts: {
+        Row: {
+          address: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          postal_code: string | null
+          state: string | null
+          tax_number: string | null
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          state?: string | null
+          tax_number?: string | null
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          state?: string | null
+          tax_number?: string | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -170,6 +398,96 @@ export type Database = {
           uif_number?: string | null
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      expense_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          date: string
+          expense_id: string
+          id: string
+          method: string
+          notes: string | null
+          reference: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          date: string
+          expense_id: string
+          id?: string
+          method: string
+          notes?: string | null
+          reference: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          date?: string
+          expense_id?: string
+          id?: string
+          method?: string
+          notes?: string | null
+          reference?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      inventory_items: {
+        Row: {
+          category: string | null
+          cost_price: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_taxable: boolean | null
+          name: string
+          quantity: number
+          reorder_level: number | null
+          sku: string | null
+          tax_rate: number
+          unit: string
+          unit_price: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          cost_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_taxable?: boolean | null
+          name: string
+          quantity?: number
+          reorder_level?: number | null
+          sku?: string | null
+          tax_rate?: number
+          unit?: string
+          unit_price: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          cost_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_taxable?: boolean | null
+          name?: string
+          quantity?: number
+          reorder_level?: number | null
+          sku?: string | null
+          tax_rate?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }

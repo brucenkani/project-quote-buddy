@@ -1,40 +1,80 @@
 import { BankTransaction } from '@/types/bankTransaction';
+import { supabase } from '@/integrations/supabase/client';
 
-const STORAGE_KEY = 'quotebuilder-bank-transactions';
-
-export const loadBankTransactions = (): BankTransaction[] => {
+export const loadBankTransactions = async (): Promise<BankTransaction[]> => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from('bank_transactions')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('date', { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map(row => ({
+      id: row.id,
+      date: row.date,
+      description: row.description,
+      reference: row.reference || '',
+      debit: Number(row.debit),
+      credit: Number(row.credit),
+      balance: Number(row.balance),
+      accountId: row.account_id || '',
+      category: row.category || '',
+      isReconciled: row.is_reconciled,
+    }));
   } catch (error) {
     console.error('Failed to load bank transactions:', error);
+    return [];
   }
-  return [];
 };
 
-export const saveBankTransactions = (transactions: BankTransaction[]): void => {
+export const saveBankTransactions = async (transactions: BankTransaction[]): Promise<void> => {
+  // Not used anymore - use saveBankTransaction instead
+  console.warn('saveBankTransactions is deprecated, use saveBankTransaction instead');
+};
+
+export const saveBankTransaction = async (transaction: BankTransaction): Promise<void> => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { error } = await supabase
+      .from('bank_transactions')
+      .upsert({
+        id: transaction.id,
+        user_id: user.id,
+        date: transaction.date,
+        description: transaction.description,
+        reference: transaction.reference,
+        debit: transaction.debit,
+        credit: transaction.credit,
+        balance: transaction.balance,
+        account_id: transaction.accountId,
+        category: transaction.category,
+        is_reconciled: transaction.isReconciled,
+      });
+
+    if (error) throw error;
   } catch (error) {
-    console.error('Failed to save bank transactions:', error);
+    console.error('Failed to save bank transaction:', error);
+    throw error;
   }
 };
 
-export const saveBankTransaction = (transaction: BankTransaction): void => {
-  const transactions = loadBankTransactions();
-  const index = transactions.findIndex(t => t.id === transaction.id);
-  if (index >= 0) {
-    transactions[index] = transaction;
-  } else {
-    transactions.push(transaction);
-  }
-  saveBankTransactions(transactions);
-};
+export const deleteBankTransaction = async (id: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('bank_transactions')
+      .delete()
+      .eq('id', id);
 
-export const deleteBankTransaction = (id: string): void => {
-  const transactions = loadBankTransactions();
-  const filtered = transactions.filter(t => t.id !== id);
-  saveBankTransactions(filtered);
+    if (error) throw error;
+  } catch (error) {
+    console.error('Failed to delete bank transaction:', error);
+    throw error;
+  }
 };
