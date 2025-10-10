@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Calculator, ArrowLeft } from 'lucide-react';
+import { Calculator, ArrowLeft, Mail } from 'lucide-react';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -20,6 +20,7 @@ export default function Auth() {
   const [joinCommunity, setJoinCommunity] = useState(false);
   const [invitationData, setInvitationData] = useState<any>(null);
   const [resetMode, setResetMode] = useState(false);
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -154,10 +155,8 @@ export default function Auth() {
         }
       }
 
-      toast({
-        title: 'Check Your Email!',
-        description: 'We sent you a confirmation link. Please check your email to verify your account.',
-      });
+      // Show email confirmation message instead of toast
+      setShowEmailConfirmation(true);
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -239,160 +238,197 @@ export default function Auth() {
       {/* Auth Form */}
       <div className="flex items-center justify-center p-4 py-16">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Welcome to BizCounting</CardTitle>
-          <CardDescription>
-            {invitationData 
-              ? `You've been invited to join as ${invitationData.role}. Create your account below.`
-              : 'Sign in to access your account'
-            }
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue={invitationData ? "signup" : "signin"} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="signin">
-              {resetMode ? (
-                <form onSubmit={handlePasswordReset} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reset-email">Email</Label>
-                    <Input
-                      id="reset-email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? 'Sending reset link...' : 'Send Reset Link'}
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    className="w-full" 
-                    onClick={() => setResetMode(false)}
-                  >
-                    Back to Sign In
-                  </Button>
-                </form>
-              ) : (
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
-                    <Input
-                      id="signin-email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
-                    <Input
-                      id="signin-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? 'Signing in...' : 'Sign In'}
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="link" 
-                    className="w-full" 
-                    onClick={() => setResetMode(true)}
-                  >
-                    Forgot Password?
-                  </Button>
-                </form>
-              )}
-            </TabsContent>
-
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    placeholder="John Doe"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={!!invitationData}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-confirm-password">Confirm Password</Label>
-                  <Input
-                    id="signup-confirm-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="joinCommunity"
-                      checked={joinCommunity}
-                      onChange={(e) => setJoinCommunity(e.target.checked)}
-                      className="rounded border-input"
-                    />
-                    <label htmlFor="joinCommunity" className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                      Join the Business Community (optional)
-                    </label>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Get your business listed in our community directory and connect with other professionals
+        {showEmailConfirmation ? (
+          // Email Confirmation Message
+          <>
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                <Mail className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle className="text-2xl">Check Your Email!</CardTitle>
+              <CardDescription className="text-base">
+                We sent you a confirmation link. Please check your email to verify your account and log in.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="p-4 bg-muted rounded-lg text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Sent to: <span className="font-medium text-foreground">{email}</span>
                   </p>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Creating account...' : 'Sign Up'}
+                <p className="text-xs text-muted-foreground text-center">
+                  Didn't receive the email? Check your spam folder or contact support.
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={() => setShowEmailConfirmation(false)}
+                >
+                  Back to Sign In
                 </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
+              </div>
+            </CardContent>
+          </>
+        ) : (
+          // Auth Form
+          <>
+            <CardHeader>
+              <CardTitle>Welcome to BizCounting</CardTitle>
+              <CardDescription>
+                {invitationData 
+                  ? `You've been invited to join as ${invitationData.role}. Create your account below.`
+                  : 'Sign in to access your account'
+                }
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue={invitationData ? "signup" : "signin"} className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="signin">Sign In</TabsTrigger>
+                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="signin">
+                  {resetMode ? (
+                    <form onSubmit={handlePasswordReset} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="reset-email">Email</Label>
+                        <Input
+                          id="reset-email"
+                          type="email"
+                          placeholder="you@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <Button type="submit" className="w-full" disabled={loading}>
+                        {loading ? 'Sending reset link...' : 'Send Reset Link'}
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        className="w-full" 
+                        onClick={() => setResetMode(false)}
+                      >
+                        Back to Sign In
+                      </Button>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleSignIn} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="signin-email">Email</Label>
+                        <Input
+                          id="signin-email"
+                          type="email"
+                          placeholder="you@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signin-password">Password</Label>
+                        <Input
+                          id="signin-password"
+                          type="password"
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <Button type="submit" className="w-full" disabled={loading}>
+                        {loading ? 'Signing in...' : 'Sign In'}
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="link" 
+                        className="w-full" 
+                        onClick={() => setResetMode(true)}
+                      >
+                        Forgot Password?
+                      </Button>
+                    </form>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="signup">
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name">Full Name</Label>
+                      <Input
+                        id="signup-name"
+                        type="text"
+                        placeholder="John Doe"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">Email</Label>
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        disabled={!!invitationData}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Password</Label>
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                      <Input
+                        id="signup-confirm-password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="joinCommunity"
+                          checked={joinCommunity}
+                          onChange={(e) => setJoinCommunity(e.target.checked)}
+                          className="rounded border-input"
+                        />
+                        <label htmlFor="joinCommunity" className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          Join the Business Community (optional)
+                        </label>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Get your business listed in our community directory and connect with other professionals
+                      </p>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? 'Creating account...' : 'Sign Up'}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </>
+        )}
       </Card>
       </div>
     </div>
