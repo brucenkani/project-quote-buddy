@@ -69,6 +69,7 @@ export default function Index() {
               <MessageCircle className="h-4 w-4" />
               WhatsApp Us
             </Button>
+            <Button variant="ghost" size="lg" onClick={() => navigate('/community')}>Business Community</Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="lg" className="gap-2">
@@ -479,6 +480,9 @@ export default function Index() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-muted-foreground text-sm">
             <p>&copy; 2025 Nkani Business Solutions (Pty) Ltd. All rights reserved.</p>
             <div className="flex gap-6">
+              <button onClick={() => navigate('/community')} className="hover:text-primary transition-colors">
+                Business Community
+              </button>
               <button onClick={() => navigate('/terms')} className="hover:text-primary transition-colors">
                 Terms & Conditions
               </button>

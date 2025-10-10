@@ -123,6 +123,134 @@ export type Database = {
           },
         ]
       }
+      community_members: {
+        Row: {
+          address: string | null
+          business_category: string
+          business_description: string | null
+          business_name: string
+          city: string | null
+          contact_email: string
+          contact_phone: string | null
+          created_at: string | null
+          featured_until: string | null
+          id: string
+          is_featured: boolean | null
+          logo_url: string | null
+          updated_at: string | null
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          business_category: string
+          business_description?: string | null
+          business_name: string
+          city?: string | null
+          contact_email: string
+          contact_phone?: string | null
+          created_at?: string | null
+          featured_until?: string | null
+          id?: string
+          is_featured?: boolean | null
+          logo_url?: string | null
+          updated_at?: string | null
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          business_category?: string
+          business_description?: string | null
+          business_name?: string
+          city?: string | null
+          contact_email?: string
+          contact_phone?: string | null
+          created_at?: string | null
+          featured_until?: string | null
+          id?: string
+          is_featured?: boolean | null
+          logo_url?: string | null
+          updated_at?: string | null
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      community_payments: {
+        Row: {
+          amount: number
+          community_member_id: string
+          created_at: string | null
+          featured_end_date: string | null
+          featured_start_date: string | null
+          id: string
+          payfast_payment_id: string | null
+          payment_reference: string
+          payment_status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          community_member_id: string
+          created_at?: string | null
+          featured_end_date?: string | null
+          featured_start_date?: string | null
+          id?: string
+          payfast_payment_id?: string | null
+          payment_reference: string
+          payment_status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          community_member_id?: string
+          created_at?: string | null
+          featured_end_date?: string | null
+          featured_start_date?: string | null
+          id?: string
+          payfast_payment_id?: string | null
+          payment_reference?: string
+          payment_status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_payments_community_member_id_fkey"
+            columns: ["community_member_id"]
+            isOneToOne: false
+            referencedRelation: "community_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_settings: {
+        Row: {
+          created_at: string | null
+          featured_duration_days: number
+          featured_listing_fee: number
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          featured_duration_days?: number
+          featured_listing_fee?: number
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          featured_duration_days?: number
+          featured_listing_fee?: number
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           created_at: string

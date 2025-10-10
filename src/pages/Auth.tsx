@@ -17,6 +17,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [joinCommunity, setJoinCommunity] = useState(false);
   const [invitationData, setInvitationData] = useState<any>(null);
   const [resetMode, setResetMode] = useState(false);
 
@@ -133,6 +134,23 @@ export default function Auth() {
 
         if (roleError) {
           console.error('Error assigning role:', roleError);
+        }
+      }
+
+      // If user opted to join community, create a placeholder entry
+      // They can complete their profile later
+      if (joinCommunity && authData.user) {
+        const { error: communityError } = await supabase
+          .from('community_members')
+          .insert({
+            user_id: authData.user.id,
+            business_name: fullName || 'My Business',
+            business_category: 'Other',
+            contact_email: email
+          });
+
+        if (communityError) {
+          console.error('Error creating community profile:', communityError);
         }
       }
 
@@ -350,6 +368,23 @@ export default function Auth() {
                     required
                     minLength={6}
                   />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="joinCommunity"
+                      checked={joinCommunity}
+                      onChange={(e) => setJoinCommunity(e.target.checked)}
+                      className="rounded border-input"
+                    />
+                    <label htmlFor="joinCommunity" className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      Join the Business Community (optional)
+                    </label>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Get your business listed in our community directory and connect with other professionals
+                  </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Creating account...' : 'Sign Up'}

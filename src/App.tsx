@@ -52,6 +52,7 @@ import InviteUsers from "./pages/InviteUsers";
 import PermissionsManager from "./pages/PermissionsManager";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import BusinessCommunity from "./pages/BusinessCommunity";
 import Calculators from "./pages/Calculators";
 import TaxCalculators from "./pages/calculators/TaxCalculators";
 import FinancialCalculators from "./pages/calculators/FinancialCalculators";
@@ -72,6 +73,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/community" element={<BusinessCommunity />} />
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/calculators" element={<Calculators />} />
