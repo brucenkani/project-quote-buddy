@@ -65,6 +65,10 @@ export default function Index() {
             <h1 className="text-2xl font-bold">BizCounting</h1>
           </div>
           <div className="flex gap-3">
+            <Button variant="outline" size="lg" className="gap-2" onClick={handleWhatsAppContact}>
+              <MessageCircle className="h-4 w-4" />
+              WhatsApp Us
+            </Button>
             <Button variant="ghost" size="lg" onClick={() => navigate('/community')}>Business Community</Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
@@ -143,10 +147,6 @@ export default function Index() {
                 </form>
               </DialogContent>
             </Dialog>
-            <Button variant="outline" size="lg" className="gap-2" onClick={handleWhatsAppContact}>
-              <MessageCircle className="h-4 w-4" />
-              WhatsApp Us
-            </Button>
             <Button onClick={() => navigate('/auth')} size="lg">
               Sign In / Sign Up
             </Button>
