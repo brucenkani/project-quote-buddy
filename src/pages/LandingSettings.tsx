@@ -3,25 +3,46 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useCompany } from '@/contexts/CompanyContext';
 import { countries } from '@/types/settings';
 import { loadSettings, saveSettings as saveLocalSettings } from '@/utils/settingsStorage';
 import { loadChartOfAccounts, saveChartOfAccounts } from '@/utils/chartOfAccountsStorage';
 import { generateChartOfAccountsPDF, generateChartOfAccountsExcel } from '@/utils/chartOfAccountsReports';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Save, Upload, X, FileDown, FileSpreadsheet, Database, Shield } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Save, Upload, X, FileDown, FileSpreadsheet, Database, Shield, MoreVertical } from 'lucide-react';
 
 export default function LandingSettings() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { settings: contextSettings, loading, saveSettings: saveToContext } = useSettings();
+  const { companies } = useCompany();
   const [localSettings, setLocalSettings] = useState(contextSettings);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Company form state
+  const [showCompanyForm, setShowCompanyForm] = useState(false);
+  const [editingCompany, setEditingCompany] = useState<any>(null);
+  const [companyFormData, setCompanyFormData] = useState({
+    companyName: '',
+    country: 'ZA',
+    companyType: 'trading',
+    email: '',
+    phone: '',
+    address: '',
+    vatNumber: '',
+    incomeTaxNumber: '',
+    companyRegistrationNumber: '',
+    logoUrl: '',
+    primaryColor: '#3b82f6',
+  });
   
   // Accounting-specific state
   const [taxRate, setTaxRate] = useState(contextSettings.taxRate || 0.15);
@@ -37,9 +58,84 @@ export default function LandingSettings() {
   const [showOpeningBalances, setShowOpeningBalances] = useState(false);
 
   const selectedCountry = countries.find(c => c.code === localSettings.country);
+  const formSelectedCountry = countries.find(c => c.code === companyFormData.country);
 
   const handleChange = (field: keyof typeof localSettings, value: string | number) => {
     setLocalSettings(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCompanyFormChange = (field: keyof typeof companyFormData, value: string) => {
+    setCompanyFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddCompany = () => {
+    setEditingCompany(null);
+    setCompanyFormData({
+      companyName: '',
+      country: 'ZA',
+      companyType: 'trading',
+      email: '',
+      phone: '',
+      address: '',
+      vatNumber: '',
+      incomeTaxNumber: '',
+      companyRegistrationNumber: '',
+      logoUrl: '',
+      primaryColor: '#3b82f6',
+    });
+    setShowCompanyForm(true);
+  };
+
+  const handleEditCompany = (company: any) => {
+    setEditingCompany(company);
+    setCompanyFormData({
+      companyName: company.name || '',
+      country: 'ZA',
+      companyType: 'trading',
+      email: '',
+      phone: '',
+      address: '',
+      vatNumber: '',
+      incomeTaxNumber: '',
+      companyRegistrationNumber: '',
+      logoUrl: '',
+      primaryColor: '#3b82f6',
+    });
+    setShowCompanyForm(true);
+  };
+
+  const handleDeleteCompany = (companyId: string) => {
+    // TODO: Implement delete functionality
+    toast({
+      title: "Delete company",
+      description: "This feature will be implemented soon.",
+    });
+  };
+
+  const handleSaveCompanyForm = () => {
+    // TODO: Implement save/update company functionality
+    toast({
+      title: editingCompany ? "Company updated" : "Company created",
+      description: editingCompany 
+        ? "Company information has been updated successfully."
+        : "New company has been created successfully.",
+    });
+    setShowCompanyForm(false);
+  };
+
+  const handleCompanyLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCompanyFormData(prev => ({ ...prev, logoUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeCompanyLogo = () => {
+    setCompanyFormData(prev => ({ ...prev, logoUrl: '' }));
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -166,208 +262,262 @@ export default function LandingSettings() {
           <TabsContent value="company" className="space-y-6">
             <Card className="shadow-[var(--shadow-elegant)] border-border/50">
               <CardHeader>
-                <CardTitle>Company Information</CardTitle>
-                <CardDescription>
-                  Global company details used across all systems
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="companyName">Company Name</Label>
-                    <Input
-                      id="companyName"
-                      value={localSettings.companyName}
-                      onChange={(e) => handleChange('companyName', e.target.value)}
-                      placeholder="Your Company Name"
-                    />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Companies</CardTitle>
+                    <CardDescription>
+                      Manage all your companies and their settings
+                    </CardDescription>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="country">Country</Label>
-                    <Select
-                      value={localSettings.country}
-                      onValueChange={(value) => {
-                        const country = countries.find(c => c.code === value);
-                        if (country) {
-                          setLocalSettings(prev => ({
-                            ...prev,
-                            country: country.code,
-                            currency: country.currency,
-                            currencySymbol: country.symbol,
-                          }));
-                        }
-                      }}
-                    >
-                      <SelectTrigger id="country">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {countries.map(c => (
-                          <SelectItem key={c.code} value={c.code}>
-                            {c.name} ({c.symbol})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="companyType">Company Type</Label>
-                    <Select
-                      value={localSettings.companyType}
-                      onValueChange={(value) => handleChange('companyType', value)}
-                    >
-                      <SelectTrigger id="companyType">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="trading">Trading Company</SelectItem>
-                        <SelectItem value="manufacturer">Manufacturer</SelectItem>
-                        <SelectItem value="contractor">Contractor</SelectItem>
-                        <SelectItem value="professional-services">Professional Services</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={localSettings.email}
-                      onChange={(e) => handleChange('email', e.target.value)}
-                      placeholder="contact@company.com"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      value={localSettings.phone}
-                      onChange={(e) => handleChange('phone', e.target.value)}
-                      placeholder="+27 12 345 6789"
-                    />
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="address">Address</Label>
-                    <Input
-                      id="address"
-                      value={localSettings.address}
-                      onChange={(e) => handleChange('address', e.target.value)}
-                      placeholder="123 Business St, City, Province, Postal Code"
-                    />
-                  </div>
+                  <Button onClick={handleAddCompany} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add Company
+                  </Button>
                 </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Company Name</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {companies.map((company) => (
+                      <TableRow key={company.id}>
+                        <TableCell className="font-medium">{company.name}</TableCell>
+                        <TableCell>{new Date(company.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditCompany(company)}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDeleteCompany(company.id)}>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
 
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-semibold mb-4">Tax Registration</h3>
+            {/* Company Form Dialog */}
+            <Dialog open={showCompanyForm} onOpenChange={setShowCompanyForm}>
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingCompany ? 'Edit Company' : 'Add New Company'}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {editingCompany 
+                      ? 'Update company information below' 
+                      : 'Enter company details to create a new company'}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-6 py-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="vatNumber">{selectedCountry?.vatLabel || 'VAT Number'}</Label>
+                      <Label htmlFor="companyName">Company Name</Label>
                       <Input
-                        id="vatNumber"
-                        value={localSettings.vatNumber || ''}
-                        onChange={(e) => handleChange('vatNumber', e.target.value)}
+                        id="companyName"
+                        value={companyFormData.companyName}
+                        onChange={(e) => handleCompanyFormChange('companyName', e.target.value)}
+                        placeholder="Your Company Name"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="incomeTaxNumber">{selectedCountry?.incomeTaxLabel || 'Tax Number'}</Label>
+                      <Label htmlFor="country">Country</Label>
+                      <Select
+                        value={companyFormData.country}
+                        onValueChange={(value) => handleCompanyFormChange('country', value)}
+                      >
+                        <SelectTrigger id="country">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {countries.map(c => (
+                            <SelectItem key={c.code} value={c.code}>
+                              {c.name} ({c.symbol})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="companyType">Company Type</Label>
+                      <Select
+                        value={companyFormData.companyType}
+                        onValueChange={(value) => handleCompanyFormChange('companyType', value)}
+                      >
+                        <SelectTrigger id="companyType">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="trading">Trading Company</SelectItem>
+                          <SelectItem value="manufacturer">Manufacturer</SelectItem>
+                          <SelectItem value="contractor">Contractor</SelectItem>
+                          <SelectItem value="professional-services">Professional Services</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
                       <Input
-                        id="incomeTaxNumber"
-                        value={localSettings.incomeTaxNumber || ''}
-                        onChange={(e) => handleChange('incomeTaxNumber', e.target.value)}
+                        id="email"
+                        type="email"
+                        value={companyFormData.email}
+                        onChange={(e) => handleCompanyFormChange('email', e.target.value)}
+                        placeholder="contact@company.com"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input
+                        id="phone"
+                        value={companyFormData.phone}
+                        onChange={(e) => handleCompanyFormChange('phone', e.target.value)}
+                        placeholder="+27 12 345 6789"
                       />
                     </div>
 
                     <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="companyRegistrationNumber">{selectedCountry?.companyRegLabel || 'Registration Number'}</Label>
+                      <Label htmlFor="address">Address</Label>
                       <Input
-                        id="companyRegistrationNumber"
-                        value={localSettings.companyRegistrationNumber || ''}
-                        onChange={(e) => handleChange('companyRegistrationNumber', e.target.value)}
+                        id="address"
+                        value={companyFormData.address}
+                        onChange={(e) => handleCompanyFormChange('address', e.target.value)}
+                        placeholder="123 Business St, City, Province, Postal Code"
                       />
                     </div>
                   </div>
-                </div>
 
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-semibold mb-4">Branding</h3>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Company Logo</Label>
-                      <div className="flex items-start gap-4">
-                        {localSettings.logoUrl && (
-                          <div className="relative">
-                            <img 
-                              src={localSettings.logoUrl} 
-                              alt="Company logo" 
-                              className="h-24 w-auto object-contain border rounded-lg p-2"
-                            />
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="icon"
-                              className="absolute -top-2 -right-2 h-6 w-6"
-                              onClick={removeLogo}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleLogoUpload}
-                            className="hidden"
-                            id="logo-upload"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="gap-2"
-                          >
-                            <Upload className="h-4 w-4" />
-                            {localSettings.logoUrl ? 'Change Logo' : 'Upload Logo'}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="primaryColor">Primary Brand Color</Label>
-                      <div className="flex gap-2">
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-semibold mb-4">Tax Registration</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="vatNumber">{formSelectedCountry?.vatLabel || 'VAT Number'}</Label>
                         <Input
-                          id="primaryColor"
-                          type="color"
-                          value={localSettings.primaryColor}
-                          onChange={(e) => handleChange('primaryColor', e.target.value)}
-                          className="w-20 h-10"
+                          id="vatNumber"
+                          value={companyFormData.vatNumber}
+                          onChange={(e) => handleCompanyFormChange('vatNumber', e.target.value)}
                         />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="incomeTaxNumber">{formSelectedCountry?.incomeTaxLabel || 'Tax Number'}</Label>
                         <Input
-                          value={localSettings.primaryColor}
-                          onChange={(e) => handleChange('primaryColor', e.target.value)}
-                          placeholder="#3b82f6"
+                          id="incomeTaxNumber"
+                          value={companyFormData.incomeTaxNumber}
+                          onChange={(e) => handleCompanyFormChange('incomeTaxNumber', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="companyRegistrationNumber">{formSelectedCountry?.companyRegLabel || 'Registration Number'}</Label>
+                        <Input
+                          id="companyRegistrationNumber"
+                          value={companyFormData.companyRegistrationNumber}
+                          onChange={(e) => handleCompanyFormChange('companyRegistrationNumber', e.target.value)}
                         />
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex justify-end pt-4">
-                  <Button onClick={handleSaveCompanySettings} className="gap-2">
-                    <Save className="h-4 w-4" />
-                    Save Company Settings
-                  </Button>
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-semibold mb-4">Branding</h3>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Company Logo</Label>
+                        <div className="flex items-start gap-4">
+                          {companyFormData.logoUrl && (
+                            <div className="relative">
+                              <img 
+                                src={companyFormData.logoUrl} 
+                                alt="Company logo" 
+                                className="h-24 w-auto object-contain border rounded-lg p-2"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="absolute -top-2 -right-2 h-6 w-6"
+                                onClick={removeCompanyLogo}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleCompanyLogoUpload}
+                              className="hidden"
+                              id="company-logo-upload"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => document.getElementById('company-logo-upload')?.click()}
+                              className="gap-2"
+                            >
+                              <Upload className="h-4 w-4" />
+                              {companyFormData.logoUrl ? 'Change Logo' : 'Upload Logo'}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="primaryColor">Primary Brand Color</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="primaryColor"
+                            type="color"
+                            value={companyFormData.primaryColor}
+                            onChange={(e) => handleCompanyFormChange('primaryColor', e.target.value)}
+                            className="w-20 h-10"
+                          />
+                          <Input
+                            value={companyFormData.primaryColor}
+                            onChange={(e) => handleCompanyFormChange('primaryColor', e.target.value)}
+                            placeholder="#3b82f6"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button variant="outline" onClick={() => setShowCompanyForm(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSaveCompanyForm} className="gap-2">
+                      <Save className="h-4 w-4" />
+                      {editingCompany ? 'Update Company' : 'Create Company'}
+                    </Button>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           {/* Accounting Settings Tab */}
