@@ -61,6 +61,7 @@ export const Navigation = () => {
                 Accounting
               </h1>
             </div>
+            <CompanySelector />
           </div>
           
           {/* Desktop Navigation */}
@@ -180,9 +181,6 @@ export const Navigation = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-2">
-                  <CompanySelector />
-                </div>
                 <DropdownMenuItem asChild>
                   <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
                     <Settings className="h-4 w-4" />
