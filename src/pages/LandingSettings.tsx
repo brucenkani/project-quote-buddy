@@ -154,19 +154,27 @@ export default function LandingSettings() {
     setShowCompanyForm(true);
   };
 
-  const handleEditCompany = (company: any) => {
+  const handleEditCompany = async (company: any) => {
     setEditingCompany(company);
+    
+    // Fetch the company settings to populate the form
+    const { data: settings } = await supabase
+      .from('company_settings')
+      .select('*')
+      .eq('company_id', company.id)
+      .single();
+    
     setCompanyFormData({
       companyName: company.name || '',
-      country: 'ZA',
-      companyType: 'trading',
-      email: '',
-      phone: '',
-      address: '',
-      vatNumber: '',
-      incomeTaxNumber: '',
-      companyRegistrationNumber: '',
-      logoUrl: '',
+      country: settings?.country || 'ZA',
+      companyType: settings?.company_type || 'trading',
+      email: settings?.email || '',
+      phone: settings?.phone || '',
+      address: settings?.address || '',
+      vatNumber: settings?.tax_number || '',
+      incomeTaxNumber: settings?.tax_number || '',
+      companyRegistrationNumber: settings?.registration_number || '',
+      logoUrl: settings?.logo_url || '',
       primaryColor: '#3b82f6',
     });
     setShowCompanyForm(true);
