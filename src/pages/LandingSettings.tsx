@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +28,18 @@ export default function LandingSettings() {
   const [localSettings, setLocalSettings] = useState(contextSettings);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Payroll Settings State
+  const [payrollSettings, setPayrollSettings] = useState<any>(null);
+  const [taxBrackets, setTaxBrackets] = useState<any[]>([]);
+  const [newBracket, setNewBracket] = useState({
+    age_group: 'under_65',
+    bracket_min: 0,
+    bracket_max: null as number | null,
+    rate: 0,
+    threshold: 0,
+    rebate: 0,
+  });
+  
   // Load company settings when active company changes
   useEffect(() => {
     if (activeCompanySettings) {
@@ -41,6 +54,46 @@ export default function LandingSettings() {
       setPurchaseStartNumber(activeCompanySettings.purchase_start_number || 1);
     }
   }, [activeCompanySettings]);
+
+  useEffect(() => {
+    if (activeCompany) {
+      loadPayrollSettings();
+    }
+  }, [activeCompany]);
+
+  const loadPayrollSettings = async () => {
+    if (!activeCompany || !activeCompanySettings) return;
+
+    const { data: settingsData } = await supabase
+      .from('payroll_settings')
+      .select('*')
+      .single();
+
+    if (settingsData) {
+      // Override with active company's settings
+      const updatedSettings = {
+        ...settingsData,
+        country: activeCompanySettings.country || 'ZA',
+        currency: activeCompanySettings.currency || 'ZAR',
+        currency_symbol: activeCompanySettings.currency_symbol || 'R',
+      };
+      setPayrollSettings(updatedSettings);
+      loadTaxBrackets(activeCompanySettings.country || 'ZA', settingsData.current_tax_year);
+    }
+  };
+
+  const loadTaxBrackets = async (country: string, year: number) => {
+    const { data } = await supabase
+      .from('tax_brackets')
+      .select('*')
+      .eq('country', country)
+      .eq('year', year)
+      .order('bracket_min');
+
+    if (data) {
+      setTaxBrackets(data);
+    }
+  };
   
   // Company form state
   const [showCompanyForm, setShowCompanyForm] = useState(false);
@@ -120,14 +173,112 @@ export default function LandingSettings() {
   };
 
   const handleDeleteCompany = async (companyId: string) => {
-    if (!confirm('Are you sure you want to delete this company? This action cannot be undone.')) {
+    const confirmDelete = confirm('Are you sure you want to delete this company? This action cannot be undone.');
+    if (!confirmDelete) return;
+
+    try {
+      const success = await deleteCompany(companyId);
+      
+      if (success) {
+        toast({
+          title: 'Success',
+          description: 'Company deleted successfully',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete company',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleTaxYearChange = async (year: string) => {
+    if (!payrollSettings || !activeCompany || !activeCompanySettings) return;
+
+    const { error } = await supabase
+      .from('payroll_settings')
+      .update({ current_tax_year: parseInt(year) })
+      .eq('id', payrollSettings.id);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update tax year',
+        variant: 'destructive',
+      });
       return;
     }
-    
-    const success = await deleteCompany(companyId);
-    if (success) {
-      // Company deleted successfully
+
+    setPayrollSettings({ ...payrollSettings, current_tax_year: parseInt(year) });
+    loadTaxBrackets(activeCompanySettings.country || 'ZA', parseInt(year));
+
+    toast({
+      title: 'Success',
+      description: 'Tax year updated',
+    });
+  };
+
+  const handleAddBracket = async () => {
+    if (!payrollSettings || !activeCompany || !activeCompanySettings) return;
+
+    const { error } = await supabase
+      .from('tax_brackets')
+      .insert([{
+        ...newBracket,
+        year: payrollSettings.current_tax_year,
+        country: activeCompanySettings.country || 'ZA',
+      }]);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to add tax bracket',
+        variant: 'destructive',
+      });
+      return;
     }
+
+    loadTaxBrackets(activeCompanySettings.country || 'ZA', payrollSettings.current_tax_year);
+    setNewBracket({
+      age_group: 'under_65',
+      bracket_min: 0,
+      bracket_max: null,
+      rate: 0,
+      threshold: 0,
+      rebate: 0,
+    });
+
+    toast({
+      title: 'Success',
+      description: 'Tax bracket added',
+    });
+  };
+
+  const handleDeleteBracket = async (id: string) => {
+    const { error } = await supabase
+      .from('tax_brackets')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete tax bracket',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (payrollSettings && activeCompany && activeCompanySettings) {
+      loadTaxBrackets(activeCompanySettings.country || 'ZA', payrollSettings.current_tax_year);
+    }
+
+    toast({
+      title: 'Success',
+      description: 'Tax bracket deleted',
+    });
   };
 
   const handleSaveCompanyForm = async () => {
@@ -796,22 +947,224 @@ export default function LandingSettings() {
 
           {/* Payroll & HR Settings Tab */}
           <TabsContent value="payroll" className="space-y-6">
-            <Card className="shadow-[var(--shadow-elegant)] border-border/50">
-              <CardHeader>
-                <CardTitle>Payroll & HR Settings</CardTitle>
-                <CardDescription>
-                  Configure payroll and HR-specific preferences
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  Payroll settings are available from the Payroll dashboard
-                </p>
-                <Button onClick={() => navigate('/payroll/settings')} variant="outline">
-                  Go to Payroll Settings
-                </Button>
-              </CardContent>
-            </Card>
+            {!activeCompany ? (
+              <Card className="shadow-[var(--shadow-elegant)] border-border/50">
+                <CardContent className="p-6">
+                  <p className="text-muted-foreground">Please select a company first to configure payroll settings.</p>
+                </CardContent>
+              </Card>
+            ) : !payrollSettings ? (
+              <Card className="shadow-[var(--shadow-elegant)] border-border/50">
+                <CardContent className="p-6">
+                  <p className="text-muted-foreground">Loading payroll settings...</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {/* Country & Currency Display */}
+                <Card className="shadow-[var(--shadow-elegant)] border-border/50">
+                  <CardHeader>
+                    <CardTitle>Country & Currency</CardTitle>
+                    <CardDescription>
+                      These settings are automatically configured based on the selected company's country
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div>
+                        <Label>Country</Label>
+                        <Input 
+                          value={activeCompanySettings?.country === 'ZA' ? 'South Africa' : activeCompanySettings?.country === 'ZW' ? 'Zimbabwe' : 'Zambia'} 
+                          disabled 
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Currency</Label>
+                        <Input value={payrollSettings.currency} disabled />
+                      </div>
+
+                      <div>
+                        <Label>Symbol</Label>
+                        <Input value={payrollSettings.currency_symbol} disabled />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Tax Year */}
+                <Card className="shadow-[var(--shadow-elegant)] border-border/50">
+                  <CardHeader>
+                    <CardTitle>Tax Year Configuration</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="max-w-xs">
+                      <Label>Current Tax Year</Label>
+                      <Select 
+                        value={payrollSettings.current_tax_year.toString()} 
+                        onValueChange={handleTaxYearChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() + i - 2).map((year) => (
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}/{year + 1}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Tax Brackets */}
+                <Card className="shadow-[var(--shadow-elegant)] border-border/50">
+                  <CardHeader>
+                    <CardTitle>
+                      Tax Brackets - {activeCompanySettings?.country === 'ZA' ? 'South Africa' : activeCompanySettings?.country === 'ZW' ? 'Zimbabwe' : 'Zambia'} ({payrollSettings.current_tax_year}/{payrollSettings.current_tax_year + 1})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Add New Bracket */}
+                    <div className="p-4 bg-secondary/20 rounded-lg">
+                      <h3 className="font-medium mb-3">Add New Tax Bracket</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
+                        <div>
+                          <Label className="text-xs">Age Group</Label>
+                          <Select 
+                            value={newBracket.age_group} 
+                            onValueChange={(value) => setNewBracket({ ...newBracket, age_group: value })}
+                          >
+                            <SelectTrigger className="h-9">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="under_65">Under 65</SelectItem>
+                              <SelectItem value="65_to_75">65 to 75</SelectItem>
+                              <SelectItem value="over_75">Over 75</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Min</Label>
+                          <Input
+                            type="number"
+                            value={newBracket.bracket_min}
+                            onChange={(e) => setNewBracket({ ...newBracket, bracket_min: Number(e.target.value) })}
+                            className="h-9"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Max</Label>
+                          <Input
+                            type="number"
+                            value={newBracket.bracket_max || ''}
+                            onChange={(e) => setNewBracket({ ...newBracket, bracket_max: e.target.value ? Number(e.target.value) : null })}
+                            placeholder="No limit"
+                            className="h-9"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Rate %</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={newBracket.rate}
+                            onChange={(e) => setNewBracket({ ...newBracket, rate: Number(e.target.value) })}
+                            className="h-9"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Threshold</Label>
+                          <Input
+                            type="number"
+                            value={newBracket.threshold}
+                            onChange={(e) => setNewBracket({ ...newBracket, threshold: Number(e.target.value) })}
+                            className="h-9"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Rebate</Label>
+                          <Input
+                            type="number"
+                            value={newBracket.rebate}
+                            onChange={(e) => setNewBracket({ ...newBracket, rebate: Number(e.target.value) })}
+                            className="h-9"
+                          />
+                        </div>
+
+                        <div className="flex items-end">
+                          <Button onClick={handleAddBracket} size="sm" className="h-9 w-full">
+                            <Plus className="h-4 w-4 mr-1" />
+                            Add
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Existing Brackets */}
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Age Group</TableHead>
+                            <TableHead>Minimum</TableHead>
+                            <TableHead>Maximum</TableHead>
+                            <TableHead>Rate</TableHead>
+                            <TableHead>Threshold</TableHead>
+                            <TableHead>Rebate</TableHead>
+                            <TableHead className="w-20">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {taxBrackets.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={7} className="text-center text-muted-foreground">
+                                No tax brackets configured for this year. Add one above.
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            taxBrackets.map((bracket) => (
+                              <TableRow key={bracket.id}>
+                                <TableCell className="capitalize">
+                                  {bracket.age_group.replace('_', ' ')}
+                                </TableCell>
+                                <TableCell>{payrollSettings.currency_symbol}{bracket.bracket_min.toLocaleString()}</TableCell>
+                                <TableCell>
+                                  {bracket.bracket_max 
+                                    ? `${payrollSettings.currency_symbol}${bracket.bracket_max.toLocaleString()}`
+                                    : 'No limit'
+                                  }
+                                </TableCell>
+                                <TableCell>{bracket.rate}%</TableCell>
+                                <TableCell>{payrollSettings.currency_symbol}{bracket.threshold.toLocaleString()}</TableCell>
+                                <TableCell>{payrollSettings.currency_symbol}{bracket.rebate.toLocaleString()}</TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteBracket(bracket.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </TabsContent>
         </Tabs>
       </div>
