@@ -31,7 +31,12 @@ export function CompanySelector() {
     if (!newCompanyName.trim()) return;
     
     setCreating(true);
-    const company = await createCompany(newCompanyName.trim());
+    const company = await createCompany(newCompanyName.trim(), {
+      country: 'ZA',
+      company_type: 'trading',
+      currency: 'ZAR',
+      currency_symbol: 'R',
+    });
     setCreating(false);
     
     if (company) {

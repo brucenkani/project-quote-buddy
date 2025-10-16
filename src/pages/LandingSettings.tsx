@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,9 +23,24 @@ export default function LandingSettings() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { settings: contextSettings, loading, saveSettings: saveToContext } = useSettings();
-  const { companies, createCompany, updateCompany, deleteCompany } = useCompany();
+  const { companies, activeCompany, activeCompanySettings, createCompany, updateCompany, deleteCompany, updateCompanySettings } = useCompany();
   const [localSettings, setLocalSettings] = useState(contextSettings);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Load company settings when active company changes
+  useEffect(() => {
+    if (activeCompanySettings) {
+      setTaxRate(activeCompanySettings.tax_rate || 0.15);
+      const yearEnd = activeCompanySettings.financial_year_end?.split('-')[0] || '02';
+      setFinancialYearEnd(parseInt(yearEnd));
+      setInvoicePrefix(activeCompanySettings.invoice_prefix || 'INV');
+      setInvoiceStartNumber(activeCompanySettings.invoice_start_number || 1);
+      setQuotePrefix(activeCompanySettings.quote_prefix || 'QTE');
+      setQuoteStartNumber(activeCompanySettings.quote_start_number || 1);
+      setPurchasePrefix(activeCompanySettings.purchase_prefix || 'PO');
+      setPurchaseStartNumber(activeCompanySettings.purchase_start_number || 1);
+    }
+  }, [activeCompanySettings]);
   
   // Company form state
   const [showCompanyForm, setShowCompanyForm] = useState(false);
@@ -125,15 +140,32 @@ export default function LandingSettings() {
       return;
     }
 
+    // Get country details to set currency
+    const selectedCountry = countries.find(c => c.code === companyFormData.country);
+
+    const settings: any = {
+      company_name: companyFormData.companyName,
+      country: companyFormData.country,
+      company_type: companyFormData.companyType,
+      email: companyFormData.email,
+      phone: companyFormData.phone,
+      address: companyFormData.address,
+      tax_number: companyFormData.vatNumber,
+      registration_number: companyFormData.companyRegistrationNumber,
+      currency: selectedCountry?.currency || 'ZAR',
+      currency_symbol: selectedCountry?.symbol || 'R',
+      logo_url: companyFormData.logoUrl,
+    };
+
     if (editingCompany) {
       // Update existing company
-      const success = await updateCompany(editingCompany.id, companyFormData.companyName);
+      const success = await updateCompany(editingCompany.id, companyFormData.companyName, settings);
       if (success) {
         setShowCompanyForm(false);
       }
     } else {
       // Create new company
-      const newCompany = await createCompany(companyFormData.companyName);
+      const newCompany = await createCompany(companyFormData.companyName, settings);
       if (newCompany) {
         setShowCompanyForm(false);
       }
@@ -189,31 +221,40 @@ export default function LandingSettings() {
     }
   };
 
-  const handleSaveAccountingSettings = () => {
-    const updatedSettings = {
-      ...localSettings,
-      taxRate,
-      invoicePrefix,
-      invoiceStartNumber,
-      quotePrefix,
-      quoteStartNumber,
-      purchasePrefix,
-      purchaseStartNumber,
-    };
-    saveLocalSettings(updatedSettings);
-    setLocalSettings(updatedSettings);
-    
-    const updatedAccounts = accounts.map(acc => ({
-      ...acc,
-      openingBalance: openingBalances[acc.id] || acc.openingBalance || 0
-    }));
-    saveChartOfAccounts(updatedAccounts);
-    setAccounts(updatedAccounts);
-    
-    toast({
-      title: "Settings saved",
-      description: "Accounting settings have been updated successfully.",
+  const handleSaveAccountingSettings = async () => {
+    if (!activeCompany) {
+      toast({
+        title: "Error",
+        description: "Please select a company first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const success = await updateCompanySettings(activeCompany.id, {
+      tax_rate: taxRate,
+      financial_year_end: `${financialYearEnd.toString().padStart(2, '0')}-28`,
+      invoice_prefix: invoicePrefix,
+      invoice_start_number: invoiceStartNumber,
+      quote_prefix: quotePrefix,
+      quote_start_number: quoteStartNumber,
+      purchase_prefix: purchasePrefix,
+      purchase_start_number: purchaseStartNumber,
     });
+    
+    if (success) {
+      const updatedAccounts = accounts.map(acc => ({
+        ...acc,
+        openingBalance: openingBalances[acc.id] || acc.openingBalance || 0
+      }));
+      saveChartOfAccounts(updatedAccounts);
+      setAccounts(updatedAccounts);
+      
+      toast({
+        title: "Settings saved",
+        description: "Accounting settings have been updated successfully.",
+      });
+    }
   };
 
   const handleDownloadPDF = () => {
