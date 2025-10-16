@@ -18,10 +18,20 @@ const initializeCache = async () => {
       return;
     }
 
+    // Get the active company_id from localStorage
+    const activeCompanyId = localStorage.getItem('activeCompanyId');
+    if (!activeCompanyId) {
+      console.error('No active company selected');
+      chartCache = [];
+      cacheInitialized = true;
+      return;
+    }
+
     const { data, error } = await supabase
       .from('chart_of_accounts')
       .select('*')
       .eq('user_id', user.id)
+      .eq('company_id', activeCompanyId)
       .order('account_number');
 
     if (error) throw error;
@@ -59,13 +69,21 @@ const saveChartOfAccountsToDb = async (accounts: ChartAccount[]): Promise<void> 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    await supabase.from('chart_of_accounts').delete().eq('user_id', user.id);
+    // Get the active company_id from localStorage
+    const activeCompanyId = localStorage.getItem('activeCompanyId');
+    if (!activeCompanyId) {
+      console.error('No active company selected');
+      return;
+    }
+
+    await supabase.from('chart_of_accounts').delete().eq('user_id', user.id).eq('company_id', activeCompanyId);
 
     if (accounts.length > 0) {
       await supabase.from('chart_of_accounts').insert(
         accounts.map(acc => ({
           id: acc.id,
           user_id: user.id,
+          company_id: activeCompanyId,
           account_number: acc.accountNumber,
           account_name: acc.accountName,
           account_type: acc.accountType,
