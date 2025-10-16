@@ -130,6 +130,7 @@ export type Database = {
           business_description: string | null
           business_name: string
           city: string | null
+          company_id: string | null
           contact_email: string
           contact_phone: string | null
           created_at: string | null
@@ -148,6 +149,7 @@ export type Database = {
           business_description?: string | null
           business_name: string
           city?: string | null
+          company_id?: string | null
           contact_email: string
           contact_phone?: string | null
           created_at?: string | null
@@ -166,6 +168,7 @@ export type Database = {
           business_description?: string | null
           business_name?: string
           city?: string | null
+          company_id?: string | null
           contact_email?: string
           contact_phone?: string | null
           created_at?: string | null
@@ -178,7 +181,15 @@ export type Database = {
           user_id?: string
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "community_members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       community_payments: {
         Row: {

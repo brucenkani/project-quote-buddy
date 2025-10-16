@@ -35,6 +35,8 @@ export default function CompanySettings() {
   const [localSettings, setLocalSettings] = useState(settings);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [user, setUser] = useState<any>(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [companyId, setCompanyId] = useState<string | null>(null);
   const [communityProfile, setCommunityProfile] = useState({
     business_name: '',
     business_description: '',
@@ -55,22 +57,42 @@ export default function CompanySettings() {
 
   useEffect(() => {
     checkUser();
-    loadCommunityProfile();
   }, []);
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
+    
+    if (user) {
+      // Check if user is owner
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'owner')
+        .single();
+      
+      setIsOwner(!!roleData);
+      
+      // Get user's company
+      const { data: memberData } = await supabase
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (memberData) {
+        setCompanyId(memberData.company_id);
+        loadCommunityProfile(memberData.company_id);
+      }
+    }
   };
 
-  const loadCommunityProfile = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
+  const loadCommunityProfile = async (company_id: string) => {
     const { data, error } = await supabase
       .from('community_members')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('company_id', company_id)
       .single();
 
     if (data && !error) {
@@ -131,10 +153,19 @@ export default function CompanySettings() {
   };
 
   const handleSaveCommunityProfile = async () => {
-    if (!user) {
+    if (!user || !isOwner) {
       toast({
-        title: 'Authentication Required',
-        description: 'Please sign in to update your community profile',
+        title: 'Permission Denied',
+        description: 'Only company owners can manage the community profile',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (!companyId) {
+      toast({
+        title: 'Error',
+        description: 'No company found for your account',
         variant: 'destructive'
       });
       return;
@@ -164,6 +195,7 @@ export default function CompanySettings() {
         const { error } = await supabase
           .from('community_members')
           .insert([{
+            company_id: companyId,
             user_id: user.id,
             ...communityProfile
           }]);
@@ -176,7 +208,9 @@ export default function CompanySettings() {
         title: 'Success!',
         description: 'Your community profile has been updated'
       });
-      loadCommunityProfile();
+      if (companyId) {
+        loadCommunityProfile(companyId);
+      }
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -454,6 +488,7 @@ export default function CompanySettings() {
           </CardContent>
         </Card>
 
+        {isOwner && (
         <Card className="shadow-[var(--shadow-elegant)] border-border/50 backdrop-blur-sm bg-card/80 mt-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -576,6 +611,7 @@ export default function CompanySettings() {
             </div>
           </CardContent>
         </Card>
+        )}
       </div>
     </div>
   );

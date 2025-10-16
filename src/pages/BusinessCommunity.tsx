@@ -56,6 +56,8 @@ export default function BusinessCommunity() {
   const [settings, setSettings] = useState<CommunitySettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [companyId, setCompanyId] = useState<string | null>(null);
   const [showJoinDialog, setShowJoinDialog] = useState(false);
   const [selectedMember, setSelectedMember] = useState<CommunityMember | null>(null);
   const [formData, setFormData] = useState({
@@ -79,6 +81,29 @@ export default function BusinessCommunity() {
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
+    
+    if (user) {
+      // Check if user is owner
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'owner')
+        .single();
+      
+      setIsOwner(!!roleData);
+      
+      // Get user's company
+      const { data: memberData } = await supabase
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (memberData) {
+        setCompanyId(memberData.company_id);
+      }
+    }
   };
 
   const fetchCommunityData = async () => {
@@ -125,13 +150,21 @@ export default function BusinessCommunity() {
   };
 
   const handleJoinCommunity = async () => {
-    if (!user) {
+    if (!user || !isOwner) {
       toast({
         title: 'Authentication Required',
-        description: 'Please sign in to join the community',
+        description: 'Only company owners can create a community profile',
         variant: 'destructive'
       });
-      navigate('/auth');
+      return;
+    }
+
+    if (!companyId) {
+      toast({
+        title: 'Error',
+        description: 'No company found for your account',
+        variant: 'destructive'
+      });
       return;
     }
 
@@ -139,6 +172,7 @@ export default function BusinessCommunity() {
       const { error } = await supabase
         .from('community_members')
         .insert([{
+          company_id: companyId,
           user_id: user.id,
           ...formData
         }]);
@@ -222,13 +256,14 @@ export default function BusinessCommunity() {
           <p className="text-xl text-muted-foreground mb-8">
             Connect, collaborate, and grow with fellow business professionals
           </p>
-          <Dialog open={showJoinDialog} onOpenChange={setShowJoinDialog}>
-            <DialogTrigger asChild>
-              <Button size="lg" className="gap-2">
-                <Building2 className="h-5 w-5" />
-                Join the Community
-              </Button>
-            </DialogTrigger>
+          {isOwner && (
+            <Dialog open={showJoinDialog} onOpenChange={setShowJoinDialog}>
+              <DialogTrigger asChild>
+                <Button size="lg" className="gap-2">
+                  <Building2 className="h-5 w-5" />
+                  Join the Community
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Join the Business Community</DialogTitle>
@@ -326,6 +361,7 @@ export default function BusinessCommunity() {
               </div>
             </DialogContent>
           </Dialog>
+          )}
         </div>
       </section>
 
