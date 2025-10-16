@@ -39,7 +39,7 @@ interface UserWithRole {
   email: string;
   full_name: string | null;
   created_at: string;
-  role: 'owner' | 'accountant' | 'employee' | null;
+  role: 'owner' | 'accountant' | 'employee' | 'admin' | null;
 }
 
 export default function InviteUsers() {
@@ -56,7 +56,7 @@ export default function InviteUsers() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [newUserRole, setNewUserRole] = useState<'owner' | 'accountant' | 'employee' | 'none'>('accountant');
+  const [newUserRole, setNewUserRole] = useState<'owner' | 'accountant' | 'employee' | 'admin' | 'none'>('accountant');
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   useEffect(() => {

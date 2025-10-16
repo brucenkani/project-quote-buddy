@@ -1,9 +1,9 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { FileText, DollarSign, Package, BookOpen, Receipt, Settings, BarChart3, LayoutDashboard, ArrowLeft, Users, ShoppingCart, Building2, ChevronDown, Menu, X } from 'lucide-react';
+import { FileText, DollarSign, Package, BookOpen, Receipt, Settings, BarChart3, LayoutDashboard, ArrowLeft, Users, ShoppingCart, Building2, ChevronDown, Menu, X, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 
@@ -12,6 +12,25 @@ export const Navigation = () => {
   const navigate = useNavigate();
   const { activeCompanySettings } = useCompany();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        setIsAdmin(!!roleData);
+      }
+    };
+
+    checkAdminRole();
+  }, []);
   
   const customerMenuItems = [
     { path: '/quotes', label: 'Quotes', icon: FileText },
@@ -170,6 +189,16 @@ export const Navigation = () => {
               </Link>
             </Button>
 
+            {/* Invite Users Link - Admin Only */}
+            {isAdmin && (
+              <Button variant={location.pathname === '/invite' ? 'secondary' : 'ghost'} size="sm" asChild>
+                <Link to="/invite" className="gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  <span>Invite Users</span>
+                </Link>
+              </Button>
+            )}
+
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               Sign Out
             </Button>
@@ -309,6 +338,21 @@ export const Navigation = () => {
                     Reports
                   </Link>
                 </Button>
+
+                {/* Invite Users - Admin Only */}
+                {isAdmin && (
+                  <Button
+                    variant={location.pathname === '/invite' ? 'default' : 'ghost'}
+                    asChild
+                    className="justify-start gap-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Link to="/invite">
+                      <UserPlus className="h-4 w-4" />
+                      Invite Users
+                    </Link>
+                  </Button>
+                )}
 
                 <div className="pt-4 border-t">
                   <Button 
