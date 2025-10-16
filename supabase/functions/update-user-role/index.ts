@@ -39,14 +39,22 @@ serve(async (req) => {
       );
     }
 
-    // Check if user is owner
-    const { data: userRoles, error: roleError } = await supabaseClient
+    // Check if user is owner (either via user_roles or company_members)
+    const { data: userRoles } = await supabaseClient
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
       .single();
 
-    if (roleError || userRoles?.role !== 'owner') {
+    const { data: companyMemberships } = await supabaseClient
+      .from('company_members')
+      .select('role')
+      .eq('user_id', user.id);
+
+    const isOwner = userRoles?.role === 'owner' || 
+                    (companyMemberships && companyMemberships.some(m => m.role === 'owner'));
+
+    if (!isOwner) {
       console.error('Authorization error: User is not an owner');
       return new Response(
         JSON.stringify({ error: 'Forbidden: Only owners can update user roles' }),

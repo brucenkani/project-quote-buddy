@@ -45,7 +45,9 @@ interface UserWithRole {
 export default function InviteUsers() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { activeCompany } = useCompany();
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [role, setRole] = useState<'admin' | 'accountant' | 'employee'>('accountant');
   const [loading, setLoading] = useState(false);
   const [permissions, setPermissions] = useState<RolePermission[]>([]);
@@ -126,30 +128,36 @@ export default function InviteUsers() {
     }
   };
 
-  const handleInvite = async (e: React.FormEvent) => {
+  const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('send-invitation', {
-        body: { email, role },
+      const { data, error } = await supabase.functions.invoke('admin-create-user', {
+        body: { 
+          email, 
+          password, 
+          role,
+          companyId: activeCompany?.id 
+        },
       });
 
       if (error) throw error;
 
       toast({
-        title: 'Invitation Sent',
-        description: `An invitation has been sent to ${email} with ${role} role and its associated permissions`,
+        title: 'User Created',
+        description: `User ${email} has been created with ${role} role. Login credentials: ${email} / ${password}`,
       });
 
       setEmail('');
+      setPassword('');
       setRole('accountant');
-      fetchUsers(); // Refresh user list
+      fetchUsers();
     } catch (error: any) {
-      console.error('Error sending invitation:', error);
+      console.error('Error creating user:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to send invitation',
+        description: error.message || 'Failed to create user',
         variant: 'destructive',
       });
     } finally {
@@ -331,11 +339,11 @@ export default function InviteUsers() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="invite" className="w-full">
+            <Tabs defaultValue="create" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="invite">
-                  <Send className="h-4 w-4 mr-2" />
-                  Send Invitations
+                <TabsTrigger value="create">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Create User
                 </TabsTrigger>
                 <TabsTrigger value="users">
                   <UserCog className="h-4 w-4 mr-2" />
@@ -347,14 +355,14 @@ export default function InviteUsers() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="invite" className="space-y-6 mt-6">
+              <TabsContent value="create" className="space-y-6 mt-6">
                 <div className="bg-muted p-4 rounded-lg">
                   <p className="text-sm text-muted-foreground">
-                    When you invite a user, they will automatically receive the permissions configured for their role. You can modify role permissions in the "Manage Permissions" tab.
+                    Create a new user account with login credentials. The user will be able to login immediately with the email and password you provide. {activeCompany && `They will be added to ${activeCompany.name}.`}
                   </p>
                 </div>
                 
-                <form onSubmit={handleInvite} className="space-y-6">
+                <form onSubmit={handleCreateUser} className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email Address</Label>
                     <Input
@@ -365,6 +373,22 @@ export default function InviteUsers() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="text"
+                      placeholder="Enter a secure password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Minimum 6 characters. Save this password to share with the user.
+                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -389,8 +413,8 @@ export default function InviteUsers() {
                   </div>
 
                   <Button type="submit" className="w-full gap-2" disabled={loading}>
-                    <Send className="h-4 w-4" />
-                    {loading ? 'Sending...' : 'Send Invitation'}
+                    <UserPlus className="h-4 w-4" />
+                    {loading ? 'Creating User...' : 'Create User Account'}
                   </Button>
                 </form>
               </TabsContent>
