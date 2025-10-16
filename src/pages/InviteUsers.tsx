@@ -12,8 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Send, Shield, Save, Users, Edit, Trash2, UserCog } from 'lucide-react';
-
+import { ArrowLeft, Send, Shield, Save, Users, Edit, Trash2, UserCog, UserPlus } from 'lucide-react';
+import { useCompany } from '@/contexts/CompanyContext';
 interface RolePermission {
   id: string;
   role: 'admin' | 'accountant' | 'employee';
