@@ -29,37 +29,20 @@ export default function Index() {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
+      // Redirect authenticated users (both admin and non-admin) to dashboard
       if (session) {
-        // Check if user is admin
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .eq('role', 'owner')
-          .maybeSingle();
-
-        // Only redirect non-admin users
-        if (!roleData) {
-          setIsAuthenticated(true);
-        }
+        setIsAuthenticated(true);
       }
       setLoading(false);
     };
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .eq('role', 'owner')
-          .maybeSingle();
-
-        if (!roleData) {
-          setIsAuthenticated(true);
-        }
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
       }
       setLoading(false);
     });
