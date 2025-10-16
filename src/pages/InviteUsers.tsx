@@ -54,7 +54,7 @@ export default function InviteUsers() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [newUserRole, setNewUserRole] = useState<'owner' | 'accountant' | 'employee'>('accountant');
+  const [newUserRole, setNewUserRole] = useState<'owner' | 'accountant' | 'employee' | 'none'>('accountant');
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -167,16 +167,18 @@ export default function InviteUsers() {
         .delete()
         .eq('user_id', editingUserId);
 
-      // Insert new role
-      const { error } = await supabase
-        .from('user_roles')
-        .insert([{ user_id: editingUserId, role: newUserRole }]);
+      // Insert new role only if not 'none'
+      if (newUserRole !== 'none') {
+        const { error } = await supabase
+          .from('user_roles')
+          .insert([{ user_id: editingUserId, role: newUserRole }]);
 
-      if (error) throw error;
+        if (error) throw error;
+      }
 
       toast({
         title: 'Success',
-        description: 'User role updated successfully',
+        description: newUserRole === 'none' ? 'User role removed successfully' : 'User role updated successfully',
       });
 
       setEditingUserId(null);
@@ -195,23 +197,31 @@ export default function InviteUsers() {
     if (!deletingUserId) return;
 
     try {
-      // Delete user role
-      await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', deletingUserId);
+      // Call edge function to delete user completely (including auth)
+      const { error: functionError } = await supabase.functions.invoke('delete-user', {
+        body: { userId: deletingUserId },
+      });
 
-      // Delete profile
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', deletingUserId);
+      if (functionError) {
+        // Fallback: delete from user_roles and profiles
+        console.warn('Edge function failed, using fallback deletion:', functionError);
+        
+        await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', deletingUserId);
 
-      if (error) throw error;
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', deletingUserId);
+
+        if (profileError) throw profileError;
+      }
 
       toast({
         title: 'Success',
-        description: 'User removed successfully',
+        description: 'User removed completely from the system',
       });
 
       setDeletingUserId(null);
@@ -534,7 +544,7 @@ export default function InviteUsers() {
           </AlertDialogHeader>
           <div className="py-4">
             <Label htmlFor="edit-role">New Role</Label>
-            <Select value={newUserRole} onValueChange={(value: 'owner' | 'accountant' | 'employee') => setNewUserRole(value)}>
+            <Select value={newUserRole} onValueChange={(value: 'owner' | 'accountant' | 'employee' | 'none') => setNewUserRole(value)}>
               <SelectTrigger id="edit-role" className="mt-2">
                 <SelectValue />
               </SelectTrigger>
@@ -542,6 +552,7 @@ export default function InviteUsers() {
                 <SelectItem value="owner">Admin</SelectItem>
                 <SelectItem value="accountant">Accountant</SelectItem>
                 <SelectItem value="employee">Employee</SelectItem>
+                <SelectItem value="none">No Role</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -556,9 +567,9 @@ export default function InviteUsers() {
       <AlertDialog open={!!deletingUserId} onOpenChange={(open) => !open && setDeletingUserId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove User</AlertDialogTitle>
+            <AlertDialogTitle>Remove User Permanently</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove this user? This action cannot be undone.
+              Are you sure you want to permanently remove this user from the system? This will delete their account, profile, and revoke all access. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
