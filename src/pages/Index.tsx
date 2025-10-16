@@ -502,10 +502,6 @@ export default function Index() {
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <span>Conversion & performance reports</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Customer support & ticketing system</span>
-                </li>
               </ul>
             </CardContent>
           </Card>
@@ -569,10 +565,6 @@ export default function Index() {
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <span>Strategic planning insights</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Business calculators & tools</span>
                 </li>
               </ul>
             </CardContent>
