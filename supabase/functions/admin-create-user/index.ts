@@ -11,6 +11,7 @@ interface CreateUserPayload {
   password: string;
   role: 'admin' | 'accountant' | 'employee';
   companyId?: string; // optional, if provided user will be added to this company
+  fullName?: string; // optional full name
 }
 
 serve(async (req) => {
@@ -63,7 +64,7 @@ serve(async (req) => {
     }
 
     const payload = (await req.json()) as CreateUserPayload;
-    const { email, password, role, companyId } = payload;
+    const { email, password, role, companyId, fullName } = payload;
 
     if (!email || !password || !role) {
       return new Response(JSON.stringify({ error: 'email, password and role are required' }), {
@@ -85,6 +86,9 @@ serve(async (req) => {
       email,
       password,
       email_confirm: true,
+      user_metadata: {
+        full_name: fullName || ''
+      }
     });
     if (createErr) {
       console.error('Error creating user:', createErr);

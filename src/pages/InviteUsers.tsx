@@ -48,6 +48,7 @@ export default function InviteUsers() {
   const { activeCompany } = useCompany();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<'admin' | 'accountant' | 'employee'>('accountant');
   const [loading, setLoading] = useState(false);
   const [permissions, setPermissions] = useState<RolePermission[]>([]);
@@ -58,6 +59,7 @@ export default function InviteUsers() {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [newUserRole, setNewUserRole] = useState<'owner' | 'accountant' | 'employee' | 'admin' | 'none'>('accountant');
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [editingUserDetails, setEditingUserDetails] = useState<{id: string, email: string, fullName: string} | null>(null);
 
   useEffect(() => {
     fetchPermissions();
@@ -137,6 +139,7 @@ export default function InviteUsers() {
         body: { 
           email, 
           password, 
+          fullName,
           role,
           companyId: activeCompany?.id 
         },
@@ -146,11 +149,12 @@ export default function InviteUsers() {
 
       toast({
         title: 'User Created',
-        description: `User ${email} has been created with ${role} role. Login credentials: ${email} / ${password}`,
+        description: `User ${fullName || email} has been created with ${role} role. Login credentials: ${email} / ${password}`,
       });
 
       setEmail('');
       setPassword('');
+      setFullName('');
       setRole('accountant');
       fetchUsers();
     } catch (error: any) {
@@ -162,6 +166,37 @@ export default function InviteUsers() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateUserDetails = async () => {
+    if (!editingUserDetails) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          email: editingUserDetails.email,
+          full_name: editingUserDetails.fullName
+        })
+        .eq('id', editingUserDetails.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'User details updated successfully',
+      });
+
+      setEditingUserDetails(null);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error updating user details:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update user details',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -364,6 +399,18 @@ export default function InviteUsers() {
                 
                 <form onSubmit={handleCreateUser} className="space-y-6">
                   <div className="space-y-2">
+                    <Label htmlFor="fullName">Full Name</Label>
+                    <Input
+                      id="fullName"
+                      type="text"
+                      placeholder="John Doe"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="email">Email Address</Label>
                     <Input
                       id="email"
@@ -471,12 +518,26 @@ export default function InviteUsers() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => {
+                                    setEditingUserDetails({
+                                      id: user.id,
+                                      email: user.email,
+                                      fullName: user.full_name || ''
+                                    });
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4 mr-1" />
+                                  Edit
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
                                     setEditingUserId(user.id);
                                     setNewUserRole(user.role || 'accountant');
                                   }}
                                 >
-                                  <Edit className="h-4 w-4 mr-1" />
-                                  Edit Role
+                                  <UserCog className="h-4 w-4 mr-1" />
+                                  Change Role
                                 </Button>
                                 <Button
                                   variant="destructive"
@@ -548,6 +609,43 @@ export default function InviteUsers() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Edit User Details Dialog */}
+      <AlertDialog open={!!editingUserDetails} onOpenChange={(open) => !open && setEditingUserDetails(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Edit User Details</AlertDialogTitle>
+            <AlertDialogDescription>
+              Update the user's name and email address.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Full Name</Label>
+              <Input
+                id="edit-name"
+                type="text"
+                value={editingUserDetails?.fullName || ''}
+                onChange={(e) => setEditingUserDetails(prev => prev ? {...prev, fullName: e.target.value} : null)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editingUserDetails?.email || ''}
+                onChange={(e) => setEditingUserDetails(prev => prev ? {...prev, email: e.target.value} : null)}
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUpdateUserDetails}>Save Changes</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {/* Edit Role Dialog */}
       <AlertDialog open={!!editingUserId} onOpenChange={(open) => !open && setEditingUserId(null)}>
