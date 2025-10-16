@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
+import { useCompany } from '@/contexts/CompanyContext';
 
 interface CommunityMember {
   id: string;
@@ -51,6 +52,7 @@ const businessCategories = [
 ];
 
 export default function BusinessCommunity() {
+  const { activeCompany } = useCompany();
   const [featuredMembers, setFeaturedMembers] = useState<CommunityMember[]>([]);
   const [regularMembers, setRegularMembers] = useState<CommunityMember[]>([]);
   const [settings, setSettings] = useState<CommunitySettings | null>(null);
@@ -72,6 +74,16 @@ export default function BusinessCommunity() {
     tagline: ''
   });
   const navigate = useNavigate();
+
+  // Update form when active company changes
+  useEffect(() => {
+    if (activeCompany?.name) {
+      setFormData(prev => ({
+        ...prev,
+        business_name: activeCompany.name
+      }));
+    }
+  }, [activeCompany]);
 
   useEffect(() => {
     fetchCommunityData();
