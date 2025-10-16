@@ -67,9 +67,9 @@ export const Navigation = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2 md:gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/landing')} className="gap-1 md:gap-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="gap-1 md:gap-2">
               <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Back</span>
+              <span className="hidden sm:inline">Home</span>
             </Button>
             <div className="flex items-center gap-2 md:gap-3">
               {activeCompanySettings?.logo_url && (
