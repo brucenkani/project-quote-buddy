@@ -694,8 +694,10 @@ export type Database = {
           cost_price: number | null
           created_at: string | null
           description: string | null
+          gl_account_id: string | null
           id: string
           is_taxable: boolean | null
+          last_cost: number | null
           name: string
           quantity: number
           reorder_level: number | null
@@ -712,8 +714,10 @@ export type Database = {
           cost_price?: number | null
           created_at?: string | null
           description?: string | null
+          gl_account_id?: string | null
           id?: string
           is_taxable?: boolean | null
+          last_cost?: number | null
           name: string
           quantity?: number
           reorder_level?: number | null
@@ -730,8 +734,10 @@ export type Database = {
           cost_price?: number | null
           created_at?: string | null
           description?: string | null
+          gl_account_id?: string | null
           id?: string
           is_taxable?: boolean | null
+          last_cost?: number | null
           name?: string
           quantity?: number
           reorder_level?: number | null
@@ -748,6 +754,63 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_movements: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          id: string
+          item_id: string
+          movement_type: string
+          notes: string | null
+          quantity: number
+          reference_id: string
+          reference_type: string
+          unit_cost: number
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          item_id: string
+          movement_type: string
+          notes?: string | null
+          quantity: number
+          reference_id: string
+          reference_type: string
+          unit_cost: number
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          item_id?: string
+          movement_type?: string
+          notes?: string | null
+          quantity?: number
+          reference_id?: string
+          reference_type?: string
+          unit_cost?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
             referencedColumns: ["id"]
           },
         ]
@@ -1314,6 +1377,7 @@ export type Database = {
           id: string
           purchase_id: string
           quantity: number
+          received_quantity: number | null
           tax_rate: number
           unit_price: number
         }
@@ -1324,6 +1388,7 @@ export type Database = {
           id?: string
           purchase_id: string
           quantity: number
+          received_quantity?: number | null
           tax_rate: number
           unit_price: number
         }
@@ -1334,6 +1399,7 @@ export type Database = {
           id?: string
           purchase_id?: string
           quantity?: number
+          received_quantity?: number | null
           tax_rate?: number
           unit_price?: number
         }
@@ -1391,9 +1457,11 @@ export type Database = {
           created_at: string | null
           delivery_date: string | null
           id: string
+          invoice_number: string | null
           issue_date: string
           notes: string | null
           po_number: string
+          received_date: string | null
           status: string
           subtotal: number
           supplier_id: string
@@ -1407,9 +1475,11 @@ export type Database = {
           created_at?: string | null
           delivery_date?: string | null
           id?: string
+          invoice_number?: string | null
           issue_date: string
           notes?: string | null
           po_number: string
+          received_date?: string | null
           status?: string
           subtotal: number
           supplier_id: string
@@ -1423,9 +1493,11 @@ export type Database = {
           created_at?: string | null
           delivery_date?: string | null
           id?: string
+          invoice_number?: string | null
           issue_date?: string
           notes?: string | null
           po_number?: string
+          received_date?: string | null
           status?: string
           subtotal?: number
           supplier_id?: string
@@ -1497,12 +1569,15 @@ export type Database = {
           created_at: string | null
           due_date: string
           id: string
+          invoice_date: string | null
           issue_date: string
           notes: string | null
           purchase_number: string
+          received_date: string | null
           status: string
           subtotal: number
           supplier_id: string
+          supplier_invoice_number: string | null
           tax_amount: number
           total_amount: number
           updated_at: string | null
@@ -1513,12 +1588,15 @@ export type Database = {
           created_at?: string | null
           due_date: string
           id?: string
+          invoice_date?: string | null
           issue_date: string
           notes?: string | null
           purchase_number: string
+          received_date?: string | null
           status?: string
           subtotal: number
           supplier_id: string
+          supplier_invoice_number?: string | null
           tax_amount: number
           total_amount: number
           updated_at?: string | null
@@ -1529,12 +1607,15 @@ export type Database = {
           created_at?: string | null
           due_date?: string
           id?: string
+          invoice_date?: string | null
           issue_date?: string
           notes?: string | null
           purchase_number?: string
+          received_date?: string | null
           status?: string
           subtotal?: number
           supplier_id?: string
+          supplier_invoice_number?: string | null
           tax_amount?: number
           total_amount?: number
           updated_at?: string | null

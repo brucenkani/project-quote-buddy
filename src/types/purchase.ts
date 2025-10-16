@@ -27,8 +27,11 @@ export interface Purchase {
   total: number;
   status: PurchaseStatus;
   notes?: string;
-  projectId?: string; // For contractor businesses - link to specific project
+  projectId?: string;
   inventoryMethod: 'perpetual' | 'periodic';
+  supplierInvoiceNumber?: string; // To prevent duplicate invoices
+  receivedDate?: string;
+  invoiceDate?: string;
   createdAt: string;
   updatedAt: string;
 }
