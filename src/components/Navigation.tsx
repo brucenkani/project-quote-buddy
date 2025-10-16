@@ -64,69 +64,73 @@ export const Navigation = () => {
             <CompanySelector />
           </div>
           
-          {/* Desktop Navigation - Consolidated Menu */}
+          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-2">
+            {/* Customers Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <Menu className="h-4 w-4" />
-                  <span>Menu</span>
+                <Button variant={isCustomerMenuActive ? 'secondary' : 'ghost'} size="sm" className="gap-2">
+                  <Users className="h-4 w-4" />
+                  <span>Customers</span>
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem asChild>
-                  <Link to="/accounting" className="flex items-center gap-2 cursor-pointer">
-                    <LayoutDashboard className="h-4 w-4" />
-                    Dashboard
-                  </Link>
-                </DropdownMenuItem>
-                
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Customers</div>
                 {customerMenuItems.map((item) => {
                   const Icon = item.icon;
                   return (
                     <DropdownMenuItem key={item.path} asChild>
-                      <Link to={item.path} className="flex items-center gap-2 cursor-pointer pl-6">
+                      <Link to={item.path} className="flex items-center gap-2 cursor-pointer">
                         <Icon className="h-4 w-4" />
                         {item.label}
                       </Link>
                     </DropdownMenuItem>
                   );
                 })}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-                {showSuppliers && (
-                  <>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Suppliers</div>
-                    {supplierMenuItems.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <DropdownMenuItem key={item.path} asChild>
-                          <Link to={item.path} className="flex items-center gap-2 cursor-pointer pl-6">
-                            <Icon className="h-4 w-4" />
-                            {item.label}
-                          </Link>
-                        </DropdownMenuItem>
-                      );
-                    })}
-                  </>
-                )}
+            {/* Suppliers Dropdown */}
+            {showSuppliers && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant={isSupplierMenuActive ? 'secondary' : 'ghost'} size="sm" className="gap-2">
+                    <ShoppingCart className="h-4 w-4" />
+                    <span>Suppliers</span>
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {supplierMenuItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <DropdownMenuItem key={item.path} asChild>
+                        <Link to={item.path} className="flex items-center gap-2 cursor-pointer">
+                          <Icon className="h-4 w-4" />
+                          {item.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
-                {showInventory && (
-                  <DropdownMenuItem asChild>
-                    <Link to="/inventory" className="flex items-center gap-2 cursor-pointer">
-                      <Package className="h-4 w-4" />
-                      Inventory
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Banking</div>
+            {/* Banking Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant={isBankingMenuActive ? 'secondary' : 'ghost'} size="sm" className="gap-2">
+                  <Building2 className="h-4 w-4" />
+                  <span>Banking</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
                 {bankingMenuItems.map((item) => {
                   const Icon = item.icon;
                   return (
                     <DropdownMenuItem key={item.path} asChild>
-                      <Link to={item.path} className="flex items-center gap-2 cursor-pointer pl-6">
+                      <Link to={item.path} className="flex items-center gap-2 cursor-pointer">
                         <Icon className="h-4 w-4" />
                         {item.label}
                       </Link>
@@ -134,28 +138,41 @@ export const Navigation = () => {
                   );
                 })}
                 <DropdownMenuItem asChild>
-                  <Link to="/bank-feeds" className="flex items-center gap-2 cursor-pointer pl-6">
+                  <Link to="/bank-feeds" className="flex items-center gap-2 cursor-pointer">
                     <Building2 className="h-4 w-4" />
                     Bank Feeds
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link to="/journal" className="flex items-center gap-2 cursor-pointer">
-                    <BookOpen className="h-4 w-4" />
-                    Journals
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link to="/reports" className="flex items-center gap-2 cursor-pointer">
-                    <BarChart3 className="h-4 w-4" />
-                    Reports
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Inventory Link */}
+            {showInventory && (
+              <Button variant={location.pathname === '/inventory' ? 'secondary' : 'ghost'} size="sm" asChild>
+                <Link to="/inventory" className="gap-2">
+                  <Package className="h-4 w-4" />
+                  <span>Inventory</span>
+                </Link>
+              </Button>
+            )}
+
+            {/* Journal Link */}
+            <Button variant={location.pathname === '/journal' ? 'secondary' : 'ghost'} size="sm" asChild>
+              <Link to="/journal" className="gap-2">
+                <BookOpen className="h-4 w-4" />
+                <span>Journals</span>
+              </Link>
+            </Button>
+
+            {/* Reports Link */}
+            <Button variant={location.pathname === '/reports' ? 'secondary' : 'ghost'} size="sm" asChild>
+              <Link to="/reports" className="gap-2">
+                <BarChart3 className="h-4 w-4" />
+                <span>Reports</span>
+              </Link>
+            </Button>
+
+            {/* Combined Companies & Settings Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-2">
@@ -163,7 +180,7 @@ export const Navigation = () => {
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem asChild>
                   <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
                     <Settings className="h-4 w-4" />
