@@ -38,14 +38,23 @@ serve(async (req) => {
       });
     }
 
-    // Only owners can create users
+    // Only owners can create users - check both user_roles and company_members
     const { data: callerRole } = await supabaseClient
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (callerRole?.role !== 'owner') {
+    const { data: companyOwnership } = await supabaseClient
+      .from('company_members')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'owner')
+      .maybeSingle();
+
+    const isOwner = callerRole?.role === 'owner' || !!companyOwnership;
+
+    if (!isOwner) {
       console.error('Forbidden: caller is not owner');
       return new Response(JSON.stringify({ error: 'Forbidden: Only owners can create users' }), {
         status: 403,
