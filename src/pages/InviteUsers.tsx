@@ -161,20 +161,12 @@ export default function InviteUsers() {
     if (!editingUserId) return;
 
     try {
-      // Delete existing role
-      await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', editingUserId);
+      // Call edge function to update user role securely
+      const { error: functionError } = await supabase.functions.invoke('update-user-role', {
+        body: { userId: editingUserId, role: newUserRole },
+      });
 
-      // Insert new role only if not 'none'
-      if (newUserRole !== 'none') {
-        const { error } = await supabase
-          .from('user_roles')
-          .insert([{ user_id: editingUserId, role: newUserRole }]);
-
-        if (error) throw error;
-      }
+      if (functionError) throw functionError;
 
       toast({
         title: 'Success',
