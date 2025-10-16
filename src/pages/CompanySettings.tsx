@@ -1,14 +1,32 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save, Upload, X } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { ArrowLeft, Save, Upload, X, Building2 } from 'lucide-react';
 import { countries } from '@/types/settings';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+
+const businessCategories = [
+  'Accounting & Finance',
+  'Construction',
+  'Consulting',
+  'Education',
+  'Healthcare',
+  'IT & Technology',
+  'Legal Services',
+  'Manufacturing',
+  'Marketing & Advertising',
+  'Real Estate',
+  'Retail',
+  'Transportation',
+  'Other'
+];
 
 export default function CompanySettings() {
   const navigate = useNavigate();
@@ -16,11 +34,61 @@ export default function CompanySettings() {
   const { settings, loading, saveSettings: saveToContext } = useSettings();
   const [localSettings, setLocalSettings] = useState(settings);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Update local settings when context settings change
-  useState(() => {
-    setLocalSettings(settings);
+  const [user, setUser] = useState<any>(null);
+  const [communityProfile, setCommunityProfile] = useState({
+    business_name: '',
+    business_description: '',
+    business_category: '',
+    contact_email: '',
+    contact_phone: '',
+    website: '',
+    address: '',
+    city: '',
+    tagline: ''
   });
+  const [hasCommunityProfile, setHasCommunityProfile] = useState(false);
+  const [communityMemberId, setCommunityMemberId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLocalSettings(settings);
+  }, [settings]);
+
+  useEffect(() => {
+    checkUser();
+    loadCommunityProfile();
+  }, []);
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+  };
+
+  const loadCommunityProfile = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('community_members')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    if (data && !error) {
+      setCommunityProfile({
+        business_name: data.business_name || '',
+        business_description: data.business_description || '',
+        business_category: data.business_category || '',
+        contact_email: data.contact_email || '',
+        contact_phone: data.contact_phone || '',
+        website: data.website || '',
+        address: data.address || '',
+        city: data.city || '',
+        tagline: data.tagline || ''
+      });
+      setHasCommunityProfile(true);
+      setCommunityMemberId(data.id);
+    }
+  };
 
   const selectedCountry = countries.find(c => c.code === localSettings.country);
 
@@ -58,6 +126,62 @@ export default function CompanySettings() {
         title: "Error",
         description: "Failed to save settings. Please try again.",
         variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveCommunityProfile = async () => {
+    if (!user) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please sign in to update your community profile',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      if (hasCommunityProfile && communityMemberId) {
+        // Update existing profile
+        const { error } = await supabase
+          .from('community_members')
+          .update({
+            business_name: communityProfile.business_name,
+            business_description: communityProfile.business_description,
+            business_category: communityProfile.business_category,
+            contact_email: communityProfile.contact_email,
+            contact_phone: communityProfile.contact_phone,
+            website: communityProfile.website,
+            address: communityProfile.address,
+            city: communityProfile.city,
+            tagline: communityProfile.tagline
+          })
+          .eq('id', communityMemberId);
+
+        if (error) throw error;
+      } else {
+        // Create new profile
+        const { error } = await supabase
+          .from('community_members')
+          .insert([{
+            user_id: user.id,
+            ...communityProfile
+          }]);
+
+        if (error) throw error;
+        setHasCommunityProfile(true);
+      }
+
+      toast({
+        title: 'Success!',
+        description: 'Your community profile has been updated'
+      });
+      loadCommunityProfile();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
       });
     }
   };
@@ -325,6 +449,129 @@ export default function CompanySettings() {
               <Button onClick={handleSave} className="gap-2">
                 <Save className="h-4 w-4" />
                 Save Settings
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-[var(--shadow-elegant)] border-border/50 backdrop-blur-sm bg-card/80 mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Community Profile
+            </CardTitle>
+            <CardDescription>
+              Manage your business listing in the BizCounting Business Community
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="community_business_name">Business Name *</Label>
+                <Input
+                  id="community_business_name"
+                  value={communityProfile.business_name}
+                  onChange={(e) => setCommunityProfile({...communityProfile, business_name: e.target.value})}
+                  placeholder="Your business name"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="community_business_category">Business Category *</Label>
+                <Select
+                  value={communityProfile.business_category}
+                  onValueChange={(value) => setCommunityProfile({...communityProfile, business_category: value})}
+                >
+                  <SelectTrigger id="community_business_category">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {businessCategories.map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="community_tagline">Tagline</Label>
+                <Input
+                  id="community_tagline"
+                  value={communityProfile.tagline}
+                  onChange={(e) => setCommunityProfile({...communityProfile, tagline: e.target.value})}
+                  placeholder="Brief description of what you do"
+                  maxLength={100}
+                />
+                <p className="text-xs text-muted-foreground">
+                  A short catchphrase that appears on your community card
+                </p>
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="community_business_description">Business Description</Label>
+                <Textarea
+                  id="community_business_description"
+                  value={communityProfile.business_description}
+                  onChange={(e) => setCommunityProfile({...communityProfile, business_description: e.target.value})}
+                  rows={4}
+                  placeholder="Describe what your business does, your services, etc."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="community_contact_email">Contact Email *</Label>
+                <Input
+                  id="community_contact_email"
+                  type="email"
+                  value={communityProfile.contact_email}
+                  onChange={(e) => setCommunityProfile({...communityProfile, contact_email: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="community_contact_phone">Contact Phone</Label>
+                <Input
+                  id="community_contact_phone"
+                  type="tel"
+                  value={communityProfile.contact_phone}
+                  onChange={(e) => setCommunityProfile({...communityProfile, contact_phone: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="community_website">Website</Label>
+                <Input
+                  id="community_website"
+                  type="url"
+                  value={communityProfile.website}
+                  onChange={(e) => setCommunityProfile({...communityProfile, website: e.target.value})}
+                  placeholder="https://www.yourwebsite.com"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="community_city">City</Label>
+                <Input
+                  id="community_city"
+                  value={communityProfile.city}
+                  onChange={(e) => setCommunityProfile({...communityProfile, city: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="community_address">Address</Label>
+                <Input
+                  id="community_address"
+                  value={communityProfile.address}
+                  onChange={(e) => setCommunityProfile({...communityProfile, address: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <Button onClick={handleSaveCommunityProfile} className="gap-2">
+                <Save className="h-4 w-4" />
+                {hasCommunityProfile ? 'Update Community Profile' : 'Create Community Profile'}
               </Button>
             </div>
           </CardContent>

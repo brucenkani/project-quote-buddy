@@ -137,6 +137,7 @@ export type Database = {
           id: string
           is_featured: boolean | null
           logo_url: string | null
+          tagline: string | null
           updated_at: string | null
           user_id: string
           website: string | null
@@ -154,6 +155,7 @@ export type Database = {
           id?: string
           is_featured?: boolean | null
           logo_url?: string | null
+          tagline?: string | null
           updated_at?: string | null
           user_id: string
           website?: string | null
@@ -171,6 +173,7 @@ export type Database = {
           id?: string
           is_featured?: boolean | null
           logo_url?: string | null
+          tagline?: string | null
           updated_at?: string | null
           user_id?: string
           website?: string | null
