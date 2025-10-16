@@ -26,10 +26,17 @@ export const getInventoryTypesForCompanyType = (companyType: string): InventoryT
     case 'trading':
       return ['finished-products'];
     case 'contractor':
-      return ['raw-materials', 'consumables'];
-    case 'professional-services':
       return ['consumables'];
+    case 'professional-services':
+      return []; // No inventory for professional services
     default:
-      return ['raw-materials', 'consumables'];
+      return ['consumables'];
   }
+};
+
+// Check if inventory type should be included in cost of sales calculation
+export const isIncludedInCOGS = (type: InventoryType): boolean => {
+  // Only Raw Materials and Finished Products are included in COGS
+  // Work In Progress and Consumables are NOT included
+  return type === 'raw-materials' || type === 'finished-products';
 };

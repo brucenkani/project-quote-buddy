@@ -8,22 +8,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { Plus, Package, Search, Pencil, Trash2 } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
-import { loadInventory, saveInventoryItem, deleteInventoryItem } from '@/utils/inventoryStorage';
-import { loadSettings } from '@/utils/settingsStorage';
 import { InventoryItem, getInventoryTypesForCompanyType } from '@/types/inventory';
 import { useToast } from '@/hooks/use-toast';
 import { ContactSelector } from '@/components/ContactSelector';
 import { Contact } from '@/types/contacts';
+import { useInventory } from '@/contexts/InventoryContext';
+import { useCompany } from '@/contexts/CompanyContext';
 
 export default function Inventory() {
   const { toast } = useToast();
-  const settings = loadSettings();
-  const [items, setItems] = useState<InventoryItem[]>(loadInventory());
+  const { activeCompanySettings } = useCompany();
+  const { inventory: items, saveItem, deleteItem, refreshInventory } = useInventory();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
 
-  const availableTypes = getInventoryTypesForCompanyType(settings.companyType);
+  const availableTypes = getInventoryTypesForCompanyType(activeCompanySettings?.company_type || '');
 
   const [formData, setFormData] = useState<Partial<InventoryItem>>({
     name: '',
@@ -39,7 +39,7 @@ export default function Inventory() {
     location: '',
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.name || !formData.type) {
       toast({ title: 'Please fill in all required fields', variant: 'destructive' });
       return;
@@ -64,24 +64,28 @@ export default function Inventory() {
       updatedAt: new Date().toISOString(),
     };
 
-    saveInventoryItem(item);
-    setItems(loadInventory());
-    setIsDialogOpen(false);
-    setEditingItem(null);
-    setFormData({
-      name: '',
-      type: availableTypes[0],
-      sku: '',
-      category: '',
-      description: '',
-      unit: 'unit',
-      quantity: 0,
-      minQuantity: 0,
-      unitCost: 0,
-      supplier: '',
-      location: '',
-    });
-    toast({ title: editingItem ? 'Item updated' : 'Item added successfully' });
+    try {
+      await saveItem(item);
+      await refreshInventory();
+      setIsDialogOpen(false);
+      setEditingItem(null);
+      setFormData({
+        name: '',
+        type: availableTypes[0],
+        sku: '',
+        category: '',
+        description: '',
+        unit: 'unit',
+        quantity: 0,
+        minQuantity: 0,
+        unitCost: 0,
+        supplier: '',
+        location: '',
+      });
+      toast({ title: editingItem ? 'Item updated' : 'Item added successfully' });
+    } catch (error) {
+      toast({ title: 'Failed to save item', variant: 'destructive' });
+    }
   };
 
   const handleEdit = (item: InventoryItem) => {
@@ -90,11 +94,15 @@ export default function Inventory() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this item?')) {
-      deleteInventoryItem(id);
-      setItems(loadInventory());
-      toast({ title: 'Item deleted successfully' });
+      try {
+        await deleteItem(id);
+        await refreshInventory();
+        toast({ title: 'Item deleted successfully' });
+      } catch (error) {
+        toast({ title: 'Failed to delete item', variant: 'destructive' });
+      }
     }
   };
 
@@ -117,7 +125,7 @@ export default function Inventory() {
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
               Inventory
             </h1>
-            <p className="text-muted-foreground">Manage your {getTypeLabel(settings.companyType)} inventory</p>
+            <p className="text-muted-foreground">Manage your {getTypeLabel(activeCompanySettings?.company_type || '')} inventory</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -194,8 +202,8 @@ export default function Inventory() {
                     onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="unitCost">Unit Cost ({settings.currencySymbol})</Label>
+                  <div className="space-y-2">
+                  <Label htmlFor="unitCost">Unit Cost ({activeCompanySettings?.currency_symbol || 'R'})</Label>
                   <Input
                     id="unitCost"
                     type="number"
@@ -279,14 +287,14 @@ export default function Inventory() {
                         <p><strong>SKU:</strong> {item.sku}</p>
                         <p><strong>Category:</strong> {item.category}</p>
                         <p><strong>Quantity:</strong> {item.quantity} {item.unit}</p>
-                        <p><strong>Unit Cost:</strong> {settings.currencySymbol}{item.unitCost.toFixed(2)}</p>
+                        <p><strong>Unit Cost:</strong> {activeCompanySettings?.currency_symbol || 'R'}{item.unitCost.toFixed(2)}</p>
                         {item.supplier && <p><strong>Supplier:</strong> {item.supplier}</p>}
                         {item.location && <p><strong>Location:</strong> {item.location}</p>}
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-xl font-bold text-primary">
-                        {settings.currencySymbol}{item.totalValue.toFixed(2)}
+                        {activeCompanySettings?.currency_symbol || 'R'}{item.totalValue.toFixed(2)}
                       </p>
                       <p className="text-xs text-muted-foreground">Total Value</p>
                     </div>

@@ -4,13 +4,13 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { FileText, DollarSign, Package, BookOpen, Receipt, Settings, BarChart3, LayoutDashboard, ArrowLeft, Users, ShoppingCart, Building2, ChevronDown, Menu, X } from 'lucide-react';
-import { loadSettings } from '@/utils/settingsStorage';
 import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
 
 export const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const settings = loadSettings();
+  const { activeCompanySettings } = useCompany();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const customerMenuItems = [
@@ -31,8 +31,8 @@ export const Navigation = () => {
   ];
 
   // Business type dependent menu visibility
-  const showInventory = settings.companyType !== 'professional-services';
-  const showSuppliers = settings.companyType !== 'professional-services';
+  const showInventory = activeCompanySettings?.company_type !== 'professional-services';
+  const showSuppliers = activeCompanySettings?.company_type !== 'professional-services';
 
   const isCustomerMenuActive = customerMenuItems.some(item => location.pathname.startsWith(item.path));
   const isSupplierMenuActive = supplierMenuItems.some(item => location.pathname.startsWith(item.path));
@@ -53,8 +53,8 @@ export const Navigation = () => {
               <span className="hidden sm:inline">Back</span>
             </Button>
             <div className="flex items-center gap-2 md:gap-3">
-              {settings.logoUrl && (
-                <img src={settings.logoUrl} alt="Logo" className="h-6 md:h-8 w-auto object-contain" />
+              {activeCompanySettings?.logo_url && (
+                <img src={activeCompanySettings.logo_url} alt="Logo" className="h-6 md:h-8 w-auto object-contain" />
               )}
               <h1 className="text-lg md:text-xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
                 Accounting
