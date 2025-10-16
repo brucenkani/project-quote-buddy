@@ -23,6 +23,7 @@ interface CommunityMember {
   logo_url?: string;
   address?: string;
   city?: string;
+  tagline?: string;
   is_featured: boolean;
   featured_until?: string;
   created_at: string;
@@ -56,6 +57,7 @@ export default function BusinessCommunity() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [showJoinDialog, setShowJoinDialog] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<CommunityMember | null>(null);
   const [formData, setFormData] = useState({
     business_name: '',
     business_description: '',
@@ -64,7 +66,8 @@ export default function BusinessCommunity() {
     contact_phone: '',
     website: '',
     address: '',
-    city: ''
+    city: '',
+    tagline: ''
   });
   const navigate = useNavigate();
 
@@ -257,6 +260,16 @@ export default function BusinessCommunity() {
                   </Select>
                 </div>
                 <div className="grid gap-2">
+                  <Label htmlFor="tagline">Tagline</Label>
+                  <Input
+                    id="tagline"
+                    value={formData.tagline}
+                    onChange={(e) => setFormData({...formData, tagline: e.target.value})}
+                    placeholder="Brief description of what you do (optional)"
+                    maxLength={100}
+                  />
+                </div>
+                <div className="grid gap-2">
                   <Label htmlFor="business_description">Business Description</Label>
                   <Textarea
                     id="business_description"
@@ -327,7 +340,11 @@ export default function BusinessCommunity() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featuredMembers.map((member) => (
-                <Card key={member.id} className="border-2 border-yellow-500/50 shadow-lg hover:shadow-xl transition-shadow">
+                <Card 
+                  key={member.id} 
+                  className="border-2 border-yellow-500/50 shadow-lg hover:shadow-xl transition-all cursor-pointer hover:border-yellow-500"
+                  onClick={() => setSelectedMember(member)}
+                >
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -336,45 +353,13 @@ export default function BusinessCommunity() {
                           {member.business_name}
                         </CardTitle>
                         <Badge className="mt-2 bg-yellow-500">{member.business_category}</Badge>
+                        {member.tagline && (
+                          <p className="text-sm text-muted-foreground italic mt-3">{member.tagline}</p>
+                        )}
                       </div>
-                      <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
+                      <Star className="h-6 w-6 text-yellow-500 fill-yellow-500 flex-shrink-0" />
                     </div>
-                    <CardDescription className="mt-4">
-                      {member.business_description}
-                    </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-2">
-                    {member.contact_email && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <a href={`mailto:${member.contact_email}`} className="hover:underline">
-                          {member.contact_email}
-                        </a>
-                      </div>
-                    )}
-                    {member.contact_phone && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <a href={`tel:${member.contact_phone}`} className="hover:underline">
-                          {member.contact_phone}
-                        </a>
-                      </div>
-                    )}
-                    {member.website && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Globe className="h-4 w-4 text-muted-foreground" />
-                        <a href={member.website} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                          Visit Website
-                        </a>
-                      </div>
-                    )}
-                    {(member.address || member.city) && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span>{[member.address, member.city].filter(Boolean).join(', ')}</span>
-                      </div>
-                    )}
-                  </CardContent>
                 </Card>
               ))}
             </div>
@@ -393,58 +378,97 @@ export default function BusinessCommunity() {
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {regularMembers.map((member) => (
-              <Card key={member.id} className="hover:shadow-lg transition-shadow">
+              <Card 
+                key={member.id} 
+                className="hover:shadow-lg transition-all cursor-pointer hover:border-primary/40"
+                onClick={() => setSelectedMember(member)}
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between">
-                    <div>
+                    <div className="flex-1">
                       <CardTitle className="flex items-center gap-2">
                         <Building2 className="h-5 w-5 text-primary" />
                         {member.business_name}
                       </CardTitle>
                       <Badge variant="outline" className="mt-2">{member.business_category}</Badge>
+                      {member.tagline && (
+                        <p className="text-sm text-muted-foreground italic mt-3 line-clamp-2">{member.tagline}</p>
+                      )}
                     </div>
                   </div>
-                  <CardDescription className="mt-4">
-                    {member.business_description}
-                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  {member.contact_email && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <a href={`mailto:${member.contact_email}`} className="hover:underline">
-                        {member.contact_email}
-                      </a>
-                    </div>
-                  )}
-                  {member.contact_phone && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <a href={`tel:${member.contact_phone}`} className="hover:underline">
-                        {member.contact_phone}
-                      </a>
-                    </div>
-                  )}
-                  {member.website && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Globe className="h-4 w-4 text-muted-foreground" />
-                      <a href={member.website} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                        Visit Website
-                      </a>
-                    </div>
-                  )}
-                  {(member.address || member.city) && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{[member.address, member.city].filter(Boolean).join(', ')}</span>
-                    </div>
-                  )}
-                </CardContent>
               </Card>
             ))}
           </div>
         </div>
       </section>
+
+      {/* Member Details Dialog */}
+      <Dialog open={selectedMember !== null} onOpenChange={() => setSelectedMember(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl flex items-center gap-2">
+              <Building2 className="h-6 w-6 text-primary" />
+              {selectedMember?.business_name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedMember && (
+            <div className="space-y-4">
+              <div>
+                <Badge className={selectedMember.is_featured ? "bg-yellow-500" : ""}>
+                  {selectedMember.business_category}
+                </Badge>
+              </div>
+
+              {selectedMember.tagline && (
+                <p className="text-lg italic text-muted-foreground border-l-4 border-primary pl-4">
+                  {selectedMember.tagline}
+                </p>
+              )}
+              
+              <div>
+                <h4 className="font-semibold mb-2">About</h4>
+                <p className="text-muted-foreground">{selectedMember.business_description || 'No description provided.'}</p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-2">Contact Details</h4>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-muted-foreground" />
+                    <a href={`mailto:${selectedMember.contact_email}`} className="hover:underline">
+                      {selectedMember.contact_email}
+                    </a>
+                  </div>
+                  {selectedMember.contact_phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <a href={`tel:${selectedMember.contact_phone}`} className="hover:underline">
+                        {selectedMember.contact_phone}
+                      </a>
+                    </div>
+                  )}
+                  {selectedMember.website && (
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-muted-foreground" />
+                      <a href={selectedMember.website} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                        {selectedMember.website}
+                      </a>
+                    </div>
+                  )}
+                  {(selectedMember.address || selectedMember.city) && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                      <span>{[selectedMember.address, selectedMember.city].filter(Boolean).join(', ')}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Footer */}
       <footer className="border-t py-8 mt-16">
