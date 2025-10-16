@@ -23,7 +23,7 @@ export default function LandingSettings() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { settings: contextSettings, loading, saveSettings: saveToContext } = useSettings();
-  const { companies } = useCompany();
+  const { companies, createCompany, updateCompany, deleteCompany } = useCompany();
   const [localSettings, setLocalSettings] = useState(contextSettings);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -104,23 +104,40 @@ export default function LandingSettings() {
     setShowCompanyForm(true);
   };
 
-  const handleDeleteCompany = (companyId: string) => {
-    // TODO: Implement delete functionality
-    toast({
-      title: "Delete company",
-      description: "This feature will be implemented soon.",
-    });
+  const handleDeleteCompany = async (companyId: string) => {
+    if (!confirm('Are you sure you want to delete this company? This action cannot be undone.')) {
+      return;
+    }
+    
+    const success = await deleteCompany(companyId);
+    if (success) {
+      // Company deleted successfully
+    }
   };
 
-  const handleSaveCompanyForm = () => {
-    // TODO: Implement save/update company functionality
-    toast({
-      title: editingCompany ? "Company updated" : "Company created",
-      description: editingCompany 
-        ? "Company information has been updated successfully."
-        : "New company has been created successfully.",
-    });
-    setShowCompanyForm(false);
+  const handleSaveCompanyForm = async () => {
+    if (!companyFormData.companyName.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Company name is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (editingCompany) {
+      // Update existing company
+      const success = await updateCompany(editingCompany.id, companyFormData.companyName);
+      if (success) {
+        setShowCompanyForm(false);
+      }
+    } else {
+      // Create new company
+      const newCompany = await createCompany(companyFormData.companyName);
+      if (newCompany) {
+        setShowCompanyForm(false);
+      }
+    }
   };
 
   const handleCompanyLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

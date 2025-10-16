@@ -23,6 +23,8 @@ interface CompanyContextType {
   activeCompany: Company | null;
   setActiveCompany: (company: Company | null) => void;
   createCompany: (name: string) => Promise<Company | null>;
+  updateCompany: (companyId: string, name: string) => Promise<boolean>;
+  deleteCompany: (companyId: string) => Promise<boolean>;
   loading: boolean;
   refreshCompanies: () => Promise<void>;
 }
@@ -156,6 +158,64 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateCompany = async (companyId: string, name: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .update({ name })
+        .eq('id', companyId);
+
+      if (error) throw error;
+
+      // Refresh companies
+      await loadCompanies();
+
+      toast({
+        title: 'Success',
+        description: 'Company updated successfully',
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error updating company:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update company',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  const deleteCompany = async (companyId: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .delete()
+        .eq('id', companyId);
+
+      if (error) throw error;
+
+      // Refresh companies
+      await loadCompanies();
+
+      toast({
+        title: 'Success',
+        description: 'Company deleted successfully',
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting company:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete company',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
   return (
     <CompanyContext.Provider
       value={{
@@ -163,6 +223,8 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         activeCompany,
         setActiveCompany,
         createCompany,
+        updateCompany,
+        deleteCompany,
         loading,
         refreshCompanies: loadCompanies,
       }}
