@@ -22,7 +22,7 @@ export const Navigation = () => {
           .from('user_roles')
           .select('role')
           .eq('user_id', user.id)
-          .eq('role', 'admin')
+          .eq('role', 'owner')
           .maybeSingle();
 
         setIsAdmin(!!roleData);

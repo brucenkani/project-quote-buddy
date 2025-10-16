@@ -35,7 +35,7 @@ export default function Index() {
           .from('user_roles')
           .select('role')
           .eq('user_id', session.user.id)
-          .eq('role', 'admin')
+          .eq('role', 'owner')
           .maybeSingle();
 
         // Only redirect non-admin users
@@ -54,7 +54,7 @@ export default function Index() {
           .from('user_roles')
           .select('role')
           .eq('user_id', session.user.id)
-          .eq('role', 'admin')
+          .eq('role', 'owner')
           .maybeSingle();
 
         if (!roleData) {
