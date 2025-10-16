@@ -64,163 +64,117 @@ export const Navigation = () => {
             <CompanySelector />
           </div>
           
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-2">
-            <nav className="flex gap-2">
-              <Button
-                variant={location.pathname === '/accounting' ? 'default' : 'ghost'}
-                size="sm"
-                asChild
-                className="gap-2"
-              >
-                <Link to="/accounting">
-                  <LayoutDashboard className="h-4 w-4" />
-                  <span>Dashboard</span>
-                </Link>
-              </Button>
+          {/* Desktop Navigation - Consolidated Menu */}
+          <div className="hidden md:flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Menu className="h-4 w-4" />
+                  <span>Menu</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link to="/accounting" className="flex items-center gap-2 cursor-pointer">
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Customers</div>
+                {customerMenuItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <DropdownMenuItem key={item.path} asChild>
+                      <Link to={item.path} className="flex items-center gap-2 cursor-pointer pl-6">
+                        <Icon className="h-4 w-4" />
+                        {item.label}
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant={isCustomerMenuActive ? 'default' : 'ghost'}
-                    size="sm"
-                    className="gap-1"
-                  >
-                    <Users className="h-4 w-4" />
-                    <span>Customers</span>
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  {customerMenuItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <DropdownMenuItem key={item.path} asChild>
-                        <Link to={item.path} className="flex items-center gap-2 cursor-pointer">
-                          <Icon className="h-4 w-4" />
-                          {item.label}
-                        </Link>
-                      </DropdownMenuItem>
-                    );
-                  })}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {showSuppliers && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant={isSupplierMenuActive ? 'default' : 'ghost'}
-                      size="sm"
-                      className="gap-1"
-                    >
-                      <ShoppingCart className="h-4 w-4" />
-                      <span>Suppliers</span>
-                      <ChevronDown className="h-3 w-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
+                {showSuppliers && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Suppliers</div>
                     {supplierMenuItems.map((item) => {
                       const Icon = item.icon;
                       return (
                         <DropdownMenuItem key={item.path} asChild>
-                          <Link to={item.path} className="flex items-center gap-2 cursor-pointer">
+                          <Link to={item.path} className="flex items-center gap-2 cursor-pointer pl-6">
                             <Icon className="h-4 w-4" />
                             {item.label}
                           </Link>
                         </DropdownMenuItem>
                       );
                     })}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+                  </>
+                )}
 
-              {showInventory && (
-                <Button
-                  variant={location.pathname === '/inventory' ? 'default' : 'ghost'}
-                  size="sm"
-                  asChild
-                  className="gap-2"
-                >
-                  <Link to="/inventory">
-                    <Package className="h-4 w-4" />
-                    <span>Inventory</span>
-                  </Link>
-                </Button>
-              )}
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant={isBankingMenuActive ? 'default' : 'ghost'}
-                    size="sm"
-                    className="gap-1"
-                  >
-                    <Building2 className="h-4 w-4" />
-                    <span>Banking</span>
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  {bankingMenuItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <DropdownMenuItem key={item.path} asChild>
-                        <Link to={item.path} className="flex items-center gap-2 cursor-pointer">
-                          <Icon className="h-4 w-4" />
-                          {item.label}
-                        </Link>
-                      </DropdownMenuItem>
-                    );
-                  })}
+                {showInventory && (
                   <DropdownMenuItem asChild>
-                    <Link to="/bank-feeds" className="flex items-center gap-2 cursor-pointer">
-                      <Building2 className="h-4 w-4" />
-                      Bank Feeds
+                    <Link to="/inventory" className="flex items-center gap-2 cursor-pointer">
+                      <Package className="h-4 w-4" />
+                      Inventory
                     </Link>
                   </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                )}
 
-              <Button
-                variant={location.pathname === '/journal' ? 'default' : 'ghost'}
-                size="sm"
-                asChild
-                className="gap-2"
-              >
-                <Link to="/journal">
-                  <BookOpen className="h-4 w-4" />
-                  <span>Journals</span>
-                </Link>
-              </Button>
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Banking</div>
+                {bankingMenuItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <DropdownMenuItem key={item.path} asChild>
+                      <Link to={item.path} className="flex items-center gap-2 cursor-pointer pl-6">
+                        <Icon className="h-4 w-4" />
+                        {item.label}
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
+                <DropdownMenuItem asChild>
+                  <Link to="/bank-feeds" className="flex items-center gap-2 cursor-pointer pl-6">
+                    <Building2 className="h-4 w-4" />
+                    Bank Feeds
+                  </Link>
+                </DropdownMenuItem>
 
-              <Button
-                variant={location.pathname === '/reports' ? 'default' : 'ghost'}
-                size="sm"
-                asChild
-                className="gap-2"
-              >
-                <Link to="/reports">
-                  <BarChart3 className="h-4 w-4" />
-                  <span>Reports</span>
-                </Link>
-              </Button>
+                <DropdownMenuItem asChild>
+                  <Link to="/journal" className="flex items-center gap-2 cursor-pointer">
+                    <BookOpen className="h-4 w-4" />
+                    Journals
+                  </Link>
+                </DropdownMenuItem>
 
-              <Button
-                variant={location.pathname === '/settings' ? 'default' : 'ghost'}
-                size="sm"
-                asChild
-                className="gap-2"
-              >
-                <Link to="/settings">
+                <DropdownMenuItem asChild>
+                  <Link to="/reports" className="flex items-center gap-2 cursor-pointer">
+                    <BarChart3 className="h-4 w-4" />
+                    Reports
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
                   <Settings className="h-4 w-4" />
-                  <span>Settings</span>
-                </Link>
-              </Button>
-            </nav>
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
-              Sign Out
-            </Button>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Mobile Menu Toggle */}
