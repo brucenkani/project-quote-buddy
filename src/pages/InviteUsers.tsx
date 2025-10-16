@@ -8,8 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Send, Shield, Save, Users } from 'lucide-react';
+import { ArrowLeft, Send, Shield, Save, Users, Edit, Trash2, UserCog } from 'lucide-react';
 
 interface RolePermission {
   id: string;
@@ -31,6 +34,14 @@ const permissionLabels: Record<string, string> = {
   view_reports: 'View Reports',
 };
 
+interface UserWithRole {
+  id: string;
+  email: string;
+  full_name: string | null;
+  created_at: string;
+  role: 'owner' | 'accountant' | 'employee' | null;
+}
+
 export default function InviteUsers() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -40,9 +51,15 @@ export default function InviteUsers() {
   const [permissions, setPermissions] = useState<RolePermission[]>([]);
   const [loadingPermissions, setLoadingPermissions] = useState(true);
   const [savingPermissions, setSavingPermissions] = useState(false);
+  const [users, setUsers] = useState<UserWithRole[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [newUserRole, setNewUserRole] = useState<'owner' | 'accountant' | 'employee'>('accountant');
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPermissions();
+    fetchUsers();
   }, []);
 
   const fetchPermissions = async () => {
@@ -67,6 +84,48 @@ export default function InviteUsers() {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      setLoadingUsers(true);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (profilesError) throw profilesError;
+
+      // Fetch roles for each user
+      const usersWithRoles: UserWithRole[] = await Promise.all(
+        (profiles || []).map(async (profile) => {
+          const { data: roleData } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', profile.id)
+            .single();
+
+          return {
+            id: profile.id,
+            email: profile.email,
+            full_name: profile.full_name,
+            created_at: profile.created_at,
+            role: roleData?.role || null,
+          };
+        })
+      );
+
+      setUsers(usersWithRoles);
+    } catch (error: any) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load users',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -85,6 +144,7 @@ export default function InviteUsers() {
 
       setEmail('');
       setRole('accountant');
+      fetchUsers(); // Refresh user list
     } catch (error: any) {
       console.error('Error sending invitation:', error);
       toast({
@@ -94,6 +154,75 @@ export default function InviteUsers() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateUserRole = async () => {
+    if (!editingUserId) return;
+
+    try {
+      // Delete existing role
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', editingUserId);
+
+      // Insert new role
+      const { error } = await supabase
+        .from('user_roles')
+        .insert([{ user_id: editingUserId, role: newUserRole }]);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'User role updated successfully',
+      });
+
+      setEditingUserId(null);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error updating user role:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update user role',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deletingUserId) return;
+
+    try {
+      // Delete user role
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', deletingUserId);
+
+      // Delete profile
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', deletingUserId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'User removed successfully',
+      });
+
+      setDeletingUserId(null);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to remove user',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -201,10 +330,14 @@ export default function InviteUsers() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="invite" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="invite">
                   <Send className="h-4 w-4 mr-2" />
                   Send Invitations
+                </TabsTrigger>
+                <TabsTrigger value="users">
+                  <UserCog className="h-4 w-4 mr-2" />
+                  Manage Users
                 </TabsTrigger>
                 <TabsTrigger value="permissions">
                   <Shield className="h-4 w-4 mr-2" />
@@ -260,6 +393,83 @@ export default function InviteUsers() {
                 </form>
               </TabsContent>
 
+              <TabsContent value="users" className="space-y-6 mt-6">
+                <div className="bg-muted p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    Manage existing users, update their roles, or remove them from the system.
+                  </p>
+                </div>
+
+                {loadingUsers ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">Loading users...</p>
+                  </div>
+                ) : users.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No users found</p>
+                  </div>
+                ) : (
+                  <div className="border rounded-lg">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Role</TableHead>
+                          <TableHead>Joined</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {users.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium">
+                              {user.full_name || 'N/A'}
+                            </TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>
+                              {user.role ? (
+                                <Badge variant={user.role === 'owner' ? 'default' : user.role === 'accountant' ? 'secondary' : 'outline'}>
+                                  {user.role === 'owner' ? 'Admin' : user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline">No Role</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(user.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setEditingUserId(user.id);
+                                    setNewUserRole(user.role || 'accountant');
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4 mr-1" />
+                                  Edit Role
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => setDeletingUserId(user.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Remove
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </TabsContent>
+
               <TabsContent value="permissions" className="space-y-6 mt-6">
                 <div className="flex justify-between items-center mb-6">
                   <div className="bg-muted p-4 rounded-lg flex-1">
@@ -312,6 +522,53 @@ export default function InviteUsers() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Edit Role Dialog */}
+      <AlertDialog open={!!editingUserId} onOpenChange={(open) => !open && setEditingUserId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Update User Role</AlertDialogTitle>
+            <AlertDialogDescription>
+              Select a new role for this user. Their permissions will be updated accordingly.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Label htmlFor="edit-role">New Role</Label>
+            <Select value={newUserRole} onValueChange={(value: 'owner' | 'accountant' | 'employee') => setNewUserRole(value)}>
+              <SelectTrigger id="edit-role" className="mt-2">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="owner">Admin</SelectItem>
+                <SelectItem value="accountant">Accountant</SelectItem>
+                <SelectItem value="employee">Employee</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUpdateUserRole}>Update Role</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete User Dialog */}
+      <AlertDialog open={!!deletingUserId} onOpenChange={(open) => !open && setDeletingUserId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this user? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Remove User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
