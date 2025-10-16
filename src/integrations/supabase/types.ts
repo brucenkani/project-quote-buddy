@@ -895,6 +895,7 @@ export type Database = {
       invoice_payments: {
         Row: {
           amount: number
+          company_id: string | null
           created_at: string | null
           date: string
           id: string
@@ -906,6 +907,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          company_id?: string | null
           created_at?: string | null
           date: string
           id?: string
@@ -917,6 +919,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          company_id?: string | null
           created_at?: string | null
           date?: string
           id?: string
@@ -926,7 +929,15 @@ export type Database = {
           reference?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "invoice_payments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoices: {
         Row: {
