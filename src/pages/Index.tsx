@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle, Phone, ArrowRight, Binary } from 'lucide-react';
+import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle, Phone, ArrowRight, Binary, UserCircle, Headset } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import bruceProfile from '@/assets/bruce-profile.png';
@@ -377,7 +377,7 @@ export default function Index() {
       <section className="container mx-auto px-4 py-8">
         <h3 className="text-3xl font-bold text-center mb-10">Everything You Need to Run Your Business</h3>
         
-        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-12">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto mb-12">
           <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/accounting')}>
             <CardHeader>
               <Calculator className="h-12 w-12 mb-4 text-primary" />
@@ -469,6 +469,70 @@ export default function Index() {
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <span>Engineering calculators</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader>
+              <UserCircle className="h-12 w-12 mb-4 text-primary" />
+              <CardTitle>CRM & Sales Pipeline</CardTitle>
+              <CardDescription>Centralize customer data and track leads</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Contact and lead database</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Visual sales pipeline tracking</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Email/SMS follow-up reminders</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Quotations linked to accounting</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Conversion & performance reports</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader>
+              <Headset className="h-12 w-12 mb-4 text-primary" />
+              <CardTitle>Customer Support & Ticketing</CardTitle>
+              <CardDescription>Manage queries and service requests professionally</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Customer portal for ticket logging</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Internal ticket routing & assignment</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>SLA tracking & monitoring</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Email/SMS customer updates</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Satisfaction & resolution reports</span>
                 </li>
               </ul>
             </CardContent>
