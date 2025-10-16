@@ -60,6 +60,7 @@ import AccountingCalculators from "./pages/calculators/AccountingCalculators";
 import BusinessMetrics from "./pages/calculators/BusinessMetrics";
 import PropertyCalculators from "./pages/calculators/PropertyCalculators";
 import EngineeringCalculators from "./pages/calculators/EngineeringCalculators";
+import LandingSettings from "./pages/LandingSettings";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ const App = () => (
           
           <Route path="/dashboard" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
           <Route path="/landing" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
+          <Route path="/landing-settings" element={<ProtectedRoute><LandingSettings /></ProtectedRoute>} />
           <Route path="/accounting" element={<ProtectedRoute><AccountingDashboard /></ProtectedRoute>} />
           <Route path="/payroll" element={<ProtectedRoute><PayrollDashboard /></ProtectedRoute>} />
           <Route path="/payroll/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />

@@ -5,11 +5,14 @@ import { User } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, Calculator, Users, Settings, Shield, Home } from 'lucide-react';
+import { CompanySelector } from '@/components/CompanySelector';
+import { useCompany } from '@/contexts/CompanyContext';
 
 export default function Landing() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const { activeCompany } = useCompany();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -67,7 +70,7 @@ export default function Landing() {
                 <Shield className="h-4 w-4" />
                 <span className="hidden sm:inline">Permissions</span>
               </Button>
-              <Button onClick={() => navigate('/company-settings')} variant="ghost" size="sm" className="gap-2">
+              <Button onClick={() => navigate('/landing-settings')} variant="ghost" size="sm" className="gap-2">
                 <Settings className="h-4 w-4" />
                 <span className="hidden sm:inline">Settings</span>
               </Button>
@@ -87,6 +90,18 @@ export default function Landing() {
             Complete business management solution for accounting and HR
           </p>
         </div>
+
+        <div className="flex justify-center mb-8">
+          <CompanySelector />
+        </div>
+
+        {activeCompany && (
+          <div className="text-center mb-8">
+            <p className="text-sm text-muted-foreground">
+              Currently working on: <span className="font-semibold text-foreground">{activeCompany.name}</span>
+            </p>
+          </div>
+        )}
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/accounting')}>

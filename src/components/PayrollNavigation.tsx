@@ -13,7 +13,6 @@ export const PayrollNavigation = () => {
     { path: '/payroll/employees', label: 'Employees', icon: Users },
     { path: '/payroll/payroll', label: 'Payroll', icon: DollarSign },
     { path: '/payroll/leave', label: 'Leave', icon: Calendar },
-    { path: '/payroll/settings', label: 'Settings', icon: Settings },
   ];
 
   const handleSignOut = async () => {

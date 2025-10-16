@@ -172,26 +172,9 @@ export const Navigation = () => {
               </Link>
             </Button>
 
-            {/* Combined Companies & Settings Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <Settings className="h-4 w-4" />
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem asChild>
-                  <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
-                    <Settings className="h-4 w-4" />
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button variant="ghost" size="sm" onClick={handleSignOut}>
+              Sign Out
+            </Button>
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -326,18 +309,6 @@ export const Navigation = () => {
                   <Link to="/reports">
                     <BarChart3 className="h-4 w-4" />
                     Reports
-                  </Link>
-                </Button>
-
-                <Button
-                  variant={location.pathname === '/settings' ? 'default' : 'ghost'}
-                  asChild
-                  className="justify-start gap-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Link to="/settings">
-                    <Settings className="h-4 w-4" />
-                    Settings
                   </Link>
                 </Button>
 
