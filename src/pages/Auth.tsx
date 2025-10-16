@@ -17,6 +17,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [joinCommunity, setJoinCommunity] = useState(false);
   const [invitationData, setInvitationData] = useState<any>(null);
   const [resetMode, setResetMode] = useState(false);
@@ -100,6 +101,7 @@ export default function Auth() {
         options: {
           data: {
             full_name: fullName,
+            company_name: companyName,
           },
           emailRedirectTo: `${window.location.origin}/landing`,
         },
@@ -332,6 +334,20 @@ export default function Auth() {
                     onChange={(e) => setFullName(e.target.value)}
                     required
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-company">Company Name</Label>
+                  <Input
+                    id="signup-company"
+                    type="text"
+                    placeholder="Your Company Name"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    You can update company details later in settings
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
