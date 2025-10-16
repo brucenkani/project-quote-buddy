@@ -90,9 +90,6 @@ export default function Index() {
     );
   }
 
-  if (isAuthenticated) {
-    return <Navigate to="/landing" replace />;
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
