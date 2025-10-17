@@ -6,9 +6,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QuoteBuilder } from '@/components/QuoteBuilder';
 import ProtectedRoute from "@/components/ProtectedRoute";
+import SubscriptionGuard from "@/components/SubscriptionGuard";
 import { DataProvider } from "@/contexts/DataProvider";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Subscription from "./pages/Subscription";
 import Landing from "./pages/Landing";
 import AccountingDashboard from "./pages/AccountingDashboard";
 import PayrollDashboard from "./pages/PayrollDashboard";
@@ -74,6 +76,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
           <Route path="/community" element={<BusinessCommunity />} />
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -85,10 +88,10 @@ const App = () => (
           <Route path="/calculators/property" element={<PropertyCalculators />} />
           <Route path="/calculators/engineering" element={<EngineeringCalculators />} />
           
-          <Route path="/dashboard" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
-          <Route path="/landing" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
-          <Route path="/landing-settings" element={<ProtectedRoute><LandingSettings /></ProtectedRoute>} />
-          <Route path="/accounting" element={<ProtectedRoute><AccountingDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><SubscriptionGuard><Landing /></SubscriptionGuard></ProtectedRoute>} />
+          <Route path="/landing" element={<ProtectedRoute><SubscriptionGuard><Landing /></SubscriptionGuard></ProtectedRoute>} />
+          <Route path="/landing-settings" element={<ProtectedRoute><SubscriptionGuard><LandingSettings /></SubscriptionGuard></ProtectedRoute>} />
+          <Route path="/accounting" element={<ProtectedRoute><SubscriptionGuard><AccountingDashboard /></SubscriptionGuard></ProtectedRoute>} />
           <Route path="/payroll" element={<ProtectedRoute><PayrollDashboard /></ProtectedRoute>} />
           <Route path="/payroll/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
           <Route path="/payroll/payroll" element={<ProtectedRoute><Payroll /></ProtectedRoute>} />

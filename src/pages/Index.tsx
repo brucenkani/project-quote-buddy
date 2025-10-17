@@ -193,20 +193,108 @@ export default function Index() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-12 text-center">
         <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-          Accounting & Payroll Systems
+          Professional Business Management Software
         </h2>
         <p className="text-xl text-muted-foreground mb-2 max-w-3xl mx-auto">
-          Streamline your accounting and HR operations with our comprehensive ERP solution.
+          Complete accounting, payroll, CRM, and analytics platform for growing businesses.
         </p>
+        <div className="mt-4 flex items-center justify-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
+            <CheckCircle className="h-5 w-5 text-primary" />
+            <span className="text-sm font-medium">1-Day Free Trial</span>
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
+            <Shield className="h-5 w-5 text-primary" />
+            <span className="text-sm font-medium">No Credit Card Required</span>
+          </div>
+        </div>
       </section>
 
-      {/* 100% Free Message - Prominent Section */}
-      <section className="container mx-auto px-4 py-2">
+      {/* Pricing Section */}
+      <section className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h3 className="text-3xl font-bold mb-3">Simple, Transparent Pricing</h3>
+            <p className="text-lg text-muted-foreground">
+              One plan with everything you need. No hidden fees.
+            </p>
+          </div>
+          
+          <Card className="border-2 border-primary shadow-xl max-w-2xl mx-auto">
+            <CardHeader className="text-center pb-8 pt-8">
+              <div className="mb-4">
+                <span className="text-5xl font-bold">R299</span>
+                <span className="text-xl text-muted-foreground">/month</span>
+              </div>
+              <CardTitle className="text-2xl">Professional Plan</CardTitle>
+              <CardDescription className="text-base mt-2">
+                Complete business management suite with all features included
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pb-8">
+              <div className="grid sm:grid-cols-2 gap-4 mb-6">
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Full Accounting System</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Payroll & HR Management</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>CRM & Sales Pipeline</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Business Analytics</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Customer Support System</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Business Calculators</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Multi-user Access</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Email Support</span>
+                </div>
+              </div>
+              
+              <div className="bg-primary/5 p-4 rounded-lg mb-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="h-5 w-5 text-primary" />
+                  <span className="font-semibold">1-Day Free Trial</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Start your free trial today. No credit card required. Full access to all features with download restrictions during trial.
+                </p>
+              </div>
+              
+              <Button size="lg" className="w-full text-lg py-6" onClick={() => navigate('/auth')}>
+                Start Your Free Trial
+              </Button>
+              
+              <p className="text-center text-sm text-muted-foreground mt-4">
+                Cancel anytime. Your data is kept for 7 days after subscription ends.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Need More Help Section */}
+      <section className="container mx-auto px-4 py-8">
         <div className="max-w-5xl mx-auto">
-          <h3 className="text-3xl font-bold text-center mb-4">100% Free for Business Owners</h3>
+          <h3 className="text-3xl font-bold text-center mb-4">Need Professional Accounting Services?</h3>
           <p className="text-lg text-center text-muted-foreground mb-8">
-            BizCounting is completely free to use. We generate revenue by offering optional professional 
-            accounting services to help you manage your finances even better.
+            Looking for personalized accounting support? Hire me, Bruce, for tailored professional services.
           </p>
           
           {/* Hire Us Section with Contact Options */}
