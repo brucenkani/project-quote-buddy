@@ -66,6 +66,8 @@ import BusinessMetrics from "./pages/calculators/BusinessMetrics";
 import PropertyCalculators from "./pages/calculators/PropertyCalculators";
 import EngineeringCalculators from "./pages/calculators/EngineeringCalculators";
 import LandingSettings from "./pages/LandingSettings";
+import CRMCustomerSupport from "./pages/CRMCustomerSupport";
+import BusinessAnalytics from "./pages/BusinessAnalytics";
 
 const queryClient = new QueryClient();
 
@@ -93,6 +95,8 @@ const App = () => (
           <Route path="/calculators/business-metrics" element={<BusinessMetrics />} />
           <Route path="/calculators/property" element={<PropertyCalculators />} />
           <Route path="/calculators/engineering" element={<EngineeringCalculators />} />
+          <Route path="/crm-support" element={<ProtectedRoute><SubscriptionGuard><CRMCustomerSupport /></SubscriptionGuard></ProtectedRoute>} />
+          <Route path="/analytics" element={<ProtectedRoute><SubscriptionGuard><BusinessAnalytics /></SubscriptionGuard></ProtectedRoute>} />
           
           <Route path="/dashboard" element={<ProtectedRoute><SubscriptionGuard><Landing /></SubscriptionGuard></ProtectedRoute>} />
           <Route path="/landing" element={<ProtectedRoute><SubscriptionGuard><Landing /></SubscriptionGuard></ProtectedRoute>} />

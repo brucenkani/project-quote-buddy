@@ -3,10 +3,11 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle, Phone, ArrowRight, Binary, UserCircle, Headset, LineChart, BookOpen, GraduationCap } from 'lucide-react';
+import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle, Phone, ArrowRight, Binary, UserCircle, Headset, LineChart, BookOpen, GraduationCap, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import bruceProfile from '@/assets/bruce-profile.png';
@@ -101,19 +102,30 @@ export default function Index() {
             <h1 className="text-2xl font-bold">BizCounting</h1>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" size="lg" className="gap-2" onClick={handleWhatsAppContact}>
-              <MessageCircle className="h-4 w-4" />
-              WhatsApp Us
-            </Button>
-            <Button variant="ghost" size="lg" onClick={() => navigate('/community')}>Business Community</Button>
-            <Button variant="ghost" size="lg" onClick={() => navigate('/knowledge')}>Knowledge Centre</Button>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="lg" className="gap-2">
                   <Mail className="h-4 w-4" />
                   Contact Us
+                  <ChevronDown className="h-3 w-3" />
                 </Button>
-              </DialogTrigger>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-card z-50">
+                <DropdownMenuItem onClick={handleWhatsAppContact} className="cursor-pointer">
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  WhatsApp
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <DialogTrigger className="w-full flex items-center cursor-pointer">
+                    <Mail className="h-4 w-4 mr-2" />
+                    Email
+                  </DialogTrigger>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button variant="ghost" size="lg" onClick={() => navigate('/community')}>Business Community</Button>
+            <Button variant="ghost" size="lg" onClick={() => navigate('/knowledge')}>Knowledge Centre</Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                   <DialogTitle>Contact Our Team</DialogTitle>
@@ -541,107 +553,43 @@ export default function Index() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer">
+          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/crm-support')}>
             <CardHeader>
               <UserCircle className="h-12 w-12 mb-4 text-primary" />
-              <CardTitle>CRM & Sales Pipeline</CardTitle>
-              <CardDescription>Centralize customer data and track leads</CardDescription>
+              <CardTitle>CRM & Customer Support</CardTitle>
+              <CardDescription>Complete customer management & support system</CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Contact and lead database</span>
+                  <span>Contact & lead database</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Visual sales pipeline tracking</span>
+                  <span>Sales pipeline tracking</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Email/SMS follow-up reminders</span>
+                  <span>Ticket management system</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Quotations linked to accounting</span>
+                  <span>Customer support tools</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Conversion & performance reports</span>
+                  <span>Performance & satisfaction reports</span>
                 </li>
               </ul>
             </CardContent>
           </Card>
 
-          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer">
-            <CardHeader>
-              <Headset className="h-12 w-12 mb-4 text-primary" />
-              <CardTitle>Customer Support & Ticketing</CardTitle>
-              <CardDescription>Manage queries and service requests professionally</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Customer portal for ticket logging</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Internal ticket routing & assignment</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>SLA tracking & monitoring</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Email/SMS customer updates</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Satisfaction & resolution reports</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/knowledge')}>
-            <CardHeader>
-              <BookOpen className="h-12 w-12 mb-4 text-primary" />
-              <CardTitle>Knowledge Centre</CardTitle>
-              <CardDescription>Learn essential business compliance procedures</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>eFiling tax submissions guide</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>CIDB registration process</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Company registration walkthrough</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>VAT returns & compliance</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Income tax returns guide</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer">
+          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/analytics')}>
             <CardHeader>
               <LineChart className="h-12 w-12 mb-4 text-primary" />
-              <CardTitle>Business Analytics</CardTitle>
-              <CardDescription>Strategic insights for growth and planning</CardDescription>
+              <CardTitle>Analytics & Calculators</CardTitle>
+              <CardDescription>Business insights & professional calculation tools</CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
@@ -651,19 +599,19 @@ export default function Index() {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Financial projections & forecasts</span>
+                  <span>Financial forecasting & projections</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Performance measurement & KPIs</span>
+                  <span>Tax & SARS calculators</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Variance analysis & budgeting</span>
+                  <span>Financial planning tools</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Strategic planning insights</span>
+                  <span>Engineering & property calculators</span>
                 </li>
               </ul>
             </CardContent>
