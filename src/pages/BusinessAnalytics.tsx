@@ -112,7 +112,10 @@ export default function BusinessAnalytics() {
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="border-2 hover:border-primary/50 transition-colors">
+              <Card 
+                className="border-2 hover:border-primary/50 transition-colors cursor-pointer"
+                onClick={() => navigate('/analytics/management-accounts')}
+              >
                 <CardHeader>
                   <BarChart3 className="h-10 w-10 mb-4 text-primary" />
                   <CardTitle>Management Accounts</CardTitle>
@@ -128,7 +131,10 @@ export default function BusinessAnalytics() {
                 </CardContent>
               </Card>
 
-              <Card className="border-2 hover:border-primary/50 transition-colors">
+              <Card 
+                className="border-2 hover:border-primary/50 transition-colors cursor-pointer"
+                onClick={() => navigate('/analytics/financial-forecasting')}
+              >
                 <CardHeader>
                   <TrendingUp className="h-10 w-10 mb-4 text-primary" />
                   <CardTitle>Financial Forecasting</CardTitle>
@@ -144,7 +150,10 @@ export default function BusinessAnalytics() {
                 </CardContent>
               </Card>
 
-              <Card className="border-2 hover:border-primary/50 transition-colors">
+              <Card 
+                className="border-2 hover:border-primary/50 transition-colors cursor-pointer"
+                onClick={() => navigate('/analytics/performance-metrics')}
+              >
                 <CardHeader>
                   <PieChart className="h-10 w-10 mb-4 text-primary" />
                   <CardTitle>Performance Metrics</CardTitle>
@@ -160,7 +169,10 @@ export default function BusinessAnalytics() {
                 </CardContent>
               </Card>
 
-              <Card className="border-2 hover:border-primary/50 transition-colors">
+              <Card 
+                className="border-2 hover:border-primary/50 transition-colors cursor-pointer"
+                onClick={() => navigate('/analytics/variance-analysis')}
+              >
                 <CardHeader>
                   <LineChart className="h-10 w-10 mb-4 text-primary" />
                   <CardTitle>Variance Analysis</CardTitle>
@@ -176,7 +188,10 @@ export default function BusinessAnalytics() {
                 </CardContent>
               </Card>
 
-              <Card className="border-2 hover:border-primary/50 transition-colors">
+              <Card 
+                className="border-2 hover:border-primary/50 transition-colors cursor-pointer"
+                onClick={() => navigate('/analytics/strategic-planning')}
+              >
                 <CardHeader>
                   <BarChart3 className="h-10 w-10 mb-4 text-primary" />
                   <CardTitle>Strategic Planning</CardTitle>
@@ -192,7 +207,10 @@ export default function BusinessAnalytics() {
                 </CardContent>
               </Card>
 
-              <Card className="border-2 hover:border-primary/50 transition-colors">
+              <Card 
+                className="border-2 hover:border-primary/50 transition-colors cursor-pointer"
+                onClick={() => navigate('/analytics/custom-reports')}
+              >
                 <CardHeader>
                   <PieChart className="h-10 w-10 mb-4 text-primary" />
                   <CardTitle>Custom Reports</CardTitle>
