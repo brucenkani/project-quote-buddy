@@ -521,37 +521,6 @@ export default function Index() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/calculators')}>
-            <CardHeader>
-              <Binary className="h-12 w-12 mb-4 text-primary" />
-              <CardTitle>Business Calculators</CardTitle>
-              <CardDescription>Essential calculation tools for your business</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Tax & SARS calculators</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Financial planning tools</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Accounting calculators</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Property & asset tools</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Engineering calculators</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
 
           <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/crm-support')}>
             <CardHeader>
@@ -585,7 +554,7 @@ export default function Index() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/analytics')}>
+          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/business-analytics')}>
             <CardHeader>
               <LineChart className="h-12 w-12 mb-4 text-primary" />
               <CardTitle>Analytics & Calculators</CardTitle>
@@ -611,7 +580,15 @@ export default function Index() {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Engineering & property calculators</span>
+                  <span>Accounting calculators</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Property & asset tools</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Engineering calculators</span>
                 </li>
               </ul>
             </CardContent>

@@ -96,7 +96,7 @@ const App = () => (
           <Route path="/calculators/property" element={<PropertyCalculators />} />
           <Route path="/calculators/engineering" element={<EngineeringCalculators />} />
           <Route path="/crm-support" element={<ProtectedRoute><SubscriptionGuard><CRMCustomerSupport /></SubscriptionGuard></ProtectedRoute>} />
-          <Route path="/analytics" element={<ProtectedRoute><SubscriptionGuard><BusinessAnalytics /></SubscriptionGuard></ProtectedRoute>} />
+          <Route path="/business-analytics" element={<ProtectedRoute><SubscriptionGuard><BusinessAnalytics /></SubscriptionGuard></ProtectedRoute>} />
           
           <Route path="/dashboard" element={<ProtectedRoute><SubscriptionGuard><Landing /></SubscriptionGuard></ProtectedRoute>} />
           <Route path="/landing" element={<ProtectedRoute><SubscriptionGuard><Landing /></SubscriptionGuard></ProtectedRoute>} />
