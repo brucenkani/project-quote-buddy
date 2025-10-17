@@ -1132,6 +1132,51 @@ export type Database = {
           },
         ]
       }
+      knowledge_articles: {
+        Row: {
+          category: string
+          content: Json
+          created_at: string
+          created_by: string
+          description: string | null
+          featured_image_url: string | null
+          id: string
+          is_published: boolean
+          slug: string
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          category: string
+          content?: Json
+          created_at?: string
+          created_by: string
+          description?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_published?: boolean
+          slug: string
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          category?: string
+          content?: Json
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          featured_image_url?: string | null
+          id?: string
+          is_published?: boolean
+          slug?: string
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       leave_balances: {
         Row: {
           available_days: number

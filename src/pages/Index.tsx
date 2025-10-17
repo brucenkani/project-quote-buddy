@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle, Phone, ArrowRight, Binary, UserCircle, Headset, LineChart } from 'lucide-react';
+import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle, Phone, ArrowRight, Binary, UserCircle, Headset, LineChart, BookOpen, GraduationCap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import bruceProfile from '@/assets/bruce-profile.png';
@@ -106,6 +106,7 @@ export default function Index() {
               WhatsApp Us
             </Button>
             <Button variant="ghost" size="lg" onClick={() => navigate('/community')}>Business Community</Button>
+            <Button variant="ghost" size="lg" onClick={() => navigate('/knowledge')}>Knowledge Centre</Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="lg" className="gap-2">
@@ -210,82 +211,60 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Pricing Section */}
+      {/* Pricing Section - Compact */}
       <section className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h3 className="text-3xl font-bold mb-3">Simple, Transparent Pricing</h3>
-            <p className="text-lg text-muted-foreground">
-              One plan with everything you need. No hidden fees.
-            </p>
-          </div>
-          
-          <Card className="border-2 border-primary shadow-xl max-w-2xl mx-auto">
-            <CardHeader className="text-center pb-8 pt-8">
-              <div className="mb-4">
-                <span className="text-5xl font-bold">R299</span>
-                <span className="text-xl text-muted-foreground">/month</span>
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
+            {/* Left: Pricing Info */}
+            <div className="flex-shrink-0">
+              <div className="mb-3">
+                <span className="text-4xl font-bold">R299</span>
+                <span className="text-lg text-muted-foreground">/month</span>
               </div>
-              <CardTitle className="text-2xl">Professional Plan</CardTitle>
-              <CardDescription className="text-base mt-2">
+              <h3 className="text-xl font-semibold mb-2">Professional Plan</h3>
+              <p className="text-sm text-muted-foreground max-w-xs">
                 Complete business management suite with all features included
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pb-8">
-              <div className="grid sm:grid-cols-2 gap-4 mb-6">
+              </p>
+            </div>
+
+            {/* Arrow */}
+            <div className="flex-shrink-0 hidden lg:block">
+              <ArrowRight className="h-8 w-8 text-primary animate-pulse" />
+            </div>
+
+            {/* Middle: Key Features */}
+            <div className="flex-1">
+              <div className="grid sm:grid-cols-2 gap-3">
                 <div className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Full Accounting System</span>
+                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Full Accounting System</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Payroll & HR Management</span>
+                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Payroll & HR Management</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>CRM & Sales Pipeline</span>
+                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">CRM & Sales Pipeline</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Business Analytics</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Customer Support System</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Business Calculators</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Multi-user Access</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Email Support</span>
+                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Business Analytics</span>
                 </div>
               </div>
-              
-              <div className="bg-primary/5 p-4 rounded-lg mb-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Clock className="h-5 w-5 text-primary" />
-                  <span className="font-semibold">1-Day Free Trial</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Start your free trial today. No credit card required. Full access to all features with download restrictions during trial.
-                </p>
+              <div className="mt-4 flex items-center gap-2 bg-background/50 p-3 rounded-lg">
+                <Clock className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">1-Day Free Trial • No Credit Card Required</span>
               </div>
-              
-              <Button size="lg" className="w-full text-lg py-6" onClick={() => navigate('/auth')}>
+            </div>
+
+            {/* Right: CTA */}
+            <div className="flex-shrink-0">
+              <Button size="lg" className="px-8 py-6 h-auto shadow-lg" onClick={() => navigate('/auth')}>
                 Start Your Free Trial
               </Button>
-              
-              <p className="text-center text-sm text-muted-foreground mt-4">
-                Cancel anytime. Your data is kept for 7 days after subscription ends.
-              </p>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -621,6 +600,38 @@ export default function Index() {
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <span>Satisfaction & resolution reports</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/knowledge')}>
+            <CardHeader>
+              <BookOpen className="h-12 w-12 mb-4 text-primary" />
+              <CardTitle>Knowledge Centre</CardTitle>
+              <CardDescription>Learn essential business compliance procedures</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>eFiling tax submissions guide</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>CIDB registration process</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Company registration walkthrough</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>VAT returns & compliance</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Income tax returns guide</span>
                 </li>
               </ul>
             </CardContent>

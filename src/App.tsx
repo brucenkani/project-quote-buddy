@@ -11,6 +11,9 @@ import { DataProvider } from "@/contexts/DataProvider";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Subscription from "./pages/Subscription";
+import KnowledgeCentre from "./pages/KnowledgeCentre";
+import KnowledgeArticle from "./pages/KnowledgeArticle";
+import KnowledgeAdmin from "./pages/admin/KnowledgeAdmin";
 import Landing from "./pages/Landing";
 import AccountingDashboard from "./pages/AccountingDashboard";
 import PayrollDashboard from "./pages/PayrollDashboard";
@@ -78,6 +81,9 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
           <Route path="/community" element={<BusinessCommunity />} />
+          <Route path="/knowledge" element={<KnowledgeCentre />} />
+          <Route path="/knowledge/:slug" element={<KnowledgeArticle />} />
+          <Route path="/admin/knowledge" element={<ProtectedRoute><KnowledgeAdmin /></ProtectedRoute>} />
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/calculators" element={<Calculators />} />
