@@ -283,11 +283,6 @@ export default function Index() {
       {/* Need More Help Section */}
       <section className="container mx-auto px-4 py-8">
         <div className="max-w-5xl mx-auto">
-          <h3 className="text-3xl font-bold text-center mb-4">Need Professional Accounting Services?</h3>
-          <p className="text-lg text-center text-muted-foreground mb-8">
-            Looking for personalized accounting support? Hire me, Bruce, for tailored professional services.
-          </p>
-          
           {/* Hire Us Section with Contact Options */}
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
             {/* Left: Static Hire Me Button and Arrow */}
@@ -309,10 +304,11 @@ export default function Index() {
               {/* Phone/WhatsApp Button */}
               <Card className="group hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer border-2">
                 <CardContent className="p-6">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3 mb-3">
                     <Phone className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                    <span className="font-semibold">Call or WhatsApp</span>
+                    <span className="font-bold text-lg">Let's Talk Business</span>
                   </div>
+                  <p className="text-sm text-muted-foreground mb-3">Quick consultation via call or WhatsApp</p>
                   <div className="flex gap-2">
                     <Button 
                       size="sm" 
@@ -342,10 +338,11 @@ export default function Index() {
                 <DialogTrigger asChild>
                   <Card className="group hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer border-2">
                     <CardContent className="p-6">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-3 mb-3">
                         <Mail className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                        <span className="font-semibold">Send Message</span>
+                        <span className="font-bold text-lg">Drop Me a Line</span>
                       </div>
+                      <p className="text-sm text-muted-foreground mb-3">Send your inquiry via email</p>
                       <Button 
                         size="sm" 
                         className="w-full gap-2"
