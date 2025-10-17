@@ -304,10 +304,6 @@ export default function Index() {
               {/* Phone/WhatsApp Button */}
               <Card className="group hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer border-2">
                 <CardContent className="p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Phone className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                    <span className="font-bold text-lg">Let's Talk Business</span>
-                  </div>
                   <div className="flex gap-2">
                     <Button 
                       size="sm" 
@@ -337,11 +333,7 @@ export default function Index() {
                 <DialogTrigger asChild>
                   <Card className="group hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer border-2">
                     <CardContent className="p-6">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Mail className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
-                        <span className="font-bold text-lg">Drop Me a Line</span>
-                      </div>
-                      <Button 
+                      <Button
                         size="sm" 
                         className="w-full gap-2"
                       >
