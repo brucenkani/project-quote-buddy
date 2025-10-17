@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle, Phone, ArrowRight, Binary, UserCircle, Headset, LineChart, BookOpen, GraduationCap, ChevronDown, Receipt } from 'lucide-react';
+import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle, Phone, ArrowRight, Binary, UserCircle, Headset, LineChart, BookOpen, GraduationCap, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import bruceProfile from '@/assets/bruce-profile.png';
@@ -541,33 +541,33 @@ export default function Index() {
             </CardContent>
           </Card>
 
-          <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer" onClick={() => navigate('/calculators/tax')}>
+          <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer" onClick={() => navigate('/business-analytics')}>
             <CardHeader>
-              <Receipt className="h-12 w-12 mb-4 text-primary" />
-              <CardTitle>Tax Planning</CardTitle>
-              <CardDescription>Comprehensive tax calculators and planning tools</CardDescription>
+              <LineChart className="h-12 w-12 mb-4 text-primary" />
+              <CardTitle>Analytics & Calculators</CardTitle>
+              <CardDescription>Business insights & professional calculation tools</CardDescription>
             </CardHeader>
             <CardContent className="hidden group-hover:block">
               <ul className="space-y-3">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Income Tax Calculator</span>
+                  <span>Management accounts & reporting</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>VAT Calculator & Planning</span>
+                  <span>Financial forecasting & projections</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Capital Gains Tax</span>
+                  <span>Financial planning tools</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Tax Deductions & Credits</span>
+                  <span>Business Calculators</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Corporate Tax Planning</span>
+                  <span>Engineering Calculators</span>
                 </li>
               </ul>
             </CardContent>
