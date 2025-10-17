@@ -56,7 +56,7 @@ export default function Landing() {
       <header className="border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <h1 className="text-2xl font-bold">BizCounting</h1>
+            <h1 className="text-2xl font-bold">BizManager</h1>
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4">
               <Button onClick={() => navigate('/')} variant="ghost" size="sm" className="gap-2">
                 <Home className="h-4 w-4" />
@@ -81,7 +81,7 @@ export default function Landing() {
 
       <main className="container mx-auto px-4 py-8 sm:py-12">
         <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">Welcome to BizCounting</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4">Welcome to BizManager</h2>
           <p className="text-lg sm:text-xl text-muted-foreground px-4">
             Complete business management solution for accounting and HR
           </p>

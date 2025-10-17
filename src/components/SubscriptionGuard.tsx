@@ -101,7 +101,7 @@ export default function SubscriptionGuard({ children, requireActive = true }: Su
           <AlertTriangle className="h-5 w-5" />
           <AlertTitle className="text-xl mb-2">Subscription Expired</AlertTitle>
           <AlertDescription className="space-y-4">
-            <p>Your trial or subscription has expired. Please subscribe to continue using BizCounting.</p>
+            <p>Your trial or subscription has expired. Please subscribe to continue using BizManager.</p>
             <p className="text-sm text-muted-foreground">
               Your data will be kept for 7 days before automatic deletion.
             </p>

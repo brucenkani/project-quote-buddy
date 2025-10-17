@@ -228,7 +228,7 @@ export default function Auth() {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
               <Calculator className="h-6 w-6 text-primary" />
-              <h1 className="text-xl sm:text-2xl font-bold">BizCounting</h1>
+              <h1 className="text-xl sm:text-2xl font-bold">BizManager</h1>
             </div>
             <Button variant="ghost" onClick={() => navigate('/')} className="gap-2">
               <ArrowLeft className="h-4 w-4" />
@@ -242,7 +242,7 @@ export default function Auth() {
       <div className="flex items-center justify-center p-4 py-16">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Welcome to BizCounting</CardTitle>
+          <CardTitle>Welcome to BizManager</CardTitle>
           <CardDescription>
             {invitationData 
               ? `You've been invited to join as ${invitationData.role}. Create your account below.`

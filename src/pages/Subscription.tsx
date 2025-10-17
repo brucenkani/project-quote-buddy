@@ -86,7 +86,7 @@ export default function Subscription() {
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-3">Subscription Management</h1>
             <p className="text-lg text-muted-foreground">
-              Manage your BizCounting subscription
+              Manage your BizManager subscription
             </p>
           </div>
 

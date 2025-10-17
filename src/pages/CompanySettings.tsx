@@ -496,7 +496,7 @@ export default function CompanySettings() {
               Community Profile
             </CardTitle>
             <CardDescription>
-              Manage your business listing in the BizCounting Business Community
+              Manage your business listing in the BizManager Business Community
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

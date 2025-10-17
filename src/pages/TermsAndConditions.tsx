@@ -26,8 +26,8 @@ export default function TermsAndConditions() {
             <section>
               <h2 className="text-2xl font-semibold mb-3">1. Introduction</h2>
               <p>
-                These Terms and Conditions ("Terms") govern your use of the BizCounting platform ("Service") 
-                provided by Nkani Business Solutions (Pty) Ltd (Registration Number: [Registration Number]), 
+                These Terms and Conditions ("Terms") govern your use of the BizManager platform ("Service") 
+                provided by Nkani Business Solutions (Pty) Ltd (Registration Number: [Registration Number]),
                 a company registered in the Republic of South Africa ("Company", "we", "us", or "our").
               </p>
               <p>
@@ -39,7 +39,7 @@ export default function TermsAndConditions() {
             <section>
               <h2 className="text-2xl font-semibold mb-3">2. Definitions</h2>
               <ul className="list-disc pl-6 space-y-2">
-                <li><strong>"Service"</strong> refers to the BizCounting platform, including all features, tools, and functionalities.</li>
+                <li><strong>"Service"</strong> refers to the BizManager platform, including all features, tools, and functionalities.</li>
                 <li><strong>"User"</strong> refers to any individual or entity accessing or using the Service.</li>
                 <li><strong>"Content"</strong> refers to data, information, text, graphics, or other materials uploaded by Users.</li>
                 <li><strong>"Professional Services"</strong> refers to optional accounting and business advisory services offered by the Company.</li>
@@ -49,7 +49,7 @@ export default function TermsAndConditions() {
             <section>
               <h2 className="text-2xl font-semibold mb-3">3. Service Description</h2>
               <p>
-                BizCounting provides a comprehensive business management platform offering:
+                BizManager provides a comprehensive business management platform offering:
               </p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>Accounting and financial management tools</li>
@@ -100,7 +100,7 @@ export default function TermsAndConditions() {
               <h2 className="text-2xl font-semibold mb-3">6. Pricing and Payment</h2>
               <h3 className="text-xl font-semibold mb-2">6.1 Free Service</h3>
               <p>
-                The core BizCounting platform is provided free of charge to all Users. We reserve the right 
+                The core BizManager platform is provided free of charge to all Users. We reserve the right 
                 to modify or discontinue the free Service at any time with reasonable notice.
               </p>
 
@@ -222,7 +222,7 @@ export default function TermsAndConditions() {
               </p>
               <p className="mt-2">
                 <strong>Nkani Business Solutions (Pty) Ltd</strong><br />
-                Email: legal@bizcounting.co.za<br />
+                Email: legal@bizmanager.co.za<br />
                 Address: [Physical Address]<br />
                 Registration Number: [Company Registration Number]
               </p>

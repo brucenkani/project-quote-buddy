@@ -75,7 +75,7 @@ export default function Index() {
 
   const handleWhatsAppContact = () => {
     const phoneNumber = '27659672215';
-    const message = encodeURIComponent("Hi, I'm interested in learning more about BizCounting's professional accounting services.");
+    const message = encodeURIComponent("Hi, I'm interested in learning more about BizManager's professional accounting services.");
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
   };
 
@@ -99,7 +99,7 @@ export default function Index() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Calculator className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">BizCounting</h1>
+            <h1 className="text-2xl font-bold">BizManager</h1>
           </div>
           <div className="flex gap-3">
             <DropdownMenu>

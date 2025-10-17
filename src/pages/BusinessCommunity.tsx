@@ -250,7 +250,7 @@ export default function BusinessCommunity() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Building2 className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">BizCounting</span>
+            <span className="text-2xl font-bold">BizManager</span>
           </div>
           <div className="flex gap-4">
             <Button variant="ghost" onClick={() => navigate('/')}>Home</Button>
@@ -521,7 +521,7 @@ export default function BusinessCommunity() {
       {/* Footer */}
       <footer className="border-t py-8 mt-16">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>&copy; 2024 BizCounting. All rights reserved.</p>
+          <p>&copy; 2024 BizManager. All rights reserved.</p>
           <div className="flex justify-center gap-6 mt-4">
             <Button variant="link" onClick={() => navigate('/terms')}>Terms & Conditions</Button>
             <Button variant="link" onClick={() => navigate('/privacy')}>Privacy Policy</Button>

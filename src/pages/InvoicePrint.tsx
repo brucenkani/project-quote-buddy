@@ -158,7 +158,7 @@ export default function InvoicePrint() {
 
       {/* Footer - Always at bottom */}
       <div className="px-8 pb-8 pt-4 border-t border-gray-300 text-center text-xs text-gray-600">
-        <p>BizCounting Systems (Registered to {settings.companyName})</p>
+        <p>BizManager Systems (Registered to {settings.companyName})</p>
       </div>
     </div>
   );

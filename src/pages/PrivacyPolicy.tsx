@@ -32,7 +32,7 @@ export default function PrivacyPolicy() {
                 of Personal Information Act, 2013 (POPIA) of South Africa.
               </p>
               <p>
-                By using the BizCounting platform ("Service"), you consent to the data practices described 
+                By using the BizManager platform ("Service"), you consent to the data practices described 
                 in this policy.
               </p>
             </section>
@@ -226,7 +226,7 @@ export default function PrivacyPolicy() {
               <div className="mt-3">
                 <p><strong>Information Officer</strong></p>
                 <p>Nkani Business Solutions (Pty) Ltd</p>
-                <p>Email: privacy@bizcounting.co.za</p>
+                <p>Email: privacy@bizmanager.co.za</p>
                 <p>Address: [Physical Address]</p>
                 <p>Registration Number: [Company Registration Number]</p>
               </div>
@@ -241,8 +241,8 @@ export default function PrivacyPolicy() {
             <section>
               <h2 className="text-2xl font-semibold mb-3">14. Consent</h2>
               <p>
-                By using the BizCounting platform, you acknowledge that you have read and understood this 
-                Privacy Policy and consent to the collection, use, and disclosure of your personal information 
+                By using the BizManager platform, you acknowledge that you have read and understood this 
+                Privacy Policy and consent to the collection, use, and disclosure of your personal information
                 as described herein.
               </p>
             </section>
