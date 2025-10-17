@@ -308,7 +308,6 @@ export default function Index() {
                     <Phone className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
                     <span className="font-bold text-lg">Let's Talk Business</span>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-3">Quick consultation via call or WhatsApp</p>
                   <div className="flex gap-2">
                     <Button 
                       size="sm" 
@@ -342,7 +341,6 @@ export default function Index() {
                         <Mail className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
                         <span className="font-bold text-lg">Drop Me a Line</span>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-3">Send your inquiry via email</p>
                       <Button 
                         size="sm" 
                         className="w-full gap-2"
