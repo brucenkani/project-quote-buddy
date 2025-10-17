@@ -141,18 +141,18 @@ export default function Landing() {
           <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/calculators')}>
             <CardHeader>
               <Calculator className="h-12 w-12 mb-4 text-primary" />
-              <CardTitle>Business Calculators</CardTitle>
+              <CardTitle>Analytics & Tools</CardTitle>
               <CardDescription>
-                Essential calculators for business, finance, and engineering
+                Comprehensive analytics, reporting, and business tools
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Financial Calculators</li>
-                <li>• Tax Calculators</li>
-                <li>• Property Calculators</li>
-                <li>• Engineering Tools</li>
-                <li>• Business Metrics</li>
+                <li>• Management accounts & reporting</li>
+                <li>• Financial forecasting & projections</li>
+                <li>• Financial planning tools</li>
+                <li>• Business Calculators</li>
+                <li>• Engineering Calculators</li>
               </ul>
             </CardContent>
           </Card>
