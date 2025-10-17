@@ -456,7 +456,7 @@ export default function Index() {
       <section className="container mx-auto px-4 py-8">
         <h3 className="text-3xl font-bold text-center mb-10">Everything You Need to Run Your Business</h3>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto mb-12">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 max-w-7xl mx-auto mb-12">
           <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/accounting')}>
             <CardHeader>
               <Calculator className="h-12 w-12 mb-4 text-primary" />
