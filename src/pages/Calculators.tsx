@@ -9,81 +9,18 @@ export default function Calculators() {
 
   const calculatorCategories = [
     {
-      title: "Tax Calculators",
-      icon: Percent,
-      description: "SARS and tax calculation tools",
-      route: "/calculators/tax",
-      calculators: [
-        "Income Tax Calculator",
-        "VAT Calculator",
-        "PAYE Calculator",
-        "Capital Gains Tax Calculator",
-        "Provisional Tax Calculator"
-      ]
-    },
-    {
-      title: "Financial Calculators",
-      icon: DollarSign,
-      description: "Financial planning and analysis tools",
-      route: "/calculators/financial",
-      calculators: [
-        "Loan Repayment Calculator",
-        "Interest Rate Calculator",
-        "Return on Investment (ROI)",
-        "Break-Even Analysis",
-        "Net Present Value (NPV)"
-      ]
-    },
-    {
-      title: "Accounting Calculators",
-      icon: Calculator,
-      description: "Essential accounting calculations",
-      route: "/calculators/accounting",
-      calculators: [
-        "Depreciation Calculator",
-        "Markup & Margin Calculator",
-        "Working Capital Calculator",
-        "Profit Margin Calculator",
-        "Cash Flow Calculator"
-      ]
-    },
-    {
-      title: "Business Metrics",
+      title: "Analytics & Calculators",
       icon: TrendingUp,
-      description: "Key performance indicators",
-      route: "/calculators/business-metrics",
+      description: "Business insights & professional calculation tools",
+      route: "/calculators",
       calculators: [
-        "Revenue Growth Calculator",
-        "Customer Acquisition Cost",
-        "Lifetime Value Calculator",
-        "Burn Rate Calculator",
-        "Gross Profit Margin"
-      ]
-    },
-    {
-      title: "Property & Asset Calculators",
-      icon: Building2,
-      description: "Real estate and asset calculations",
-      route: "/calculators/property",
-      calculators: [
-        "Property Transfer Duty",
-        "Rental Yield Calculator",
-        "Bond Calculator",
-        "Asset Valuation",
-        "Property Investment ROI"
-      ]
-    },
-    {
-      title: "Engineering Calculators",
-      icon: Wrench,
-      description: "Technical and project calculations",
-      route: "/calculators/engineering",
-      calculators: [
-        "Project Cost Calculator",
-        "Material Quantity Estimator",
-        "Labor Cost Calculator",
-        "Unit Conversion Tools",
-        "Project Timeline Calculator"
+        "Management accounts & reporting",
+        "Financial forecasting & projections",
+        "Tax & SARS calculators",
+        "Financial planning tools",
+        "Accounting calculators",
+        "Property & asset tools",
+        "Engineering calculators"
       ]
     }
   ];
@@ -100,7 +37,7 @@ export default function Calculators() {
             </Button>
             <div className="flex items-center gap-2">
               <Calculator className="h-6 w-6 text-primary" />
-              <h1 className="text-2xl font-bold">Business Calculators</h1>
+              <h1 className="text-2xl font-bold">Analytics & Calculators</h1>
             </div>
           </div>
           <Button onClick={() => navigate('/auth')} size="lg">
@@ -112,9 +49,9 @@ export default function Calculators() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4">Professional Business Calculators</h2>
+          <h2 className="text-4xl font-bold mb-4">Analytics & Calculators</h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Comprehensive suite of calculators for accounting, tax, finance, and engineering needs
+            Business insights & professional calculation tools
           </p>
         </div>
 
