@@ -113,7 +113,7 @@ export default function BusinessAnalytics() {
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               <Card 
-                className="group border-2 hover:border-primary/50 transition-all cursor-pointer"
+                className="border-2 hover:border-primary/50 transition-colors cursor-pointer"
                 onClick={() => navigate('/analytics/management-accounts')}
               >
                 <CardHeader>
@@ -121,7 +121,7 @@ export default function BusinessAnalytics() {
                   <CardTitle>Management Accounts</CardTitle>
                   <CardDescription>Comprehensive financial reporting</CardDescription>
                 </CardHeader>
-                <CardContent className="hidden group-hover:block">
+                <CardContent>
                   <ul className="space-y-2 text-sm text-muted-foreground">
                     <li>• Income statements</li>
                     <li>• Balance sheets</li>
@@ -132,7 +132,7 @@ export default function BusinessAnalytics() {
               </Card>
 
               <Card 
-                className="group border-2 hover:border-primary/50 transition-all cursor-pointer"
+                className="border-2 hover:border-primary/50 transition-colors cursor-pointer"
                 onClick={() => navigate('/analytics/financial-forecasting')}
               >
                 <CardHeader>
@@ -140,7 +140,7 @@ export default function BusinessAnalytics() {
                   <CardTitle>Financial Forecasting</CardTitle>
                   <CardDescription>Projections and planning tools</CardDescription>
                 </CardHeader>
-                <CardContent className="hidden group-hover:block">
+                <CardContent>
                   <ul className="space-y-2 text-sm text-muted-foreground">
                     <li>• Revenue forecasts</li>
                     <li>• Expense projections</li>
@@ -151,7 +151,7 @@ export default function BusinessAnalytics() {
               </Card>
 
               <Card 
-                className="group border-2 hover:border-primary/50 transition-all cursor-pointer"
+                className="border-2 hover:border-primary/50 transition-colors cursor-pointer"
                 onClick={() => navigate('/analytics/performance-metrics')}
               >
                 <CardHeader>
@@ -159,7 +159,7 @@ export default function BusinessAnalytics() {
                   <CardTitle>Performance Metrics</CardTitle>
                   <CardDescription>Key performance indicators</CardDescription>
                 </CardHeader>
-                <CardContent className="hidden group-hover:block">
+                <CardContent>
                   <ul className="space-y-2 text-sm text-muted-foreground">
                     <li>• KPI dashboards</li>
                     <li>• Profitability analysis</li>
@@ -170,7 +170,7 @@ export default function BusinessAnalytics() {
               </Card>
 
               <Card 
-                className="group border-2 hover:border-primary/50 transition-all cursor-pointer"
+                className="border-2 hover:border-primary/50 transition-colors cursor-pointer"
                 onClick={() => navigate('/analytics/variance-analysis')}
               >
                 <CardHeader>
@@ -178,7 +178,7 @@ export default function BusinessAnalytics() {
                   <CardTitle>Variance Analysis</CardTitle>
                   <CardDescription>Budget vs actual comparisons</CardDescription>
                 </CardHeader>
-                <CardContent className="hidden group-hover:block">
+                <CardContent>
                   <ul className="space-y-2 text-sm text-muted-foreground">
                     <li>• Budget variance tracking</li>
                     <li>• Cost analysis</li>
@@ -189,7 +189,7 @@ export default function BusinessAnalytics() {
               </Card>
 
               <Card 
-                className="group border-2 hover:border-primary/50 transition-all cursor-pointer"
+                className="border-2 hover:border-primary/50 transition-colors cursor-pointer"
                 onClick={() => navigate('/analytics/strategic-planning')}
               >
                 <CardHeader>
@@ -197,7 +197,7 @@ export default function BusinessAnalytics() {
                   <CardTitle>Strategic Planning</CardTitle>
                   <CardDescription>Long-term business insights</CardDescription>
                 </CardHeader>
-                <CardContent className="hidden group-hover:block">
+                <CardContent>
                   <ul className="space-y-2 text-sm text-muted-foreground">
                     <li>• Market trend analysis</li>
                     <li>• Competitive positioning</li>
@@ -208,7 +208,7 @@ export default function BusinessAnalytics() {
               </Card>
 
               <Card 
-                className="group border-2 hover:border-primary/50 transition-all cursor-pointer"
+                className="border-2 hover:border-primary/50 transition-colors cursor-pointer"
                 onClick={() => navigate('/analytics/custom-reports')}
               >
                 <CardHeader>
@@ -216,7 +216,7 @@ export default function BusinessAnalytics() {
                   <CardTitle>Custom Reports</CardTitle>
                   <CardDescription>Tailored business intelligence</CardDescription>
                 </CardHeader>
-                <CardContent className="hidden group-hover:block">
+                <CardContent>
                   <ul className="space-y-2 text-sm text-muted-foreground">
                     <li>• Custom dashboards</li>
                     <li>• Ad-hoc reports</li>
