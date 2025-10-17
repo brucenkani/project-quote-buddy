@@ -550,6 +550,44 @@ export type Database = {
         }
         Relationships: []
       }
+      data_deletion_queue: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          deleted_at: string | null
+          id: string
+          scheduled_deletion_date: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          scheduled_deletion_date: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          scheduled_deletion_date?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_deletion_queue_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           account_number: string | null
@@ -1851,6 +1889,121 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          id: string
+          metadata: Json | null
+          payfast_payment_id: string | null
+          status: string
+          subscription_id: string
+          transaction_date: string | null
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          payfast_payment_id?: string | null
+          status: string
+          subscription_id: string
+          transaction_date?: string | null
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          payfast_payment_id?: string | null
+          status?: string
+          subscription_id?: string
+          transaction_date?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_transactions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          amount: number | null
+          auto_renew: boolean | null
+          cancellation_date: string | null
+          company_id: string | null
+          created_at: string | null
+          currency: string | null
+          deletion_scheduled_date: string | null
+          id: string
+          payfast_payment_id: string | null
+          payfast_subscription_token: string | null
+          status: Database["public"]["Enums"]["subscription_status"]
+          subscription_end: string | null
+          subscription_start: string | null
+          trial_end: string | null
+          trial_start: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          auto_renew?: boolean | null
+          cancellation_date?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          deletion_scheduled_date?: string | null
+          id?: string
+          payfast_payment_id?: string | null
+          payfast_subscription_token?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"]
+          subscription_end?: string | null
+          subscription_start?: string | null
+          trial_end?: string | null
+          trial_start?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          auto_renew?: boolean | null
+          cancellation_date?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          deletion_scheduled_date?: string | null
+          id?: string
+          payfast_payment_id?: string | null
+          payfast_subscription_token?: string | null
+          status?: Database["public"]["Enums"]["subscription_status"]
+          subscription_end?: string | null
+          subscription_start?: string | null
+          trial_end?: string | null
+          trial_start?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tax_brackets: {
         Row: {
           age_group: string
@@ -2020,6 +2173,10 @@ export type Database = {
           status: string
         }[]
       }
+      has_active_subscription: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2031,13 +2188,27 @@ export type Database = {
         Args: { _company_id: string; _user_id: string }
         Returns: boolean
       }
+      is_in_trial: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       is_owner: {
         Args: { _user_id: string }
         Returns: boolean
       }
+      schedule_data_deletion: {
+        Args: { _company_id: string; _user_id: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "owner" | "accountant" | "employee" | "admin"
+      subscription_status:
+        | "trial"
+        | "active"
+        | "expired"
+        | "cancelled"
+        | "suspended"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2166,6 +2337,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "accountant", "employee", "admin"],
+      subscription_status: [
+        "trial",
+        "active",
+        "expired",
+        "cancelled",
+        "suspended",
+      ],
     },
   },
 } as const
