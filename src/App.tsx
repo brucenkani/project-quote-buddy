@@ -68,6 +68,12 @@ import EngineeringCalculators from "./pages/calculators/EngineeringCalculators";
 import LandingSettings from "./pages/LandingSettings";
 import CRMCustomerSupport from "./pages/CRMCustomerSupport";
 import BusinessAnalytics from "./pages/BusinessAnalytics";
+import ManagementAccounts from "./pages/analytics/ManagementAccounts";
+import FinancialForecasting from "./pages/analytics/FinancialForecasting";
+import PerformanceMetrics from "./pages/analytics/PerformanceMetrics";
+import VarianceAnalysis from "./pages/analytics/VarianceAnalysis";
+import StrategicPlanning from "./pages/analytics/StrategicPlanning";
+import CustomReports from "./pages/analytics/CustomReports";
 
 const queryClient = new QueryClient();
 
@@ -98,6 +104,12 @@ const App = () => (
           <Route path="/crm-support" element={<ProtectedRoute><SubscriptionGuard><CRMCustomerSupport /></SubscriptionGuard></ProtectedRoute>} />
           <Route path="/business-analytics" element={<BusinessAnalytics />} />
           <Route path="/analytics" element={<BusinessAnalytics />} />
+          <Route path="/analytics/management-accounts" element={<ManagementAccounts />} />
+          <Route path="/analytics/financial-forecasting" element={<FinancialForecasting />} />
+          <Route path="/analytics/performance-metrics" element={<PerformanceMetrics />} />
+          <Route path="/analytics/variance-analysis" element={<VarianceAnalysis />} />
+          <Route path="/analytics/strategic-planning" element={<StrategicPlanning />} />
+          <Route path="/analytics/custom-reports" element={<CustomReports />} />
           
           <Route path="/dashboard" element={<ProtectedRoute><SubscriptionGuard><Landing /></SubscriptionGuard></ProtectedRoute>} />
           <Route path="/landing" element={<ProtectedRoute><SubscriptionGuard><Landing /></SubscriptionGuard></ProtectedRoute>} />
