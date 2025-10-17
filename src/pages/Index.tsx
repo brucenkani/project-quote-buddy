@@ -444,13 +444,13 @@ export default function Index() {
         <h3 className="text-3xl font-bold text-center mb-10">Everything You Need to Run Your Business</h3>
         
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 max-w-7xl mx-auto mb-12">
-          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/accounting')}>
+          <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer" onClick={() => navigate('/accounting')}>
             <CardHeader>
               <Calculator className="h-12 w-12 mb-4 text-primary" />
               <CardTitle>Accounting System</CardTitle>
               <CardDescription>Complete financial management at your fingertips</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="hidden group-hover:block">
               <ul className="space-y-3">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
@@ -476,13 +476,13 @@ export default function Index() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/payroll')}>
+          <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer" onClick={() => navigate('/payroll')}>
             <CardHeader>
               <Users className="h-12 w-12 mb-4 text-primary" />
               <CardTitle>Payroll & HR System</CardTitle>
               <CardDescription>Simplify employee management and payroll</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="hidden group-hover:block">
               <ul className="space-y-3">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
@@ -509,13 +509,13 @@ export default function Index() {
           </Card>
 
 
-          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/crm-support')}>
+          <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer" onClick={() => navigate('/crm-support')}>
             <CardHeader>
               <UserCircle className="h-12 w-12 mb-4 text-primary" />
               <CardTitle>CRM & Customer Support</CardTitle>
               <CardDescription>Complete customer management & support system</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="hidden group-hover:block">
               <ul className="space-y-3">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
@@ -541,13 +541,13 @@ export default function Index() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/business-analytics')}>
+          <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer" onClick={() => navigate('/business-analytics')}>
             <CardHeader>
               <LineChart className="h-12 w-12 mb-4 text-primary" />
               <CardTitle>Analytics & Calculators</CardTitle>
               <CardDescription>Business insights & professional calculation tools</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="hidden group-hover:block">
               <ul className="space-y-3">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
