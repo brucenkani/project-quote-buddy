@@ -289,7 +289,7 @@ export default function Index() {
             <div className="flex items-center gap-6">
               <div className="flex-shrink-0">
                 <Button size="lg" variant="default" className="text-lg px-8 py-6 h-auto shadow-lg hover:shadow-xl transition-all">
-                  Hire Me, Bruce.
+                  Need an Accountant?
                 </Button>
               </div>
 
