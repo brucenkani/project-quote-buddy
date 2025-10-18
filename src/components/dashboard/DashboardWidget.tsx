@@ -1151,9 +1151,7 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                         />
                       </div>
 
-                      {widget.type !== 'text' && widget.config.availableColumns && widget.config.availableColumns.length > 0 && (
-                        renderWidgetSettings()
-                      )}
+                      {widget.type !== 'text' && renderWidgetSettings()}
                     </>
                   )}
                 </div>
