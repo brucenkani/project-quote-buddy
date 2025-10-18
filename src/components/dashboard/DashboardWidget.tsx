@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Rnd } from 'react-rnd';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -198,17 +199,262 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
     }
   };
 
+  const renderWidgetSettings = () => {
+    const columns = widget.config.availableColumns || [];
+    
+    // Formula-specific settings
+    if (widget.type === 'formula') {
+      const formulaType = widget.config.formulaType || 'SUM';
+      const needsMultipleCriteria = ['SUMIFS', 'COUNTIFS', 'AVERAGEIFS'].includes(formulaType);
+      
+      return (
+        <>
+          <div className="space-y-2">
+            <Label>Formula Type</Label>
+            <Select
+              value={formulaType}
+              onValueChange={(value) => onUpdate({ 
+                ...widget, 
+                config: { ...widget.config, formulaType: value, formulaParams: {} } 
+              })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select formula" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(formulaFunctions).map(([key, desc]) => (
+                  <SelectItem key={key} value={key}>
+                    {key} - {desc}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {needsMultipleCriteria ? (
+            <>
+              <div className="space-y-2">
+                <Label>Sum/Count Range</Label>
+                <Select
+                  value={widget.config.dataKey || ''}
+                  onValueChange={(value) => onUpdate({ 
+                    ...widget, 
+                    config: { ...widget.config, dataKey: value } 
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select column to sum/count" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {columns.map((col) => (
+                      <SelectItem key={col} value={col}>{col}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Criteria Column 1</Label>
+                <Select
+                  value={widget.config.formulaParams?.criteriaCol1 || ''}
+                  onValueChange={(value) => onUpdate({ 
+                    ...widget, 
+                    config: { 
+                      ...widget.config, 
+                      formulaParams: { ...widget.config.formulaParams, criteriaCol1: value } 
+                    } 
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select criteria column" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {columns.map((col) => (
+                      <SelectItem key={col} value={col}>{col}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Criteria Value 1</Label>
+                <Input
+                  value={widget.config.formulaParams?.criteriaVal1 || ''}
+                  onChange={(e) => onUpdate({ 
+                    ...widget, 
+                    config: { 
+                      ...widget.config, 
+                      formulaParams: { ...widget.config.formulaParams, criteriaVal1: e.target.value } 
+                    } 
+                  })}
+                  placeholder="Enter criteria value"
+                />
+              </div>
+            </>
+          ) : (
+            <div className="space-y-2">
+              <Label>Data Column</Label>
+              <Select
+                value={widget.config.dataKey || ''}
+                onValueChange={(value) => onUpdate({ 
+                  ...widget, 
+                  config: { ...widget.config, dataKey: value } 
+                })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select column" />
+                </SelectTrigger>
+                <SelectContent>
+                  {columns.map((col) => (
+                    <SelectItem key={col} value={col}>{col}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {['NPV', 'IRR'].includes(formulaType) && (
+            <div className="space-y-2">
+              <Label>Discount Rate {formulaType === 'NPV' ? '(%)' : ''}</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={widget.config.formulaParams?.rate || ''}
+                onChange={(e) => onUpdate({ 
+                  ...widget, 
+                  config: { 
+                    ...widget.config, 
+                    formulaParams: { ...widget.config.formulaParams, rate: parseFloat(e.target.value) || 0 } 
+                  } 
+                })}
+                placeholder="Enter rate (e.g., 10 for 10%)"
+              />
+            </div>
+          )}
+
+          {['PMT', 'PV', 'FV'].includes(formulaType) && (
+            <>
+              <div className="space-y-2">
+                <Label>Interest Rate (%)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={widget.config.formulaParams?.rate || ''}
+                  onChange={(e) => onUpdate({ 
+                    ...widget, 
+                    config: { 
+                      ...widget.config, 
+                      formulaParams: { ...widget.config.formulaParams, rate: parseFloat(e.target.value) || 0 } 
+                    } 
+                  })}
+                  placeholder="Enter rate"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Number of Periods</Label>
+                <Input
+                  type="number"
+                  value={widget.config.formulaParams?.nper || ''}
+                  onChange={(e) => onUpdate({ 
+                    ...widget, 
+                    config: { 
+                      ...widget.config, 
+                      formulaParams: { ...widget.config.formulaParams, nper: parseInt(e.target.value) || 0 } 
+                    } 
+                  })}
+                  placeholder="Enter number of periods"
+                />
+              </div>
+              {formulaType === 'PMT' && (
+                <div className="space-y-2">
+                  <Label>Present Value</Label>
+                  <Input
+                    type="number"
+                    value={widget.config.formulaParams?.pv || ''}
+                    onChange={(e) => onUpdate({ 
+                      ...widget, 
+                      config: { 
+                        ...widget.config, 
+                        formulaParams: { ...widget.config.formulaParams, pv: parseFloat(e.target.value) || 0 } 
+                      } 
+                    })}
+                    placeholder="Enter present value"
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </>
+      );
+    }
+
+    // Chart-specific settings
+    if (widget.type.startsWith('chart-') || widget.type === 'table') {
+      return (
+        <>
+          <div className="space-y-2">
+            <Label>Label/Category Column</Label>
+            <Select
+              value={widget.config.xAxisKey || ''}
+              onValueChange={(value) => onUpdate({ 
+                ...widget, 
+                config: { ...widget.config, xAxisKey: value } 
+              })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select column for labels" />
+              </SelectTrigger>
+              <SelectContent>
+                {columns.map((col) => (
+                  <SelectItem key={col} value={col}>{col}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Value Column</Label>
+            <Select
+              value={widget.config.dataKey || ''}
+              onValueChange={(value) => onUpdate({ 
+                ...widget, 
+                config: { ...widget.config, dataKey: value } 
+              })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select column for values" />
+              </SelectTrigger>
+              <SelectContent>
+                {columns.map((col) => (
+                  <SelectItem key={col} value={col}>{col}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </>
+      );
+    }
+
+    return null;
+  };
+
   return (
-    <Card
-      className="h-full"
-      style={{
-        position: 'absolute',
-        left: `${widget.x}px`,
-        top: `${widget.y}px`,
-        width: `${widget.width}px`,
-        height: `${widget.height}px`,
+    <Rnd
+      position={{ x: widget.x, y: widget.y }}
+      size={{ width: widget.width, height: widget.height }}
+      onDragStop={(e, d) => {
+        onUpdate({ ...widget, x: d.x, y: d.y });
       }}
+      onResizeStop={(e, direction, ref, delta, position) => {
+        onUpdate({
+          ...widget,
+          width: parseInt(ref.style.width),
+          height: parseInt(ref.style.height),
+          ...position,
+        });
+      }}
+      minWidth={200}
+      minHeight={150}
+      bounds="parent"
     >
+      <Card className="h-full w-full">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm">
@@ -266,94 +512,7 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                       </div>
 
                       {widget.type !== 'text' && widget.config.availableColumns && widget.config.availableColumns.length > 0 && (
-                        <>
-                          {widget.type === 'formula' && (
-                            <>
-                              <div className="space-y-2">
-                                <Label>Formula Type</Label>
-                                <Select
-                                  value={widget.config.formulaType || 'SUM'}
-                                  onValueChange={(value) => onUpdate({ 
-                                    ...widget, 
-                                    config: { ...widget.config, formulaType: value } 
-                                  })}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select formula" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {Object.entries(formulaFunctions).map(([key, desc]) => (
-                                      <SelectItem key={key} value={key}>
-                                        {key} - {desc}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Data Column</Label>
-                                <Select
-                                  value={widget.config.dataKey || ''}
-                                  onValueChange={(value) => onUpdate({ 
-                                    ...widget, 
-                                    config: { ...widget.config, dataKey: value } 
-                                  })}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select column" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {widget.config.availableColumns?.map((col) => (
-                                      <SelectItem key={col} value={col}>{col}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </>
-                          )}
-                          {(widget.type.startsWith('chart-') || widget.type === 'table') && (
-                            <>
-                              <div className="space-y-2">
-                                <Label>Label/Category Column</Label>
-                                <Select
-                                  value={widget.config.xAxisKey || ''}
-                                  onValueChange={(value) => onUpdate({ 
-                                    ...widget, 
-                                    config: { ...widget.config, xAxisKey: value } 
-                                  })}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select column" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {widget.config.availableColumns?.map((col) => (
-                                      <SelectItem key={col} value={col}>{col}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Value Column</Label>
-                                <Select
-                                  value={widget.config.dataKey || ''}
-                                  onValueChange={(value) => onUpdate({ 
-                                    ...widget, 
-                                    config: { ...widget.config, dataKey: value } 
-                                  })}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select column" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {widget.config.availableColumns?.map((col) => (
-                                      <SelectItem key={col} value={col}>{col}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </>
-                          )}
-                        </>
+                        renderWidgetSettings()
                       )}
                     </>
                   )}
@@ -370,5 +529,6 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
         {renderContent()}
       </CardContent>
     </Card>
+    </Rnd>
   );
 }

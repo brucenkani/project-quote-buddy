@@ -27,6 +27,33 @@ export function calculateFormula(
   column: string,
   params?: any
 ): number {
+  // Handle IFS formulas (SUMIFS, COUNTIFS, AVERAGEIFS)
+  if (formulaType === 'SUMIFS' || formulaType === 'COUNTIFS' || formulaType === 'AVERAGEIFS') {
+    if (!params?.criteriaCol1 || params?.criteriaVal1 === undefined) {
+      return 0;
+    }
+    
+    const filteredData = data.filter(row => {
+      const cellValue = String(row[params.criteriaCol1] || '');
+      const criteriaValue = String(params.criteriaVal1);
+      return cellValue.toLowerCase().includes(criteriaValue.toLowerCase());
+    });
+    
+    if (formulaType === 'COUNTIFS') {
+      return filteredData.length;
+    }
+    
+    const values = filteredData.map(row => Number(row[column]) || 0);
+    const sum = values.reduce((acc, val) => acc + val, 0);
+    
+    if (formulaType === 'SUMIFS') {
+      return sum;
+    }
+    
+    if (formulaType === 'AVERAGEIFS') {
+      return values.length > 0 ? sum / values.length : 0;
+    }
+  }
   const values = data
     .map(row => parseFloat(row[column]))
     .filter(val => !isNaN(val));
