@@ -26,6 +26,22 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
   
   // Get the data source for this widget
   const widgetDataSource = availableDataSources.find(ds => ds.id === widget.data_source_id);
+  
+  // Transform array data to objects with column names
+  const transformedDataSource = widgetDataSource ? {
+    ...widgetDataSource,
+    data: widgetDataSource.data.map((row: any) => {
+      if (Array.isArray(row)) {
+        // Convert array to object using column names
+        const obj: any = {};
+        widgetDataSource.columns.forEach((col: string, index: number) => {
+          obj[col] = row[index];
+        });
+        return obj;
+      }
+      return row; // Already an object
+    })
+  } : undefined;
 
   const handleDataSourceChange = (dataSourceId: string) => {
     const dataSource = availableDataSources.find(ds => ds.id === dataSourceId);
@@ -103,7 +119,7 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
         );
 
       case 'formula':
-        const widgetData = widgetDataSource?.data || [];
+        const widgetData = transformedDataSource?.data || [];
         const formulaColumn = widget.config.dataKey || '';
         const formulaType = widget.config.formulaType || 'SUM';
         const result = widgetData.length > 0 && formulaColumn 
