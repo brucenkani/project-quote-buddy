@@ -565,7 +565,7 @@ export default function FinancialForecasting() {
                         <SelectValue placeholder="Manual - Direct input" />
                       </SelectTrigger>
                       <SelectContent className="bg-background z-50">
-                        <SelectItem value="">Manual - Direct input</SelectItem>
+                        <SelectItem value="manual">Manual - Direct input</SelectItem>
                         {dataSources.map((ds) => (
                           <SelectItem key={ds.id} value={ds.id}>
                             {ds.name} ({ds.row_count} rows)
@@ -658,7 +658,7 @@ export default function FinancialForecasting() {
                               <SelectValue placeholder="Column or type value..." />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">None</SelectItem>
+                              <SelectItem value="none">None</SelectItem>
                               {dataColumns.map((col) => (
                                 <SelectItem key={col} value={col}>{col}</SelectItem>
                               ))}
@@ -680,7 +680,7 @@ export default function FinancialForecasting() {
                               <SelectValue placeholder="Column or type value..." />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">None</SelectItem>
+                              <SelectItem value="none">None</SelectItem>
                               {dataColumns.map((col) => (
                                 <SelectItem key={col} value={col}>{col}</SelectItem>
                               ))}
@@ -779,7 +779,7 @@ export default function FinancialForecasting() {
                               <SelectValue placeholder="Column or type value..." />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">None</SelectItem>
+                              <SelectItem value="none">None</SelectItem>
                               {dataColumns.map((col) => (
                                 <SelectItem key={col} value={col}>{col}</SelectItem>
                               ))}
@@ -801,7 +801,7 @@ export default function FinancialForecasting() {
                               <SelectValue placeholder="Column or type value..." />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">None</SelectItem>
+                              <SelectItem value="none">None</SelectItem>
                               {dataColumns.map((col) => (
                                 <SelectItem key={col} value={col}>{col}</SelectItem>
                               ))}
@@ -921,7 +921,7 @@ export default function FinancialForecasting() {
                               <SelectValue placeholder="Column or type value..." />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">None</SelectItem>
+                              <SelectItem value="none">None</SelectItem>
                               {dataColumns.map((col) => (
                                 <SelectItem key={col} value={col}>{col}</SelectItem>
                               ))}
@@ -998,7 +998,7 @@ export default function FinancialForecasting() {
                               <SelectValue placeholder="Column or type value..." />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">None</SelectItem>
+                              <SelectItem value="none">None</SelectItem>
                               {dataColumns.map((col) => (
                                 <SelectItem key={col} value={col}>{col}</SelectItem>
                               ))}
@@ -1041,7 +1041,7 @@ export default function FinancialForecasting() {
                               <SelectValue placeholder="Column or type value..." />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">None</SelectItem>
+                              <SelectItem value="none">None</SelectItem>
                               {dataColumns.map((col) => (
                                 <SelectItem key={col} value={col}>{col}</SelectItem>
                               ))}
