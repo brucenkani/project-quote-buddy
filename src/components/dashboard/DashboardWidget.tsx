@@ -185,18 +185,83 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
         );
 
       case 'chart-pie':
-        const pieData = widget.config.data || [];
+        const rawPieData = transformedDataSource?.data || widget.config.data || [];
         const pieNameKey = widget.config.xAxisKey || 'name';
         const pieValueKey = widget.config.dataKey || 'value';
+        const pieValueType = widget.config.valueType || 'sum';
+        
+        // Group data by category column and aggregate based on valueType
+        const groupedData = pieNameKey && rawPieData.length > 0 ? (() => {
+          const groups: { [key: string]: number[] } = {};
+          
+          rawPieData.forEach((row: any) => {
+            const categoryValue = String(row[pieNameKey] || 'Unknown');
+            const numericValue = Number(row[pieValueKey]) || 0;
+            
+            if (!groups[categoryValue]) {
+              groups[categoryValue] = [];
+            }
+            groups[categoryValue].push(numericValue);
+          });
+          
+          return Object.entries(groups).map(([category, values]) => {
+            let calculatedValue = 0;
+            
+            switch (pieValueType) {
+              case 'sum':
+                calculatedValue = values.reduce((sum, val) => sum + val, 0);
+                break;
+              case 'average':
+                calculatedValue = values.reduce((sum, val) => sum + val, 0) / values.length;
+                break;
+              case 'count':
+                calculatedValue = values.length;
+                break;
+              case 'minimum':
+                calculatedValue = Math.min(...values);
+                break;
+              case 'maximum':
+                calculatedValue = Math.max(...values);
+                break;
+              case 'percentage':
+                const total = Object.values(groups).flat().reduce((sum, val) => sum + val, 0);
+                calculatedValue = total > 0 ? (values.reduce((sum, val) => sum + val, 0) / total) * 100 : 0;
+                break;
+              default:
+                calculatedValue = values.reduce((sum, val) => sum + val, 0);
+            }
+            
+            return {
+              [pieNameKey]: category,
+              [pieValueKey]: Math.round(calculatedValue * 100) / 100
+            };
+          });
+        })() : rawPieData;
+        
         return (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={pieData} cx="50%" cy="50%" outerRadius={60} dataKey={pieValueKey} nameKey={pieNameKey} label>
-                {pieData.map((entry, index) => (
+              <Pie 
+                data={groupedData} 
+                cx="50%" 
+                cy="50%" 
+                outerRadius={60} 
+                dataKey={pieValueKey} 
+                nameKey={pieNameKey} 
+                label={(entry) => {
+                  const value = entry[pieValueKey];
+                  return pieValueType === 'percentage' ? `${value.toFixed(1)}%` : value;
+                }}
+              >
+                {groupedData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip 
+                formatter={(value: any) => {
+                  return pieValueType === 'percentage' ? `${Number(value).toFixed(1)}%` : value;
+                }}
+              />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -550,6 +615,31 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
               </SelectContent>
             </Select>
           </div>
+          
+          {widget.type === 'chart-pie' && (
+            <div className="space-y-2">
+              <Label>Value Type</Label>
+              <Select
+                value={widget.config.valueType || 'sum'}
+                onValueChange={(value) => onUpdate({ 
+                  ...widget, 
+                  config: { ...widget.config, valueType: value } 
+                })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select aggregation type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sum">Sum</SelectItem>
+                  <SelectItem value="average">Average</SelectItem>
+                  <SelectItem value="count">Count</SelectItem>
+                  <SelectItem value="minimum">Minimum</SelectItem>
+                  <SelectItem value="maximum">Maximum</SelectItem>
+                  <SelectItem value="percentage">Percentage (%)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </>
       );
     }
