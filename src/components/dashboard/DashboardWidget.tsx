@@ -661,25 +661,34 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
               </div>
             </>
           ) : (
-            <div className="space-y-2">
-              <Label>Data Column</Label>
-              <Select
-                value={widget.config.dataKey || ''}
-                onValueChange={(value) => onUpdate({ 
-                  ...widget, 
-                  config: { ...widget.config, dataKey: value } 
-                })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select column" />
-                </SelectTrigger>
-                <SelectContent>
-                  {columns.map((col) => (
-                    <SelectItem key={col} value={col}>{col}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <>
+              {columns.length > 0 && !['FV', 'PV', 'PMT', 'RATE', 'NPV', 'IRR'].includes(formulaType) && (
+                <div className="space-y-2">
+                  <Label>Data Column</Label>
+                  <Select
+                    value={widget.config.dataKey || ''}
+                    onValueChange={(value) => onUpdate({ 
+                      ...widget, 
+                      config: { ...widget.config, dataKey: value } 
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select column" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {columns.map((col) => (
+                        <SelectItem key={col} value={col}>{col}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {columns.length === 0 && !['FV', 'PV', 'PMT', 'RATE', 'NPV', 'IRR'].includes(formulaType) && (
+                <p className="text-sm text-muted-foreground">
+                  Select a data source with columns or choose a financial formula (FV, PV, PMT, NPV, IRR, RATE) for manual input
+                </p>
+              )}
+            </>
           )}
 
           {formulaType === 'NPV' && (
