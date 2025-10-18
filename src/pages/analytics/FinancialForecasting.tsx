@@ -555,17 +555,17 @@ export default function FinancialForecasting() {
               <Card>
                 <CardHeader>
                   <CardTitle>Select Data Source (Optional)</CardTitle>
-                  <CardDescription>Choose a data source to use column values, or enter values directly below</CardDescription>
+                  <CardDescription>Choose "Manual" for direct input, or select a data source to use column values</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
                     <Label>Data Source</Label>
                     <Select value={selectedDataSource} onValueChange={setSelectedDataSource}>
                       <SelectTrigger>
-                        <SelectValue placeholder="None - Use direct input" />
+                        <SelectValue placeholder="Manual - Direct input" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None - Use direct input</SelectItem>
+                        <SelectItem value="">Manual - Direct input</SelectItem>
                         {dataSources.map((ds) => (
                           <SelectItem key={ds.id} value={ds.id}>
                             {ds.name} ({ds.row_count} rows)
@@ -573,9 +573,14 @@ export default function FinancialForecasting() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {dataColumns.length > 0 && (
+                    {selectedDataSource && dataColumns.length > 0 && (
                       <p className="text-sm text-muted-foreground">
                         Available columns: {dataColumns.join(', ')}
+                      </p>
+                    )}
+                    {!selectedDataSource && (
+                      <p className="text-sm text-muted-foreground">
+                        Manual mode: Type values directly into the input fields below
                       </p>
                     )}
                   </div>
