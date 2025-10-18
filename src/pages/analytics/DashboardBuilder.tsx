@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardExport } from '@/components/dashboard/DashboardExport';
 import { supabase } from '@/integrations/supabase/client';
 import { WidgetPalette } from '@/components/dashboard/WidgetPalette';
 import { DashboardWidget } from '@/components/dashboard/DashboardWidget';
 import { Widget, WidgetType, DashboardConfig, DataSource } from '@/types/dashboard';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function DashboardBuilder() {
   const navigate = useNavigate();
@@ -16,11 +17,25 @@ export default function DashboardBuilder() {
   const [dashboard, setDashboard] = useState<DashboardConfig | null>(null);
   const [availableDataSources, setAvailableDataSources] = useState<DataSource[]>([]);
   const [draggedWidgetType, setDraggedWidgetType] = useState<WidgetType | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     loadDashboard();
     loadDataSources();
   }, [id]);
+
+  // Warn user before leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   const loadDataSources = async () => {
     try {
@@ -104,6 +119,7 @@ export default function DashboardBuilder() {
       widgets: [...dashboard.widgets, newWidget],
     });
     setDraggedWidgetType(null);
+    setHasUnsavedChanges(true);
   };
 
   const handleUpdateWidget = (updatedWidget: Widget) => {
@@ -112,6 +128,7 @@ export default function DashboardBuilder() {
       ...dashboard,
       widgets: dashboard.widgets.map(w => w.id === updatedWidget.id ? updatedWidget : w),
     });
+    setHasUnsavedChanges(true);
   };
 
   const handleDeleteWidget = (widgetId: string) => {
@@ -120,6 +137,7 @@ export default function DashboardBuilder() {
       ...dashboard,
       widgets: dashboard.widgets.filter(w => w.id !== widgetId),
     });
+    setHasUnsavedChanges(true);
   };
 
   const handleSave = async () => {
@@ -136,6 +154,7 @@ export default function DashboardBuilder() {
 
       if (error) throw error;
 
+      setHasUnsavedChanges(false);
       toast({
         title: 'Dashboard Saved',
         description: 'Your changes have been saved successfully.',
@@ -163,9 +182,15 @@ export default function DashboardBuilder() {
               </Button>
               <h1 className="text-2xl font-bold">{dashboard.name}</h1>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
+              {hasUnsavedChanges && (
+                <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 text-sm font-medium">
+                  <AlertTriangle className="h-4 w-4" />
+                  Unsaved changes
+                </div>
+              )}
               <DashboardExport dashboard={dashboard} />
-              <Button onClick={handleSave}>
+              <Button onClick={handleSave} variant={hasUnsavedChanges ? "default" : "outline"}>
                 <Save className="h-4 w-4 mr-2" />
                 Save Report
               </Button>
@@ -175,6 +200,14 @@ export default function DashboardBuilder() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {hasUnsavedChanges && (
+          <Alert className="mb-6 border-amber-600/50 bg-amber-50 dark:bg-amber-950/20">
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+            <AlertDescription className="text-amber-800 dark:text-amber-300">
+              You have unsaved changes. Don't forget to click "Save Report" to preserve your work before refreshing or leaving this page.
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="grid grid-cols-[250px_1fr] gap-6 h-[calc(100vh-140px)]">
           <aside>
             <WidgetPalette onDragStart={handleDragStart} />
