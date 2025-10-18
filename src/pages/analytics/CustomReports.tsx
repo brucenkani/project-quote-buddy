@@ -156,10 +156,21 @@ export default function CustomReports() {
 
           {/* Custom Dashboards Tab */}
           <TabsContent value="dashboards" className="space-y-6">
+            {/* Data Source Upload Section - First */}
+            <div className="grid gap-4">
+              <DataSourceUpload onUploadComplete={() => setUploadTrigger(prev => prev + 1)} />
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-4">Available Data Sources</h3>
+              <DataSourceList refreshTrigger={uploadTrigger} />
+            </div>
+
+            {/* Create Dashboard Section - After Data Sources */}
             <Card>
               <CardHeader>
                 <CardTitle>Create New Dashboard</CardTitle>
-                <CardDescription>Build a custom dashboard with drag-and-drop widgets</CardDescription>
+                <CardDescription>Build a custom dashboard with drag-and-drop widgets using your uploaded data</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4">
@@ -189,15 +200,6 @@ export default function CustomReports() {
                 </div>
               </CardContent>
             </Card>
-
-            <div className="grid gap-4 mb-6">
-              <DataSourceUpload onUploadComplete={() => setUploadTrigger(prev => prev + 1)} />
-            </div>
-
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4">Available Data Sources</h3>
-              <DataSourceList refreshTrigger={uploadTrigger} />
-            </div>
 
             <div className="grid gap-4">
               <h3 className="text-lg font-semibold">Your Dashboards</h3>
