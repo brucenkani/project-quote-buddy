@@ -384,12 +384,62 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
 
       case 'table':
         const rawTableData = transformedDataSource?.data || widget.config.data || [];
-        const tableColumns = widget.config.availableColumns || Object.keys(rawTableData[0] || {});
+        const labelColumn = widget.config.xAxisKey;
+        const valueColumn = widget.config.dataKey;
+        const valueType = widget.config.valueType || 'sum';
         const tableFontSize = Math.max(Math.min(widget.width / 60, 14), 10);
         const maxRows = Math.floor((widget.height - 80) / (tableFontSize * 2.5));
         
-        // Use transformed data source directly for tables (no grouping)
-        const tableData = rawTableData;
+        // If both label and value columns are selected, create pivot table
+        let tableData = rawTableData;
+        let tableColumns = widget.config.availableColumns || Object.keys(rawTableData[0] || {});
+        
+        if (labelColumn && valueColumn && rawTableData.length > 0) {
+          // Group by label column and aggregate value column
+          const grouped = rawTableData.reduce((acc: any, row: any) => {
+            const label = String(row[labelColumn] || 'Unknown');
+            const value = parseFloat(row[valueColumn]) || 0;
+            
+            if (!acc[label]) {
+              acc[label] = { label, values: [] };
+            }
+            acc[label].values.push(value);
+            return acc;
+          }, {});
+          
+          // Calculate aggregated values
+          tableData = Object.values(grouped).map((group: any) => {
+            let aggregatedValue = 0;
+            const values = group.values;
+            
+            switch (valueType) {
+              case 'sum':
+                aggregatedValue = values.reduce((sum: number, v: number) => sum + v, 0);
+                break;
+              case 'average':
+                aggregatedValue = values.reduce((sum: number, v: number) => sum + v, 0) / values.length;
+                break;
+              case 'count':
+                aggregatedValue = values.length;
+                break;
+              case 'minimum':
+                aggregatedValue = Math.min(...values);
+                break;
+              case 'maximum':
+                aggregatedValue = Math.max(...values);
+                break;
+              default:
+                aggregatedValue = values.reduce((sum: number, v: number) => sum + v, 0);
+            }
+            
+            return {
+              [labelColumn]: group.label,
+              [valueColumn]: aggregatedValue.toFixed(2)
+            };
+          });
+          
+          tableColumns = [labelColumn, `${valueColumn} (${valueType})`];
+        }
         
         return (
           <div className="overflow-auto h-full" style={{ fontSize: `${tableFontSize}px` }}>
@@ -404,9 +454,12 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
               <tbody>
                 {tableData.slice(0, maxRows).map((row, idx) => (
                   <tr key={idx} className="border-b hover:bg-muted/50">
-                    {tableColumns.map((col) => (
-                      <td key={col} className="p-2">{row[col]}</td>
-                    ))}
+                    {tableColumns.map((col) => {
+                      const actualCol = col.includes('(') ? col.split(' (')[0] : col;
+                      return (
+                        <td key={col} className="p-2">{row[actualCol] ?? row[col]}</td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
@@ -734,11 +787,11 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
             </Select>
           </div>
           
-          {widget.type !== 'table' && (
+          {(widget.type === 'chart-pie' || widget.type === 'table') && (
             <div className="space-y-2">
               <Label>Value Type</Label>
               <Select
-                value={widget.config.valueType || 'count'}
+                value={widget.config.valueType || (widget.type === 'table' ? 'sum' : 'count')}
                 onValueChange={(value) => onUpdate({ 
                   ...widget, 
                   config: { ...widget.config, valueType: value } 
@@ -753,7 +806,7 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                   <SelectItem value="count">Count</SelectItem>
                   <SelectItem value="minimum">Minimum</SelectItem>
                   <SelectItem value="maximum">Maximum</SelectItem>
-                  <SelectItem value="percentage">Percentage (%)</SelectItem>
+                  {widget.type === 'chart-pie' && <SelectItem value="percentage">Percentage (%)</SelectItem>}
                 </SelectContent>
               </Select>
             </div>
