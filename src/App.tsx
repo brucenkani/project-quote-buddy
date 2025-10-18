@@ -102,8 +102,8 @@ const App = () => (
           <Route path="/analytics/performance-metrics" element={<PerformanceMetrics />} />
           <Route path="/analytics/variance-analysis" element={<VarianceAnalysis />} />
           <Route path="/analytics/strategic-planning" element={<StrategicPlanning />} />
-          <Route path="/analytics/custom-reports" element={<CustomReports />} />
-          <Route path="/analytics/dashboard-builder/:id" element={<DashboardBuilder />} />
+          <Route path="/analytics/custom-reports" element={<ProtectedRoute><CustomReports /></ProtectedRoute>} />
+          <Route path="/analytics/dashboard-builder/:id" element={<ProtectedRoute><DashboardBuilder /></ProtectedRoute>} />
           
           <Route path="/dashboard" element={<ProtectedRoute><SubscriptionGuard><Landing /></SubscriptionGuard></ProtectedRoute>} />
           <Route path="/landing" element={<ProtectedRoute><SubscriptionGuard><Landing /></SubscriptionGuard></ProtectedRoute>} />
