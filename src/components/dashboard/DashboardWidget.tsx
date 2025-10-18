@@ -44,6 +44,19 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
   } : undefined;
 
   const handleDataSourceChange = (dataSourceId: string) => {
+    // Handle manual input mode
+    if (dataSourceId === 'manual') {
+      onUpdate({
+        ...widget,
+        data_source_id: 'manual',
+        config: {
+          ...widget.config,
+          availableColumns: []
+        }
+      });
+      return;
+    }
+
     const dataSource = availableDataSources.find(ds => ds.id === dataSourceId);
     if (!dataSource) return;
 
@@ -1096,13 +1109,14 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                   <div className="space-y-2">
                     <Label>Data Source</Label>
                     <Select
-                      value={widget.data_source_id || ''}
+                      value={widget.data_source_id || 'manual'}
                       onValueChange={handleDataSourceChange}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a data source" />
+                        <SelectValue placeholder="Manual - Direct input" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-background z-50">
+                        <SelectItem value="manual">Manual - Direct input</SelectItem>
                         {availableDataSources.map((ds) => (
                           <SelectItem key={ds.id} value={ds.id}>
                             {ds.name} ({ds.row_count} rows)
@@ -1110,6 +1124,11 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                         ))}
                       </SelectContent>
                     </Select>
+                    {(!widget.data_source_id || widget.data_source_id === 'manual') && (
+                      <p className="text-xs text-muted-foreground">
+                        Manual mode - Enter values directly in the parameter fields below
+                      </p>
+                    )}
                   </div>
 
                   {widget.data_source_id && (
