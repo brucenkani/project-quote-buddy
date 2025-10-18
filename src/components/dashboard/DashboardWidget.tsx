@@ -3,7 +3,7 @@ import { Rnd } from 'react-rnd';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Trash2, Settings } from 'lucide-react';
+import { Trash2, Settings, Plus, X } from 'lucide-react';
 import { Widget, DataSource } from '@/types/dashboard';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -205,8 +205,7 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
     // Formula-specific settings
     if (widget.type === 'formula') {
       const formulaType = widget.config.formulaType || 'SUM';
-      const needsCriteria = ['SUMIF', 'COUNTIF', 'SUMIFS', 'COUNTIFS', 'AVERAGEIFS'].includes(formulaType);
-      const needsMultipleCriteria = ['SUMIFS', 'COUNTIFS', 'AVERAGEIFS'].includes(formulaType);
+      const isIFSFormula = ['SUMIFS', 'COUNTIFS', 'AVERAGEIFS'].includes(formulaType);
       
       return (
         <>
@@ -214,10 +213,15 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
             <Label>Formula Type</Label>
             <Select
               value={formulaType}
-              onValueChange={(value) => onUpdate({ 
-                ...widget, 
-                config: { ...widget.config, formulaType: value, formulaParams: {} } 
-              })}
+              onValueChange={(value) => {
+                const newParams = ['SUMIFS', 'COUNTIFS', 'AVERAGEIFS'].includes(value)
+                  ? { criteria: [{ column: '', value: '' }] }
+                  : {};
+                onUpdate({ 
+                  ...widget, 
+                  config: { ...widget.config, formulaType: value, formulaParams: newParams } 
+                });
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select formula" />
@@ -232,10 +236,13 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
             </Select>
           </div>
 
-          {needsCriteria ? (
+          {isIFSFormula ? (
             <>
               <div className="space-y-2">
-                <Label>{needsMultipleCriteria ? 'Sum/Count/Average Range' : 'Data Column'}</Label>
+                <Label>
+                  {formulaType === 'SUMIFS' ? 'Sum Range' : 
+                   formulaType === 'COUNTIFS' ? 'Count Range' : 'Average Range'}
+                </Label>
                 <Select
                   value={widget.config.dataKey || ''}
                   onValueChange={(value) => onUpdate({ 
@@ -244,7 +251,7 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                   })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={needsMultipleCriteria ? "Select column to calculate" : "Select column"} />
+                    <SelectValue placeholder="Select column to calculate" />
                   </SelectTrigger>
                   <SelectContent>
                     {columns.map((col) => (
@@ -253,41 +260,118 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Criteria Column{needsMultipleCriteria ? ' 1' : ''}</Label>
-                <Select
-                  value={widget.config.formulaParams?.criteriaCol1 || widget.config.formulaParams?.criteriaColumn || ''}
-                  onValueChange={(value) => onUpdate({ 
-                    ...widget, 
-                    config: { 
-                      ...widget.config, 
-                      formulaParams: { ...widget.config.formulaParams, criteriaCol1: value, criteriaColumn: value } 
-                    } 
-                  })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select criteria column" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {columns.map((col) => (
-                      <SelectItem key={col} value={col}>{col}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Criteria Value{needsMultipleCriteria ? ' 1' : ''}</Label>
-                <Input
-                  value={widget.config.formulaParams?.criteriaVal1 || widget.config.formulaParams?.criteria || ''}
-                  onChange={(e) => onUpdate({ 
-                    ...widget, 
-                    config: { 
-                      ...widget.config, 
-                      formulaParams: { ...widget.config.formulaParams, criteriaVal1: e.target.value, criteria: e.target.value } 
-                    } 
-                  })}
-                  placeholder="Enter criteria (e.g., >100, =Active, ProductA)"
-                />
+              
+              {/* Multiple Criteria Builder */}
+              <div className="space-y-3 border-t pt-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-semibold">Criteria (all must match)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const currentCriteria = widget.config.formulaParams?.criteria || [];
+                      onUpdate({ 
+                        ...widget, 
+                        config: { 
+                          ...widget.config, 
+                          formulaParams: { 
+                            ...widget.config.formulaParams,
+                            criteria: [...currentCriteria, { column: '', value: '' }]
+                          }
+                        } 
+                      });
+                    }}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Add Criteria
+                  </Button>
+                </div>
+                
+                {(widget.config.formulaParams?.criteria || []).map((criterion: any, index: number) => (
+                  <div key={index} className="flex gap-2 items-start p-3 border rounded-lg bg-muted/30">
+                    <div className="flex-1 space-y-2">
+                      <div>
+                        <Label className="text-xs">Column {index + 1}</Label>
+                        <Select
+                          value={criterion.column || ''}
+                          onValueChange={(value) => {
+                            const updatedCriteria = [...(widget.config.formulaParams?.criteria || [])];
+                            updatedCriteria[index] = { ...updatedCriteria[index], column: value };
+                            onUpdate({ 
+                              ...widget, 
+                              config: { 
+                                ...widget.config, 
+                                formulaParams: { 
+                                  ...widget.config.formulaParams,
+                                  criteria: updatedCriteria
+                                }
+                              } 
+                            });
+                          }}
+                        >
+                          <SelectTrigger className="h-8">
+                            <SelectValue placeholder="Select column" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {columns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-xs">Value {index + 1}</Label>
+                        <Input
+                          className="h-8"
+                          value={criterion.value || ''}
+                          onChange={(e) => {
+                            const updatedCriteria = [...(widget.config.formulaParams?.criteria || [])];
+                            updatedCriteria[index] = { ...updatedCriteria[index], value: e.target.value };
+                            onUpdate({ 
+                              ...widget, 
+                              config: { 
+                                ...widget.config, 
+                                formulaParams: { 
+                                  ...widget.config.formulaParams,
+                                  criteria: updatedCriteria
+                                }
+                              } 
+                            });
+                          }}
+                          placeholder="e.g., >100, >=50, =Active, Product"
+                        />
+                      </div>
+                    </div>
+                    
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="mt-5"
+                      onClick={() => {
+                        const updatedCriteria = (widget.config.formulaParams?.criteria || []).filter((_: any, i: number) => i !== index);
+                        onUpdate({ 
+                          ...widget, 
+                          config: { 
+                            ...widget.config, 
+                            formulaParams: { 
+                              ...widget.config.formulaParams,
+                              criteria: updatedCriteria
+                            }
+                          } 
+                        });
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                
+                {(!widget.config.formulaParams?.criteria || widget.config.formulaParams.criteria.length === 0) && (
+                  <p className="text-xs text-muted-foreground italic">Click "Add Criteria" to add conditions</p>
+                )}
               </div>
             </>
           ) : (

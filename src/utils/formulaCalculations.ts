@@ -6,8 +6,9 @@ export const formulaFunctions = {
   AVERAGE: 'Average of values',
   COUNT: 'Count non-empty values',
   COUNTA: 'Count all non-blank values',
-  COUNTIF: 'Count values matching criteria',
-  SUMIF: 'Sum values matching criteria',
+  COUNTIFS: 'Count values matching multiple criteria',
+  SUMIFS: 'Sum values matching multiple criteria',
+  AVERAGEIFS: 'Average values matching multiple criteria',
   MIN: 'Minimum value',
   MAX: 'Maximum value',
   MEDIAN: 'Median value',
@@ -27,19 +28,44 @@ export function calculateFormula(
   column: string,
   params?: any
 ): number {
-  // Handle IFS formulas (SUMIFS, COUNTIFS, AVERAGEIFS)
+  // Handle IFS formulas (SUMIFS, COUNTIFS, AVERAGEIFS) with multiple criteria
   if (formulaType === 'SUMIFS' || formulaType === 'COUNTIFS' || formulaType === 'AVERAGEIFS') {
-    const criteriaCol = params?.criteriaCol1 || params?.criteriaColumn;
-    const criteriaVal = params?.criteriaVal1 || params?.criteria;
+    const criteria = params?.criteria || [];
     
-    if (!criteriaCol || criteriaVal === undefined) {
+    if (!Array.isArray(criteria) || criteria.length === 0) {
       return 0;
     }
     
     const filteredData = data.filter(row => {
-      const cellValue = String(row[criteriaCol] || '');
-      const criteriaValue = String(criteriaVal);
-      return cellValue.toLowerCase().includes(criteriaValue.toLowerCase());
+      // All criteria must match
+      return criteria.every((crit: any) => {
+        if (!crit.column || crit.value === undefined || crit.value === '') {
+          return true; // Skip empty criteria
+        }
+        
+        const cellValue = row[crit.column];
+        const criteriaValue = crit.value;
+        
+        // Handle comparison operators
+        if (typeof criteriaValue === 'string') {
+          if (criteriaValue.startsWith('>=')) {
+            return parseFloat(cellValue) >= parseFloat(criteriaValue.substring(2));
+          } else if (criteriaValue.startsWith('<=')) {
+            return parseFloat(cellValue) <= parseFloat(criteriaValue.substring(2));
+          } else if (criteriaValue.startsWith('>')) {
+            return parseFloat(cellValue) > parseFloat(criteriaValue.substring(1));
+          } else if (criteriaValue.startsWith('<')) {
+            return parseFloat(cellValue) < parseFloat(criteriaValue.substring(1));
+          } else if (criteriaValue.startsWith('=')) {
+            return String(cellValue) === criteriaValue.substring(1);
+          } else if (criteriaValue.startsWith('!=') || criteriaValue.startsWith('<>')) {
+            return String(cellValue) !== criteriaValue.substring(2);
+          }
+        }
+        
+        // Text matching (case-insensitive contains)
+        return String(cellValue || '').toLowerCase().includes(String(criteriaValue).toLowerCase());
+      });
     });
     
     if (formulaType === 'COUNTIFS') {
@@ -74,47 +100,6 @@ export function calculateFormula(
     
     case 'COUNTA':
       return data.filter(row => row[column] != null && row[column] !== '').length;
-    
-    case 'COUNTIF':
-      const countifCriteriaCol = params?.criteriaCol1 || params?.criteriaColumn || column;
-      const countifCriteria = params?.criteriaVal1 || params?.criteria;
-      if (!countifCriteria) return 0;
-      
-      return data.filter(row => {
-        const val = row[countifCriteriaCol];
-        if (countifCriteria.startsWith('>')) {
-          return parseFloat(val) > parseFloat(countifCriteria.substring(1));
-        } else if (countifCriteria.startsWith('<')) {
-          return parseFloat(val) < parseFloat(countifCriteria.substring(1));
-        } else if (countifCriteria.startsWith('=')) {
-          return val == countifCriteria.substring(1);
-        }
-        return String(val).toLowerCase().includes(String(countifCriteria).toLowerCase());
-      }).length;
-    
-    case 'SUMIF':
-      const sumifCriteriaCol = params?.criteriaCol1 || params?.criteriaColumn || column;
-      const sumifCriteria = params?.criteriaVal1 || params?.criteria;
-      if (!sumifCriteria) return 0;
-      
-      return data.reduce((sum, row) => {
-        const criteriaValue = row[sumifCriteriaCol];
-        const numVal = parseFloat(row[column]);
-        if (isNaN(numVal)) return sum;
-        
-        let matches = false;
-        if (sumifCriteria.startsWith('>')) {
-          matches = parseFloat(criteriaValue) > parseFloat(sumifCriteria.substring(1));
-        } else if (sumifCriteria.startsWith('<')) {
-          matches = parseFloat(criteriaValue) < parseFloat(sumifCriteria.substring(1));
-        } else if (sumifCriteria.startsWith('=')) {
-          matches = criteriaValue == sumifCriteria.substring(1);
-        } else {
-          matches = String(criteriaValue).toLowerCase().includes(String(sumifCriteria).toLowerCase());
-        }
-        
-        return matches ? sum + numVal : sum;
-      }, 0);
     
     case 'MIN':
       return values.length > 0 ? Math.min(...values) : 0;
