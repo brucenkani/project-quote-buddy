@@ -33,34 +33,47 @@ export default function FinancialForecasting() {
   const [inflationRate, setInflationRate] = useState('');
   const [expenseProjection, setExpenseProjection] = useState<any>(null);
 
-  // Financial Formula States
+  // Financial Formula States - FV
   const [fvRate, setFvRate] = useState('');
   const [fvNper, setFvNper] = useState('');
   const [fvPmt, setFvPmt] = useState('');
   const [fvPv, setFvPv] = useState('');
-  const [fvFrequency, setFvFrequency] = useState('1');
+  const [fvType, setFvType] = useState('0');
   const [fvResult, setFvResult] = useState<number | null>(null);
 
+  // PV
   const [pvRate, setPvRate] = useState('');
   const [pvNper, setPvNper] = useState('');
   const [pvPmt, setPvPmt] = useState('');
   const [pvFv, setPvFv] = useState('');
-  const [pvFrequency, setPvFrequency] = useState('1');
+  const [pvType, setPvType] = useState('0');
   const [pvResult, setPvResult] = useState<number | null>(null);
 
+  // PMT
   const [pmtRate, setPmtRate] = useState('');
   const [pmtNper, setPmtNper] = useState('');
   const [pmtPv, setPmtPv] = useState('');
   const [pmtFv, setPmtFv] = useState('');
-  const [pmtFrequency, setPmtFrequency] = useState('1');
+  const [pmtType, setPmtType] = useState('0');
   const [pmtResult, setPmtResult] = useState<number | null>(null);
 
+  // RATE
   const [rateNper, setRateNper] = useState('');
   const [ratePmt, setRatePmt] = useState('');
   const [ratePv, setRatePv] = useState('');
   const [rateFv, setRateFv] = useState('');
-  const [rateFrequency, setRateFrequency] = useState('1');
+  const [rateType, setRateType] = useState('0');
   const [rateResult, setRateResult] = useState<number | null>(null);
+
+  // NPV
+  const [npvRate, setNpvRate] = useState('');
+  const [npvValues, setNpvValues] = useState('');
+  const [npvResult, setNpvResult] = useState<number | null>(null);
+
+  // IRR
+  const [irrValues, setIrrValues] = useState('');
+  const [irrGuess, setIrrGuess] = useState('0.1');
+  const [irrResult, setIrrResult] = useState<number | null>(null);
 
   // Budget Planning States
   const [totalBudget, setTotalBudget] = useState('');
@@ -125,9 +138,9 @@ export default function FinancialForecasting() {
     const nper = getColumnValueOrDirect(fvNper, fvNper);
     const pmt = getColumnValueOrDirect(fvPmt, fvPmt);
     const pv = getColumnValueOrDirect(fvPv, fvPv);
-    const frequency = parseInt(fvFrequency);
+    const type = parseInt(fvType);
 
-    if (isNaN(rate) || isNaN(nper) || isNaN(frequency)) {
+    if (isNaN(rate) || isNaN(nper)) {
       toast({
         title: "Invalid Input",
         description: "Please provide valid values for Rate and Nper",
@@ -141,7 +154,7 @@ export default function FinancialForecasting() {
       nper,
       pmt,
       pv,
-      frequency
+      frequency: 1 // Rate is already per period
     });
 
     setFvResult(result);
@@ -152,9 +165,9 @@ export default function FinancialForecasting() {
     const nper = getColumnValueOrDirect(pvNper, pvNper);
     const pmt = getColumnValueOrDirect(pvPmt, pvPmt);
     const fv = getColumnValueOrDirect(pvFv, pvFv);
-    const frequency = parseInt(pvFrequency);
+    const type = parseInt(pvType);
 
-    if (isNaN(rate) || isNaN(nper) || isNaN(frequency)) {
+    if (isNaN(rate) || isNaN(nper)) {
       toast({
         title: "Invalid Input",
         description: "Please provide valid values for Rate and Nper",
@@ -168,7 +181,7 @@ export default function FinancialForecasting() {
       nper,
       pmt,
       fv,
-      frequency
+      frequency: 1
     });
 
     setPvResult(result);
@@ -179,12 +192,12 @@ export default function FinancialForecasting() {
     const nper = getColumnValueOrDirect(pmtNper, pmtNper);
     const pv = getColumnValueOrDirect(pmtPv, pmtPv);
     const fv = getColumnValueOrDirect(pmtFv, pmtFv);
-    const frequency = parseInt(pmtFrequency);
+    const type = parseInt(pmtType);
 
-    if (isNaN(rate) || isNaN(nper) || isNaN(pv) || isNaN(frequency)) {
+    if (isNaN(rate) || isNaN(nper) || isNaN(pv)) {
       toast({
         title: "Invalid Input",
-        description: "Please provide valid values for Rate, Nper, and PV",
+        description: "Please provide valid values for Rate, Nper, and Pv",
         variant: "destructive"
       });
       return;
@@ -195,7 +208,7 @@ export default function FinancialForecasting() {
       nper,
       pv,
       fv,
-      frequency
+      frequency: 1
     });
 
     setPmtResult(result);
@@ -206,12 +219,12 @@ export default function FinancialForecasting() {
     const pmt = getColumnValueOrDirect(ratePmt, ratePmt);
     const pv = getColumnValueOrDirect(ratePv, ratePv);
     const fv = getColumnValueOrDirect(rateFv, rateFv);
-    const frequency = parseInt(rateFrequency);
+    const type = parseInt(rateType);
 
-    if (isNaN(nper) || isNaN(pv) || isNaN(frequency)) {
+    if (isNaN(nper) || isNaN(pv)) {
       toast({
         title: "Invalid Input",
-        description: "Please provide valid values for Nper and PV",
+        description: "Please provide valid values for Nper and Pv",
         variant: "destructive"
       });
       return;
@@ -222,10 +235,53 @@ export default function FinancialForecasting() {
       pmt,
       pv,
       fv,
-      frequency
+      frequency: 1
     });
 
     setRateResult(result);
+  };
+
+  const calculateNPV = () => {
+    const rate = parseFloat(npvRate) / 100;
+    const values = npvValues.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+
+    if (isNaN(rate) || values.length === 0) {
+      toast({
+        title: "Invalid Input",
+        description: "Please provide valid Rate and cashflow values (comma-separated)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const result = calculateFormula('NPV', [], '', {
+      rate,
+      cashflows: values,
+      frequency: 1
+    });
+
+    setNpvResult(result);
+  };
+
+  const calculateIRR = () => {
+    const values = irrValues.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+    const guess = parseFloat(irrGuess);
+
+    if (values.length < 2) {
+      toast({
+        title: "Invalid Input",
+        description: "Please provide at least 2 cashflow values (comma-separated)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const result = calculateFormula('IRR', [], '', {
+      cashflows: values,
+      frequency: 1
+    });
+
+    setIrrResult(result);
   };
 
   const calculateRevenueForecast = () => {
@@ -528,26 +584,26 @@ export default function FinancialForecasting() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Financial Functions (Excel-style)</CardTitle>
+                  <CardTitle>Financial Functions (Excel-compatible)</CardTitle>
                   <CardDescription>
                     {dataColumns.length > 0 
-                      ? "Select data columns OR type values directly. Frequency divides the annual interest rate." 
-                      : "Enter values directly. Frequency divides the annual interest rate."}
+                      ? "Select data columns OR type values directly. Rate is per period (e.g., 6%/4 = 1.5% for quarterly at 6% APR)." 
+                      : "Enter values directly. Rate is per period (e.g., 6%/4 = 1.5% for quarterly at 6% APR)."}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* FV Calculator */}
                   <div className="p-4 border rounded-lg space-y-4">
                     <h3 className="font-semibold text-lg">FV - Future Value</h3>
-                    <p className="text-sm text-muted-foreground">Formula: =FV(rate, nper, pmt, [pv])</p>
+                    <p className="text-sm text-muted-foreground">Formula: =FV(rate, nper, pmt, [pv], [type])</p>
                     <p className="text-xs text-muted-foreground">
                       {dataColumns.length > 0 
-                        ? "Select columns or type values: annual interest rate (%), number of periods (years), payment amount, present value"
-                        : "Enter values: annual interest rate (%), number of periods (years), payment amount, present value"}
+                        ? "Select columns or type values. Rate is the interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR."
+                        : "Enter values. Rate is the interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR."}
                     </p>
                     <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
                       <div className="space-y-2">
-                        <Label>Rate (Annual %)</Label>
+                        <Label>Rate</Label>
                         {dataColumns.length > 0 ? (
                           <Select value={fvRate} onValueChange={setFvRate}>
                             <SelectTrigger>
@@ -565,11 +621,11 @@ export default function FinancialForecasting() {
                           step="0.01" 
                           value={fvRate} 
                           onChange={(e) => setFvRate(e.target.value)}
-                          placeholder="e.g., 8.5"
+                          placeholder="e.g., 1.5 (for 6%/4)"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Nper (Years)</Label>
+                        <Label>Nper</Label>
                         {dataColumns.length > 0 ? (
                           <Select value={fvNper} onValueChange={setFvNper}>
                             <SelectTrigger>
@@ -586,7 +642,7 @@ export default function FinancialForecasting() {
                           type="number" 
                           value={fvNper} 
                           onChange={(e) => setFvNper(e.target.value)}
-                          placeholder="e.g., 10"
+                          placeholder="e.g., 40 (periods)"
                         />
                       </div>
                       <div className="space-y-2">
@@ -612,7 +668,7 @@ export default function FinancialForecasting() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>PV (Present Value) - Optional</Label>
+                        <Label>Pv - Optional</Label>
                         {dataColumns.length > 0 ? (
                           <Select value={fvPv} onValueChange={setFvPv}>
                             <SelectTrigger>
@@ -634,16 +690,14 @@ export default function FinancialForecasting() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Frequency (divides rate)</Label>
-                        <Select value={fvFrequency} onValueChange={setFvFrequency}>
+                        <Label>Type</Label>
+                        <Select value={fvType} onValueChange={setFvType}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="1">Annual (÷1)</SelectItem>
-                            <SelectItem value="2">Semi-Annual (÷2)</SelectItem>
-                            <SelectItem value="4">Quarterly (÷4)</SelectItem>
-                            <SelectItem value="12">Monthly (÷12)</SelectItem>
+                            <SelectItem value="0">0 (End of period)</SelectItem>
+                            <SelectItem value="1">1 (Beginning of period)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -662,15 +716,15 @@ export default function FinancialForecasting() {
                   {/* PV Calculator */}
                   <div className="p-4 border rounded-lg space-y-4">
                     <h3 className="font-semibold text-lg">PV - Present Value</h3>
-                    <p className="text-sm text-muted-foreground">Formula: =PV(rate, nper, pmt, [fv])</p>
+                    <p className="text-sm text-muted-foreground">Formula: =PV(rate, nper, pmt, [fv], [type])</p>
                     <p className="text-xs text-muted-foreground">
                       {dataColumns.length > 0 
-                        ? "Select columns or type values: annual interest rate (%), number of periods (years), payment amount, future value"
-                        : "Enter values: annual interest rate (%), number of periods (years), payment amount, future value"}
+                        ? "Select columns or type values. Rate is the interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR."
+                        : "Enter values. Rate is the interest rate per period. For example, use 6%/4 for quarterly payments at 6% APR."}
                     </p>
                     <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
                       <div className="space-y-2">
-                        <Label>Rate (Annual %)</Label>
+                        <Label>Rate</Label>
                         {dataColumns.length > 0 ? (
                           <Select value={pvRate} onValueChange={setPvRate}>
                             <SelectTrigger>
@@ -688,11 +742,11 @@ export default function FinancialForecasting() {
                           step="0.01" 
                           value={pvRate} 
                           onChange={(e) => setPvRate(e.target.value)}
-                          placeholder="e.g., 8.5"
+                          placeholder="e.g., 1.5"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Nper (Years)</Label>
+                        <Label>Nper</Label>
                         {dataColumns.length > 0 ? (
                           <Select value={pvNper} onValueChange={setPvNper}>
                             <SelectTrigger>
@@ -709,11 +763,11 @@ export default function FinancialForecasting() {
                           type="number" 
                           value={pvNper} 
                           onChange={(e) => setPvNper(e.target.value)}
-                          placeholder="e.g., 10"
+                          placeholder="e.g., 40"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Pmt (Payment) - Optional</Label>
+                        <Label>Pmt - Optional</Label>
                         {dataColumns.length > 0 ? (
                           <Select value={pvPmt} onValueChange={setPvPmt}>
                             <SelectTrigger>
@@ -735,7 +789,7 @@ export default function FinancialForecasting() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>FV (Future Value) - Optional</Label>
+                        <Label>Fv - Optional</Label>
                         {dataColumns.length > 0 ? (
                           <Select value={pvFv} onValueChange={setPvFv}>
                             <SelectTrigger>
@@ -757,16 +811,14 @@ export default function FinancialForecasting() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Frequency (divides rate)</Label>
-                        <Select value={pvFrequency} onValueChange={setPvFrequency}>
+                        <Label>Type</Label>
+                        <Select value={pvType} onValueChange={setPvType}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="1">Annual (÷1)</SelectItem>
-                            <SelectItem value="2">Semi-Annual (÷2)</SelectItem>
-                            <SelectItem value="4">Quarterly (÷4)</SelectItem>
-                            <SelectItem value="12">Monthly (÷12)</SelectItem>
+                            <SelectItem value="0">0 (End of period)</SelectItem>
+                            <SelectItem value="1">1 (Beginning of period)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -879,16 +931,14 @@ export default function FinancialForecasting() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Frequency (divides rate)</Label>
-                        <Select value={pmtFrequency} onValueChange={setPmtFrequency}>
+                        <Label>Type</Label>
+                        <Select value={pmtType} onValueChange={setPmtType}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="1">Annual (÷1)</SelectItem>
-                            <SelectItem value="2">Semi-Annual (÷2)</SelectItem>
-                            <SelectItem value="4">Quarterly (÷4)</SelectItem>
-                            <SelectItem value="12">Monthly (÷12)</SelectItem>
+                            <SelectItem value="0">0 (End of period)</SelectItem>
+                            <SelectItem value="1">1 (Beginning of period)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -1001,16 +1051,14 @@ export default function FinancialForecasting() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Frequency (divides rate)</Label>
-                        <Select value={rateFrequency} onValueChange={setRateFrequency}>
+                        <Label>Type</Label>
+                        <Select value={rateType} onValueChange={setRateType}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="1">Annual (÷1)</SelectItem>
-                            <SelectItem value="2">Semi-Annual (÷2)</SelectItem>
-                            <SelectItem value="4">Quarterly (÷4)</SelectItem>
-                            <SelectItem value="12">Monthly (÷12)</SelectItem>
+                            <SelectItem value="0">0 (End of period)</SelectItem>
+                            <SelectItem value="1">1 (Beginning of period)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
