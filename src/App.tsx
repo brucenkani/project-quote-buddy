@@ -58,13 +58,6 @@ import PermissionsManager from "./pages/PermissionsManager";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import BusinessCommunity from "./pages/BusinessCommunity";
-import Calculators from "./pages/Calculators";
-import TaxCalculators from "./pages/calculators/TaxCalculators";
-import FinancialCalculators from "./pages/calculators/FinancialCalculators";
-import AccountingCalculators from "./pages/calculators/AccountingCalculators";
-import BusinessMetrics from "./pages/calculators/BusinessMetrics";
-import PropertyCalculators from "./pages/calculators/PropertyCalculators";
-import EngineeringCalculators from "./pages/calculators/EngineeringCalculators";
 import LandingSettings from "./pages/LandingSettings";
 import CRMCustomerSupport from "./pages/CRMCustomerSupport";
 import CustomerDatabase from "./pages/crm/CustomerDatabase";
@@ -97,13 +90,6 @@ const App = () => (
           <Route path="/admin/knowledge" element={<ProtectedRoute><KnowledgeAdmin /></ProtectedRoute>} />
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/calculators" element={<Calculators />} />
-          <Route path="/calculators/tax" element={<TaxCalculators />} />
-          <Route path="/calculators/financial" element={<FinancialCalculators />} />
-          <Route path="/calculators/accounting" element={<AccountingCalculators />} />
-          <Route path="/calculators/business-metrics" element={<BusinessMetrics />} />
-          <Route path="/calculators/property" element={<PropertyCalculators />} />
-          <Route path="/calculators/engineering" element={<EngineeringCalculators />} />
           <Route path="/crm-customer-support" element={<ProtectedRoute><SubscriptionGuard><CRMCustomerSupport /></SubscriptionGuard></ProtectedRoute>} />
           <Route path="/crm/customer-database" element={<ProtectedRoute><SubscriptionGuard><CustomerDatabase /></SubscriptionGuard></ProtectedRoute>} />
           <Route path="/crm/sales-pipeline" element={<ProtectedRoute><SubscriptionGuard><SalesPipeline /></SubscriptionGuard></ProtectedRoute>} />
