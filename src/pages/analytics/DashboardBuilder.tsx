@@ -13,12 +13,33 @@ export default function DashboardBuilder() {
   const { id } = useParams();
   const { toast } = useToast();
   const [dashboard, setDashboard] = useState<DashboardConfig | null>(null);
-  const [dataSource, setDataSource] = useState<DataSource | null>(null);
+  const [availableDataSources, setAvailableDataSources] = useState<DataSource[]>([]);
   const [draggedWidgetType, setDraggedWidgetType] = useState<WidgetType | null>(null);
 
   useEffect(() => {
     loadDashboard();
+    loadDataSources();
   }, [id]);
+
+  const loadDataSources = async () => {
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return;
+
+      const { data, error } = await supabase
+        .from('data_sources')
+        .select('*')
+        .eq('user_id', user.user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      if (data) {
+        setAvailableDataSources(data as unknown as DataSource[]);
+      }
+    } catch (error) {
+      console.error('Error loading data sources:', error);
+    }
+  };
 
   const loadDashboard = async () => {
     try {
@@ -32,19 +53,6 @@ export default function DashboardBuilder() {
 
       if (data) {
         setDashboard(data as unknown as DashboardConfig);
-        
-        // Load associated data source
-        if (data.data_source_id) {
-          const { data: dsData, error: dsError } = await supabase
-            .from('data_sources')
-            .select('*')
-            .eq('id', data.data_source_id)
-            .single();
-          
-          if (!dsError && dsData) {
-            setDataSource(dsData as unknown as DataSource);
-          }
-        }
       } else {
         toast({
           title: 'Dashboard not found',
@@ -76,43 +84,7 @@ export default function DashboardBuilder() {
     const x = e.clientX - canvas.left;
     const y = e.clientY - canvas.top;
 
-    // Prepare widget config based on data source
-    let widgetConfig: Widget['config'] = {
-      title: `New ${draggedWidgetType} Widget`,
-    };
-
-    if (dataSource) {
-      const columns = dataSource.columns as string[];
-      const data = dataSource.data as any[];
-
-      // For charts, use first two columns as default (label and value)
-      if (draggedWidgetType.startsWith('chart-') || draggedWidgetType === 'table') {
-        widgetConfig.data = data.slice(0, 10); // Limit to first 10 rows for performance
-        widgetConfig.dataKey = columns[1] || columns[0]; // Value column
-        widgetConfig.xAxisKey = columns[0]; // Label column
-        widgetConfig.availableColumns = columns;
-      } else if (draggedWidgetType === 'kpi' || draggedWidgetType === 'metric') {
-        // For KPI/Metric, calculate sum or count of first numeric column
-        const numericColumn = columns.find(col => {
-          const value = data[0]?.[col];
-          return typeof value === 'number' || !isNaN(Number(value));
-        }) || columns[1] || columns[0];
-        
-        const total = data.reduce((sum, row) => {
-          const val = Number(row[numericColumn]) || 0;
-          return sum + val;
-        }, 0);
-        
-        widgetConfig.value = total;
-        widgetConfig.metric = numericColumn;
-      } else if (draggedWidgetType === 'text') {
-        widgetConfig.value = 'Enter text here';
-      }
-    } else {
-      // Fallback for widgets without data source
-      widgetConfig.value = draggedWidgetType === 'text' ? 'Enter text here' : 100;
-    }
-
+    // Create widget without data - user will select data source in settings
     const newWidget: Widget = {
       id: `widget-${Date.now()}`,
       type: draggedWidgetType,
@@ -120,7 +92,10 @@ export default function DashboardBuilder() {
       y: Math.max(0, y - 75),
       width: draggedWidgetType === 'table' ? 600 : 300,
       height: draggedWidgetType === 'table' ? 400 : 250,
-      config: widgetConfig,
+      config: {
+        title: `New ${draggedWidgetType} Widget`,
+        value: draggedWidgetType === 'text' ? 'Click settings to configure' : 'Select data source',
+      },
     };
 
     setDashboard({
@@ -216,7 +191,7 @@ export default function DashboardBuilder() {
                 <DashboardWidget
                   key={widget.id}
                   widget={widget}
-                  dataSource={dataSource}
+                  availableDataSources={availableDataSources}
                   onUpdate={handleUpdateWidget}
                   onDelete={handleDeleteWidget}
                 />

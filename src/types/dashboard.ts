@@ -7,6 +7,7 @@ export interface Widget {
   y: number;
   width: number;
   height: number;
+  data_source_id?: string; // Each widget can have its own data source
   config: {
     title?: string;
     value?: string | number;

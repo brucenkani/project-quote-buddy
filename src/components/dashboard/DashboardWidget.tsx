@@ -11,16 +11,57 @@ import { Label } from '@/components/ui/label';
 
 interface DashboardWidgetProps {
   widget: Widget;
-  dataSource?: DataSource | null;
+  availableDataSources?: DataSource[];
   onUpdate: (widget: Widget) => void;
   onDelete: (id: string) => void;
 }
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
-export function DashboardWidget({ widget, dataSource, onUpdate, onDelete }: DashboardWidgetProps) {
+export function DashboardWidget({ widget, availableDataSources = [], onUpdate, onDelete }: DashboardWidgetProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  
+  // Get the data source for this widget
+  const widgetDataSource = availableDataSources.find(ds => ds.id === widget.data_source_id);
+
+  const handleDataSourceChange = (dataSourceId: string) => {
+    const dataSource = availableDataSources.find(ds => ds.id === dataSourceId);
+    if (!dataSource) return;
+
+    const columns = dataSource.columns as string[];
+    const data = dataSource.data as any[];
+
+    let updatedConfig = { ...widget.config };
+
+    // Auto-populate data based on widget type
+    if (widget.type.startsWith('chart-') || widget.type === 'table') {
+      updatedConfig.data = data.slice(0, 50); // Limit rows for performance
+      updatedConfig.dataKey = columns[1] || columns[0];
+      updatedConfig.xAxisKey = columns[0];
+      updatedConfig.availableColumns = columns;
+    } else if (widget.type === 'kpi' || widget.type === 'metric') {
+      const numericColumn = columns.find(col => {
+        const value = data[0]?.[col];
+        return typeof value === 'number' || !isNaN(Number(value));
+      }) || columns[1] || columns[0];
+      
+      const total = data.reduce((sum, row) => {
+        const val = Number(row[numericColumn]) || 0;
+        return sum + val;
+      }, 0);
+      
+      updatedConfig.value = total;
+      updatedConfig.metric = numericColumn;
+      updatedConfig.availableColumns = columns;
+    }
+
+    onUpdate({ 
+      ...widget, 
+      data_source_id: dataSourceId,
+      config: updatedConfig
+    });
+  };
 
   const renderContent = () => {
     switch (widget.type) {
@@ -162,72 +203,98 @@ export function DashboardWidget({ widget, dataSource, onUpdate, onDelete }: Dash
             )}
           </CardTitle>
           <div className="flex gap-1">
-            {widget.config.availableColumns && widget.config.availableColumns.length > 0 && (
-              <Dialog open={showSettings} onOpenChange={setShowSettings}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <Settings className="h-3 w-3" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Widget Settings</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label>Widget Title</Label>
-                      <Input
-                        value={widget.config.title || ''}
-                        onChange={(e) => onUpdate({ ...widget, config: { ...widget.config, title: e.target.value } })}
-                        placeholder="Enter title..."
-                      />
-                    </div>
-                    {(widget.type.startsWith('chart-') || widget.type === 'table') && (
-                      <>
-                        <div className="space-y-2">
-                          <Label>Label/Category Column</Label>
-                          <Select
-                            value={widget.config.xAxisKey || ''}
-                            onValueChange={(value) => onUpdate({ 
-                              ...widget, 
-                              config: { ...widget.config, xAxisKey: value } 
-                            })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select column" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {widget.config.availableColumns?.map((col) => (
-                                <SelectItem key={col} value={col}>{col}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Value Column</Label>
-                          <Select
-                            value={widget.config.dataKey || ''}
-                            onValueChange={(value) => onUpdate({ 
-                              ...widget, 
-                              config: { ...widget.config, dataKey: value } 
-                            })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select column" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {widget.config.availableColumns?.map((col) => (
-                                <SelectItem key={col} value={col}>{col}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </>
-                    )}
+            <Dialog open={showSettings} onOpenChange={setShowSettings}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <Settings className="h-3 w-3" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Widget Settings</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label>Data Source</Label>
+                    <Select
+                      value={widget.data_source_id || ''}
+                      onValueChange={handleDataSourceChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a data source" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableDataSources.map((ds) => (
+                          <SelectItem key={ds.id} value={ds.id}>
+                            {ds.name} ({ds.row_count} rows)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                </DialogContent>
-              </Dialog>
-            )}
+
+                  {widget.data_source_id && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Widget Title</Label>
+                        <Input
+                          value={widget.config.title || ''}
+                          onChange={(e) => onUpdate({ ...widget, config: { ...widget.config, title: e.target.value } })}
+                          placeholder="Enter title..."
+                        />
+                      </div>
+
+                      {widget.type !== 'text' && widget.config.availableColumns && widget.config.availableColumns.length > 0 && (
+                        <>
+                          {(widget.type.startsWith('chart-') || widget.type === 'table') && (
+                            <>
+                              <div className="space-y-2">
+                                <Label>Label/Category Column</Label>
+                                <Select
+                                  value={widget.config.xAxisKey || ''}
+                                  onValueChange={(value) => onUpdate({ 
+                                    ...widget, 
+                                    config: { ...widget.config, xAxisKey: value } 
+                                  })}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select column" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {widget.config.availableColumns?.map((col) => (
+                                      <SelectItem key={col} value={col}>{col}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Value Column</Label>
+                                <Select
+                                  value={widget.config.dataKey || ''}
+                                  onValueChange={(value) => onUpdate({ 
+                                    ...widget, 
+                                    config: { ...widget.config, dataKey: value } 
+                                  })}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select column" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {widget.config.availableColumns?.map((col) => (
+                                      <SelectItem key={col} value={col}>{col}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
             <Button variant="ghost" size="sm" onClick={() => onDelete(widget.id)}>
               <Trash2 className="h-3 w-3" />
             </Button>
