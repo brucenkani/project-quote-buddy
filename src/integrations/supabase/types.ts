@@ -574,6 +574,57 @@ export type Database = {
           },
         ]
       }
+      custom_dashboards: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          data_source_id: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+          widgets: Json
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          data_source_id?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+          widgets?: Json
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          data_source_id?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+          widgets?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_dashboards_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_dashboards_data_source_id_fkey"
+            columns: ["data_source_id"]
+            isOneToOne: false
+            referencedRelation: "data_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_payroll_items: {
         Row: {
           amount: number
@@ -635,6 +686,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "data_deletion_queue_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_sources: {
+        Row: {
+          columns: Json
+          company_id: string | null
+          created_at: string
+          data: Json
+          file_name: string
+          id: string
+          name: string
+          row_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          columns: Json
+          company_id?: string | null
+          created_at?: string
+          data: Json
+          file_name: string
+          id?: string
+          name: string
+          row_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          columns?: Json
+          company_id?: string | null
+          created_at?: string
+          data?: Json
+          file_name?: string
+          id?: string
+          name?: string
+          row_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_sources_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"

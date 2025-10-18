@@ -70,6 +70,7 @@ import PerformanceMetrics from "./pages/analytics/PerformanceMetrics";
 import VarianceAnalysis from "./pages/analytics/VarianceAnalysis";
 import StrategicPlanning from "./pages/analytics/StrategicPlanning";
 import CustomReports from "./pages/analytics/CustomReports";
+import DashboardBuilder from "./pages/analytics/DashboardBuilder";
 
 const queryClient = new QueryClient();
 
@@ -102,6 +103,7 @@ const App = () => (
           <Route path="/analytics/variance-analysis" element={<VarianceAnalysis />} />
           <Route path="/analytics/strategic-planning" element={<StrategicPlanning />} />
           <Route path="/analytics/custom-reports" element={<CustomReports />} />
+          <Route path="/analytics/dashboard-builder/:id" element={<DashboardBuilder />} />
           
           <Route path="/dashboard" element={<ProtectedRoute><SubscriptionGuard><Landing /></SubscriptionGuard></ProtectedRoute>} />
           <Route path="/landing" element={<ProtectedRoute><SubscriptionGuard><Landing /></SubscriptionGuard></ProtectedRoute>} />

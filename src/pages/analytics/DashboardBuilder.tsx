@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { WidgetPalette } from '@/components/dashboard/WidgetPalette';
 import { DashboardWidget } from '@/components/dashboard/DashboardWidget';
 import { Widget, WidgetType, DashboardConfig } from '@/types/dashboard';
@@ -15,20 +16,39 @@ export default function DashboardBuilder() {
   const [draggedWidgetType, setDraggedWidgetType] = useState<WidgetType | null>(null);
 
   useEffect(() => {
-    // Load dashboard from localStorage
-    const dashboards = JSON.parse(localStorage.getItem('customDashboards') || '[]');
-    const found = dashboards.find((d: DashboardConfig) => d.id === id);
-    if (found) {
-      setDashboard(found);
-    } else {
+    loadDashboard();
+  }, [id]);
+
+  const loadDashboard = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('custom_dashboards')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setDashboard(data as unknown as DashboardConfig);
+      } else {
+        toast({
+          title: 'Dashboard not found',
+          description: 'Redirecting back...',
+          variant: 'destructive',
+        });
+        navigate('/analytics/custom-reports');
+      }
+    } catch (error) {
+      console.error('Error loading dashboard:', error);
       toast({
-        title: 'Dashboard not found',
+        title: 'Error loading dashboard',
         description: 'Redirecting back...',
         variant: 'destructive',
       });
       navigate('/analytics/custom-reports');
     }
-  }, [id, navigate, toast]);
+  };
 
   const handleDragStart = (type: WidgetType) => {
     setDraggedWidgetType(type);
@@ -78,19 +98,32 @@ export default function DashboardBuilder() {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!dashboard) return;
     
-    const dashboards = JSON.parse(localStorage.getItem('customDashboards') || '[]');
-    const updated = dashboards.map((d: DashboardConfig) => 
-      d.id === dashboard.id ? { ...dashboard, updatedAt: new Date().toISOString() } : d
-    );
-    localStorage.setItem('customDashboards', JSON.stringify(updated));
-    
-    toast({
-      title: 'Dashboard Saved',
-      description: 'Your changes have been saved successfully.',
-    });
+    try {
+      const { error } = await supabase
+        .from('custom_dashboards')
+        .update({
+          widgets: dashboard.widgets as any,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', dashboard.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Dashboard Saved',
+        description: 'Your changes have been saved successfully.',
+      });
+    } catch (error) {
+      console.error('Error saving dashboard:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save dashboard',
+        variant: 'destructive',
+      });
+    }
   };
 
   if (!dashboard) return null;

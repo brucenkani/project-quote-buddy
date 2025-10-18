@@ -18,7 +18,20 @@ export interface Widget {
 export interface DashboardConfig {
   id: string;
   name: string;
+  description?: string;
   widgets: Widget[];
-  createdAt: string;
-  updatedAt: string;
+  data_source_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DataSource {
+  id: string;
+  name: string;
+  file_name: string;
+  columns: string[];
+  data: any[];
+  row_count: number;
+  created_at: string;
+  updated_at: string;
 }
