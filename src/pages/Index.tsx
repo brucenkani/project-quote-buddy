@@ -102,30 +102,30 @@ export default function Index() {
             <h1 className="text-2xl font-bold">BizManager</h1>
           </div>
           <div className="flex gap-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="lg" className="gap-2">
-                  <Mail className="h-4 w-4" />
-                  Contact Us
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-card z-50">
-                <DropdownMenuItem onClick={handleWhatsAppContact} className="cursor-pointer">
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  WhatsApp
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <DialogTrigger className="w-full flex items-center cursor-pointer">
-                    <Mail className="h-4 w-4 mr-2" />
-                    Email
-                  </DialogTrigger>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="lg" className="gap-2">
+                    <Mail className="h-4 w-4" />
+                    Contact Us
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-card z-50">
+                  <DropdownMenuItem onClick={handleWhatsAppContact} className="cursor-pointer">
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    WhatsApp
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <DialogTrigger className="w-full flex items-center cursor-pointer">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Email
+                    </DialogTrigger>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             <Button variant="ghost" size="lg" onClick={() => navigate('/community')}>Business Community</Button>
             <Button variant="ghost" size="lg" onClick={() => navigate('/knowledge')}>Knowledge Centre</Button>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                   <DialogTitle>Contact Our Team</DialogTitle>
