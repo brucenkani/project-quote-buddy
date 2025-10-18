@@ -67,6 +67,9 @@ import PropertyCalculators from "./pages/calculators/PropertyCalculators";
 import EngineeringCalculators from "./pages/calculators/EngineeringCalculators";
 import LandingSettings from "./pages/LandingSettings";
 import CRMCustomerSupport from "./pages/CRMCustomerSupport";
+import CustomerDatabase from "./pages/crm/CustomerDatabase";
+import SalesPipeline from "./pages/crm/SalesPipeline";
+import TicketSystem from "./pages/crm/TicketSystem";
 import BusinessAnalytics from "./pages/BusinessAnalytics";
 import ManagementAccounts from "./pages/analytics/ManagementAccounts";
 import FinancialForecasting from "./pages/analytics/FinancialForecasting";
@@ -101,7 +104,10 @@ const App = () => (
           <Route path="/calculators/business-metrics" element={<BusinessMetrics />} />
           <Route path="/calculators/property" element={<PropertyCalculators />} />
           <Route path="/calculators/engineering" element={<EngineeringCalculators />} />
-          <Route path="/crm-support" element={<ProtectedRoute><SubscriptionGuard><CRMCustomerSupport /></SubscriptionGuard></ProtectedRoute>} />
+          <Route path="/crm-customer-support" element={<ProtectedRoute><SubscriptionGuard><CRMCustomerSupport /></SubscriptionGuard></ProtectedRoute>} />
+          <Route path="/crm/customer-database" element={<ProtectedRoute><SubscriptionGuard><CustomerDatabase /></SubscriptionGuard></ProtectedRoute>} />
+          <Route path="/crm/sales-pipeline" element={<ProtectedRoute><SubscriptionGuard><SalesPipeline /></SubscriptionGuard></ProtectedRoute>} />
+          <Route path="/crm/ticket-system" element={<ProtectedRoute><SubscriptionGuard><TicketSystem /></SubscriptionGuard></ProtectedRoute>} />
           <Route path="/business-analytics" element={<BusinessAnalytics />} />
           <Route path="/analytics" element={<BusinessAnalytics />} />
           <Route path="/analytics/management-accounts" element={<ManagementAccounts />} />

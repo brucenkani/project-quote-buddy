@@ -596,7 +596,7 @@ export type Database = {
           annual_leave_days: number | null
           bank_name: string | null
           basic_salary: number
-          company_id: string | null
+          company_id: string
           created_at: string | null
           date_of_birth: string
           department: string | null
@@ -627,7 +627,7 @@ export type Database = {
           annual_leave_days?: number | null
           bank_name?: string | null
           basic_salary: number
-          company_id?: string | null
+          company_id: string
           created_at?: string | null
           date_of_birth: string
           department?: string | null
@@ -658,7 +658,7 @@ export type Database = {
           annual_leave_days?: number | null
           bank_name?: string | null
           basic_salary?: number
-          company_id?: string | null
+          company_id?: string
           created_at?: string | null
           date_of_birth?: string
           department?: string | null

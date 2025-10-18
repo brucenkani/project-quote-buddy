@@ -509,7 +509,7 @@ export default function Index() {
           </Card>
 
 
-          <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer" onClick={() => navigate('/crm-support')}>
+          <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer" onClick={() => navigate('/crm-customer-support')}>
             <CardHeader>
               <UserCircle className="h-12 w-12 mb-4 text-primary" />
               <CardTitle>CRM & Customer Support</CardTitle>

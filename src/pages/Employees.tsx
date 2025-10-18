@@ -114,9 +114,22 @@ export default function Employees() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Get user's active company
+      const { data: companyMembers } = await supabase
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single();
+
+      if (!companyMembers) throw new Error('No company found for user');
+
       const dataToSubmit = {
         ...formData,
-        user_id: user?.id || undefined,
+        user_id: user.id,
+        company_id: companyMembers.company_id,
         basic_salary: parseFloat(formData.basic_salary),
         annual_leave_days: parseFloat(formData.annual_leave_days),
         sick_leave_days: parseFloat(formData.sick_leave_days),

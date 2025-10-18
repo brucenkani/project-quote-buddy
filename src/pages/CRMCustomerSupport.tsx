@@ -53,7 +53,7 @@ export default function CRMCustomerSupport() {
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="border-2 hover:border-primary/50 transition-colors">
+              <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/crm/customer-database')}>
                 <CardHeader>
                   <Users className="h-10 w-10 mb-4 text-primary" />
                   <CardTitle>Customer Database</CardTitle>
@@ -74,10 +74,11 @@ export default function CRMCustomerSupport() {
                       <span>Customer segmentation</span>
                     </li>
                   </ul>
+                  <Button className="w-full mt-4" variant="outline">Open</Button>
                 </CardContent>
               </Card>
 
-              <Card className="border-2 hover:border-primary/50 transition-colors">
+              <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/crm/sales-pipeline')}>
                 <CardHeader>
                   <TrendingUp className="h-10 w-10 mb-4 text-primary" />
                   <CardTitle>Sales Pipeline</CardTitle>
@@ -98,43 +99,35 @@ export default function CRMCustomerSupport() {
                       <span>Conversion rate analysis</span>
                     </li>
                   </ul>
+                  <Button className="w-full mt-4" variant="outline">Open</Button>
                 </CardContent>
               </Card>
 
-              <Card className="border-2 hover:border-primary/50 transition-colors">
+              <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/crm/ticket-system')}>
                 <CardHeader>
                   <MessageSquare className="h-10 w-10 mb-4 text-primary" />
-                  <CardTitle>Communication Hub</CardTitle>
-                  <CardDescription>Centralized customer communications</CardDescription>
+                  <CardTitle>Support Tickets</CardTitle>
+                  <CardDescription>Ticket management system</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-sm text-muted-foreground">
                     <li className="flex items-start gap-2">
                       <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Email integration</span>
+                      <span>Multi-channel support</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Call logs & notes</span>
+                      <span>Priority assignment</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span>Activity timeline</span>
+                      <span>Resolution tracking</span>
                     </li>
                   </ul>
+                  <Button className="w-full mt-4" variant="outline">Open</Button>
                 </CardContent>
               </Card>
             </div>
-
-            <Card className="bg-muted/50">
-              <CardHeader>
-                <CardTitle className="text-center">Coming Soon</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center text-muted-foreground">
-                <p>This feature is currently under development and will be available soon.</p>
-                <p className="mt-2">Contact us if you'd like early access or have specific requirements.</p>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* Customer Support Tab */}
@@ -147,7 +140,7 @@ export default function CRMCustomerSupport() {
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="border-2 hover:border-primary/50 transition-colors">
+              <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/crm/ticket-system')}>
                 <CardHeader>
                   <Headset className="h-10 w-10 mb-4 text-primary" />
                   <CardTitle>Support Channels</CardTitle>
@@ -168,10 +161,11 @@ export default function CRMCustomerSupport() {
                       <span>Phone support logging</span>
                     </li>
                   </ul>
+                  <Button className="w-full mt-4" variant="outline">Open</Button>
                 </CardContent>
               </Card>
 
-              <Card className="border-2 hover:border-primary/50 transition-colors">
+              <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/crm/ticket-system')}>
                 <CardHeader>
                   <Clock className="h-10 w-10 mb-4 text-primary" />
                   <CardTitle>Response Management</CardTitle>
@@ -192,10 +186,11 @@ export default function CRMCustomerSupport() {
                       <span>Response templates</span>
                     </li>
                   </ul>
+                  <Button className="w-full mt-4" variant="outline">Open</Button>
                 </CardContent>
               </Card>
 
-              <Card className="border-2 hover:border-primary/50 transition-colors">
+              <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/crm/ticket-system')}>
                 <CardHeader>
                   <TrendingUp className="h-10 w-10 mb-4 text-primary" />
                   <CardTitle>Support Analytics</CardTitle>
@@ -216,19 +211,10 @@ export default function CRMCustomerSupport() {
                       <span>Team performance reports</span>
                     </li>
                   </ul>
+                  <Button className="w-full mt-4" variant="outline">Open</Button>
                 </CardContent>
               </Card>
             </div>
-
-            <Card className="bg-muted/50">
-              <CardHeader>
-                <CardTitle className="text-center">Coming Soon</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center text-muted-foreground">
-                <p>This feature is currently under development and will be available soon.</p>
-                <p className="mt-2">Contact us if you'd like early access or have specific requirements.</p>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* Ticketing Tab */}
@@ -241,7 +227,7 @@ export default function CRMCustomerSupport() {
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="border-2 hover:border-primary/50 transition-colors">
+              <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/crm/ticket-system')}>
                 <CardHeader>
                   <Ticket className="h-10 w-10 mb-4 text-primary" />
                   <CardTitle>Ticket Creation</CardTitle>
@@ -262,10 +248,11 @@ export default function CRMCustomerSupport() {
                       <span>Category & tag management</span>
                     </li>
                   </ul>
+                  <Button className="w-full mt-4" variant="outline">Open</Button>
                 </CardContent>
               </Card>
 
-              <Card className="border-2 hover:border-primary/50 transition-colors">
+              <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/crm/ticket-system')}>
                 <CardHeader>
                   <AlertCircle className="h-10 w-10 mb-4 text-primary" />
                   <CardTitle>Ticket Workflow</CardTitle>
@@ -286,10 +273,11 @@ export default function CRMCustomerSupport() {
                       <span>Escalation management</span>
                     </li>
                   </ul>
+                  <Button className="w-full mt-4" variant="outline">Open</Button>
                 </CardContent>
               </Card>
 
-              <Card className="border-2 hover:border-primary/50 transition-colors">
+              <Card className="border-2 hover:border-primary/50 transition-colors cursor-pointer" onClick={() => navigate('/crm/ticket-system')}>
                 <CardHeader>
                   <CheckCircle className="h-10 w-10 mb-4 text-primary" />
                   <CardTitle>Resolution Tracking</CardTitle>
@@ -310,19 +298,10 @@ export default function CRMCustomerSupport() {
                       <span>Knowledge base integration</span>
                     </li>
                   </ul>
+                  <Button className="w-full mt-4" variant="outline">Open</Button>
                 </CardContent>
               </Card>
             </div>
-
-            <Card className="bg-muted/50">
-              <CardHeader>
-                <CardTitle className="text-center">Coming Soon</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center text-muted-foreground">
-                <p>This feature is currently under development and will be available soon.</p>
-                <p className="mt-2">Contact us if you'd like early access or have specific requirements.</p>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </main>

@@ -138,7 +138,7 @@ export default function Landing() {
             </CardContent>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/crm-support')}>
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/crm-customer-support')}>
             <CardHeader>
               <Users className="h-12 w-12 mb-4 text-primary" />
               <CardTitle>CRM & Customer Support</CardTitle>
