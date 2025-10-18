@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, LayoutDashboard, Trash2 } from 'lucide-react';
+import { Plus, LayoutDashboard, Trash2, ArrowLeft, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { DataSourceUpload } from '@/components/dashboard/DataSourceUpload';
@@ -115,6 +115,24 @@ export default function CustomReports() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <header className="border-b bg-background/95 backdrop-blur">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/business-analytics')} className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Analytics
+            </Button>
+            <div className="flex items-center gap-2">
+              <FileText className="h-6 w-6 text-primary" />
+              <h1 className="text-2xl font-bold">Custom Reports</h1>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground mt-2 ml-12">
+            Upload data sources and build custom dashboards with drag-and-drop widgets
+          </p>
+        </div>
+      </header>
+
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-6">
           {/* Data Source Upload Section */}
