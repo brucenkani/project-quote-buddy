@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Building2, Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
 
 interface BankAccount {
   id: string;
@@ -25,12 +27,11 @@ interface BankAccount {
 }
 
 export default function BankAccounts() {
-  const [accounts, setAccounts] = useState<BankAccount[]>(() => {
-    const saved = localStorage.getItem('bankAccounts');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const { activeCompany } = useCompany();
+  const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState<{
     accountName: string;
     bankName: string;
@@ -51,40 +52,117 @@ export default function BankAccounts() {
     openingBalance: 0,
   });
 
-  const saveToBankAccounts = (newAccounts: BankAccount[]) => {
-    setAccounts(newAccounts);
-    localStorage.setItem('bankAccounts', JSON.stringify(newAccounts));
+  useEffect(() => {
+    if (activeCompany) {
+      loadBankAccounts();
+    }
+  }, [activeCompany]);
+
+  const loadBankAccounts = async () => {
+    if (!activeCompany) return;
+
+    try {
+      setLoading(true);
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session?.user) {
+        toast.error('Please sign in to view bank accounts');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('bank_accounts')
+        .select('*')
+        .eq('company_id', activeCompany.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedAccounts: BankAccount[] = (data || []).map(acc => ({
+        id: acc.id,
+        accountName: acc.account_name,
+        bankName: acc.bank_name,
+        accountNumber: acc.account_number,
+        branchCode: acc.branch_code || '',
+        accountType: acc.account_type as 'checking' | 'savings' | 'credit',
+        currency: acc.currency,
+        ledgerAccount: acc.ledger_account,
+        openingBalance: Number(acc.opening_balance),
+        isActive: acc.is_active,
+        createdAt: acc.created_at,
+      }));
+
+      setAccounts(formattedAccounts);
+    } catch (error: any) {
+      toast.error('Failed to load bank accounts: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!activeCompany) {
+      toast.error('Please select a company first');
+      return;
+    }
+
     if (!formData.accountName || !formData.bankName || !formData.accountNumber || !formData.ledgerAccount) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    if (editingAccount) {
-      const updated = accounts.map(acc => 
-        acc.id === editingAccount.id 
-          ? { ...acc, ...formData }
-          : acc
-      );
-      saveToBankAccounts(updated);
-      toast.success('Bank account updated successfully');
-    } else {
-      const newAccount: BankAccount = {
-        id: crypto.randomUUID(),
-        ...formData,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-      };
-      saveToBankAccounts([...accounts, newAccount]);
-      toast.success('Bank account added successfully');
-    }
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session?.user) {
+        toast.error('Please sign in to manage bank accounts');
+        return;
+      }
 
-    setIsDialogOpen(false);
-    resetForm();
+      if (editingAccount) {
+        const { error } = await supabase
+          .from('bank_accounts')
+          .update({
+            account_name: formData.accountName,
+            bank_name: formData.bankName,
+            account_number: formData.accountNumber,
+            branch_code: formData.branchCode,
+            account_type: formData.accountType,
+            currency: formData.currency,
+            ledger_account: formData.ledgerAccount,
+            opening_balance: formData.openingBalance,
+          })
+          .eq('id', editingAccount.id);
+
+        if (error) throw error;
+        toast.success('Bank account updated successfully');
+      } else {
+        const { error } = await supabase
+          .from('bank_accounts')
+          .insert({
+            user_id: session.session.user.id,
+            company_id: activeCompany.id,
+            account_name: formData.accountName,
+            bank_name: formData.bankName,
+            account_number: formData.accountNumber,
+            branch_code: formData.branchCode,
+            account_type: formData.accountType,
+            currency: formData.currency,
+            ledger_account: formData.ledgerAccount,
+            opening_balance: formData.openingBalance,
+            current_balance: formData.openingBalance,
+          });
+
+        if (error) throw error;
+        toast.success('Bank account added successfully');
+      }
+
+      await loadBankAccounts();
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (error: any) {
+      toast.error('Failed to save bank account: ' + error.message);
+    }
   };
 
   const resetForm = () => {
@@ -116,19 +194,41 @@ export default function BankAccounts() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this bank account?')) {
-      saveToBankAccounts(accounts.filter(acc => acc.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this bank account?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('bank_accounts')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
       toast.success('Bank account deleted successfully');
+      await loadBankAccounts();
+    } catch (error: any) {
+      toast.error('Failed to delete bank account: ' + error.message);
     }
   };
 
-  const toggleActive = (id: string) => {
-    const updated = accounts.map(acc => 
-      acc.id === id ? { ...acc, isActive: !acc.isActive } : acc
-    );
-    saveToBankAccounts(updated);
-    toast.success('Account status updated');
+  const toggleActive = async (id: string) => {
+    try {
+      const account = accounts.find(acc => acc.id === id);
+      if (!account) return;
+
+      const { error } = await supabase
+        .from('bank_accounts')
+        .update({ is_active: !account.isActive })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast.success('Account status updated');
+      await loadBankAccounts();
+    } catch (error: any) {
+      toast.error('Failed to update account status: ' + error.message);
+    }
   };
 
   return (
@@ -290,7 +390,11 @@ export default function BankAccounts() {
           </CardHeader>
           
           <CardContent>
-            {accounts.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <p>Loading bank accounts...</p>
+              </div>
+            ) : accounts.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No bank accounts yet. Add your first bank account to get started.</p>
