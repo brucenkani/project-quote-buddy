@@ -12,6 +12,10 @@ export interface Widget {
     value?: string | number;
     data?: any[];
     color?: string;
+    dataKey?: string; // Which column to use for values
+    xAxisKey?: string; // Which column to use for labels/x-axis
+    metric?: string; // Which metric is being displayed
+    availableColumns?: string[]; // All available columns from data source
   };
 }
 
