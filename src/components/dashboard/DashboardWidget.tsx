@@ -205,6 +205,7 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
     // Formula-specific settings
     if (widget.type === 'formula') {
       const formulaType = widget.config.formulaType || 'SUM';
+      const needsCriteria = ['SUMIF', 'COUNTIF', 'SUMIFS', 'COUNTIFS', 'AVERAGEIFS'].includes(formulaType);
       const needsMultipleCriteria = ['SUMIFS', 'COUNTIFS', 'AVERAGEIFS'].includes(formulaType);
       
       return (
@@ -231,10 +232,10 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
             </Select>
           </div>
 
-          {needsMultipleCriteria ? (
+          {needsCriteria ? (
             <>
               <div className="space-y-2">
-                <Label>Sum/Count Range</Label>
+                <Label>{needsMultipleCriteria ? 'Sum/Count/Average Range' : 'Data Column'}</Label>
                 <Select
                   value={widget.config.dataKey || ''}
                   onValueChange={(value) => onUpdate({ 
@@ -243,7 +244,7 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                   })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select column to sum/count" />
+                    <SelectValue placeholder={needsMultipleCriteria ? "Select column to calculate" : "Select column"} />
                   </SelectTrigger>
                   <SelectContent>
                     {columns.map((col) => (
@@ -253,14 +254,14 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Criteria Column 1</Label>
+                <Label>Criteria Column{needsMultipleCriteria ? ' 1' : ''}</Label>
                 <Select
-                  value={widget.config.formulaParams?.criteriaCol1 || ''}
+                  value={widget.config.formulaParams?.criteriaCol1 || widget.config.formulaParams?.criteriaColumn || ''}
                   onValueChange={(value) => onUpdate({ 
                     ...widget, 
                     config: { 
                       ...widget.config, 
-                      formulaParams: { ...widget.config.formulaParams, criteriaCol1: value } 
+                      formulaParams: { ...widget.config.formulaParams, criteriaCol1: value, criteriaColumn: value } 
                     } 
                   })}
                 >
@@ -275,17 +276,17 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Criteria Value 1</Label>
+                <Label>Criteria Value{needsMultipleCriteria ? ' 1' : ''}</Label>
                 <Input
-                  value={widget.config.formulaParams?.criteriaVal1 || ''}
+                  value={widget.config.formulaParams?.criteriaVal1 || widget.config.formulaParams?.criteria || ''}
                   onChange={(e) => onUpdate({ 
                     ...widget, 
                     config: { 
                       ...widget.config, 
-                      formulaParams: { ...widget.config.formulaParams, criteriaVal1: e.target.value } 
+                      formulaParams: { ...widget.config.formulaParams, criteriaVal1: e.target.value, criteria: e.target.value } 
                     } 
                   })}
-                  placeholder="Enter criteria value"
+                  placeholder="Enter criteria (e.g., >100, =Active, ProductA)"
                 />
               </div>
             </>

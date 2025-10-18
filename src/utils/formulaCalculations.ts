@@ -29,13 +29,16 @@ export function calculateFormula(
 ): number {
   // Handle IFS formulas (SUMIFS, COUNTIFS, AVERAGEIFS)
   if (formulaType === 'SUMIFS' || formulaType === 'COUNTIFS' || formulaType === 'AVERAGEIFS') {
-    if (!params?.criteriaCol1 || params?.criteriaVal1 === undefined) {
+    const criteriaCol = params?.criteriaCol1 || params?.criteriaColumn;
+    const criteriaVal = params?.criteriaVal1 || params?.criteria;
+    
+    if (!criteriaCol || criteriaVal === undefined) {
       return 0;
     }
     
     const filteredData = data.filter(row => {
-      const cellValue = String(row[params.criteriaCol1] || '');
-      const criteriaValue = String(params.criteriaVal1);
+      const cellValue = String(row[criteriaCol] || '');
+      const criteriaValue = String(criteriaVal);
       return cellValue.toLowerCase().includes(criteriaValue.toLowerCase());
     });
     
@@ -54,6 +57,7 @@ export function calculateFormula(
       return values.length > 0 ? sum / values.length : 0;
     }
   }
+  
   const values = data
     .map(row => parseFloat(row[column]))
     .filter(val => !isNaN(val));
@@ -72,34 +76,44 @@ export function calculateFormula(
       return data.filter(row => row[column] != null && row[column] !== '').length;
     
     case 'COUNTIF':
-      if (!params?.criteria) return 0;
+      const countifCriteriaCol = params?.criteriaCol1 || params?.criteriaColumn || column;
+      const countifCriteria = params?.criteriaVal1 || params?.criteria;
+      if (!countifCriteria) return 0;
+      
       return data.filter(row => {
-        const val = row[column];
-        if (params.criteria.startsWith('>')) {
-          return parseFloat(val) > parseFloat(params.criteria.substring(1));
-        } else if (params.criteria.startsWith('<')) {
-          return parseFloat(val) < parseFloat(params.criteria.substring(1));
-        } else if (params.criteria.startsWith('=')) {
-          return val == params.criteria.substring(1);
+        const val = row[countifCriteriaCol];
+        if (countifCriteria.startsWith('>')) {
+          return parseFloat(val) > parseFloat(countifCriteria.substring(1));
+        } else if (countifCriteria.startsWith('<')) {
+          return parseFloat(val) < parseFloat(countifCriteria.substring(1));
+        } else if (countifCriteria.startsWith('=')) {
+          return val == countifCriteria.substring(1);
         }
-        return val == params.criteria;
+        return String(val).toLowerCase().includes(String(countifCriteria).toLowerCase());
       }).length;
     
     case 'SUMIF':
-      if (!params?.criteria) return 0;
+      const sumifCriteriaCol = params?.criteriaCol1 || params?.criteriaColumn || column;
+      const sumifCriteria = params?.criteriaVal1 || params?.criteria;
+      if (!sumifCriteria) return 0;
+      
       return data.reduce((sum, row) => {
-        const val = row[column];
-        const numVal = parseFloat(row[params.sumColumn || column]);
+        const criteriaValue = row[sumifCriteriaCol];
+        const numVal = parseFloat(row[column]);
         if (isNaN(numVal)) return sum;
         
-        if (params.criteria.startsWith('>')) {
-          return parseFloat(val) > parseFloat(params.criteria.substring(1)) ? sum + numVal : sum;
-        } else if (params.criteria.startsWith('<')) {
-          return parseFloat(val) < parseFloat(params.criteria.substring(1)) ? sum + numVal : sum;
-        } else if (params.criteria.startsWith('=')) {
-          return val == params.criteria.substring(1) ? sum + numVal : sum;
+        let matches = false;
+        if (sumifCriteria.startsWith('>')) {
+          matches = parseFloat(criteriaValue) > parseFloat(sumifCriteria.substring(1));
+        } else if (sumifCriteria.startsWith('<')) {
+          matches = parseFloat(criteriaValue) < parseFloat(sumifCriteria.substring(1));
+        } else if (sumifCriteria.startsWith('=')) {
+          matches = criteriaValue == sumifCriteria.substring(1);
+        } else {
+          matches = String(criteriaValue).toLowerCase().includes(String(sumifCriteria).toLowerCase());
         }
-        return val == params.criteria ? sum + numVal : sum;
+        
+        return matches ? sum + numVal : sum;
       }, 0);
     
     case 'MIN':
@@ -180,7 +194,7 @@ export function formatFormulaResult(value: number, formulaType: string): string 
     return `${(value * 100).toFixed(2)}%`;
   }
   
-  if (formulaType === 'COUNT' || formulaType === 'COUNTA' || formulaType === 'COUNTIF') {
+  if (formulaType === 'COUNT' || formulaType === 'COUNTA' || formulaType === 'COUNTIF' || formulaType === 'COUNTIFS') {
     return Math.round(value).toString();
   }
   
