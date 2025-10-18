@@ -518,6 +518,14 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                     </>
                   )}
                 </div>
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button variant="outline" onClick={() => setShowSettings(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={() => setShowSettings(false)}>
+                    OK
+                  </Button>
+                </div>
               </DialogContent>
             </Dialog>
             <Button variant="ghost" size="sm" onClick={() => onDelete(widget.id)}>
