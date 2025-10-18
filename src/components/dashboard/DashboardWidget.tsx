@@ -383,10 +383,13 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
         );
 
       case 'table':
-        const tableData = widget.config.data || [];
-        const tableColumns = widget.config.availableColumns || Object.keys(tableData[0] || {});
+        const rawTableData = transformedDataSource?.data || widget.config.data || [];
+        const tableColumns = widget.config.availableColumns || Object.keys(rawTableData[0] || {});
         const tableFontSize = Math.max(Math.min(widget.width / 60, 14), 10);
         const maxRows = Math.floor((widget.height - 80) / (tableFontSize * 2.5));
+        
+        // Use transformed data source directly for tables (no grouping)
+        const tableData = rawTableData;
         
         return (
           <div className="overflow-auto h-full" style={{ fontSize: `${tableFontSize}px` }}>
