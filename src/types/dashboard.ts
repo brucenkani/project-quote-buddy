@@ -19,7 +19,6 @@ export interface Widget {
     availableColumns?: string[]; // All available columns from data source
     formulaType?: string; // Type of formula (SUM, COUNT, NPV, etc.)
     formulaParams?: any; // Parameters for the formula
-    metricType?: string; // Type of metric for pie charts (count, percentage, sum, average)
   };
 }
 
