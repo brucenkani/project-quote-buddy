@@ -110,27 +110,31 @@ export default function FinancialForecasting() {
     setDataRows(data);
   };
 
-  const getColumnValue = (columnName: string, rowIndex: number = 0): number => {
-    if (!dataRows.length || !columnName) return 0;
-    const value = dataRows[rowIndex]?.[columnName];
-    return parseFloat(value) || 0;
+  const getColumnValueOrDirect = (columnName: string, directValue: string, rowIndex: number = 0): number => {
+    // If we have data rows and a column is selected, use column value
+    if (dataRows.length && columnName && dataColumns.includes(columnName)) {
+      const value = dataRows[rowIndex]?.[columnName];
+      return parseFloat(value) || 0;
+    }
+    // Otherwise use direct input value
+    return parseFloat(directValue) || 0;
   };
 
   const calculateFV = () => {
-    if (!dataRows.length) {
+    const rate = getColumnValueOrDirect(fvRate, fvRate) / 100;
+    const nper = getColumnValueOrDirect(fvNper, fvNper);
+    const pmt = getColumnValueOrDirect(fvPmt, fvPmt);
+    const pv = getColumnValueOrDirect(fvPv, fvPv);
+    const frequency = parseInt(fvFrequency);
+
+    if (isNaN(rate) || isNaN(nper) || isNaN(frequency)) {
       toast({
-        title: "No Data",
-        description: "Please select a data source first",
+        title: "Invalid Input",
+        description: "Please provide valid values for Rate and Nper",
         variant: "destructive"
       });
       return;
     }
-
-    const rate = getColumnValue(fvRate) / 100;
-    const nper = getColumnValue(fvNper);
-    const pmt = fvPmt ? getColumnValue(fvPmt) : 0;
-    const pv = fvPv ? getColumnValue(fvPv) : 0;
-    const frequency = parseInt(fvFrequency);
 
     const result = calculateFormula('FV', [], '', {
       rate,
@@ -144,20 +148,20 @@ export default function FinancialForecasting() {
   };
 
   const calculatePV = () => {
-    if (!dataRows.length) {
+    const rate = getColumnValueOrDirect(pvRate, pvRate) / 100;
+    const nper = getColumnValueOrDirect(pvNper, pvNper);
+    const pmt = getColumnValueOrDirect(pvPmt, pvPmt);
+    const fv = getColumnValueOrDirect(pvFv, pvFv);
+    const frequency = parseInt(pvFrequency);
+
+    if (isNaN(rate) || isNaN(nper) || isNaN(frequency)) {
       toast({
-        title: "No Data",
-        description: "Please select a data source first",
+        title: "Invalid Input",
+        description: "Please provide valid values for Rate and Nper",
         variant: "destructive"
       });
       return;
     }
-
-    const rate = getColumnValue(pvRate) / 100;
-    const nper = getColumnValue(pvNper);
-    const pmt = pvPmt ? getColumnValue(pvPmt) : 0;
-    const fv = pvFv ? getColumnValue(pvFv) : 0;
-    const frequency = parseInt(pvFrequency);
 
     const result = calculateFormula('PV', [], '', {
       rate,
@@ -171,20 +175,20 @@ export default function FinancialForecasting() {
   };
 
   const calculatePMT = () => {
-    if (!dataRows.length) {
+    const rate = getColumnValueOrDirect(pmtRate, pmtRate) / 100;
+    const nper = getColumnValueOrDirect(pmtNper, pmtNper);
+    const pv = getColumnValueOrDirect(pmtPv, pmtPv);
+    const fv = getColumnValueOrDirect(pmtFv, pmtFv);
+    const frequency = parseInt(pmtFrequency);
+
+    if (isNaN(rate) || isNaN(nper) || isNaN(pv) || isNaN(frequency)) {
       toast({
-        title: "No Data",
-        description: "Please select a data source first",
+        title: "Invalid Input",
+        description: "Please provide valid values for Rate, Nper, and PV",
         variant: "destructive"
       });
       return;
     }
-
-    const rate = getColumnValue(pmtRate) / 100;
-    const nper = getColumnValue(pmtNper);
-    const pv = getColumnValue(pmtPv);
-    const fv = pmtFv ? getColumnValue(pmtFv) : 0;
-    const frequency = parseInt(pmtFrequency);
 
     const result = calculateFormula('PMT', [], '', {
       rate,
@@ -198,20 +202,20 @@ export default function FinancialForecasting() {
   };
 
   const calculateRATE = () => {
-    if (!dataRows.length) {
+    const nper = getColumnValueOrDirect(rateNper, rateNper);
+    const pmt = getColumnValueOrDirect(ratePmt, ratePmt);
+    const pv = getColumnValueOrDirect(ratePv, ratePv);
+    const fv = getColumnValueOrDirect(rateFv, rateFv);
+    const frequency = parseInt(rateFrequency);
+
+    if (isNaN(nper) || isNaN(pv) || isNaN(frequency)) {
       toast({
-        title: "No Data",
-        description: "Please select a data source first",
+        title: "Invalid Input",
+        description: "Please provide valid values for Nper and PV",
         variant: "destructive"
       });
       return;
     }
-
-    const nper = getColumnValue(rateNper);
-    const pmt = ratePmt ? getColumnValue(ratePmt) : 0;
-    const pv = getColumnValue(ratePv);
-    const fv = rateFv ? getColumnValue(rateFv) : 0;
-    const frequency = parseInt(rateFrequency);
 
     const result = calculateFormula('RATE', [], '', {
       nper,
@@ -494,17 +498,18 @@ export default function FinancialForecasting() {
               {/* Data Source Selector */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Select Data Source</CardTitle>
-                  <CardDescription>Choose a data source to use column values in financial formulas</CardDescription>
+                  <CardTitle>Select Data Source (Optional)</CardTitle>
+                  <CardDescription>Choose a data source to use column values, or enter values directly below</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
                     <Label>Data Source</Label>
                     <Select value={selectedDataSource} onValueChange={setSelectedDataSource}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a data source..." />
+                        <SelectValue placeholder="None - Use direct input" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="">None - Use direct input</SelectItem>
                         {dataSources.map((ds) => (
                           <SelectItem key={ds.id} value={ds.id}>
                             {ds.name} ({ds.row_count} rows)
@@ -524,68 +529,109 @@ export default function FinancialForecasting() {
               <Card>
                 <CardHeader>
                   <CardTitle>Financial Functions (Excel-style)</CardTitle>
-                  <CardDescription>Select data columns to use in financial formulas. The frequency divides the annual interest rate accordingly.</CardDescription>
+                  <CardDescription>
+                    {dataColumns.length > 0 
+                      ? "Select data columns OR type values directly. Frequency divides the annual interest rate." 
+                      : "Enter values directly. Frequency divides the annual interest rate."}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* FV Calculator */}
                   <div className="p-4 border rounded-lg space-y-4">
                     <h3 className="font-semibold text-lg">FV - Future Value</h3>
                     <p className="text-sm text-muted-foreground">Formula: =FV(rate, nper, pmt, [pv])</p>
-                    <p className="text-xs text-muted-foreground">Select columns containing: annual interest rate, number of periods, payment amount, present value</p>
+                    <p className="text-xs text-muted-foreground">
+                      {dataColumns.length > 0 
+                        ? "Select columns or type values: annual interest rate (%), number of periods (years), payment amount, present value"
+                        : "Enter values: annual interest rate (%), number of periods (years), payment amount, present value"}
+                    </p>
                     <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
                       <div className="space-y-2">
-                        <Label>Rate Column (Annual %)</Label>
-                        <Select value={fvRate} onValueChange={setFvRate} disabled={!dataColumns.length}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select column..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {dataColumns.map((col) => (
-                              <SelectItem key={col} value={col}>{col}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>Rate (Annual %)</Label>
+                        {dataColumns.length > 0 ? (
+                          <Select value={fvRate} onValueChange={setFvRate}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Column or type value..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {dataColumns.map((col) => (
+                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <Input 
+                          type="number" 
+                          step="0.01" 
+                          value={fvRate} 
+                          onChange={(e) => setFvRate(e.target.value)}
+                          placeholder="e.g., 8.5"
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label>Nper Column (Years)</Label>
-                        <Select value={fvNper} onValueChange={setFvNper} disabled={!dataColumns.length}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select column..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {dataColumns.map((col) => (
-                              <SelectItem key={col} value={col}>{col}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>Nper (Years)</Label>
+                        {dataColumns.length > 0 ? (
+                          <Select value={fvNper} onValueChange={setFvNper}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Column or type value..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {dataColumns.map((col) => (
+                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <Input 
+                          type="number" 
+                          value={fvNper} 
+                          onChange={(e) => setFvNper(e.target.value)}
+                          placeholder="e.g., 10"
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label>Pmt Column (Payment)</Label>
-                        <Select value={fvPmt} onValueChange={setFvPmt} disabled={!dataColumns.length}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select column..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">None</SelectItem>
-                            {dataColumns.map((col) => (
-                              <SelectItem key={col} value={col}>{col}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>Pmt (Payment) - Optional</Label>
+                        {dataColumns.length > 0 ? (
+                          <Select value={fvPmt} onValueChange={setFvPmt}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Column or type value..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">None</SelectItem>
+                              {dataColumns.map((col) => (
+                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <Input 
+                          type="number" 
+                          value={fvPmt} 
+                          onChange={(e) => setFvPmt(e.target.value)}
+                          placeholder="e.g., -1000"
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label>PV Column (Present Value)</Label>
-                        <Select value={fvPv} onValueChange={setFvPv} disabled={!dataColumns.length}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select column..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">None</SelectItem>
-                            {dataColumns.map((col) => (
-                              <SelectItem key={col} value={col}>{col}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>PV (Present Value) - Optional</Label>
+                        {dataColumns.length > 0 ? (
+                          <Select value={fvPv} onValueChange={setFvPv}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Column or type value..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">None</SelectItem>
+                              {dataColumns.map((col) => (
+                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <Input 
+                          type="number" 
+                          value={fvPv} 
+                          onChange={(e) => setFvPv(e.target.value)}
+                          placeholder="e.g., 0"
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label>Frequency (divides rate)</Label>
@@ -617,61 +663,98 @@ export default function FinancialForecasting() {
                   <div className="p-4 border rounded-lg space-y-4">
                     <h3 className="font-semibold text-lg">PV - Present Value</h3>
                     <p className="text-sm text-muted-foreground">Formula: =PV(rate, nper, pmt, [fv])</p>
-                    <p className="text-xs text-muted-foreground">Select columns containing: annual interest rate, number of periods, payment amount, future value</p>
+                    <p className="text-xs text-muted-foreground">
+                      {dataColumns.length > 0 
+                        ? "Select columns or type values: annual interest rate (%), number of periods (years), payment amount, future value"
+                        : "Enter values: annual interest rate (%), number of periods (years), payment amount, future value"}
+                    </p>
                     <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
                       <div className="space-y-2">
-                        <Label>Rate Column (Annual %)</Label>
-                        <Select value={pvRate} onValueChange={setPvRate} disabled={!dataColumns.length}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select column..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {dataColumns.map((col) => (
-                              <SelectItem key={col} value={col}>{col}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>Rate (Annual %)</Label>
+                        {dataColumns.length > 0 ? (
+                          <Select value={pvRate} onValueChange={setPvRate}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Column or type value..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {dataColumns.map((col) => (
+                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <Input 
+                          type="number" 
+                          step="0.01" 
+                          value={pvRate} 
+                          onChange={(e) => setPvRate(e.target.value)}
+                          placeholder="e.g., 8.5"
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label>Nper Column (Years)</Label>
-                        <Select value={pvNper} onValueChange={setPvNper} disabled={!dataColumns.length}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select column..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {dataColumns.map((col) => (
-                              <SelectItem key={col} value={col}>{col}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>Nper (Years)</Label>
+                        {dataColumns.length > 0 ? (
+                          <Select value={pvNper} onValueChange={setPvNper}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Column or type value..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {dataColumns.map((col) => (
+                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <Input 
+                          type="number" 
+                          value={pvNper} 
+                          onChange={(e) => setPvNper(e.target.value)}
+                          placeholder="e.g., 10"
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label>Pmt Column (Payment)</Label>
-                        <Select value={pvPmt} onValueChange={setPvPmt} disabled={!dataColumns.length}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select column..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">None</SelectItem>
-                            {dataColumns.map((col) => (
-                              <SelectItem key={col} value={col}>{col}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>Pmt (Payment) - Optional</Label>
+                        {dataColumns.length > 0 ? (
+                          <Select value={pvPmt} onValueChange={setPvPmt}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Column or type value..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">None</SelectItem>
+                              {dataColumns.map((col) => (
+                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <Input 
+                          type="number" 
+                          value={pvPmt} 
+                          onChange={(e) => setPvPmt(e.target.value)}
+                          placeholder="e.g., -1000"
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label>FV Column (Future Value)</Label>
-                        <Select value={pvFv} onValueChange={setPvFv} disabled={!dataColumns.length}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select column..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">None</SelectItem>
-                            {dataColumns.map((col) => (
-                              <SelectItem key={col} value={col}>{col}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>FV (Future Value) - Optional</Label>
+                        {dataColumns.length > 0 ? (
+                          <Select value={pvFv} onValueChange={setPvFv}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Column or type value..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">None</SelectItem>
+                              {dataColumns.map((col) => (
+                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <Input 
+                          type="number" 
+                          value={pvFv} 
+                          onChange={(e) => setPvFv(e.target.value)}
+                          placeholder="e.g., 0"
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label>Frequency (divides rate)</Label>
@@ -703,60 +786,97 @@ export default function FinancialForecasting() {
                   <div className="p-4 border rounded-lg space-y-4">
                     <h3 className="font-semibold text-lg">PMT - Payment</h3>
                     <p className="text-sm text-muted-foreground">Formula: =PMT(rate, nper, pv, [fv])</p>
-                    <p className="text-xs text-muted-foreground">Select columns containing: annual interest rate, number of periods, present value (loan amount), future value</p>
+                    <p className="text-xs text-muted-foreground">
+                      {dataColumns.length > 0 
+                        ? "Select columns or type values: annual interest rate (%), number of periods (years), present value (loan amount), future value"
+                        : "Enter values: annual interest rate (%), number of periods (years), present value (loan amount), future value"}
+                    </p>
                     <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
                       <div className="space-y-2">
-                        <Label>Rate Column (Annual %)</Label>
-                        <Select value={pmtRate} onValueChange={setPmtRate} disabled={!dataColumns.length}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select column..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {dataColumns.map((col) => (
-                              <SelectItem key={col} value={col}>{col}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>Rate (Annual %)</Label>
+                        {dataColumns.length > 0 ? (
+                          <Select value={pmtRate} onValueChange={setPmtRate}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Column or type value..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {dataColumns.map((col) => (
+                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <Input 
+                          type="number" 
+                          step="0.01" 
+                          value={pmtRate} 
+                          onChange={(e) => setPmtRate(e.target.value)}
+                          placeholder="e.g., 7.5"
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label>Nper Column (Years)</Label>
-                        <Select value={pmtNper} onValueChange={setPmtNper} disabled={!dataColumns.length}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select column..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {dataColumns.map((col) => (
-                              <SelectItem key={col} value={col}>{col}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>Nper (Years)</Label>
+                        {dataColumns.length > 0 ? (
+                          <Select value={pmtNper} onValueChange={setPmtNper}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Column or type value..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {dataColumns.map((col) => (
+                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <Input 
+                          type="number" 
+                          value={pmtNper} 
+                          onChange={(e) => setPmtNper(e.target.value)}
+                          placeholder="e.g., 30"
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label>PV Column (Loan Amount)</Label>
-                        <Select value={pmtPv} onValueChange={setPmtPv} disabled={!dataColumns.length}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select column..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {dataColumns.map((col) => (
-                              <SelectItem key={col} value={col}>{col}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>PV (Loan Amount)</Label>
+                        {dataColumns.length > 0 ? (
+                          <Select value={pmtPv} onValueChange={setPmtPv}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Column or type value..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {dataColumns.map((col) => (
+                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <Input 
+                          type="number" 
+                          value={pmtPv} 
+                          onChange={(e) => setPmtPv(e.target.value)}
+                          placeholder="e.g., 200000"
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label>FV Column (Future Value)</Label>
-                        <Select value={pmtFv} onValueChange={setPmtFv} disabled={!dataColumns.length}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select column..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">None</SelectItem>
-                            {dataColumns.map((col) => (
-                              <SelectItem key={col} value={col}>{col}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>FV (Future Value) - Optional</Label>
+                        {dataColumns.length > 0 ? (
+                          <Select value={pmtFv} onValueChange={setPmtFv}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Column or type value..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">None</SelectItem>
+                              {dataColumns.map((col) => (
+                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <Input 
+                          type="number" 
+                          value={pmtFv} 
+                          onChange={(e) => setPmtFv(e.target.value)}
+                          placeholder="e.g., 0"
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label>Frequency (divides rate)</Label>
@@ -788,61 +908,97 @@ export default function FinancialForecasting() {
                   <div className="p-4 border rounded-lg space-y-4">
                     <h3 className="font-semibold text-lg">RATE - Interest Rate</h3>
                     <p className="text-sm text-muted-foreground">Formula: =RATE(nper, pmt, pv, [fv])</p>
-                    <p className="text-xs text-muted-foreground">Select columns containing: number of periods, payment amount, present value (loan amount), future value</p>
+                    <p className="text-xs text-muted-foreground">
+                      {dataColumns.length > 0 
+                        ? "Select columns or type values: number of periods (years), payment amount, present value (loan amount), future value"
+                        : "Enter values: number of periods (years), payment amount, present value (loan amount), future value"}
+                    </p>
                     <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
                       <div className="space-y-2">
-                        <Label>Nper Column (Years)</Label>
-                        <Select value={rateNper} onValueChange={setRateNper} disabled={!dataColumns.length}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select column..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {dataColumns.map((col) => (
-                              <SelectItem key={col} value={col}>{col}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>Nper (Years)</Label>
+                        {dataColumns.length > 0 ? (
+                          <Select value={rateNper} onValueChange={setRateNper}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Column or type value..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {dataColumns.map((col) => (
+                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <Input 
+                          type="number" 
+                          value={rateNper} 
+                          onChange={(e) => setRateNper(e.target.value)}
+                          placeholder="e.g., 30"
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label>Pmt Column (Payment)</Label>
-                        <Select value={ratePmt} onValueChange={setRatePmt} disabled={!dataColumns.length}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select column..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">None</SelectItem>
-                            {dataColumns.map((col) => (
-                              <SelectItem key={col} value={col}>{col}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>Pmt (Payment) - Optional</Label>
+                        {dataColumns.length > 0 ? (
+                          <Select value={ratePmt} onValueChange={setRatePmt}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Column or type value..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">None</SelectItem>
+                              {dataColumns.map((col) => (
+                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <Input 
+                          type="number" 
+                          value={ratePmt} 
+                          onChange={(e) => setRatePmt(e.target.value)}
+                          placeholder="e.g., -1200"
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label>PV Column (Loan Amount)</Label>
-                        <Select value={ratePv} onValueChange={setRatePv} disabled={!dataColumns.length}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select column..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {dataColumns.map((col) => (
-                              <SelectItem key={col} value={col}>{col}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>PV (Loan Amount)</Label>
+                        {dataColumns.length > 0 ? (
+                          <Select value={ratePv} onValueChange={setRatePv}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Column or type value..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {dataColumns.map((col) => (
+                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <Input 
+                          type="number" 
+                          value={ratePv} 
+                          onChange={(e) => setRatePv(e.target.value)}
+                          placeholder="e.g., 200000"
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label>FV Column (Future Value)</Label>
-                        <Select value={rateFv} onValueChange={setRateFv} disabled={!dataColumns.length}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select column..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="">None</SelectItem>
-                            {dataColumns.map((col) => (
-                              <SelectItem key={col} value={col}>{col}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label>FV (Future Value) - Optional</Label>
+                        {dataColumns.length > 0 ? (
+                          <Select value={rateFv} onValueChange={setRateFv}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Column or type value..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">None</SelectItem>
+                              {dataColumns.map((col) => (
+                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        <Input 
+                          type="number" 
+                          value={rateFv} 
+                          onChange={(e) => setRateFv(e.target.value)}
+                          placeholder="e.g., 0"
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label>Frequency (divides rate)</Label>
