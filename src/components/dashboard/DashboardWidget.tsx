@@ -188,21 +188,26 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
         const rawPieData = transformedDataSource?.data || widget.config.data || [];
         const pieNameKey = widget.config.xAxisKey || 'name';
         const pieValueKey = widget.config.dataKey || 'value';
-        const pieValueType = widget.config.valueType || 'sum';
+        const pieValueType = widget.config.valueType || 'count';
         
         // Group data by category column and aggregate based on valueType
-        const groupedData = pieNameKey && pieValueKey && rawPieData.length > 0 ? (() => {
+        const groupedData = pieNameKey && rawPieData.length > 0 ? (() => {
           const groups: { [key: string]: number[] } = {};
           
           rawPieData.forEach((row: any) => {
             const categoryValue = String(row[pieNameKey] || 'Unknown');
-            const numericValue = Number(row[pieValueKey]) || 0;
+            const numericValue = pieValueKey ? (Number(row[pieValueKey]) || 0) : 1;
             
             if (!groups[categoryValue]) {
               groups[categoryValue] = [];
             }
             groups[categoryValue].push(numericValue);
           });
+          
+          // Calculate total for percentage
+          const allValues = Object.values(groups).flat();
+          const grandTotal = allValues.reduce((sum, val) => sum + val, 0);
+          const totalCount = allValues.length;
           
           return Object.entries(groups).map(([category, values]) => {
             let calculatedValue = 0;
@@ -224,11 +229,11 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                 calculatedValue = Math.max(...values);
                 break;
               case 'percentage':
-                const total = Object.values(groups).flat().reduce((sum, val) => sum + val, 0);
-                calculatedValue = total > 0 ? (values.reduce((sum, val) => sum + val, 0) / total) * 100 : 0;
+                // Calculate percentage based on count
+                calculatedValue = totalCount > 0 ? (values.length / totalCount) * 100 : 0;
                 break;
               default:
-                calculatedValue = values.reduce((sum, val) => sum + val, 0);
+                calculatedValue = values.length;
             }
             
             return {
@@ -238,7 +243,7 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
           });
         })() : [];
         
-        const pieRadius = Math.min(widget.width, widget.height) * 0.3;
+        const pieRadius = Math.min(widget.width, widget.height) * 0.25;
         
         return groupedData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
@@ -252,7 +257,7 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                 nameKey="name"
                 label={(entry) => {
                   const value = entry.value;
-                  return pieValueType === 'percentage' ? `${value.toFixed(1)}%` : value;
+                  return pieValueType === 'percentage' ? `${value.toFixed(1)}%` : value.toFixed(0);
                 }}
               >
                 {groupedData.map((entry, index) => (
@@ -261,7 +266,7 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
               </Pie>
               <Tooltip 
                 formatter={(value: any) => {
-                  return pieValueType === 'percentage' ? `${Number(value).toFixed(1)}%` : value;
+                  return pieValueType === 'percentage' ? `${Number(value).toFixed(1)}%` : Number(value).toFixed(0);
                 }}
               />
               <Legend />
