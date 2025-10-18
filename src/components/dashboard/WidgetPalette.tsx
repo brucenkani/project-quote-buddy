@@ -1,4 +1,4 @@
-import { Type, BarChart3, LineChart, PieChart, Table, Hash, TrendingUp } from 'lucide-react';
+import { Type, BarChart3, LineChart, PieChart, Table, Hash, TrendingUp, Calculator } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { WidgetType } from '@/types/dashboard';
 
@@ -10,6 +10,7 @@ const widgetTypes = [
   { type: 'text' as WidgetType, icon: Type, label: 'Text Field', color: 'text-blue-500' },
   { type: 'kpi' as WidgetType, icon: TrendingUp, label: 'KPI Card', color: 'text-green-500' },
   { type: 'metric' as WidgetType, icon: Hash, label: 'Metric', color: 'text-purple-500' },
+  { type: 'formula' as WidgetType, icon: Calculator, label: 'Formula/Function', color: 'text-amber-500' },
   { type: 'chart-bar' as WidgetType, icon: BarChart3, label: 'Bar Chart', color: 'text-orange-500' },
   { type: 'chart-line' as WidgetType, icon: LineChart, label: 'Line Chart', color: 'text-pink-500' },
   { type: 'chart-pie' as WidgetType, icon: PieChart, label: 'Pie Chart', color: 'text-indigo-500' },

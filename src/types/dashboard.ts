@@ -1,4 +1,4 @@
-export type WidgetType = 'text' | 'kpi' | 'chart-bar' | 'chart-line' | 'chart-pie' | 'table' | 'metric';
+export type WidgetType = 'text' | 'kpi' | 'chart-bar' | 'chart-line' | 'chart-pie' | 'table' | 'metric' | 'formula';
 
 export interface Widget {
   id: string;
@@ -17,6 +17,8 @@ export interface Widget {
     xAxisKey?: string; // Which column to use for labels/x-axis
     metric?: string; // Which metric is being displayed
     availableColumns?: string[]; // All available columns from data source
+    formulaType?: string; // Type of formula (SUM, COUNT, NPV, etc.)
+    formulaParams?: any; // Parameters for the formula
   };
 }
 

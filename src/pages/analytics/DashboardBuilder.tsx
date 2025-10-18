@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { DashboardExport } from '@/components/dashboard/DashboardExport';
 import { supabase } from '@/integrations/supabase/client';
 import { WidgetPalette } from '@/components/dashboard/WidgetPalette';
 import { DashboardWidget } from '@/components/dashboard/DashboardWidget';
@@ -162,10 +163,13 @@ export default function DashboardBuilder() {
               </Button>
               <h1 className="text-2xl font-bold">{dashboard.name}</h1>
             </div>
-            <Button onClick={handleSave}>
-              <Save className="h-4 w-4 mr-2" />
-              Save Dashboard
-            </Button>
+            <div className="flex gap-2">
+              <DashboardExport dashboard={dashboard} />
+              <Button onClick={handleSave}>
+                <Save className="h-4 w-4 mr-2" />
+                Save Report
+              </Button>
+            </div>
           </div>
         </div>
       </header>

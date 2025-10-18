@@ -8,6 +8,7 @@ import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tool
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { calculateFormula, formatFormulaResult, formulaFunctions } from '@/utils/formulaCalculations';
 
 interface DashboardWidgetProps {
   widget: Widget;
@@ -54,6 +55,10 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
       updatedConfig.value = total;
       updatedConfig.metric = numericColumn;
       updatedConfig.availableColumns = columns;
+    } else if (widget.type === 'formula') {
+      updatedConfig.availableColumns = columns;
+      updatedConfig.formulaType = 'SUM';
+      updatedConfig.dataKey = columns[1] || columns[0];
     }
 
     onUpdate({ 
@@ -93,6 +98,22 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">{widget.config.title || 'Metric'}</span>
             <span className="text-2xl font-bold">{widget.config.value || '0'}</span>
+          </div>
+        );
+
+      case 'formula':
+        const widgetData = widgetDataSource?.data || [];
+        const formulaColumn = widget.config.dataKey || '';
+        const formulaType = widget.config.formulaType || 'SUM';
+        const result = widgetData.length > 0 && formulaColumn 
+          ? calculateFormula(formulaType, widgetData, formulaColumn, widget.config.formulaParams)
+          : 0;
+        
+        return (
+          <div className="text-center">
+            <div className="text-sm text-muted-foreground mb-2">{formulaType}</div>
+            <div className="text-4xl font-bold text-primary">{formatFormulaResult(result, formulaType)}</div>
+            <p className="text-sm text-muted-foreground mt-2">{formulaColumn || 'Select column'}</p>
           </div>
         );
 
@@ -246,6 +267,50 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
 
                       {widget.type !== 'text' && widget.config.availableColumns && widget.config.availableColumns.length > 0 && (
                         <>
+                          {widget.type === 'formula' && (
+                            <>
+                              <div className="space-y-2">
+                                <Label>Formula Type</Label>
+                                <Select
+                                  value={widget.config.formulaType || 'SUM'}
+                                  onValueChange={(value) => onUpdate({ 
+                                    ...widget, 
+                                    config: { ...widget.config, formulaType: value } 
+                                  })}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select formula" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Object.entries(formulaFunctions).map(([key, desc]) => (
+                                      <SelectItem key={key} value={key}>
+                                        {key} - {desc}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Data Column</Label>
+                                <Select
+                                  value={widget.config.dataKey || ''}
+                                  onValueChange={(value) => onUpdate({ 
+                                    ...widget, 
+                                    config: { ...widget.config, dataKey: value } 
+                                  })}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select column" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {widget.config.availableColumns?.map((col) => (
+                                      <SelectItem key={col} value={col}>{col}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </>
+                          )}
                           {(widget.type.startsWith('chart-') || widget.type === 'table') && (
                             <>
                               <div className="space-y-2">
