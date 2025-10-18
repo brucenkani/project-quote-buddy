@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +17,13 @@ export default function CustomReports() {
   const [customDashboards, setCustomDashboards] = useState<any[]>([]);
   const [selectedDashboard, setSelectedDashboard] = useState<string | null>(null);
   const [newDashboardName, setNewDashboardName] = useState('');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('customDashboards');
+    if (saved) {
+      setCustomDashboards(JSON.parse(saved));
+    }
+  }, []);
   const [reportConfig, setReportConfig] = useState({
     name: '',
     dataSource: 'sales',
@@ -55,9 +62,13 @@ export default function CustomReports() {
       id: Date.now().toString(),
       name: `${template.name} - Copy`,
       templateId: template.id,
+      widgets: [],
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
-    setCustomDashboards([...customDashboards, newDashboard]);
+    const updated = [...customDashboards, newDashboard];
+    setCustomDashboards(updated);
+    localStorage.setItem('customDashboards', JSON.stringify(updated));
     toast({
       title: 'Dashboard Created',
       description: `${template.name} has been added to your dashboards.`,
@@ -76,9 +87,13 @@ export default function CustomReports() {
     const newDashboard = {
       id: Date.now().toString(),
       name: newDashboardName,
+      widgets: [],
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
-    setCustomDashboards([...customDashboards, newDashboard]);
+    const updated = [...customDashboards, newDashboard];
+    setCustomDashboards(updated);
+    localStorage.setItem('customDashboards', JSON.stringify(updated));
     setNewDashboardName('');
     toast({
       title: 'Dashboard Created',
@@ -87,7 +102,9 @@ export default function CustomReports() {
   };
 
   const handleDeleteDashboard = (id: string) => {
-    setCustomDashboards(customDashboards.filter(d => d.id !== id));
+    const updated = customDashboards.filter(d => d.id !== id);
+    setCustomDashboards(updated);
+    localStorage.setItem('customDashboards', JSON.stringify(updated));
     toast({
       title: 'Dashboard Deleted',
       description: 'The dashboard has been removed.',
@@ -195,18 +212,27 @@ export default function CustomReports() {
                 ) : (
                   <div className="space-y-2">
                     {customDashboards.map((dashboard) => (
-                      <div key={dashboard.id} className="p-4 border rounded-lg flex justify-between items-center">
+                      <div 
+                        key={dashboard.id} 
+                        className="p-4 border rounded-lg flex justify-between items-center hover:border-primary/50 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/analytics/dashboard-builder/${dashboard.id}`)}
+                      >
                         <div>
                           <h3 className="font-semibold">{dashboard.name}</h3>
                           <p className="text-sm text-muted-foreground">
                             Created {new Date(dashboard.createdAt).toLocaleDateString()}
+                            {dashboard.widgets && <> • {dashboard.widgets.length} widgets</>}
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            <Settings className="h-4 w-4" />
-                          </Button>
-                          <Button variant="destructive" size="sm" onClick={() => handleDeleteDashboard(dashboard.id)}>
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteDashboard(dashboard.id);
+                            }}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
