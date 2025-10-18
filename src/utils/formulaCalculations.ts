@@ -175,6 +175,11 @@ export function calculateFormula(
 }
 
 export function formatFormulaResult(value: number, formulaType: string): string {
+  // Handle invalid numbers
+  if (!isFinite(value) || isNaN(value)) {
+    return '0';
+  }
+  
   if (formulaType === 'IRR' || formulaType === 'RATE') {
     return `${(value * 100).toFixed(2)}%`;
   }

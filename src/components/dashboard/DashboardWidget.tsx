@@ -88,6 +88,7 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
   const renderContent = () => {
     switch (widget.type) {
       case 'text':
+        const textFontSize = Math.max(Math.min(widget.width / 25, 18), 12);
         return isEditing ? (
           <Input
             value={widget.config.value as string || ''}
@@ -95,26 +96,38 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
             placeholder="Enter text..."
             onBlur={() => setIsEditing(false)}
             autoFocus
+            style={{ fontSize: `${textFontSize}px` }}
           />
         ) : (
-          <p className="text-muted-foreground" onClick={() => setIsEditing(true)}>
+          <p 
+            className="text-muted-foreground break-words" 
+            onClick={() => setIsEditing(true)}
+            style={{ fontSize: `${textFontSize}px` }}
+          >
             {widget.config.value || 'Click to edit text'}
           </p>
         );
 
       case 'kpi':
+        const kpiSize = Math.min(widget.width, widget.height);
+        const kpiFontSize = Math.max(Math.min(kpiSize / 6, 56), 24);
         return (
-          <div className="text-center">
-            <div className="text-4xl font-bold text-primary">{widget.config.value || '0'}</div>
+          <div className="text-center h-full flex flex-col justify-center">
+            <div className="font-bold text-primary" style={{ fontSize: `${kpiFontSize}px` }}>
+              {widget.config.value || '0'}
+            </div>
             <p className="text-sm text-muted-foreground mt-2">{widget.config.title || 'KPI Value'}</p>
           </div>
         );
 
       case 'metric':
+        const metricFontSize = Math.max(Math.min(widget.width / 12, 32), 16);
         return (
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between h-full px-2">
             <span className="text-sm font-medium">{widget.config.title || 'Metric'}</span>
-            <span className="text-2xl font-bold">{widget.config.value || '0'}</span>
+            <span className="font-bold" style={{ fontSize: `${metricFontSize}px` }}>
+              {widget.config.value || '0'}
+            </span>
           </div>
         );
 
@@ -126,11 +139,16 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
           ? calculateFormula(formulaType, widgetData, formulaColumn, widget.config.formulaParams)
           : 0;
         
+        const formulaSize = Math.min(widget.width, widget.height);
+        const formulaFontSize = Math.max(Math.min(formulaSize / 6, 56), 24);
+        
         return (
-          <div className="text-center">
-            <div className="text-sm text-muted-foreground mb-2">{formulaType}</div>
-            <div className="text-4xl font-bold text-primary">{formatFormulaResult(result, formulaType)}</div>
-            <p className="text-sm text-muted-foreground mt-2">{formulaColumn || 'Select column'}</p>
+          <div className="text-center h-full flex flex-col justify-center">
+            <div className="text-xs text-muted-foreground mb-2">{formulaType}</div>
+            <div className="font-bold text-primary" style={{ fontSize: `${formulaFontSize}px` }}>
+              {formatFormulaResult(result, formulaType)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2 truncate px-2">{formulaColumn || 'Select column'}</p>
           </div>
         );
 
@@ -187,19 +205,22 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
       case 'table':
         const tableData = widget.config.data || [];
         const tableColumns = widget.config.availableColumns || Object.keys(tableData[0] || {});
+        const tableFontSize = Math.max(Math.min(widget.width / 60, 14), 10);
+        const maxRows = Math.floor((widget.height - 80) / (tableFontSize * 2.5));
+        
         return (
-          <div className="overflow-auto h-full">
-            <table className="w-full text-sm">
-              <thead>
+          <div className="overflow-auto h-full" style={{ fontSize: `${tableFontSize}px` }}>
+            <table className="w-full">
+              <thead className="sticky top-0 bg-background">
                 <tr className="border-b">
                   {tableColumns.map((col) => (
-                    <th key={col} className="text-left p-2">{col}</th>
+                    <th key={col} className="text-left p-2 font-semibold">{col}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {tableData.map((row, idx) => (
-                  <tr key={idx} className="border-b">
+                {tableData.slice(0, maxRows).map((row, idx) => (
+                  <tr key={idx} className="border-b hover:bg-muted/50">
                     {tableColumns.map((col) => (
                       <td key={col} className="p-2">{row[col]}</td>
                     ))}
