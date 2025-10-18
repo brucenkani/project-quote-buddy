@@ -326,84 +326,181 @@ export default function FinancialForecasting() {
             <TabsContent value="scenario" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Scenario Analysis</CardTitle>
-                  <CardDescription>Compare best case, base case, and worst case scenarios</CardDescription>
+                  <CardTitle>Financial Functions (Excel-style)</CardTitle>
+                  <CardDescription>Calculate PV, FV, PMT, NPV, IRR, and RATE with Excel formulas</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Base Case Value (R)</Label>
-                      <Input 
-                        type="number" 
-                        value={baseCase} 
-                        onChange={(e) => setBaseCase(e.target.value)}
-                        placeholder="e.g., 1000000"
-                      />
+                <CardContent className="space-y-6">
+                  {/* FV Calculator */}
+                  <div className="p-4 border rounded-lg space-y-4">
+                    <h3 className="font-semibold text-lg">FV - Future Value</h3>
+                    <p className="text-sm text-muted-foreground">Formula: =FV(rate, nper, pmt, [pv], [type])</p>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label>Rate (Annual %)</Label>
+                        <Input type="number" step="0.01" placeholder="e.g., 8.5" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Nper (Years)</Label>
+                        <Input type="number" placeholder="e.g., 10" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Pmt (Payment)</Label>
+                        <Input type="number" placeholder="e.g., -1000" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>PV (Present Value)</Label>
+                        <Input type="number" placeholder="e.g., 0" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Frequency</Label>
+                        <Select defaultValue="12">
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">Annual</SelectItem>
+                            <SelectItem value="2">Semi-Annual</SelectItem>
+                            <SelectItem value="4">Quarterly</SelectItem>
+                            <SelectItem value="12">Monthly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Optimistic Variance (%)</Label>
-                      <Input 
-                        type="number" 
-                        value={optimisticVar} 
-                        onChange={(e) => setOptimisticVar(e.target.value)}
-                        placeholder="e.g., 25"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Pessimistic Variance (%)</Label>
-                      <Input 
-                        type="number" 
-                        value={pessimisticVar} 
-                        onChange={(e) => setPessimisticVar(e.target.value)}
-                        placeholder="e.g., -15"
-                      />
+                    <Button className="w-full"><Calculator className="h-4 w-4 mr-2" />Calculate FV</Button>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-sm text-muted-foreground">Result</p>
+                      <p className="text-2xl font-bold">R 0.00</p>
                     </div>
                   </div>
 
-                  <Button onClick={calculateScenarioAnalysis} className="w-full">
-                    <Calculator className="h-4 w-4 mr-2" />
-                    Analyze Scenarios
-                  </Button>
-
-                  {scenarioResults && (
-                    <div className="space-y-4">
-                      <div className="grid gap-4">
-                        <div className="p-6 border-2 border-red-500/20 bg-red-50 dark:bg-red-950 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-semibold text-red-700 dark:text-red-300">Pessimistic Scenario</span>
-                            <span className="text-sm text-red-600 dark:text-red-400">Worst Case</span>
-                          </div>
-                          <p className="text-3xl font-bold text-red-700 dark:text-red-300">R {scenarioResults.pessimistic.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                        </div>
-
-                        <div className="p-6 border-2 border-primary/50 bg-primary/5 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-semibold">Base Case Scenario</span>
-                            <span className="text-sm text-muted-foreground">Expected</span>
-                          </div>
-                          <p className="text-3xl font-bold">R {scenarioResults.base.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                        </div>
-
-                        <div className="p-6 border-2 border-green-500/20 bg-green-50 dark:bg-green-950 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-semibold text-green-700 dark:text-green-300">Optimistic Scenario</span>
-                            <span className="text-sm text-green-600 dark:text-green-400">Best Case</span>
-                          </div>
-                          <p className="text-3xl font-bold text-green-700 dark:text-green-300">R {scenarioResults.optimistic.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                        </div>
+                  {/* PV Calculator */}
+                  <div className="p-4 border rounded-lg space-y-4">
+                    <h3 className="font-semibold text-lg">PV - Present Value</h3>
+                    <p className="text-sm text-muted-foreground">Formula: =PV(rate, nper, pmt, [fv], [type])</p>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label>Rate (Annual %)</Label>
+                        <Input type="number" step="0.01" placeholder="e.g., 8.5" />
                       </div>
-
-                      <div className="p-4 bg-muted rounded-lg">
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold">Scenario Range:</span>
-                          <span className="text-lg font-bold">R {scenarioResults.range.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          This represents the total variance between best and worst case scenarios
-                        </p>
+                      <div className="space-y-2">
+                        <Label>Nper (Years)</Label>
+                        <Input type="number" placeholder="e.g., 10" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Pmt (Payment)</Label>
+                        <Input type="number" placeholder="e.g., -1000" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>FV (Future Value)</Label>
+                        <Input type="number" placeholder="e.g., 0" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Frequency</Label>
+                        <Select defaultValue="12">
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">Annual</SelectItem>
+                            <SelectItem value="2">Semi-Annual</SelectItem>
+                            <SelectItem value="4">Quarterly</SelectItem>
+                            <SelectItem value="12">Monthly</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
-                  )}
+                    <Button className="w-full"><Calculator className="h-4 w-4 mr-2" />Calculate PV</Button>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-sm text-muted-foreground">Result</p>
+                      <p className="text-2xl font-bold">R 0.00</p>
+                    </div>
+                  </div>
+
+                  {/* PMT Calculator */}
+                  <div className="p-4 border rounded-lg space-y-4">
+                    <h3 className="font-semibold text-lg">PMT - Payment</h3>
+                    <p className="text-sm text-muted-foreground">Formula: =PMT(rate, nper, pv, [fv], [type])</p>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label>Rate (Annual %)</Label>
+                        <Input type="number" step="0.01" placeholder="e.g., 7.5" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Nper (Years)</Label>
+                        <Input type="number" placeholder="e.g., 30" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>PV (Loan Amount)</Label>
+                        <Input type="number" placeholder="e.g., 200000" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>FV (Future Value)</Label>
+                        <Input type="number" placeholder="e.g., 0" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Frequency</Label>
+                        <Select defaultValue="12">
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">Annual</SelectItem>
+                            <SelectItem value="2">Semi-Annual</SelectItem>
+                            <SelectItem value="4">Quarterly</SelectItem>
+                            <SelectItem value="12">Monthly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <Button className="w-full"><Calculator className="h-4 w-4 mr-2" />Calculate PMT</Button>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-sm text-muted-foreground">Result</p>
+                      <p className="text-2xl font-bold">R 0.00</p>
+                    </div>
+                  </div>
+
+                  {/* RATE Calculator */}
+                  <div className="p-4 border rounded-lg space-y-4">
+                    <h3 className="font-semibold text-lg">RATE - Interest Rate</h3>
+                    <p className="text-sm text-muted-foreground">Formula: =RATE(nper, pmt, pv, [fv], [type])</p>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label>Nper (Years)</Label>
+                        <Input type="number" placeholder="e.g., 5" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Pmt (Payment)</Label>
+                        <Input type="number" placeholder="e.g., -500" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>PV (Present Value)</Label>
+                        <Input type="number" placeholder="e.g., 20000" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>FV (Future Value)</Label>
+                        <Input type="number" placeholder="e.g., 0" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Frequency</Label>
+                        <Select defaultValue="12">
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">Annual</SelectItem>
+                            <SelectItem value="2">Semi-Annual</SelectItem>
+                            <SelectItem value="4">Quarterly</SelectItem>
+                            <SelectItem value="12">Monthly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <Button className="w-full"><Calculator className="h-4 w-4 mr-2" />Calculate RATE</Button>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-sm text-muted-foreground">Result (Annual %)</p>
+                      <p className="text-2xl font-bold">0.00%</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

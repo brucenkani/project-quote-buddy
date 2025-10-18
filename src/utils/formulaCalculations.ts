@@ -115,32 +115,78 @@ export function calculateFormula(
     
     // Financial Functions
     case 'PV':
-      // PV = FV / (1 + rate)^periods
-      const { rate: pvRate = 0.1, periods: pvPeriods = 1, fv = 0 } = params || {};
-      return fv / Math.pow(1 + pvRate, pvPeriods);
+      // PV(rate, nper, pmt, [fv], [type]) - Excel format
+      // For lump sum: PV = FV / (1 + rate)^nper
+      const { 
+        rate: pvRate = 0, 
+        nper: pvNper = 1, 
+        pmt: pvPmt = 0,
+        fv: pvFv = 0,
+        frequency: pvFreq = 1 
+      } = params || {};
+      const pvPerRate = pvRate / pvFreq;
+      const pvTotalPer = pvNper * pvFreq;
+      
+      if (pvPmt === 0) {
+        // Lump sum calculation
+        return pvFv / Math.pow(1 + pvPerRate, pvTotalPer);
+      }
+      // Annuity calculation
+      const pvFactor = Math.pow(1 + pvPerRate, pvTotalPer);
+      return (pvPmt * (1 - 1 / pvFactor) / pvPerRate) + (pvFv / pvFactor);
     
     case 'FV':
-      // FV = PV * (1 + rate)^periods
-      const { rate: fvRate = 0.1, periods: fvPeriods = 1, pv = 0 } = params || {};
-      return pv * Math.pow(1 + fvRate, fvPeriods);
+      // FV(rate, nper, pmt, [pv], [type]) - Excel format
+      const { 
+        rate: fvRate = 0, 
+        nper: fvNper = 1, 
+        pmt: fvPmt = 0,
+        pv: fvPv = 0,
+        frequency: fvFreq = 1 
+      } = params || {};
+      const fvPerRate = fvRate / fvFreq;
+      const fvTotalPer = fvNper * fvFreq;
+      
+      if (fvPmt === 0) {
+        // Lump sum calculation
+        return fvPv * Math.pow(1 + fvPerRate, fvTotalPer);
+      }
+      // Annuity calculation
+      const fvFactor = Math.pow(1 + fvPerRate, fvTotalPer);
+      return (fvPmt * (fvFactor - 1) / fvPerRate) + (fvPv * fvFactor);
     
     case 'PMT':
-      // PMT = PV * (rate * (1 + rate)^periods) / ((1 + rate)^periods - 1)
-      const { rate: pmtRate = 0.1, periods: pmtPeriods = 1, pv: pmtPv = 0 } = params || {};
-      if (pmtRate === 0) return pmtPv / pmtPeriods;
-      const factor = Math.pow(1 + pmtRate, pmtPeriods);
-      return pmtPv * (pmtRate * factor) / (factor - 1);
+      // PMT(rate, nper, pv, [fv], [type]) - Excel format
+      const { 
+        rate: pmtRate = 0, 
+        nper: pmtNper = 1, 
+        pv: pmtPv = 0,
+        fv: pmtFv = 0,
+        frequency: pmtFreq = 1 
+      } = params || {};
+      const pmtPerRate = pmtRate / pmtFreq;
+      const pmtTotalPer = pmtNper * pmtFreq;
+      
+      if (pmtPerRate === 0) return -(pmtPv + pmtFv) / pmtTotalPer;
+      const pmtFactor = Math.pow(1 + pmtPerRate, pmtTotalPer);
+      return -(pmtPv * pmtFactor + pmtFv) * pmtPerRate / (pmtFactor - 1);
     
     case 'NPV':
-      // NPV = sum of (cashflow / (1 + rate)^period) for each period
-      const { rate: npvRate = 0.1, cashflows = values } = params || {};
+      // NPV(rate, value1, [value2], ...) - Excel format
+      const { 
+        rate: npvRate = 0, 
+        cashflows = values,
+        frequency: npvFreq = 1 
+      } = params || {};
+      const npvPerRate = npvRate / npvFreq;
       return cashflows.reduce((npv: number, cf: number, i: number) => {
-        return npv + cf / Math.pow(1 + npvRate, i + 1);
+        return npv + cf / Math.pow(1 + npvPerRate, i + 1);
       }, 0);
     
     case 'IRR':
-      // Simplified IRR calculation using Newton-Raphson method
+      // IRR(values, [guess]) - Excel format
       const irrCashflows = params?.cashflows || values;
+      const irrFreq = params?.frequency || 1;
       if (irrCashflows.length < 2) return 0;
       
       let rate = 0.1;
@@ -158,16 +204,44 @@ export function calculateFormula(
         }
         
         const newRate = rate - npv / dnpv;
-        if (Math.abs(newRate - rate) < tolerance) return newRate;
+        if (Math.abs(newRate - rate) < tolerance) return newRate * irrFreq; // Annualize
         rate = newRate;
       }
-      return rate;
+      return rate * irrFreq;
     
     case 'RATE':
-      // Simplified rate calculation
-      const { periods: ratePeriods = 1, pv: ratePv = 0, fv: rateFv = 0 } = params || {};
-      if (ratePv === 0 || ratePeriods === 0) return 0;
-      return Math.pow(rateFv / ratePv, 1 / ratePeriods) - 1;
+      // RATE(nper, pmt, pv, [fv], [type]) - Excel format
+      const { 
+        nper: rateNper = 1, 
+        pmt: ratePmt = 0,
+        pv: ratePv = 0, 
+        fv: rateFv = 0,
+        frequency: rateFreq = 1 
+      } = params || {};
+      
+      if (ratePmt === 0) {
+        // Simple rate calculation for lump sum
+        if (ratePv === 0 || rateNper === 0) return 0;
+        const totalPer = rateNper * rateFreq;
+        return (Math.pow(Math.abs(rateFv / ratePv), 1 / totalPer) - 1) * rateFreq;
+      }
+      
+      // Newton-Raphson for annuity
+      let r = 0.1 / rateFreq;
+      for (let i = 0; i < 100; i++) {
+        const totalPer = rateNper * rateFreq;
+        const factor = Math.pow(1 + r, totalPer);
+        const pv_calc = (ratePmt * (1 - 1 / factor) / r) + (rateFv / factor);
+        const error = pv_calc + ratePv;
+        
+        if (Math.abs(error) < 0.0001) return r * rateFreq;
+        
+        const derivative = -totalPer * ratePmt / (r * r * factor) - 
+                          ratePmt * (1 - 1 / factor) / (r * r) -
+                          totalPer * rateFv / (r * factor);
+        r = r - error / derivative;
+      }
+      return r * rateFreq;
     
     default:
       return 0;
