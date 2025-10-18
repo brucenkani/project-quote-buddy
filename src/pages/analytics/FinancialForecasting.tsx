@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,11 +8,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, TrendingUp, Calculator, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { calculateFormula, formatFormulaResult } from '@/utils/formulaCalculations';
 
 export default function FinancialForecasting() {
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  // Data source states
+  const [dataSources, setDataSources] = useState<any[]>([]);
+  const [selectedDataSource, setSelectedDataSource] = useState<string>('');
+  const [dataColumns, setDataColumns] = useState<string[]>([]);
+  const [dataRows, setDataRows] = useState<any[]>([]);
+
   // Revenue Forecast States
   const [currentRevenue, setCurrentRevenue] = useState('');
   const [growthRate, setGrowthRate] = useState('');
@@ -25,11 +33,34 @@ export default function FinancialForecasting() {
   const [inflationRate, setInflationRate] = useState('');
   const [expenseProjection, setExpenseProjection] = useState<any>(null);
 
-  // Scenario Analysis States
-  const [baseCase, setBaseCase] = useState('');
-  const [optimisticVar, setOptimisticVar] = useState('');
-  const [pessimisticVar, setPessimisticVar] = useState('');
-  const [scenarioResults, setScenarioResults] = useState<any>(null);
+  // Financial Formula States
+  const [fvRate, setFvRate] = useState('');
+  const [fvNper, setFvNper] = useState('');
+  const [fvPmt, setFvPmt] = useState('');
+  const [fvPv, setFvPv] = useState('');
+  const [fvFrequency, setFvFrequency] = useState('1');
+  const [fvResult, setFvResult] = useState<number | null>(null);
+
+  const [pvRate, setPvRate] = useState('');
+  const [pvNper, setPvNper] = useState('');
+  const [pvPmt, setPvPmt] = useState('');
+  const [pvFv, setPvFv] = useState('');
+  const [pvFrequency, setPvFrequency] = useState('1');
+  const [pvResult, setPvResult] = useState<number | null>(null);
+
+  const [pmtRate, setPmtRate] = useState('');
+  const [pmtNper, setPmtNper] = useState('');
+  const [pmtPv, setPmtPv] = useState('');
+  const [pmtFv, setPmtFv] = useState('');
+  const [pmtFrequency, setPmtFrequency] = useState('1');
+  const [pmtResult, setPmtResult] = useState<number | null>(null);
+
+  const [rateNper, setRateNper] = useState('');
+  const [ratePmt, setRatePmt] = useState('');
+  const [ratePv, setRatePv] = useState('');
+  const [rateFv, setRateFv] = useState('');
+  const [rateFrequency, setRateFrequency] = useState('1');
+  const [rateResult, setRateResult] = useState<number | null>(null);
 
   // Budget Planning States
   const [totalBudget, setTotalBudget] = useState('');
@@ -40,6 +71,158 @@ export default function FinancialForecasting() {
     { name: 'Admin', percentage: 15 },
     { name: 'Other', percentage: 10 },
   ]);
+
+  // Load data sources
+  useEffect(() => {
+    loadDataSources();
+  }, []);
+
+  // Load data when data source is selected
+  useEffect(() => {
+    if (selectedDataSource) {
+      loadDataSourceContent(selectedDataSource);
+    }
+  }, [selectedDataSource]);
+
+  const loadDataSources = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('data_sources')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setDataSources(data);
+    }
+  };
+
+  const loadDataSourceContent = async (dataSourceId: string) => {
+    const source = dataSources.find(ds => ds.id === dataSourceId);
+    if (!source) return;
+
+    const columns = source.columns || [];
+    const data = source.data || [];
+
+    setDataColumns(columns);
+    setDataRows(data);
+  };
+
+  const getColumnValue = (columnName: string, rowIndex: number = 0): number => {
+    if (!dataRows.length || !columnName) return 0;
+    const value = dataRows[rowIndex]?.[columnName];
+    return parseFloat(value) || 0;
+  };
+
+  const calculateFV = () => {
+    if (!dataRows.length) {
+      toast({
+        title: "No Data",
+        description: "Please select a data source first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const rate = getColumnValue(fvRate) / 100;
+    const nper = getColumnValue(fvNper);
+    const pmt = fvPmt ? getColumnValue(fvPmt) : 0;
+    const pv = fvPv ? getColumnValue(fvPv) : 0;
+    const frequency = parseInt(fvFrequency);
+
+    const result = calculateFormula('FV', [], '', {
+      rate,
+      nper,
+      pmt,
+      pv,
+      frequency
+    });
+
+    setFvResult(result);
+  };
+
+  const calculatePV = () => {
+    if (!dataRows.length) {
+      toast({
+        title: "No Data",
+        description: "Please select a data source first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const rate = getColumnValue(pvRate) / 100;
+    const nper = getColumnValue(pvNper);
+    const pmt = pvPmt ? getColumnValue(pvPmt) : 0;
+    const fv = pvFv ? getColumnValue(pvFv) : 0;
+    const frequency = parseInt(pvFrequency);
+
+    const result = calculateFormula('PV', [], '', {
+      rate,
+      nper,
+      pmt,
+      fv,
+      frequency
+    });
+
+    setPvResult(result);
+  };
+
+  const calculatePMT = () => {
+    if (!dataRows.length) {
+      toast({
+        title: "No Data",
+        description: "Please select a data source first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const rate = getColumnValue(pmtRate) / 100;
+    const nper = getColumnValue(pmtNper);
+    const pv = getColumnValue(pmtPv);
+    const fv = pmtFv ? getColumnValue(pmtFv) : 0;
+    const frequency = parseInt(pmtFrequency);
+
+    const result = calculateFormula('PMT', [], '', {
+      rate,
+      nper,
+      pv,
+      fv,
+      frequency
+    });
+
+    setPmtResult(result);
+  };
+
+  const calculateRATE = () => {
+    if (!dataRows.length) {
+      toast({
+        title: "No Data",
+        description: "Please select a data source first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const nper = getColumnValue(rateNper);
+    const pmt = ratePmt ? getColumnValue(ratePmt) : 0;
+    const pv = getColumnValue(ratePv);
+    const fv = rateFv ? getColumnValue(rateFv) : 0;
+    const frequency = parseInt(rateFrequency);
+
+    const result = calculateFormula('RATE', [], '', {
+      nper,
+      pmt,
+      pv,
+      fv,
+      frequency
+    });
+
+    setRateResult(result);
+  };
 
   const calculateRevenueForecast = () => {
     const revenue = parseFloat(currentRevenue);
@@ -95,22 +278,6 @@ export default function FinancialForecasting() {
     setExpenseProjection({ projections });
   };
 
-  const calculateScenarioAnalysis = () => {
-    const base = parseFloat(baseCase);
-    const optimistic = parseFloat(optimisticVar) / 100;
-    const pessimistic = parseFloat(pessimisticVar) / 100;
-
-    if (isNaN(base) || isNaN(optimistic) || isNaN(pessimistic)) return;
-
-    const scenarios = {
-      pessimistic: base * (1 + pessimistic),
-      base: base,
-      optimistic: base * (1 + optimistic),
-      range: base * optimistic - base * pessimistic
-    };
-
-    setScenarioResults(scenarios);
-  };
 
   const handleDownload = (reportType: string) => {
     toast({
@@ -324,182 +491,383 @@ export default function FinancialForecasting() {
 
             {/* Scenario Analysis */}
             <TabsContent value="scenario" className="space-y-4">
+              {/* Data Source Selector */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Select Data Source</CardTitle>
+                  <CardDescription>Choose a data source to use column values in financial formulas</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Label>Data Source</Label>
+                    <Select value={selectedDataSource} onValueChange={setSelectedDataSource}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a data source..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {dataSources.map((ds) => (
+                          <SelectItem key={ds.id} value={ds.id}>
+                            {ds.name} ({ds.row_count} rows)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {dataColumns.length > 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        Available columns: {dataColumns.join(', ')}
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle>Financial Functions (Excel-style)</CardTitle>
-                  <CardDescription>Calculate PV, FV, PMT, NPV, IRR, and RATE with Excel formulas</CardDescription>
+                  <CardDescription>Select data columns to use in financial formulas. The frequency divides the annual interest rate accordingly.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* FV Calculator */}
                   <div className="p-4 border rounded-lg space-y-4">
                     <h3 className="font-semibold text-lg">FV - Future Value</h3>
-                    <p className="text-sm text-muted-foreground">Formula: =FV(rate, nper, pmt, [pv], [type])</p>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <p className="text-sm text-muted-foreground">Formula: =FV(rate, nper, pmt, [pv])</p>
+                    <p className="text-xs text-muted-foreground">Select columns containing: annual interest rate, number of periods, payment amount, present value</p>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
                       <div className="space-y-2">
-                        <Label>Rate (Annual %)</Label>
-                        <Input type="number" step="0.01" placeholder="e.g., 8.5" />
+                        <Label>Rate Column (Annual %)</Label>
+                        <Select value={fvRate} onValueChange={setFvRate} disabled={!dataColumns.length}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select column..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dataColumns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Nper (Years)</Label>
-                        <Input type="number" placeholder="e.g., 10" />
+                        <Label>Nper Column (Years)</Label>
+                        <Select value={fvNper} onValueChange={setFvNper} disabled={!dataColumns.length}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select column..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dataColumns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Pmt (Payment)</Label>
-                        <Input type="number" placeholder="e.g., -1000" />
+                        <Label>Pmt Column (Payment)</Label>
+                        <Select value={fvPmt} onValueChange={setFvPmt} disabled={!dataColumns.length}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select column..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {dataColumns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>PV (Present Value)</Label>
-                        <Input type="number" placeholder="e.g., 0" />
+                        <Label>PV Column (Present Value)</Label>
+                        <Select value={fvPv} onValueChange={setFvPv} disabled={!dataColumns.length}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select column..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {dataColumns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Frequency</Label>
-                        <Select defaultValue="12">
+                        <Label>Frequency (divides rate)</Label>
+                        <Select value={fvFrequency} onValueChange={setFvFrequency}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="1">Annual</SelectItem>
-                            <SelectItem value="2">Semi-Annual</SelectItem>
-                            <SelectItem value="4">Quarterly</SelectItem>
-                            <SelectItem value="12">Monthly</SelectItem>
+                            <SelectItem value="1">Annual (÷1)</SelectItem>
+                            <SelectItem value="2">Semi-Annual (÷2)</SelectItem>
+                            <SelectItem value="4">Quarterly (÷4)</SelectItem>
+                            <SelectItem value="12">Monthly (÷12)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
-                    <Button className="w-full"><Calculator className="h-4 w-4 mr-2" />Calculate FV</Button>
-                    <div className="p-3 bg-muted rounded-lg">
-                      <p className="text-sm text-muted-foreground">Result</p>
-                      <p className="text-2xl font-bold">R 0.00</p>
-                    </div>
+                    <Button onClick={calculateFV} className="w-full" disabled={!fvRate || !fvNper}>
+                      <Calculator className="h-4 w-4 mr-2" />Calculate FV
+                    </Button>
+                    {fvResult !== null && (
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-sm text-muted-foreground">Future Value Result</p>
+                        <p className="text-2xl font-bold">R {fvResult.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                      </div>
+                    )}
                   </div>
 
                   {/* PV Calculator */}
                   <div className="p-4 border rounded-lg space-y-4">
                     <h3 className="font-semibold text-lg">PV - Present Value</h3>
-                    <p className="text-sm text-muted-foreground">Formula: =PV(rate, nper, pmt, [fv], [type])</p>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <p className="text-sm text-muted-foreground">Formula: =PV(rate, nper, pmt, [fv])</p>
+                    <p className="text-xs text-muted-foreground">Select columns containing: annual interest rate, number of periods, payment amount, future value</p>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
                       <div className="space-y-2">
-                        <Label>Rate (Annual %)</Label>
-                        <Input type="number" step="0.01" placeholder="e.g., 8.5" />
+                        <Label>Rate Column (Annual %)</Label>
+                        <Select value={pvRate} onValueChange={setPvRate} disabled={!dataColumns.length}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select column..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dataColumns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Nper (Years)</Label>
-                        <Input type="number" placeholder="e.g., 10" />
+                        <Label>Nper Column (Years)</Label>
+                        <Select value={pvNper} onValueChange={setPvNper} disabled={!dataColumns.length}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select column..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dataColumns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Pmt (Payment)</Label>
-                        <Input type="number" placeholder="e.g., -1000" />
+                        <Label>Pmt Column (Payment)</Label>
+                        <Select value={pvPmt} onValueChange={setPvPmt} disabled={!dataColumns.length}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select column..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {dataColumns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>FV (Future Value)</Label>
-                        <Input type="number" placeholder="e.g., 0" />
+                        <Label>FV Column (Future Value)</Label>
+                        <Select value={pvFv} onValueChange={setPvFv} disabled={!dataColumns.length}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select column..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {dataColumns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Frequency</Label>
-                        <Select defaultValue="12">
+                        <Label>Frequency (divides rate)</Label>
+                        <Select value={pvFrequency} onValueChange={setPvFrequency}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="1">Annual</SelectItem>
-                            <SelectItem value="2">Semi-Annual</SelectItem>
-                            <SelectItem value="4">Quarterly</SelectItem>
-                            <SelectItem value="12">Monthly</SelectItem>
+                            <SelectItem value="1">Annual (÷1)</SelectItem>
+                            <SelectItem value="2">Semi-Annual (÷2)</SelectItem>
+                            <SelectItem value="4">Quarterly (÷4)</SelectItem>
+                            <SelectItem value="12">Monthly (÷12)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
-                    <Button className="w-full"><Calculator className="h-4 w-4 mr-2" />Calculate PV</Button>
-                    <div className="p-3 bg-muted rounded-lg">
-                      <p className="text-sm text-muted-foreground">Result</p>
-                      <p className="text-2xl font-bold">R 0.00</p>
-                    </div>
+                    <Button onClick={calculatePV} className="w-full" disabled={!pvRate || !pvNper}>
+                      <Calculator className="h-4 w-4 mr-2" />Calculate PV
+                    </Button>
+                    {pvResult !== null && (
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-sm text-muted-foreground">Present Value Result</p>
+                        <p className="text-2xl font-bold">R {pvResult.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                      </div>
+                    )}
                   </div>
 
                   {/* PMT Calculator */}
                   <div className="p-4 border rounded-lg space-y-4">
                     <h3 className="font-semibold text-lg">PMT - Payment</h3>
-                    <p className="text-sm text-muted-foreground">Formula: =PMT(rate, nper, pv, [fv], [type])</p>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <p className="text-sm text-muted-foreground">Formula: =PMT(rate, nper, pv, [fv])</p>
+                    <p className="text-xs text-muted-foreground">Select columns containing: annual interest rate, number of periods, present value (loan amount), future value</p>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
                       <div className="space-y-2">
-                        <Label>Rate (Annual %)</Label>
-                        <Input type="number" step="0.01" placeholder="e.g., 7.5" />
+                        <Label>Rate Column (Annual %)</Label>
+                        <Select value={pmtRate} onValueChange={setPmtRate} disabled={!dataColumns.length}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select column..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dataColumns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Nper (Years)</Label>
-                        <Input type="number" placeholder="e.g., 30" />
+                        <Label>Nper Column (Years)</Label>
+                        <Select value={pmtNper} onValueChange={setPmtNper} disabled={!dataColumns.length}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select column..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dataColumns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>PV (Loan Amount)</Label>
-                        <Input type="number" placeholder="e.g., 200000" />
+                        <Label>PV Column (Loan Amount)</Label>
+                        <Select value={pmtPv} onValueChange={setPmtPv} disabled={!dataColumns.length}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select column..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dataColumns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>FV (Future Value)</Label>
-                        <Input type="number" placeholder="e.g., 0" />
+                        <Label>FV Column (Future Value)</Label>
+                        <Select value={pmtFv} onValueChange={setPmtFv} disabled={!dataColumns.length}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select column..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {dataColumns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Frequency</Label>
-                        <Select defaultValue="12">
+                        <Label>Frequency (divides rate)</Label>
+                        <Select value={pmtFrequency} onValueChange={setPmtFrequency}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="1">Annual</SelectItem>
-                            <SelectItem value="2">Semi-Annual</SelectItem>
-                            <SelectItem value="4">Quarterly</SelectItem>
-                            <SelectItem value="12">Monthly</SelectItem>
+                            <SelectItem value="1">Annual (÷1)</SelectItem>
+                            <SelectItem value="2">Semi-Annual (÷2)</SelectItem>
+                            <SelectItem value="4">Quarterly (÷4)</SelectItem>
+                            <SelectItem value="12">Monthly (÷12)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
-                    <Button className="w-full"><Calculator className="h-4 w-4 mr-2" />Calculate PMT</Button>
-                    <div className="p-3 bg-muted rounded-lg">
-                      <p className="text-sm text-muted-foreground">Result</p>
-                      <p className="text-2xl font-bold">R 0.00</p>
-                    </div>
+                    <Button onClick={calculatePMT} className="w-full" disabled={!pmtRate || !pmtNper || !pmtPv}>
+                      <Calculator className="h-4 w-4 mr-2" />Calculate PMT
+                    </Button>
+                    {pmtResult !== null && (
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-sm text-muted-foreground">Payment Result</p>
+                        <p className="text-2xl font-bold">R {pmtResult.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                      </div>
+                    )}
                   </div>
 
                   {/* RATE Calculator */}
                   <div className="p-4 border rounded-lg space-y-4">
                     <h3 className="font-semibold text-lg">RATE - Interest Rate</h3>
-                    <p className="text-sm text-muted-foreground">Formula: =RATE(nper, pmt, pv, [fv], [type])</p>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <p className="text-sm text-muted-foreground">Formula: =RATE(nper, pmt, pv, [fv])</p>
+                    <p className="text-xs text-muted-foreground">Select columns containing: number of periods, payment amount, present value (loan amount), future value</p>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
                       <div className="space-y-2">
-                        <Label>Nper (Years)</Label>
-                        <Input type="number" placeholder="e.g., 5" />
+                        <Label>Nper Column (Years)</Label>
+                        <Select value={rateNper} onValueChange={setRateNper} disabled={!dataColumns.length}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select column..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dataColumns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Pmt (Payment)</Label>
-                        <Input type="number" placeholder="e.g., -500" />
+                        <Label>Pmt Column (Payment)</Label>
+                        <Select value={ratePmt} onValueChange={setRatePmt} disabled={!dataColumns.length}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select column..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {dataColumns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>PV (Present Value)</Label>
-                        <Input type="number" placeholder="e.g., 20000" />
+                        <Label>PV Column (Loan Amount)</Label>
+                        <Select value={ratePv} onValueChange={setRatePv} disabled={!dataColumns.length}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select column..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dataColumns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>FV (Future Value)</Label>
-                        <Input type="number" placeholder="e.g., 0" />
+                        <Label>FV Column (Future Value)</Label>
+                        <Select value={rateFv} onValueChange={setRateFv} disabled={!dataColumns.length}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select column..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">None</SelectItem>
+                            {dataColumns.map((col) => (
+                              <SelectItem key={col} value={col}>{col}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Frequency</Label>
-                        <Select defaultValue="12">
+                        <Label>Frequency (divides rate)</Label>
+                        <Select value={rateFrequency} onValueChange={setRateFrequency}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="1">Annual</SelectItem>
-                            <SelectItem value="2">Semi-Annual</SelectItem>
-                            <SelectItem value="4">Quarterly</SelectItem>
-                            <SelectItem value="12">Monthly</SelectItem>
+                            <SelectItem value="1">Annual (÷1)</SelectItem>
+                            <SelectItem value="2">Semi-Annual (÷2)</SelectItem>
+                            <SelectItem value="4">Quarterly (÷4)</SelectItem>
+                            <SelectItem value="12">Monthly (÷12)</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
-                    <Button className="w-full"><Calculator className="h-4 w-4 mr-2" />Calculate RATE</Button>
-                    <div className="p-3 bg-muted rounded-lg">
-                      <p className="text-sm text-muted-foreground">Result (Annual %)</p>
-                      <p className="text-2xl font-bold">0.00%</p>
-                    </div>
+                    <Button onClick={calculateRATE} className="w-full" disabled={!rateNper || !ratePv}>
+                      <Calculator className="h-4 w-4 mr-2" />Calculate RATE
+                    </Button>
+                    {rateResult !== null && (
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-sm text-muted-foreground">Interest Rate Result (Annual)</p>
+                        <p className="text-2xl font-bold">{(rateResult * 100).toFixed(2)}%</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
