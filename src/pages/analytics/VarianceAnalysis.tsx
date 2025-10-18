@@ -90,7 +90,7 @@ export default function VarianceAnalysis() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate('/knowledge')}>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/business-analytics')}>
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <TrendingUp className="h-6 w-6 text-primary" />
