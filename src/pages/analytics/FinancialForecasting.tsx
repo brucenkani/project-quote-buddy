@@ -564,7 +564,7 @@ export default function FinancialForecasting() {
                       <SelectTrigger>
                         <SelectValue placeholder="Manual - Direct input" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-background z-50">
                         <SelectItem value="">Manual - Direct input</SelectItem>
                         {dataSources.map((ds) => (
                           <SelectItem key={ds.id} value={ds.id}>
