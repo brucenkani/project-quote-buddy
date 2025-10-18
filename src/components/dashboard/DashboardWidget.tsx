@@ -669,9 +669,10 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
             </div>
           )}
 
-          {['NPV', 'IRR'].includes(formulaType) && (
+          {formulaType === 'NPV' && (
             <div className="space-y-2">
-              <Label>Discount Rate {formulaType === 'NPV' ? '(%)' : ''}</Label>
+              <Label>Rate (discount rate per period)</Label>
+              <p className="text-xs text-muted-foreground">Enter as decimal (e.g., 0.10 for 10%)</p>
               <Input
                 type="number"
                 step="0.01"
@@ -683,7 +684,27 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                     formulaParams: { ...widget.config.formulaParams, rate: parseFloat(e.target.value) || 0 } 
                   } 
                 })}
-                placeholder="Enter rate (e.g., 10 for 10%)"
+                placeholder="e.g., 0.10 for 10%"
+              />
+            </div>
+          )}
+          
+          {formulaType === 'IRR' && (
+            <div className="space-y-2">
+              <Label>Guess (optional)</Label>
+              <p className="text-xs text-muted-foreground">Starting estimate for IRR (default 0.1)</p>
+              <Input
+                type="number"
+                step="0.01"
+                value={widget.config.formulaParams?.guess || 0.1}
+                onChange={(e) => onUpdate({ 
+                  ...widget, 
+                  config: { 
+                    ...widget.config, 
+                    formulaParams: { ...widget.config.formulaParams, guess: parseFloat(e.target.value) || 0.1 } 
+                  } 
+                })}
+                placeholder="e.g., 0.1 for 10%"
               />
             </div>
           )}
@@ -691,7 +712,8 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
           {['PMT', 'PV', 'FV'].includes(formulaType) && (
             <>
               <div className="space-y-2">
-                <Label>Interest Rate (%)</Label>
+                <Label>Rate (per period)</Label>
+                <p className="text-xs text-muted-foreground">Use 6%/4 for quarterly at 6% APR</p>
                 <Input
                   type="number"
                   step="0.01"
@@ -703,11 +725,12 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                       formulaParams: { ...widget.config.formulaParams, rate: parseFloat(e.target.value) || 0 } 
                     } 
                   })}
-                  placeholder="Enter rate"
+                  placeholder="e.g., 1.5 for 1.5% per period"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Number of Periods</Label>
+                <Label>Nper (number of periods)</Label>
+                <p className="text-xs text-muted-foreground">Total payment periods</p>
                 <Input
                   type="number"
                   value={widget.config.formulaParams?.nper || ''}
@@ -718,12 +741,13 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                       formulaParams: { ...widget.config.formulaParams, nper: parseInt(e.target.value) || 0 } 
                     } 
                   })}
-                  placeholder="Enter number of periods"
+                  placeholder="e.g., 48 for 4 years quarterly"
                 />
               </div>
               {formulaType === 'PMT' && (
                 <div className="space-y-2">
-                  <Label>Present Value</Label>
+                  <Label>Pv (present value)</Label>
+                  <p className="text-xs text-muted-foreground">Loan amount or investment</p>
                   <Input
                     type="number"
                     value={widget.config.formulaParams?.pv || ''}
@@ -734,10 +758,213 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                         formulaParams: { ...widget.config.formulaParams, pv: parseFloat(e.target.value) || 0 } 
                       } 
                     })}
-                    placeholder="Enter present value"
+                    placeholder="e.g., 100000 for $100k loan"
                   />
                 </div>
               )}
+              {formulaType === 'PMT' && (
+                <div className="space-y-2">
+                  <Label>Fv (future value) - Optional</Label>
+                  <p className="text-xs text-muted-foreground">Balloon payment at end</p>
+                  <Input
+                    type="number"
+                    value={widget.config.formulaParams?.fv || ''}
+                    onChange={(e) => onUpdate({ 
+                      ...widget, 
+                      config: { 
+                        ...widget.config, 
+                        formulaParams: { ...widget.config.formulaParams, fv: parseFloat(e.target.value) || 0 } 
+                      } 
+                    })}
+                    placeholder="Usually 0"
+                  />
+                </div>
+              )}
+              {formulaType === 'FV' && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Pmt (payment) - Optional</Label>
+                    <p className="text-xs text-muted-foreground">Payment each period</p>
+                    <Input
+                      type="number"
+                      value={widget.config.formulaParams?.pmt || ''}
+                      onChange={(e) => onUpdate({ 
+                        ...widget, 
+                        config: { 
+                          ...widget.config, 
+                          formulaParams: { ...widget.config.formulaParams, pmt: parseFloat(e.target.value) || 0 } 
+                        } 
+                      })}
+                      placeholder="e.g., 500 for $500/period"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Pv (present value) - Optional</Label>
+                    <p className="text-xs text-muted-foreground">Initial investment</p>
+                    <Input
+                      type="number"
+                      value={widget.config.formulaParams?.pv || ''}
+                      onChange={(e) => onUpdate({ 
+                        ...widget, 
+                        config: { 
+                          ...widget.config, 
+                          formulaParams: { ...widget.config.formulaParams, pv: parseFloat(e.target.value) || 0 } 
+                        } 
+                      })}
+                      placeholder="e.g., 10000 for $10k"
+                    />
+                  </div>
+                </>
+              )}
+              {formulaType === 'PV' && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Pmt (payment) - Optional</Label>
+                    <p className="text-xs text-muted-foreground">Payment each period</p>
+                    <Input
+                      type="number"
+                      value={widget.config.formulaParams?.pmt || ''}
+                      onChange={(e) => onUpdate({ 
+                        ...widget, 
+                        config: { 
+                          ...widget.config, 
+                          formulaParams: { ...widget.config.formulaParams, pmt: parseFloat(e.target.value) || 0 } 
+                        } 
+                      })}
+                      placeholder="e.g., 500 for $500/period"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Fv (future value) - Optional</Label>
+                    <p className="text-xs text-muted-foreground">Target amount</p>
+                    <Input
+                      type="number"
+                      value={widget.config.formulaParams?.fv || ''}
+                      onChange={(e) => onUpdate({ 
+                        ...widget, 
+                        config: { 
+                          ...widget.config, 
+                          formulaParams: { ...widget.config.formulaParams, fv: parseFloat(e.target.value) || 0 } 
+                        } 
+                      })}
+                      placeholder="e.g., 100000 for $100k"
+                    />
+                  </div>
+                </>
+              )}
+              <div className="space-y-2">
+                <Label>Type (payment timing)</Label>
+                <p className="text-xs text-muted-foreground">When payments are made</p>
+                <Select
+                  value={String(widget.config.formulaParams?.type || 0)}
+                  onValueChange={(value) => onUpdate({ 
+                    ...widget, 
+                    config: { 
+                      ...widget.config, 
+                      formulaParams: { ...widget.config.formulaParams, type: parseInt(value) } 
+                    } 
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="0">0 - End of period</SelectItem>
+                    <SelectItem value="1">1 - Beginning of period</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
+          
+          {formulaType === 'RATE' && (
+            <>
+              <div className="space-y-2">
+                <Label>Nper (number of periods)</Label>
+                <p className="text-xs text-muted-foreground">Total payment periods</p>
+                <Input
+                  type="number"
+                  value={widget.config.formulaParams?.nper || ''}
+                  onChange={(e) => onUpdate({ 
+                    ...widget, 
+                    config: { 
+                      ...widget.config, 
+                      formulaParams: { ...widget.config.formulaParams, nper: parseInt(e.target.value) || 0 } 
+                    } 
+                  })}
+                  placeholder="e.g., 48 for 4 years quarterly"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Pmt (payment per period)</Label>
+                <p className="text-xs text-muted-foreground">Regular payment amount</p>
+                <Input
+                  type="number"
+                  value={widget.config.formulaParams?.pmt || ''}
+                  onChange={(e) => onUpdate({ 
+                    ...widget, 
+                    config: { 
+                      ...widget.config, 
+                      formulaParams: { ...widget.config.formulaParams, pmt: parseFloat(e.target.value) || 0 } 
+                    } 
+                  })}
+                  placeholder="e.g., -500 for $500 payment"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Pv (present value)</Label>
+                <p className="text-xs text-muted-foreground">Loan amount or investment</p>
+                <Input
+                  type="number"
+                  value={widget.config.formulaParams?.pv || ''}
+                  onChange={(e) => onUpdate({ 
+                    ...widget, 
+                    config: { 
+                      ...widget.config, 
+                      formulaParams: { ...widget.config.formulaParams, pv: parseFloat(e.target.value) || 0 } 
+                    } 
+                  })}
+                  placeholder="e.g., 100000 for $100k"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Fv (future value) - Optional</Label>
+                <p className="text-xs text-muted-foreground">Balloon payment at end</p>
+                <Input
+                  type="number"
+                  value={widget.config.formulaParams?.fv || ''}
+                  onChange={(e) => onUpdate({ 
+                    ...widget, 
+                    config: { 
+                      ...widget.config, 
+                      formulaParams: { ...widget.config.formulaParams, fv: parseFloat(e.target.value) || 0 } 
+                    } 
+                  })}
+                  placeholder="Usually 0"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Type (payment timing)</Label>
+                <p className="text-xs text-muted-foreground">When payments are made</p>
+                <Select
+                  value={String(widget.config.formulaParams?.type || 0)}
+                  onValueChange={(value) => onUpdate({ 
+                    ...widget, 
+                    config: { 
+                      ...widget.config, 
+                      formulaParams: { ...widget.config.formulaParams, type: parseInt(value) } 
+                    } 
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="0">0 - End of period</SelectItem>
+                    <SelectItem value="1">1 - Beginning of period</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </>
           )}
         </>
