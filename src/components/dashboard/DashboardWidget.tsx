@@ -42,6 +42,9 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
       updatedConfig.dataKey = columns[1] || columns[0];
       updatedConfig.xAxisKey = columns[0];
       updatedConfig.availableColumns = columns;
+      if (widget.type === 'chart-pie') {
+        updatedConfig.metricType = 'count'; // Default to count for pie charts
+      }
     } else if (widget.type === 'kpi' || widget.type === 'metric') {
       const numericColumn = columns.find(col => {
         const value = data[0]?.[col];
@@ -151,18 +154,57 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
         );
 
       case 'chart-pie':
-        const pieData = widget.config.data || [];
-        const pieNameKey = widget.config.xAxisKey || 'name';
-        const pieValueKey = widget.config.dataKey || 'value';
+        const rawData = widgetDataSource?.data || [];
+        const segmentKey = widget.config.xAxisKey || 'name';
+        const metricType = widget.config.metricType || 'count';
+        const valueColumn = widget.config.dataKey;
+        
+        // Group data by segment and calculate metrics
+        const groupedData = rawData.reduce((acc: any, row: any) => {
+          const segment = row[segmentKey] || 'Unknown';
+          if (!acc[segment]) {
+            acc[segment] = { name: segment, count: 0, sum: 0, values: [] };
+          }
+          acc[segment].count++;
+          if (valueColumn) {
+            const val = Number(row[valueColumn]) || 0;
+            acc[segment].sum += val;
+            acc[segment].values.push(val);
+          }
+          return acc;
+        }, {});
+        
+        const pieData = Object.values(groupedData).map((item: any) => {
+          let value = 0;
+          if (metricType === 'count') {
+            value = item.count;
+          } else if (metricType === 'percentage') {
+            value = (item.count / rawData.length) * 100;
+          } else if (metricType === 'sum') {
+            value = item.sum;
+          } else if (metricType === 'average') {
+            value = item.values.length > 0 ? item.sum / item.values.length : 0;
+          }
+          return { ...item, value };
+        });
+        
         return (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={pieData} cx="50%" cy="50%" outerRadius={60} dataKey={pieValueKey} nameKey={pieNameKey} label>
+              <Pie 
+                data={pieData} 
+                cx="50%" 
+                cy="50%" 
+                outerRadius={60} 
+                dataKey="value" 
+                nameKey="name" 
+                label={(entry) => `${entry.name}: ${metricType === 'percentage' ? entry.value.toFixed(1) + '%' : entry.value.toFixed(2)}`}
+              >
                 {pieData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip formatter={(value: any) => metricType === 'percentage' ? `${value.toFixed(1)}%` : value.toFixed(2)} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -386,7 +428,75 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
       );
     }
 
-    // Chart-specific settings
+    // Pie chart-specific settings
+    if (widget.type === 'chart-pie') {
+      return (
+        <>
+          <div className="space-y-2">
+            <Label>Segment By Column</Label>
+            <Select
+              value={widget.config.xAxisKey || ''}
+              onValueChange={(value) => onUpdate({ 
+                ...widget, 
+                config: { ...widget.config, xAxisKey: value } 
+              })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select column to segment" />
+              </SelectTrigger>
+              <SelectContent>
+                {columns.map((col) => (
+                  <SelectItem key={col} value={col}>{col}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Value Type</Label>
+            <Select
+              value={widget.config.metricType || 'count'}
+              onValueChange={(value) => onUpdate({ 
+                ...widget, 
+                config: { ...widget.config, metricType: value } 
+              })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select metric type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="count">Count</SelectItem>
+                <SelectItem value="percentage">Percentage (%)</SelectItem>
+                <SelectItem value="sum">Sum</SelectItem>
+                <SelectItem value="average">Average</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {(widget.config.metricType === 'sum' || widget.config.metricType === 'average') && (
+            <div className="space-y-2">
+              <Label>Value Column</Label>
+              <Select
+                value={widget.config.dataKey || ''}
+                onValueChange={(value) => onUpdate({ 
+                  ...widget, 
+                  config: { ...widget.config, dataKey: value } 
+                })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select column to calculate" />
+                </SelectTrigger>
+                <SelectContent>
+                  {columns.map((col) => (
+                    <SelectItem key={col} value={col}>{col}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </>
+      );
+    }
+
+    // Other chart-specific settings (bar, line, table)
     if (widget.type.startsWith('chart-') || widget.type === 'table') {
       return (
         <>
