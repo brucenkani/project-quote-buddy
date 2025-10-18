@@ -191,7 +191,7 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
         const pieValueType = widget.config.valueType || 'sum';
         
         // Group data by category column and aggregate based on valueType
-        const groupedData = pieNameKey && rawPieData.length > 0 ? (() => {
+        const groupedData = pieNameKey && pieValueKey && rawPieData.length > 0 ? (() => {
           const groups: { [key: string]: number[] } = {};
           
           rawPieData.forEach((row: any) => {
@@ -232,24 +232,26 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
             }
             
             return {
-              [pieNameKey]: category,
-              [pieValueKey]: Math.round(calculatedValue * 100) / 100
+              name: category,
+              value: Math.round(calculatedValue * 100) / 100
             };
           });
-        })() : rawPieData;
+        })() : [];
         
-        return (
+        const pieRadius = Math.min(widget.width, widget.height) * 0.3;
+        
+        return groupedData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie 
                 data={groupedData} 
                 cx="50%" 
                 cy="50%" 
-                outerRadius={60} 
-                dataKey={pieValueKey} 
-                nameKey={pieNameKey} 
+                outerRadius={pieRadius} 
+                dataKey="value"
+                nameKey="name"
                 label={(entry) => {
-                  const value = entry[pieValueKey];
+                  const value = entry.value;
                   return pieValueType === 'percentage' ? `${value.toFixed(1)}%` : value;
                 }}
               >
@@ -265,6 +267,10 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
               <Legend />
             </PieChart>
           </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+            Configure data source and columns in settings
+          </div>
         );
 
       case 'table':
@@ -669,16 +675,18 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
       <Card className="h-full w-full">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm">
+          <CardTitle className="text-sm flex-1 cursor-pointer" onClick={() => setIsEditing(true)}>
             {isEditing ? (
               <Input
                 value={widget.config.title || ''}
                 onChange={(e) => onUpdate({ ...widget, config: { ...widget.config, title: e.target.value } })}
+                onBlur={() => setIsEditing(false)}
                 placeholder="Widget title..."
                 className="h-6 text-sm"
+                autoFocus
               />
             ) : (
-              widget.config.title || 'Untitled Widget'
+              <span>{widget.config.title || 'Untitled Widget'}</span>
             )}
           </CardTitle>
           <div className="flex gap-1">
