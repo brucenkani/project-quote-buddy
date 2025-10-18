@@ -477,11 +477,11 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                   <Settings className="h-3 w-3" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader>
                   <DialogTitle>Widget Settings</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
+                <div className="space-y-4 py-4 overflow-y-auto flex-1">
                   <div className="space-y-2">
                     <Label>Data Source</Label>
                     <Select
