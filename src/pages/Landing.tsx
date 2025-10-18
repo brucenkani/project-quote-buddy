@@ -138,10 +138,29 @@ export default function Landing() {
             </CardContent>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/calculators')}>
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/crm-support')}>
+            <CardHeader>
+              <Users className="h-12 w-12 mb-4 text-primary" />
+              <CardTitle>CRM & Customer Support</CardTitle>
+              <CardDescription>
+                Complete customer management & support system
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>• Contact & lead management</li>
+                <li>• Sales pipeline tracking</li>
+                <li>• Ticket management system</li>
+                <li>• Customer support tools</li>
+                <li>• Performance reports</li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/business-analytics')}>
             <CardHeader>
               <Calculator className="h-12 w-12 mb-4 text-primary" />
-              <CardTitle>Analytics & Tools</CardTitle>
+              <CardTitle>Reporting Suite</CardTitle>
               <CardDescription>
                 Comprehensive analytics, reporting, and business tools
               </CardDescription>
@@ -150,9 +169,9 @@ export default function Landing() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>• Management accounts & reporting</li>
                 <li>• Financial forecasting & projections</li>
-                <li>• Financial planning tools</li>
-                <li>• Business Calculators</li>
-                <li>• Engineering Calculators</li>
+                <li>• Variance analysis & planning</li>
+                <li>• Performance metrics & KPIs</li>
+                <li>• Custom reports & dashboards</li>
               </ul>
             </CardContent>
           </Card>

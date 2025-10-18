@@ -544,8 +544,8 @@ export default function Index() {
           <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer" onClick={() => navigate('/business-analytics')}>
             <CardHeader>
               <LineChart className="h-12 w-12 mb-4 text-primary" />
-              <CardTitle>Analytics & Calculators</CardTitle>
-              <CardDescription>Business insights & professional calculation tools</CardDescription>
+              <CardTitle>Reporting Suite</CardTitle>
+              <CardDescription>Comprehensive analytics, reporting, and business tools</CardDescription>
             </CardHeader>
             <CardContent className="hidden group-hover:block">
               <ul className="space-y-3">
@@ -559,15 +559,15 @@ export default function Index() {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Financial planning tools</span>
+                  <span>Variance analysis & strategic planning</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Business Calculators</span>
+                  <span>Performance metrics & KPIs</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Engineering Calculators</span>
+                  <span>Custom reports & dashboards</span>
                 </li>
               </ul>
             </CardContent>
