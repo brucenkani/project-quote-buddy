@@ -153,9 +153,61 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
         );
 
       case 'chart-bar':
-        const barData = widget.config.data || [];
+        const rawBarData = transformedDataSource?.data || widget.config.data || [];
         const barXKey = widget.config.xAxisKey || 'name';
         const barYKey = widget.config.dataKey || 'value';
+        const barValueType = widget.config.valueType || 'count';
+        
+        // Group data by category column and aggregate based on valueType
+        const barData = barXKey && rawBarData.length > 0 ? (() => {
+          const groups: { [key: string]: number[] } = {};
+          
+          rawBarData.forEach((row: any) => {
+            const categoryValue = String(row[barXKey] || 'Unknown');
+            const numericValue = barYKey ? (Number(row[barYKey]) || 0) : 1;
+            
+            if (!groups[categoryValue]) {
+              groups[categoryValue] = [];
+            }
+            groups[categoryValue].push(numericValue);
+          });
+          
+          const allValues = Object.values(groups).flat();
+          const totalCount = allValues.length;
+          
+          return Object.entries(groups).map(([category, values]) => {
+            let calculatedValue = 0;
+            
+            switch (barValueType) {
+              case 'sum':
+                calculatedValue = values.reduce((sum, val) => sum + val, 0);
+                break;
+              case 'average':
+                calculatedValue = values.reduce((sum, val) => sum + val, 0) / values.length;
+                break;
+              case 'count':
+                calculatedValue = values.length;
+                break;
+              case 'minimum':
+                calculatedValue = Math.min(...values);
+                break;
+              case 'maximum':
+                calculatedValue = Math.max(...values);
+                break;
+              case 'percentage':
+                calculatedValue = totalCount > 0 ? (values.length / totalCount) * 100 : 0;
+                break;
+              default:
+                calculatedValue = values.length;
+            }
+            
+            return {
+              [barXKey]: category,
+              [barYKey]: Math.round(calculatedValue * 100) / 100
+            };
+          });
+        })() : [];
+        
         return (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={barData}>
@@ -169,9 +221,61 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
         );
 
       case 'chart-line':
-        const lineData = widget.config.data || [];
+        const rawLineData = transformedDataSource?.data || widget.config.data || [];
         const lineXKey = widget.config.xAxisKey || 'name';
         const lineYKey = widget.config.dataKey || 'value';
+        const lineValueType = widget.config.valueType || 'count';
+        
+        // Group data by category column and aggregate based on valueType
+        const lineData = lineXKey && rawLineData.length > 0 ? (() => {
+          const groups: { [key: string]: number[] } = {};
+          
+          rawLineData.forEach((row: any) => {
+            const categoryValue = String(row[lineXKey] || 'Unknown');
+            const numericValue = lineYKey ? (Number(row[lineYKey]) || 0) : 1;
+            
+            if (!groups[categoryValue]) {
+              groups[categoryValue] = [];
+            }
+            groups[categoryValue].push(numericValue);
+          });
+          
+          const allValues = Object.values(groups).flat();
+          const totalCount = allValues.length;
+          
+          return Object.entries(groups).map(([category, values]) => {
+            let calculatedValue = 0;
+            
+            switch (lineValueType) {
+              case 'sum':
+                calculatedValue = values.reduce((sum, val) => sum + val, 0);
+                break;
+              case 'average':
+                calculatedValue = values.reduce((sum, val) => sum + val, 0) / values.length;
+                break;
+              case 'count':
+                calculatedValue = values.length;
+                break;
+              case 'minimum':
+                calculatedValue = Math.min(...values);
+                break;
+              case 'maximum':
+                calculatedValue = Math.max(...values);
+                break;
+              case 'percentage':
+                calculatedValue = totalCount > 0 ? (values.length / totalCount) * 100 : 0;
+                break;
+              default:
+                calculatedValue = values.length;
+            }
+            
+            return {
+              [lineXKey]: category,
+              [lineYKey]: Math.round(calculatedValue * 100) / 100
+            };
+          });
+        })() : [];
+        
         return (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={lineData}>
@@ -627,11 +731,11 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
             </Select>
           </div>
           
-          {widget.type === 'chart-pie' && (
+          {widget.type !== 'table' && (
             <div className="space-y-2">
               <Label>Value Type</Label>
               <Select
-                value={widget.config.valueType || 'sum'}
+                value={widget.config.valueType || 'count'}
                 onValueChange={(value) => onUpdate({ 
                   ...widget, 
                   config: { ...widget.config, valueType: value } 
