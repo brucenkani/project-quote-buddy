@@ -693,20 +693,27 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
 
           {formulaType === 'NPV' && (
             <div className="space-y-2">
-              <Label>Rate (discount rate per period)</Label>
-              <p className="text-xs text-muted-foreground">Enter as decimal (e.g., 0.10 for 10%)</p>
+              <Label>Rate (%)</Label>
+              <p className="text-xs text-muted-foreground">Enter as percentage (e.g., 10 for 10%)</p>
               <Input
                 type="number"
                 step="0.01"
-                value={widget.config.formulaParams?.rate || ''}
-                onChange={(e) => onUpdate({ 
-                  ...widget, 
-                  config: { 
-                    ...widget.config, 
-                    formulaParams: { ...widget.config.formulaParams, rate: parseFloat(e.target.value) || 0 } 
-                  } 
-                })}
-                placeholder="e.g., 0.10 for 10%"
+                value={widget.config.formulaParams?.ratePercent || ''}
+                onChange={(e) => {
+                  const percentValue = parseFloat(e.target.value) || 0;
+                  onUpdate({ 
+                    ...widget, 
+                    config: { 
+                      ...widget.config, 
+                      formulaParams: { 
+                        ...widget.config.formulaParams, 
+                        ratePercent: percentValue,
+                        rate: percentValue / 100 // Convert to decimal
+                      } 
+                    } 
+                  });
+                }}
+                placeholder="e.g., 10 for 10%"
               />
             </div>
           )}
@@ -734,20 +741,27 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
           {['PMT', 'PV', 'FV'].includes(formulaType) && (
             <>
               <div className="space-y-2">
-                <Label>Rate (per period)</Label>
-                <p className="text-xs text-muted-foreground">Use 6%/4 for quarterly at 6% APR</p>
+                <Label>Rate (%)</Label>
+                <p className="text-xs text-muted-foreground">Enter as percentage (e.g., 5 for 5%)</p>
                 <Input
                   type="number"
                   step="0.01"
-                  value={widget.config.formulaParams?.rate || ''}
-                  onChange={(e) => onUpdate({ 
-                    ...widget, 
-                    config: { 
-                      ...widget.config, 
-                      formulaParams: { ...widget.config.formulaParams, rate: parseFloat(e.target.value) || 0 } 
-                    } 
-                  })}
-                  placeholder="e.g., 1.5 for 1.5% per period"
+                  value={widget.config.formulaParams?.ratePercent || ''}
+                  onChange={(e) => {
+                    const percentValue = parseFloat(e.target.value) || 0;
+                    onUpdate({ 
+                      ...widget, 
+                      config: { 
+                        ...widget.config, 
+                        formulaParams: { 
+                          ...widget.config.formulaParams, 
+                          ratePercent: percentValue,
+                          rate: percentValue / 100 // Convert to decimal
+                        } 
+                      } 
+                    });
+                  }}
+                  placeholder="e.g., 5 for 5%"
                 />
               </div>
               <div className="space-y-2">
