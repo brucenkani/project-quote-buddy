@@ -125,7 +125,7 @@ export function calculateFormula(
         frequency: pvFreq = 1 
       } = params || {};
       const pvPerRate = pvRate / pvFreq;
-      const pvTotalPer = pvNper * pvFreq;
+      const pvTotalPer = pvNper;
       
       if (pvPmt === 0) {
         // Lump sum calculation
@@ -153,7 +153,7 @@ export function calculateFormula(
         frequency: fvFreq = 1 
       } = params || {};
       const fvPerRate = fvRate / fvFreq;
-      const fvTotalPer = fvNper * fvFreq;
+      const fvTotalPer = fvNper;
       
       if (fvPmt === 0) {
         // Lump sum calculation
@@ -181,7 +181,7 @@ export function calculateFormula(
         frequency: pmtFreq = 1 
       } = params || {};
       const pmtPerRate = pmtRate / pmtFreq;
-      const pmtTotalPer = pmtNper * pmtFreq;
+      const pmtTotalPer = pmtNper;
       
       if (pmtPerRate === 0) return -(pmtPv + pmtFv) / pmtTotalPer;
       const pmtFactor = Math.pow(1 + pmtPerRate, pmtTotalPer);
@@ -246,14 +246,14 @@ export function calculateFormula(
       if (ratePmt === 0) {
         // Simple rate calculation for lump sum
         if (ratePv === 0 || rateNper === 0) return 0;
-        const totalPer = rateNper * rateFreq;
-        return (Math.pow(Math.abs(rateFv / ratePv), 1 / totalPer) - 1) * rateFreq;
+         const totalPer = rateNper;
+         return (Math.pow(Math.abs(rateFv / ratePv), 1 / totalPer) - 1) * rateFreq;
       }
       
       // Newton-Raphson for annuity
       let r = 0.1 / rateFreq;
       for (let i = 0; i < 100; i++) {
-        const totalPer = rateNper * rateFreq;
+        const totalPer = rateNper;
         const factor = Math.pow(1 + r, totalPer);
         const pv_calc = (ratePmt * (1 - 1 / factor) / r) + (rateFv / factor);
         const error = pv_calc + ratePv;
@@ -280,6 +280,13 @@ export function formatFormulaResult(value: number, formulaType: string): string 
   
   if (formulaType === 'IRR' || formulaType === 'RATE') {
     return `${(value * 100).toFixed(2)}%`;
+  }
+  
+  if (formulaType === 'PMT') {
+    return Math.abs(value).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   }
   
   if (formulaType === 'COUNT' || formulaType === 'COUNTA' || formulaType === 'COUNTIF' || formulaType === 'COUNTIFS') {

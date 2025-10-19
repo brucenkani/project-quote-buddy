@@ -148,9 +148,12 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
         const widgetData = transformedDataSource?.data || [];
         const formulaColumn = widget.config.dataKey || '';
         const formulaType = widget.config.formulaType || 'SUM';
-        const result = widgetData.length > 0 && formulaColumn 
-          ? calculateFormula(formulaType, widgetData, formulaColumn, widget.config.formulaParams)
-          : 0;
+        const isFinancial = ['PMT', 'PV', 'FV', 'NPV', 'IRR', 'RATE'].includes(formulaType);
+        const result = isFinancial
+          ? calculateFormula(formulaType, [], '', widget.config.formulaParams)
+          : (widgetData.length > 0 && formulaColumn
+              ? calculateFormula(formulaType, widgetData, formulaColumn, widget.config.formulaParams)
+              : 0);
         
         const formulaSize = Math.min(widget.width, widget.height);
         const formulaFontSize = Math.max(Math.min(formulaSize / 6, 56), 24);
