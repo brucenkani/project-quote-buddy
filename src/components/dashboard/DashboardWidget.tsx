@@ -741,8 +741,8 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
           {['PMT', 'PV', 'FV'].includes(formulaType) && (
             <>
               <div className="space-y-2">
-                <Label>Rate (%)</Label>
-                <p className="text-xs text-muted-foreground">Enter as percentage (e.g., 5 for 5%)</p>
+                <Label>Annual Rate (%)</Label>
+                <p className="text-xs text-muted-foreground">Annual interest rate (e.g., 5 for 5%)</p>
                 <Input
                   type="number"
                   step="0.01"
@@ -761,8 +761,33 @@ export function DashboardWidget({ widget, availableDataSources = [], onUpdate, o
                       } 
                     });
                   }}
-                  placeholder="e.g., 5 for 5%"
+                  placeholder="e.g., 5 for 5% annual"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Payment Frequency</Label>
+                <p className="text-xs text-muted-foreground">How often payments are made per year</p>
+                <Select
+                  value={String(widget.config.formulaParams?.frequency || 1)}
+                  onValueChange={(value) => onUpdate({ 
+                    ...widget, 
+                    config: { 
+                      ...widget.config, 
+                      formulaParams: { ...widget.config.formulaParams, frequency: parseInt(value) } 
+                    } 
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="1">Annual (1/year)</SelectItem>
+                    <SelectItem value="2">Semi-annual (2/year)</SelectItem>
+                    <SelectItem value="4">Quarterly (4/year)</SelectItem>
+                    <SelectItem value="12">Monthly (12/year)</SelectItem>
+                    <SelectItem value="52">Weekly (52/year)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>Nper (number of periods)</Label>

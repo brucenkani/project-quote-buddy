@@ -116,12 +116,12 @@ export function calculateFormula(
     // Financial Functions
     case 'PV':
       // PV(rate, nper, pmt, [fv], [type]) - Excel format
-      // For lump sum: PV = FV / (1 + rate)^nper
       const { 
         rate: pvRate = 0, 
         nper: pvNper = 1, 
         pmt: pvPmt = 0,
         fv: pvFv = 0,
+        type: pvType = 0,
         frequency: pvFreq = 1 
       } = params || {};
       const pvPerRate = pvRate / pvFreq;
@@ -133,7 +133,14 @@ export function calculateFormula(
       }
       // Annuity calculation
       const pvFactor = Math.pow(1 + pvPerRate, pvTotalPer);
-      return (pvPmt * (1 - 1 / pvFactor) / pvPerRate) + (pvFv / pvFactor);
+      let pv = (pvPmt * (1 - 1 / pvFactor) / pvPerRate) + (pvFv / pvFactor);
+      
+      // Adjust for payment timing
+      if (pvType === 1) {
+        pv = pv * (1 + pvPerRate);
+      }
+      
+      return pv;
     
     case 'FV':
       // FV(rate, nper, pmt, [pv], [type]) - Excel format
@@ -142,6 +149,7 @@ export function calculateFormula(
         nper: fvNper = 1, 
         pmt: fvPmt = 0,
         pv: fvPv = 0,
+        type: fvType = 0,
         frequency: fvFreq = 1 
       } = params || {};
       const fvPerRate = fvRate / fvFreq;
@@ -153,7 +161,14 @@ export function calculateFormula(
       }
       // Annuity calculation
       const fvFactor = Math.pow(1 + fvPerRate, fvTotalPer);
-      return (fvPmt * (fvFactor - 1) / fvPerRate) + (fvPv * fvFactor);
+      let fv = (fvPmt * (fvFactor - 1) / fvPerRate) + (fvPv * fvFactor);
+      
+      // Adjust for payment timing
+      if (fvType === 1) {
+        fv = fv * (1 + fvPerRate);
+      }
+      
+      return fv;
     
     case 'PMT':
       // PMT(rate, nper, pv, [fv], [type]) - Excel format
@@ -162,6 +177,7 @@ export function calculateFormula(
         nper: pmtNper = 1, 
         pv: pmtPv = 0,
         fv: pmtFv = 0,
+        type: pmtType = 0,
         frequency: pmtFreq = 1 
       } = params || {};
       const pmtPerRate = pmtRate / pmtFreq;
@@ -169,7 +185,15 @@ export function calculateFormula(
       
       if (pmtPerRate === 0) return -(pmtPv + pmtFv) / pmtTotalPer;
       const pmtFactor = Math.pow(1 + pmtPerRate, pmtTotalPer);
-      return -(pmtPv * pmtFactor + pmtFv) * pmtPerRate / (pmtFactor - 1);
+      let payment = -(pmtPv * pmtFactor + pmtFv) * pmtPerRate / (pmtFactor - 1);
+      
+      // Adjust for payment timing (type: 0 = end of period, 1 = beginning)
+      if (pmtType === 1) {
+        payment = payment / (1 + pmtPerRate);
+      }
+      
+      console.log('PMT Calculation:', { pmtRate, pmtNper, pmtPv, pmtFv, pmtType, pmtPerRate, pmtTotalPer, pmtFactor, payment });
+      return payment;
     
     case 'NPV':
       // NPV(rate, value1, [value2], ...) - Excel format
