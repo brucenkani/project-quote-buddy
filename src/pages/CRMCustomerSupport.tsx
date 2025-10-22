@@ -10,12 +10,14 @@ import TicketSystem from './crm/TicketSystem';
 
 export default function CRMCustomerSupport() {
   const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState<'overview' | 'crm' | 'tickets'>('overview');
+  const [activeSection, setActiveSection] = useState<'overview' | 'customers' | 'pipeline' | 'tickets'>('overview');
 
-  // For now, CRM section defaults to Customer Database
-  // In future, this could be a tabbed interface within CRM
-  if (activeSection === 'crm') {
+  if (activeSection === 'customers') {
     return <CustomerDatabase />;
+  }
+
+  if (activeSection === 'pipeline') {
+    return <SalesPipeline />;
   }
 
   if (activeSection === 'tickets') {
@@ -46,18 +48,15 @@ export default function CRMCustomerSupport() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-3 gap-6">
           <Card 
             className="border-2 hover:border-primary/50 transition-all cursor-pointer hover:shadow-lg"
-            onClick={() => setActiveSection('crm')}
+            onClick={() => setActiveSection('customers')}
           >
             <CardHeader>
-              <div className="flex gap-3 mb-4">
-                <Users className="h-10 w-10 text-primary" />
-                <TrendingUp className="h-10 w-10 text-primary" />
-              </div>
-              <CardTitle>CRM & Sales Pipeline</CardTitle>
-              <CardDescription>Customer database and visual sales tracking system</CardDescription>
+              <Users className="h-10 w-10 mb-4 text-primary" />
+              <CardTitle>Customer Database</CardTitle>
+              <CardDescription>Centralize all customer information</CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2 text-sm text-muted-foreground mb-4">
@@ -73,6 +72,22 @@ export default function CRMCustomerSupport() {
                   <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                   <span>Customer segmentation</span>
                 </li>
+              </ul>
+              <Button className="w-full" variant="outline">Open</Button>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="border-2 hover:border-primary/50 transition-all cursor-pointer hover:shadow-lg"
+            onClick={() => setActiveSection('pipeline')}
+          >
+            <CardHeader>
+              <TrendingUp className="h-10 w-10 mb-4 text-primary" />
+              <CardTitle>Sales Pipeline</CardTitle>
+              <CardDescription>Visual sales tracking system</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-muted-foreground mb-4">
                 <li className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                   <span>Lead tracking & management</span>
