@@ -91,10 +91,10 @@ const App = () => (
           <Route path="/admin/knowledge" element={<ProtectedRoute><KnowledgeAdmin /></ProtectedRoute>} />
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/crm-customer-support" element={<ProtectedRoute><SubscriptionGuard><CRMCustomerSupport /></SubscriptionGuard></ProtectedRoute>} />
-          <Route path="/crm/customer-database" element={<ProtectedRoute><SubscriptionGuard><CustomerDatabase /></SubscriptionGuard></ProtectedRoute>} />
-          <Route path="/crm/sales-pipeline" element={<ProtectedRoute><SubscriptionGuard><SalesPipeline /></SubscriptionGuard></ProtectedRoute>} />
-          <Route path="/crm/ticket-system" element={<ProtectedRoute><SubscriptionGuard><TicketSystem /></SubscriptionGuard></ProtectedRoute>} />
+          <Route path="/crm-customer-support" element={<ProtectedRoute><CRMCustomerSupport /></ProtectedRoute>} />
+          <Route path="/crm/customer-database" element={<ProtectedRoute><CustomerDatabase /></ProtectedRoute>} />
+          <Route path="/crm/sales-pipeline" element={<ProtectedRoute><SalesPipeline /></ProtectedRoute>} />
+          <Route path="/crm/ticket-system" element={<ProtectedRoute><TicketSystem /></ProtectedRoute>} />
           <Route path="/business-analytics" element={<BusinessAnalytics />} />
           <Route path="/analytics" element={<BusinessAnalytics />} />
           <Route path="/analytics/management-accounts" element={<ManagementAccounts />} />
@@ -105,10 +105,12 @@ const App = () => (
           <Route path="/analytics/custom-reports" element={<ProtectedRoute><CustomReports /></ProtectedRoute>} />
           <Route path="/analytics/dashboard-builder/:id" element={<ProtectedRoute><DashboardBuilder /></ProtectedRoute>} />
           
-          <Route path="/dashboard" element={<ProtectedRoute><SubscriptionGuard><Landing /></SubscriptionGuard></ProtectedRoute>} />
-          <Route path="/landing" element={<ProtectedRoute><SubscriptionGuard><Landing /></SubscriptionGuard></ProtectedRoute>} />
-          <Route path="/landing-settings" element={<ProtectedRoute><SubscriptionGuard><LandingSettings /></SubscriptionGuard></ProtectedRoute>} />
-          <Route path="/accounting" element={<ProtectedRoute><SubscriptionGuard><AccountingDashboard /></SubscriptionGuard></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
+          <Route path="/landing" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
+          <Route path="/landing-settings" element={<ProtectedRoute><LandingSettings /></ProtectedRoute>} />
+          <Route path="/accounting" element={<ProtectedRoute><AccountingDashboard /></ProtectedRoute>} />
+          <Route path="/accounting-dashboard" element={<ProtectedRoute><AccountingDashboard /></ProtectedRoute>} />
+          <Route path="/payroll-dashboard" element={<ProtectedRoute><PayrollDashboard /></ProtectedRoute>} />
           <Route path="/payroll" element={<ProtectedRoute><PayrollDashboard /></ProtectedRoute>} />
           <Route path="/payroll/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
           <Route path="/payroll/payroll" element={<ProtectedRoute><Payroll /></ProtectedRoute>} />
