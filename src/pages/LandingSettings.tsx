@@ -303,17 +303,27 @@ export default function LandingSettings() {
     const selectedCountry = countries.find(c => c.code === companyFormData.country);
 
     const settings: any = {
-      company_name: companyFormData.companyName,
       country: companyFormData.country,
       company_type: companyFormData.companyType,
-      email: companyFormData.email,
-      phone: companyFormData.phone,
-      address: companyFormData.address,
-      tax_number: companyFormData.vatNumber,
-      registration_number: companyFormData.companyRegistrationNumber,
+      email: companyFormData.email || '',
+      phone: companyFormData.phone || '',
+      address: companyFormData.address || '',
+      city: '',
+      state: '',
+      postal_code: '',
+      tax_number: companyFormData.vatNumber || '',
+      registration_number: companyFormData.companyRegistrationNumber || '',
       currency: selectedCountry?.currency || 'ZAR',
       currency_symbol: selectedCountry?.symbol || 'R',
-      logo_url: companyFormData.logoUrl,
+      logo_url: companyFormData.logoUrl || undefined,
+      tax_rate: 15,
+      financial_year_end: '02-28',
+      invoice_prefix: 'INV',
+      invoice_start_number: 1,
+      quote_prefix: 'QTE',
+      quote_start_number: 1,
+      purchase_prefix: 'PO',
+      purchase_start_number: 1,
     };
 
     if (editingCompany) {
