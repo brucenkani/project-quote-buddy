@@ -10,7 +10,7 @@ interface CreateUserPayload {
   email: string;
   password: string;
   role: 'admin' | 'accountant' | 'employee';
-  companyId?: string; // optional, if provided user will be added to this company
+  companyId: string; // required - user must be invited to a company
   fullName?: string; // optional full name
 }
 
@@ -39,36 +39,29 @@ serve(async (req) => {
       });
     }
 
-    // Only owners can create users - check both user_roles and company_members
-    const { data: callerRole } = await supabaseClient
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .maybeSingle();
+    const payload = (await req.json()) as CreateUserPayload;
+    const { email, password, role, companyId, fullName } = payload;
 
-    const { data: companyOwnership } = await supabaseClient
-      .from('company_members')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'owner')
-      .maybeSingle();
-
-    const isOwner = callerRole?.role === 'owner' || !!companyOwnership;
-
-    if (!isOwner) {
-      console.error('Forbidden: caller is not owner');
-      return new Response(JSON.stringify({ error: 'Forbidden: Only owners can create users' }), {
-        status: 403,
+    if (!email || !password || !role || !companyId) {
+      return new Response(JSON.stringify({ error: 'email, password, role, and companyId are required' }), {
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const payload = (await req.json()) as CreateUserPayload;
-    const { email, password, role, companyId, fullName } = payload;
+    // Check if caller is owner of the specified company
+    const { data: companyOwnership } = await supabaseClient
+      .from('company_members')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('company_id', companyId)
+      .eq('role', 'owner')
+      .maybeSingle();
 
-    if (!email || !password || !role) {
-      return new Response(JSON.stringify({ error: 'email, password and role are required' }), {
-        status: 400,
+    if (!companyOwnership) {
+      console.error('Forbidden: caller is not owner of this company');
+      return new Response(JSON.stringify({ error: 'Forbidden: Only company admins can invite users' }), {
+        status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -117,20 +110,21 @@ serve(async (req) => {
       });
     }
 
-    // 3) If a companyId is provided, add the user as a member to that company
-    if (companyId) {
-      const { error: memberErr } = await supabaseAdmin.from('company_members').insert({
-        company_id: companyId,
-        user_id: newUserId,
-        role: roleToAssign,
+    // Add the user as a member to the company
+    const { error: memberErr } = await supabaseAdmin.from('company_members').insert({
+      company_id: companyId,
+      user_id: newUserId,
+      role: roleToAssign,
+    });
+    if (memberErr) {
+      console.error('Error adding company member:', memberErr);
+      return new Response(JSON.stringify({ error: 'Failed to add user to company' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
-      if (memberErr) {
-        console.error('Error adding company member:', memberErr);
-        // continue but report
-      }
     }
 
-    // 4) Clean up any auto-created company for the new user (optional)
+    // Clean up any auto-created company for the new user
     const { data: autoCompanies } = await supabaseAdmin
       .from('companies')
       .select('id')
