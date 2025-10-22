@@ -196,8 +196,8 @@ export default function Index() {
                 </form>
               </DialogContent>
             </Dialog>
-            <Button onClick={() => navigate('/auth')} size="lg">
-              Sign In / Sign Up
+            <Button onClick={() => navigate(isAuthenticated ? '/dashboard' : '/auth')} size="lg">
+              {isAuthenticated ? 'Dashboard' : 'Sign In / Sign Up'}
             </Button>
           </div>
         </div>
