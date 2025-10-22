@@ -2331,6 +2331,16 @@ export type Database = {
       }
     }
     Functions: {
+      create_company_full: {
+        Args: { _name: string; _settings?: Json }
+        Returns: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          updated_at: string
+        }[]
+      }
       get_company_role: {
         Args: { _company_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

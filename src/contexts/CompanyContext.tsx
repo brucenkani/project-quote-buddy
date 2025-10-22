@@ -249,59 +249,31 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         return null;
       }
 
-      // Create company
-      const { data: companyData, error: companyError } = await supabase
-        .from('companies')
-        .insert({ name, created_by: user.id })
-        .select()
-        .single();
+      // Use secure backend function to create company, membership and settings atomically
+      const { data, error } = await supabase.rpc('create_company_full', {
+        _name: name,
+        _settings: settings as any,
+      });
 
-      if (companyError) throw companyError;
+      if (error) throw error;
 
-      // Add creator as owner
-      const { error: memberError } = await supabase
-        .from('company_members')
-        .insert({
-          company_id: companyData.id,
-          user_id: user.id,
-          role: 'owner',
-        });
+      const raw = Array.isArray(data) ? data[0] : data;
+      if (!raw) throw new Error('Company creation failed');
 
-      if (memberError) throw memberError;
+      const company: Company = {
+        id: raw.id,
+        name: raw.name,
+        created_by: raw.created_by,
+        created_at: raw.created_at,
+        updated_at: raw.updated_at,
+      };
 
-      // Create company settings
-      const { error: settingsError } = await supabase
-        .from('company_settings')
-        .insert({
-          company_id: companyData.id,
-          user_id: user.id,
-          company_name: name,
-          country: settings.country || 'ZA',
-          company_type: settings.company_type || 'trading',
-          email: settings.email || '',
-          phone: settings.phone || '',
-          address: settings.address || '',
-          city: settings.city || '',
-          state: settings.state || '',
-          postal_code: settings.postal_code || '',
-          tax_number: settings.tax_number || '',
-          registration_number: settings.registration_number || '',
-          currency: settings.currency || 'ZAR',
-          currency_symbol: settings.currency_symbol || 'R',
-          logo_url: settings.logo_url,
-          tax_rate: settings.tax_rate || 15,
-          financial_year_end: settings.financial_year_end || '02-28',
-          invoice_prefix: settings.invoice_prefix || 'INV',
-          invoice_start_number: settings.invoice_start_number || 1,
-          quote_prefix: settings.quote_prefix || 'QTE',
-          quote_start_number: settings.quote_start_number || 1,
-          purchase_prefix: settings.purchase_prefix || 'PO',
-          purchase_start_number: settings.purchase_start_number || 1,
-        });
+      // Optimistically set active company and load its settings
+      setActiveCompanyState(company);
+      localStorage.setItem('activeCompanyId', company.id);
+      await loadCompanySettings(company.id);
 
-      if (settingsError) throw settingsError;
-
-      // Refresh companies
+      // Refresh list in background
       await loadCompanies();
 
       toast({
@@ -309,12 +281,12 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         description: 'Company created successfully',
       });
 
-      return companyData;
-    } catch (error) {
+      return company;
+    } catch (error: any) {
       console.error('Error creating company:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create company',
+        description: error?.message || 'Failed to create company',
         variant: 'destructive',
       });
       return null;
