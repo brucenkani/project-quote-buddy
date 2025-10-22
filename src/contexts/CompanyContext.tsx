@@ -185,12 +185,14 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
       setCompanies(companiesData || []);
 
-      // Set active company from localStorage or first company
+      // Set active company from localStorage or first company and load its settings
       const savedCompanyId = localStorage.getItem('activeCompanyId');
-      if (savedCompanyId && companiesData?.find(c => c.id === savedCompanyId)) {
-        setActiveCompanyState(companiesData.find(c => c.id === savedCompanyId) || companiesData[0] || null);
-      } else {
-        setActiveCompanyState(companiesData?.[0] || null);
+      const selectedCompany = savedCompanyId && companiesData?.find(c => c.id === savedCompanyId)
+        ? (companiesData?.find(c => c.id === savedCompanyId) as Company)
+        : (companiesData?.[0] || null);
+      setActiveCompanyState(selectedCompany);
+      if (selectedCompany) {
+        await loadCompanySettings(selectedCompany.id);
       }
     } catch (error) {
       console.error('Error loading companies:', error);
@@ -205,7 +207,23 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // Initial load
     loadCompanies();
+
+    // Refresh on auth state changes (sign in/out)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, _session) => {
+      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+        setLoading(true);
+        loadCompanies();
+      }
+      if (event === 'SIGNED_OUT') {
+        setCompanies([]);
+        setActiveCompanyState(null);
+        setActiveCompanySettings(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const setActiveCompany = async (company: Company | null) => {
