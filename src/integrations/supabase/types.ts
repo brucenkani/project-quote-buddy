@@ -740,6 +740,45 @@ export type Database = {
           },
         ]
       }
+      deals: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          customer: string
+          id: string
+          probability: number
+          stage: string
+          title: string
+          updated_at: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          customer: string
+          id?: string
+          probability?: number
+          stage?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          value?: number
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          customer?: string
+          id?: string
+          probability?: number
+          stage?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: []
+      }
       employees: {
         Row: {
           account_number: string | null
@@ -2368,6 +2407,12 @@ export type Database = {
           updated_at: string | null
           user_id: string | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "employee_safe_view"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_invitation_by_token: {
         Args: { _token: string }
@@ -2380,10 +2425,7 @@ export type Database = {
           status: string
         }[]
       }
-      has_active_subscription: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
+      has_active_subscription: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2395,14 +2437,8 @@ export type Database = {
         Args: { _company_id: string; _user_id: string }
         Returns: boolean
       }
-      is_in_trial: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
-      is_owner: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
+      is_in_trial: { Args: { _user_id: string }; Returns: boolean }
+      is_owner: { Args: { _user_id: string }; Returns: boolean }
       schedule_data_deletion: {
         Args: { _company_id: string; _user_id: string }
         Returns: string

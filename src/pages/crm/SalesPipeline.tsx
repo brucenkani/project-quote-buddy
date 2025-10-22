@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Plus } from 'lucide-react';
 import DealDialog from '@/components/crm/DealDialog';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
 
 interface Deal {
   id: string;
@@ -26,13 +28,37 @@ const stages = [
 
 export default function SalesPipeline() {
   const navigate = useNavigate();
-  const [deals, setDeals] = useState<Deal[]>([
-    { id: '1', title: 'Enterprise Software Deal', customer: 'Acme Corp', value: 50000, stage: 'proposal', probability: 60 },
-    { id: '2', title: 'Consulting Services', customer: 'TechStart Inc', value: 25000, stage: 'negotiation', probability: 80 },
-    { id: '3', title: 'Annual Maintenance', customer: 'Global Ltd', value: 15000, stage: 'qualified', probability: 40 },
-  ]);
+  const { activeCompany } = useCompany();
+  const [deals, setDeals] = useState<Deal[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (activeCompany) {
+      fetchDeals();
+    }
+  }, [activeCompany]);
+
+  const fetchDeals = async () => {
+    if (!activeCompany) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('deals')
+        .select('*')
+        .eq('company_id', activeCompany.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setDeals((data || []) as Deal[]);
+    } catch (error) {
+      console.error('Error fetching deals:', error);
+      toast.error('Failed to load deals');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getDealsByStage = (stage: string) => deals.filter(d => d.stage === stage);
 
@@ -50,19 +76,47 @@ export default function SalesPipeline() {
     setDialogOpen(true);
   };
 
-  const handleSaveDeal = (deal: Deal) => {
-    setDeals(prevDeals => {
-      const existingIndex = prevDeals.findIndex(d => d.id === deal.id);
-      if (existingIndex >= 0) {
-        const updated = [...prevDeals];
-        updated[existingIndex] = deal;
+  const handleSaveDeal = async (deal: Deal) => {
+    if (!activeCompany) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const dealData = {
+        title: deal.title,
+        customer: deal.customer,
+        value: deal.value,
+        stage: deal.stage,
+        probability: deal.probability,
+        company_id: activeCompany.id,
+        user_id: user.id,
+      };
+
+      if (deal.id && deal.id !== 'new') {
+        // Update existing deal
+        const { error } = await supabase
+          .from('deals')
+          .update(dealData)
+          .eq('id', deal.id);
+
+        if (error) throw error;
         toast.success('Deal updated successfully');
-        return updated;
       } else {
+        // Create new deal
+        const { error } = await supabase
+          .from('deals')
+          .insert([dealData]);
+
+        if (error) throw error;
         toast.success('Deal created successfully');
-        return [...prevDeals, deal];
       }
-    });
+
+      fetchDeals();
+    } catch (error) {
+      console.error('Error saving deal:', error);
+      toast.error('Failed to save deal');
+    }
   };
 
   return (
@@ -86,6 +140,12 @@ export default function SalesPipeline() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-muted-foreground">Loading deals...</p>
+          </div>
+        ) : (
+          <>
         <div className="grid grid-cols-5 gap-4">
           {stages.map((stage) => {
             const stageDeals = getDealsByStage(stage.id);
@@ -158,6 +218,8 @@ export default function SalesPipeline() {
             </CardContent>
           </Card>
         </div>
+        </>
+        )}
       </main>
 
       <DealDialog
