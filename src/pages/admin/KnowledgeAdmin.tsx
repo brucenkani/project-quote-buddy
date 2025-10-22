@@ -60,10 +60,11 @@ export default function KnowledgeAdmin() {
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
+      .eq('role', 'super_admin')
       .single();
 
-    if (roleData?.role !== 'admin') {
-      toast.error('Access denied. Admin only.');
+    if (!roleData) {
+      toast.error('Access denied. Super admin only.');
       navigate('/dashboard');
     }
   };

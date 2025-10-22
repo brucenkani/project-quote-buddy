@@ -95,12 +95,12 @@ export default function BusinessCommunity() {
     setUser(user);
     
     if (user) {
-      // Check if user is owner
+      // Check if user is super admin
       const { data: roleData } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .eq('role', 'owner')
+        .eq('role', 'super_admin')
         .single();
       
       setIsOwner(!!roleData);
@@ -164,8 +164,8 @@ export default function BusinessCommunity() {
   const handleJoinCommunity = async () => {
     if (!user || !isOwner) {
       toast({
-        title: 'Authentication Required',
-        description: 'Only company owners can create a community profile',
+        title: 'Access Denied',
+        description: 'Only super admins can manage the community directory',
         variant: 'destructive'
       });
       return;
@@ -273,12 +273,12 @@ export default function BusinessCommunity() {
               <DialogTrigger asChild>
                 <Button size="lg" className="gap-2">
                   <Building2 className="h-5 w-5" />
-                  Join the Community
+                  Add Business to Directory
                 </Button>
               </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Join the Business Community</DialogTitle>
+                <DialogTitle>Add Business to Directory</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
