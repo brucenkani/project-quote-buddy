@@ -2439,13 +2439,14 @@ export type Database = {
       }
       is_in_trial: { Args: { _user_id: string }; Returns: boolean }
       is_owner: { Args: { _user_id: string }; Returns: boolean }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       schedule_data_deletion: {
         Args: { _company_id: string; _user_id: string }
         Returns: string
       }
     }
     Enums: {
-      app_role: "owner" | "accountant" | "employee" | "admin"
+      app_role: "owner" | "accountant" | "employee" | "admin" | "super_admin"
       subscription_status:
         | "trial"
         | "active"
@@ -2579,7 +2580,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["owner", "accountant", "employee", "admin"],
+      app_role: ["owner", "accountant", "employee", "admin", "super_admin"],
       subscription_status: [
         "trial",
         "active",
