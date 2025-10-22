@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Trash2, Search, Mail } from 'lucide-react';
+import { Trash2, Search, Mail, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface User {
@@ -68,6 +68,34 @@ export default function UserManagementTable() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMakeSuperAdmin = async (userId: string, userEmail: string) => {
+    if (!confirm(`Are you sure you want to make "${userEmail}" a Super Admin?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase.functions.invoke('update-user-role', {
+        body: { userId, role: 'super_admin' },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: `"${userEmail}" is now a Super Admin`,
+      });
+
+      loadUsers();
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update user role',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -191,15 +219,27 @@ export default function UserManagementTable() {
                       {new Date(user.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteUser(user.id, user.email)}
-                        className="text-destructive hover:text-destructive"
-                        disabled={user.role === 'super_admin'}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        {user.role !== 'super_admin' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleMakeSuperAdmin(user.id, user.email)}
+                          >
+                            <ShieldCheck className="h-4 w-4 mr-2" />
+                            Make Super Admin
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteUser(user.id, user.email)}
+                          className="text-destructive hover:text-destructive"
+                          disabled={user.role === 'super_admin'}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
