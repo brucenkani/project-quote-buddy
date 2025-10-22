@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Save, Upload, X, FileDown, FileSpreadsheet, Database, Shield, MoreVertical } from 'lucide-react';
+import { CreateCompanyDialog } from '@/components/CreateCompanyDialog';
 
 export default function LandingSettings() {
   const navigate = useNavigate();
@@ -96,6 +97,7 @@ export default function LandingSettings() {
   };
   
   // Company form state
+  const [showCreateCompanyDialog, setShowCreateCompanyDialog] = useState(false);
   const [showCompanyForm, setShowCompanyForm] = useState(false);
   const [editingCompany, setEditingCompany] = useState<any>(null);
   const [companyFormData, setCompanyFormData] = useState({
@@ -137,21 +139,7 @@ export default function LandingSettings() {
   };
 
   const handleAddCompany = () => {
-    setEditingCompany(null);
-    setCompanyFormData({
-      companyName: '',
-      country: 'ZA',
-      companyType: 'trading',
-      email: '',
-      phone: '',
-      address: '',
-      vatNumber: '',
-      incomeTaxNumber: '',
-      companyRegistrationNumber: '',
-      logoUrl: '',
-      primaryColor: '#3b82f6',
-    });
-    setShowCompanyForm(true);
+    setShowCreateCompanyDialog(true);
   };
 
   const handleEditCompany = async (company: any) => {
@@ -1186,6 +1174,8 @@ export default function LandingSettings() {
           </TabsContent>
         </Tabs>
       </div>
+      
+      <CreateCompanyDialog open={showCreateCompanyDialog} onOpenChange={setShowCreateCompanyDialog} />
     </div>
   );
 }

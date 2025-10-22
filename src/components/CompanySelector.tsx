@@ -10,48 +10,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { CreateCompanyDialog } from './CreateCompanyDialog';
 
 export function CompanySelector() {
-  const { companies, activeCompany, setActiveCompany, createCompany } = useCompany();
+  const { companies, activeCompany, setActiveCompany } = useCompany();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [newCompanyName, setNewCompanyName] = useState('');
-  const [creating, setCreating] = useState(false);
-
-  const handleCreateCompany = async () => {
-    if (!newCompanyName.trim()) return;
-    
-    setCreating(true);
-    const company = await createCompany(newCompanyName.trim(), {
-      country: 'ZA',
-      company_type: 'trading',
-      currency: 'ZAR',
-      currency_symbol: 'R',
-    });
-    setCreating(false);
-    
-    if (company) {
-      setShowCreateDialog(false);
-      setNewCompanyName('');
-      setActiveCompany(company);
-    }
-  };
 
   if (!activeCompany) {
     return (
-      <Button onClick={() => setShowCreateDialog(true)} size="sm">
-        <Plus className="mr-2 h-4 w-4" />
-        Create Company
-      </Button>
+      <>
+        <Button onClick={() => setShowCreateDialog(true)} size="sm">
+          <Plus className="mr-2 h-4 w-4" />
+          Create Company
+        </Button>
+        <CreateCompanyDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
+      </>
     );
   }
 
@@ -86,44 +59,7 @@ export function CompanySelector() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Company</DialogTitle>
-            <DialogDescription>
-              Create a new company to manage your accounting separately.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="company-name">Company Name</Label>
-              <Input
-                id="company-name"
-                value={newCompanyName}
-                onChange={(e) => setNewCompanyName(e.target.value)}
-                placeholder="Enter company name"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleCreateCompany();
-                }}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowCreateDialog(false);
-                setNewCompanyName('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleCreateCompany} disabled={!newCompanyName.trim() || creating}>
-              {creating ? 'Creating...' : 'Create Company'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CreateCompanyDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
     </>
   );
 }
