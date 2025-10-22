@@ -189,12 +189,12 @@ export const Navigation = () => {
               </Link>
             </Button>
 
-            {/* Invite Users Link - Admin Only */}
+            {/* Your Users Link - Admin Only */}
             {isAdmin && (
               <Button variant={location.pathname === '/invite' ? 'secondary' : 'ghost'} size="sm" asChild>
                 <Link to="/invite" className="gap-2">
                   <UserPlus className="h-4 w-4" />
-                  <span>Invite Users</span>
+                  <span>Your Users</span>
                 </Link>
               </Button>
             )}
@@ -339,7 +339,7 @@ export const Navigation = () => {
                   </Link>
                 </Button>
 
-                {/* Invite Users - Admin Only */}
+                {/* Your Users - Admin Only */}
                 {isAdmin && (
                   <Button
                     variant={location.pathname === '/invite' ? 'default' : 'ghost'}
@@ -349,7 +349,7 @@ export const Navigation = () => {
                   >
                     <Link to="/invite">
                       <UserPlus className="h-4 w-4" />
-                      Invite Users
+                      Your Users
                     </Link>
                   </Button>
                 )}

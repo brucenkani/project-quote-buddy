@@ -13,9 +13,24 @@ export default function Landing() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { activeCompany } = useCompany();
 
   useEffect(() => {
+    const checkAdminRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'owner')
+          .maybeSingle();
+
+        setIsAdmin(!!roleData);
+      }
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
@@ -23,6 +38,9 @@ export default function Landing() {
         navigate('/auth');
       } else if (session && window.location.pathname === '/') {
         navigate('/dashboard');
+      }
+      if (session) {
+        checkAdminRole();
       }
     });
 
@@ -33,6 +51,9 @@ export default function Landing() {
         navigate('/auth');
       } else if (session && window.location.pathname === '/') {
         navigate('/dashboard');
+      }
+      if (session) {
+        checkAdminRole();
       }
     });
 
@@ -63,10 +84,12 @@ export default function Landing() {
                 <Home className="h-4 w-4" />
                 <span className="hidden sm:inline">Home</span>
               </Button>
-              <Button onClick={() => navigate('/invite')} variant="ghost" size="sm" className="gap-2">
-                <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">Invite Users</span>
-              </Button>
+              {isAdmin && (
+                <Button onClick={() => navigate('/invite')} variant="ghost" size="sm" className="gap-2">
+                  <Users className="h-4 w-4" />
+                  <span className="hidden sm:inline">Your Users</span>
+                </Button>
+              )}
               <Button onClick={() => navigate('/landing-settings')} variant="ghost" size="sm" className="gap-2">
                 <Settings className="h-4 w-4" />
                 <span className="hidden sm:inline">Settings</span>
