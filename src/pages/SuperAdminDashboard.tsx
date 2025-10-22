@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Users, Activity, TrendingUp, LogOut, Shield } from 'lucide-react';
+import { Building2, Users, Activity, TrendingUp, LogOut, Shield, BookOpen, Network } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import CompanyManagementTable from '@/components/superadmin/CompanyManagementTable';
 import UserManagementTable from '@/components/superadmin/UserManagementTable';
@@ -179,6 +179,43 @@ export default function SuperAdminDashboard() {
               <p className="text-xs text-muted-foreground">
                 All systems operational
               </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Content Management */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/admin/knowledge-admin')}>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <BookOpen className="h-8 w-8 text-primary" />
+                <div>
+                  <CardTitle>Knowledge Centre</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">Manage educational content and articles</p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" className="w-full">
+                Manage Articles
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/business-community')}>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Network className="h-8 w-8 text-primary" />
+                <div>
+                  <CardTitle>Business Community</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">Manage community directory and listings</p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" className="w-full">
+                Manage Directory
+              </Button>
             </CardContent>
           </Card>
         </div>
