@@ -1,12 +1,15 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Headphones } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Users, Headphones, ArrowLeft } from 'lucide-react';
 import SalesPipeline from './crm/SalesPipeline';
 import TicketSystem from './crm/TicketSystem';
 
 type ActiveSection = 'overview' | 'pipeline' | 'tickets';
 
 export default function CRMCustomerSupport() {
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<ActiveSection>('overview');
 
   if (activeSection === 'pipeline') {
@@ -18,10 +21,23 @@ export default function CRMCustomerSupport() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">CRM & Customer Support</h1>
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+              <h1 className="text-2xl font-bold">CRM & Customer Support</h1>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-8">
+        <div className="text-center mb-8">
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Manage your customer relationships, track sales pipeline, and handle support tickets
           </p>
@@ -94,7 +110,7 @@ export default function CRMCustomerSupport() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
