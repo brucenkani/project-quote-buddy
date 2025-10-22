@@ -477,37 +477,53 @@ export default function Index() {
 
         </div>
 
-        {/* Additional Benefits */}
-        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          <Card>
-            <CardHeader className="text-center">
-              <Clock className="h-10 w-10 mx-auto mb-2 text-primary" />
-              <CardTitle className="text-lg">Save Time</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center text-muted-foreground">
-              Automate repetitive tasks and focus on growing your business
-            </CardContent>
-          </Card>
+        {/* Additional Services */}
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* Websites & Excel Templates Shop */}
+          <div className="flex items-center gap-6 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
+            <div className="flex-shrink-0 hidden sm:block">
+              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+                <Binary className="h-10 w-10 text-primary" />
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold mb-2">Websites & Excel Templates</h3>
+              <p className="text-muted-foreground mb-4">
+                Professional websites and custom Excel tools to streamline your business operations
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={handleWhatsAppContact}
+                className="gap-2"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Get a Quote
+              </Button>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader className="text-center">
-              <Shield className="h-10 w-10 mx-auto mb-2 text-primary" />
-              <CardTitle className="text-lg">Stay Compliant</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center text-muted-foreground">
-              Built-in SARS compliance and financial best practices
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="text-center">
-              <TrendingUp className="h-10 w-10 mx-auto mb-2 text-primary" />
-              <CardTitle className="text-lg">Grow Efficiently</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center text-muted-foreground">
-              Scale your operations with powerful insights and reporting
-            </CardContent>
-          </Card>
+          {/* Report & Document Makers */}
+          <div className="flex items-center gap-6 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
+            <div className="flex-shrink-0 hidden sm:block">
+              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+                <FileText className="h-10 w-10 text-primary" />
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold mb-2">Report & Document Makers</h3>
+              <p className="text-muted-foreground mb-4">
+                Custom reports, presentations, and professional documents tailored to your needs
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={handleWhatsAppContact}
+                className="gap-2"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Get a Quote
+              </Button>
+            </div>
+          </div>
         </div>
       </section>
 
