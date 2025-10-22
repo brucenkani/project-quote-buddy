@@ -64,7 +64,7 @@ export default function InviteUsers() {
   useEffect(() => {
     fetchPermissions();
     fetchUsers();
-  }, []);
+  }, [activeCompany]);
 
   const fetchPermissions = async () => {
     try {
@@ -91,31 +91,48 @@ export default function InviteUsers() {
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
+      
+      if (!activeCompany) {
+        setUsers([]);
+        setLoadingUsers(false);
+        return;
+      }
+
+      // Fetch only company members for the active company
+      const { data: companyMembers, error: membersError } = await supabase
+        .from('company_members')
+        .select('user_id, role')
+        .eq('company_id', activeCompany.id);
+
+      if (membersError) throw membersError;
+
+      if (!companyMembers || companyMembers.length === 0) {
+        setUsers([]);
+        setLoadingUsers(false);
+        return;
+      }
+
+      // Fetch profile details for each company member
+      const userIds = companyMembers.map(m => m.user_id);
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
+        .in('id', userIds)
         .order('created_at', { ascending: false });
 
       if (profilesError) throw profilesError;
 
-      // Fetch roles for each user
-      const usersWithRoles: UserWithRole[] = await Promise.all(
-        (profiles || []).map(async (profile) => {
-          const { data: roleData } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', profile.id)
-            .single();
-
-          return {
-            id: profile.id,
-            email: profile.email,
-            full_name: profile.full_name,
-            created_at: profile.created_at,
-            role: roleData?.role || null,
-          };
-        })
-      );
+      // Map profiles with their company roles
+      const usersWithRoles: UserWithRole[] = (profiles || []).map((profile) => {
+        const member = companyMembers.find(m => m.user_id === profile.id);
+        return {
+          id: profile.id,
+          email: profile.email,
+          full_name: profile.full_name,
+          created_at: profile.created_at,
+          role: member?.role || null,
+        };
+      });
 
       setUsers(usersWithRoles);
     } catch (error: any) {
