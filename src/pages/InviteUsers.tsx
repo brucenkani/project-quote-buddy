@@ -45,12 +45,15 @@ interface UserWithRole {
 export default function InviteUsers() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { activeCompany } = useCompany();
+  const { companies, activeCompany } = useCompany();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<'admin' | 'accountant' | 'employee'>('accountant');
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [managingCompanyAccess, setManagingCompanyAccess] = useState<{userId: string, userName: string} | null>(null);
+  const [userCompanies, setUserCompanies] = useState<{companyId: string, companyName: string, role: string}[]>([]);
   const [permissions, setPermissions] = useState<RolePermission[]>([]);
   const [loadingPermissions, setLoadingPermissions] = useState(true);
   const [savingPermissions, setSavingPermissions] = useState(false);
@@ -64,6 +67,9 @@ export default function InviteUsers() {
   useEffect(() => {
     fetchPermissions();
     fetchUsers();
+    if (activeCompany && !selectedCompanyId) {
+      setSelectedCompanyId(activeCompany.id);
+    }
   }, [activeCompany]);
 
   const fetchPermissions = async () => {
@@ -149,6 +155,16 @@ export default function InviteUsers() {
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!selectedCompanyId) {
+      toast({
+        title: 'Error',
+        description: 'Please select a company',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -158,15 +174,16 @@ export default function InviteUsers() {
           password, 
           fullName,
           role,
-          companyId: activeCompany?.id 
+          companyId: selectedCompanyId 
         },
       });
 
       if (error) throw error;
 
+      const selectedCompany = companies.find(c => c.id === selectedCompanyId);
       toast({
         title: 'User Created',
-        description: `User ${fullName || email} has been created with ${role} role. Login credentials: ${email} / ${password}`,
+        description: `User ${fullName || email} has been created with ${role} role in ${selectedCompany?.name}. Login credentials: ${email} / ${password}`,
       });
 
       setEmail('');
@@ -283,6 +300,96 @@ export default function InviteUsers() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to remove user',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleManageCompanyAccess = async (userId: string, userName: string) => {
+    setManagingCompanyAccess({ userId, userName });
+    
+    // Fetch all companies this user has access to
+    try {
+      const { data: memberData, error } = await supabase
+        .from('company_members')
+        .select('company_id, role, companies!inner(name)')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      const userComps = (memberData || []).map((m: any) => ({
+        companyId: m.company_id,
+        companyName: m.companies.name,
+        role: m.role,
+      }));
+
+      setUserCompanies(userComps);
+    } catch (error: any) {
+      console.error('Error fetching user companies:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load user company access',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleAddCompanyAccess = async (companyId: string, userRole: 'owner' | 'accountant' | 'employee') => {
+    if (!managingCompanyAccess) return;
+
+    try {
+      const { error } = await supabase
+        .from('company_members')
+        .insert({
+          company_id: companyId,
+          user_id: managingCompanyAccess.userId,
+          role: userRole,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Company access granted',
+      });
+
+      // Refresh user companies
+      await handleManageCompanyAccess(managingCompanyAccess.userId, managingCompanyAccess.userName);
+    } catch (error: any) {
+      console.error('Error adding company access:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to add company access',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleRemoveCompanyAccess = async (companyId: string) => {
+    if (!managingCompanyAccess) return;
+
+    try {
+      const { error } = await supabase
+        .from('company_members')
+        .delete()
+        .eq('company_id', companyId)
+        .eq('user_id', managingCompanyAccess.userId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Company access removed',
+      });
+
+      // Refresh user companies
+      await handleManageCompanyAccess(managingCompanyAccess.userId, managingCompanyAccess.userName);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error removing company access:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to remove company access',
         variant: 'destructive',
       });
     }
@@ -410,11 +517,30 @@ export default function InviteUsers() {
               <TabsContent value="create" className="space-y-6 mt-6">
                 <div className="bg-muted p-4 rounded-lg">
                   <p className="text-sm text-muted-foreground">
-                    Create a new user account with login credentials. The user will be able to login immediately with the email and password you provide. {activeCompany && `They will be added to ${activeCompany.name}.`}
+                    Create a new user account with login credentials. The user will be able to login immediately with the email and password you provide.
                   </p>
                 </div>
                 
                 <form onSubmit={handleCreateUser} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="company">Company Access</Label>
+                    <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId} required>
+                      <SelectTrigger id="company">
+                        <SelectValue placeholder="Select a company" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {companies.map((company) => (
+                          <SelectItem key={company.id} value={company.id}>
+                            {company.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      Select which company this user will have access to
+                    </p>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="fullName">Full Name</Label>
                     <Input
@@ -476,7 +602,7 @@ export default function InviteUsers() {
                     </p>
                   </div>
 
-                  <Button type="submit" className="w-full gap-2" disabled={loading}>
+                  <Button type="submit" className="w-full gap-2" disabled={loading || !selectedCompanyId}>
                     <UserPlus className="h-4 w-4" />
                     {loading ? 'Creating User...' : 'Create User Account'}
                   </Button>
@@ -544,6 +670,14 @@ export default function InviteUsers() {
                                 >
                                   <Edit className="h-4 w-4 mr-1" />
                                   Edit
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleManageCompanyAccess(user.id, user.full_name || user.email)}
+                                >
+                                  <Users className="h-4 w-4 mr-1" />
+                                  Manage Access
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -690,6 +824,90 @@ export default function InviteUsers() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleUpdateUserRole}>Update Role</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Manage Company Access Dialog */}
+      <AlertDialog open={!!managingCompanyAccess} onOpenChange={(open) => !open && setManagingCompanyAccess(null)}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Manage Company Access - {managingCompanyAccess?.userName}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Grant or remove access to different companies for this user.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            {/* Current Access */}
+            <div>
+              <h4 className="font-semibold mb-3">Current Access</h4>
+              {userCompanies.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No company access</p>
+              ) : (
+                <div className="space-y-2">
+                  {userCompanies.map((uc) => (
+                    <div key={uc.companyId} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{uc.companyName}</p>
+                        <Badge variant="outline" className="mt-1">
+                          {uc.role === 'owner' ? 'Admin' : uc.role.charAt(0).toUpperCase() + uc.role.slice(1)}
+                        </Badge>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleRemoveCompanyAccess(uc.companyId)}
+                      >
+                        Remove Access
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Add New Access */}
+            <div>
+              <h4 className="font-semibold mb-3">Add Company Access</h4>
+              <div className="space-y-3">
+                {companies
+                  .filter(c => !userCompanies.some(uc => uc.companyId === c.id))
+                  .map((company) => (
+                    <div key={company.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <p className="font-medium">{company.name}</p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddCompanyAccess(company.id, 'employee')}
+                        >
+                          Add as Employee
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddCompanyAccess(company.id, 'accountant')}
+                        >
+                          Add as Accountant
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddCompanyAccess(company.id, 'owner')}
+                        >
+                          Add as Admin
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                {companies.filter(c => !userCompanies.some(uc => uc.companyId === c.id)).length === 0 && (
+                  <p className="text-sm text-muted-foreground">User has access to all companies</p>
+                )}
+              </div>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Close</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
