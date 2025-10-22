@@ -20,6 +20,21 @@ export default function Landing() {
     const checkAdminRole = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // Check for super admin first
+        const { data: superAdminData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'super_admin')
+          .maybeSingle();
+
+        if (superAdminData) {
+          // Redirect super admins to their dashboard
+          navigate('/super-admin');
+          return;
+        }
+
+        // Check for regular owner role
         const { data: roleData } = await supabase
           .from('user_roles')
           .select('role')

@@ -15,6 +15,7 @@ import KnowledgeCentre from "./pages/KnowledgeCentre";
 import KnowledgeArticle from "./pages/KnowledgeArticle";
 import KnowledgeAdmin from "./pages/admin/KnowledgeAdmin";
 import Landing from "./pages/Landing";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import AccountingDashboard from "./pages/AccountingDashboard";
 import PayrollDashboard from "./pages/PayrollDashboard";
 import Employees from "./pages/Employees";
@@ -105,6 +106,7 @@ const App = () => (
           <Route path="/analytics/custom-reports" element={<ProtectedRoute><CustomReports /></ProtectedRoute>} />
           <Route path="/analytics/dashboard-builder/:id" element={<ProtectedRoute><DashboardBuilder /></ProtectedRoute>} />
           
+          <Route path="/super-admin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
           <Route path="/landing" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
           <Route path="/landing-settings" element={<ProtectedRoute><LandingSettings /></ProtectedRoute>} />
