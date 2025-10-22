@@ -39,7 +39,7 @@ serve(async (req) => {
       );
     }
 
-    // Check if user is super_admin, owner (either via user_roles or company_members)
+    // Check if user is owner (either via user_roles or company_members)
     const { data: userRoles } = await supabaseClient
       .from('user_roles')
       .select('role')
@@ -51,14 +51,13 @@ serve(async (req) => {
       .select('role')
       .eq('user_id', user.id);
 
-    const isSuperAdmin = userRoles?.role === 'super_admin';
     const isOwner = userRoles?.role === 'owner' || 
                     (companyMemberships && companyMemberships.some(m => m.role === 'owner'));
 
-    if (!isSuperAdmin && !isOwner) {
-      console.error('Authorization error: User is not a super admin or owner');
+    if (!isOwner) {
+      console.error('Authorization error: User is not an owner');
       return new Response(
-        JSON.stringify({ error: 'Forbidden: Only super admins or owners can update user roles' }),
+        JSON.stringify({ error: 'Forbidden: Only owners can update user roles' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
