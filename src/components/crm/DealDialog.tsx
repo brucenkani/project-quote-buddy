@@ -53,11 +53,10 @@ export default function DealDialog({ open, onOpenChange, deal, onSave }: DealDia
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const dealData: Deal = {
-      id: deal?.id || crypto.randomUUID(),
+      id: deal?.id || 'new',
       ...formData,
     };
     onSave(dealData);
-    onOpenChange(false);
   };
 
   return (

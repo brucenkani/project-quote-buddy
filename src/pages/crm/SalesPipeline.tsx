@@ -182,7 +182,8 @@ export default function SalesPipeline() {
         user_id: user.id,
       };
 
-      if (deal.id && deal.id !== 'new') {
+      if (deal.id !== 'new') {
+        // Update existing deal
         const { error } = await supabase
           .from('deals')
           .update(dealData)
@@ -191,6 +192,7 @@ export default function SalesPipeline() {
         if (error) throw error;
         toast.success('Deal updated successfully');
       } else {
+        // Insert new deal
         const { error } = await supabase
           .from('deals')
           .insert([dealData]);
@@ -199,7 +201,8 @@ export default function SalesPipeline() {
         toast.success('Deal created successfully');
       }
 
-      fetchDeals();
+      await fetchDeals();
+      setDialogOpen(false);
     } catch (error) {
       console.error('Error saving deal:', error);
       toast.error('Failed to save deal');
