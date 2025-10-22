@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Plus } from 'lucide-react';
+import DealDialog from '@/components/crm/DealDialog';
+import { toast } from 'sonner';
 
 interface Deal {
   id: string;
@@ -24,16 +26,43 @@ const stages = [
 
 export default function SalesPipeline() {
   const navigate = useNavigate();
-  const [deals] = useState<Deal[]>([
+  const [deals, setDeals] = useState<Deal[]>([
     { id: '1', title: 'Enterprise Software Deal', customer: 'Acme Corp', value: 50000, stage: 'proposal', probability: 60 },
     { id: '2', title: 'Consulting Services', customer: 'TechStart Inc', value: 25000, stage: 'negotiation', probability: 80 },
     { id: '3', title: 'Annual Maintenance', customer: 'Global Ltd', value: 15000, stage: 'qualified', probability: 40 },
   ]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
 
   const getDealsByStage = (stage: string) => deals.filter(d => d.stage === stage);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(amount);
+  };
+
+  const handleAddDeal = () => {
+    setSelectedDeal(null);
+    setDialogOpen(true);
+  };
+
+  const handleEditDeal = (deal: Deal) => {
+    setSelectedDeal(deal);
+    setDialogOpen(true);
+  };
+
+  const handleSaveDeal = (deal: Deal) => {
+    setDeals(prevDeals => {
+      const existingIndex = prevDeals.findIndex(d => d.id === deal.id);
+      if (existingIndex >= 0) {
+        const updated = [...prevDeals];
+        updated[existingIndex] = deal;
+        toast.success('Deal updated successfully');
+        return updated;
+      } else {
+        toast.success('Deal created successfully');
+        return [...prevDeals, deal];
+      }
+    });
   };
 
   return (
@@ -47,7 +76,7 @@ export default function SalesPipeline() {
               </Button>
               <h1 className="text-2xl font-bold">Sales Pipeline</h1>
             </div>
-            <Button>
+            <Button onClick={handleAddDeal}>
               <Plus className="mr-2 h-4 w-4" />
               Add Deal
             </Button>
@@ -72,7 +101,11 @@ export default function SalesPipeline() {
                 </div>
                 <div className="space-y-3">
                   {stageDeals.map((deal) => (
-                    <Card key={deal.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                    <Card 
+                      key={deal.id} 
+                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => handleEditDeal(deal)}
+                    >
                       <CardHeader className="p-4">
                         <CardTitle className="text-sm">{deal.title}</CardTitle>
                       </CardHeader>
@@ -125,6 +158,13 @@ export default function SalesPipeline() {
           </Card>
         </div>
       </main>
+
+      <DealDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        deal={selectedDeal}
+        onSave={handleSaveDeal}
+      />
     </div>
   );
 }
