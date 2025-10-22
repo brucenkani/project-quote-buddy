@@ -209,76 +209,10 @@ export default function Index() {
           Professional Business Management Software
         </h2>
         <p className="text-xl text-muted-foreground mb-2 max-w-3xl mx-auto">
-          Complete accounting, payroll, CRM, and analytics platform for growing businesses.
+          Complete accounting, payroll, and CRM platform for growing businesses - completely free!
         </p>
-        <div className="mt-4 flex items-center justify-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
-            <CheckCircle className="h-5 w-5 text-primary" />
-            <span className="text-sm font-medium">1-Day Free Trial</span>
-          </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
-            <Shield className="h-5 w-5 text-primary" />
-            <span className="text-sm font-medium">No Credit Card Required</span>
-          </div>
-        </div>
       </section>
 
-      {/* Pricing Section - Compact */}
-      <section className="container mx-auto px-4 py-8">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
-            {/* Left: Pricing Info */}
-            <div className="flex-shrink-0">
-              <div className="mb-3">
-                <span className="text-4xl font-bold">R299</span>
-                <span className="text-lg text-muted-foreground">/month</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Professional Plan</h3>
-              <p className="text-sm text-muted-foreground max-w-xs">
-                Complete business management suite with all features included
-              </p>
-            </div>
-
-            {/* Arrow */}
-            <div className="flex-shrink-0 hidden lg:block">
-              <ArrowRight className="h-8 w-8 text-primary animate-pulse" />
-            </div>
-
-            {/* Middle: Key Features */}
-            <div className="flex-1">
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Full Accounting System</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Payroll & HR Management</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">CRM & Sales Pipeline</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Business Analytics</span>
-                </div>
-              </div>
-              <div className="mt-4 flex items-center gap-2 bg-background/50 p-3 rounded-lg">
-                <Clock className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">1-Day Free Trial • No Credit Card Required</span>
-              </div>
-            </div>
-
-            {/* Right: CTA */}
-            <div className="flex-shrink-0">
-              <Button size="lg" className="px-8 py-6 h-auto shadow-lg" onClick={() => navigate('/auth')}>
-                Start Your Free Trial
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Need More Help Section */}
       <section className="container mx-auto px-4 py-8">
@@ -443,7 +377,7 @@ export default function Index() {
       <section className="container mx-auto px-4 py-8">
         <h3 className="text-3xl font-bold text-center mb-10">Everything You Need to Run Your Business</h3>
         
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 max-w-7xl mx-auto mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto mb-12">
           <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer" onClick={() => navigate('/accounting')}>
             <CardHeader>
               <Calculator className="h-12 w-12 mb-4 text-primary" />
@@ -541,37 +475,6 @@ export default function Index() {
             </CardContent>
           </Card>
 
-          <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer" onClick={() => navigate('/business-analytics')}>
-            <CardHeader>
-              <LineChart className="h-12 w-12 mb-4 text-primary" />
-              <CardTitle>Reporting Suite</CardTitle>
-              <CardDescription>Comprehensive analytics, reporting, and business tools</CardDescription>
-            </CardHeader>
-            <CardContent className="hidden group-hover:block">
-              <ul className="space-y-3">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Management accounts & reporting</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Financial forecasting & projections</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Variance analysis & strategic planning</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Performance metrics & KPIs</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Custom reports & dashboards</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Additional Benefits */}
