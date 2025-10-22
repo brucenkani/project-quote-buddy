@@ -86,10 +86,12 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
+          <Route path="/business-community" element={<BusinessCommunity />} />
           <Route path="/community" element={<BusinessCommunity />} />
           <Route path="/knowledge" element={<KnowledgeCentre />} />
           <Route path="/knowledge/:slug" element={<KnowledgeArticle />} />
           <Route path="/admin/knowledge" element={<ProtectedRoute><KnowledgeAdmin /></ProtectedRoute>} />
+          <Route path="/admin/knowledge-admin" element={<ProtectedRoute><KnowledgeAdmin /></ProtectedRoute>} />
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/crm-customer-support" element={<ProtectedRoute><CRMCustomerSupport /></ProtectedRoute>} />
