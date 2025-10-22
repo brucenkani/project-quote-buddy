@@ -209,7 +209,7 @@ export default function Index() {
           Professional Business Management Software
         </h2>
         <p className="text-xl text-muted-foreground mb-2 max-w-3xl mx-auto">
-          Complete accounting, payroll, and CRM platform for growing businesses - completely free!
+          Complete accounting, payroll, and CRM platform for growing businesses - <span className="font-bold">Completely Free for Entrepreneurs!</span>
         </p>
       </section>
 
