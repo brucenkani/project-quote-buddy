@@ -99,12 +99,79 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
       if (memberError) throw memberError;
 
-      if (!memberData || memberData.length === 0) {
-        setCompanies([]);
-        setActiveCompanyState(null);
-        setLoading(false);
-        return;
-      }
+        if (!memberData || memberData.length === 0) {
+          // No companies yet for this user — try to auto-create one from signup metadata
+          try {
+            const metaName = (user.user_metadata as any)?.company_name as string | undefined;
+            const fallbackName = (user.email?.split('@')[0] || 'My') + "'s Company";
+            const initialName = (metaName && metaName.trim()) ? metaName.trim() : fallbackName;
+
+            // Create company
+            const { data: companyData, error: companyError } = await supabase
+              .from('companies')
+              .insert({ name: initialName, created_by: user.id })
+              .select()
+              .single();
+
+            if (companyError) throw companyError;
+
+            // Add creator as owner
+            const { error: memberInsertError } = await supabase
+              .from('company_members')
+              .insert({ company_id: companyData.id, user_id: user.id, role: 'owner' });
+            if (memberInsertError) throw memberInsertError;
+
+            // Create default company settings
+            const { error: settingsError } = await supabase
+              .from('company_settings')
+              .insert({
+                company_id: companyData.id,
+                user_id: user.id,
+                company_name: initialName,
+                country: 'ZA',
+                company_type: 'trading',
+                email: '',
+                phone: '',
+                address: '',
+                city: '',
+                state: '',
+                postal_code: '',
+                tax_number: '',
+                registration_number: '',
+                currency: 'ZAR',
+                currency_symbol: 'R',
+                tax_rate: 15,
+                financial_year_end: '02-28',
+                invoice_prefix: 'INV',
+                invoice_start_number: 1,
+                quote_prefix: 'QTE',
+                quote_start_number: 1,
+                purchase_prefix: 'PO',
+                purchase_start_number: 1,
+              });
+            if (settingsError) throw settingsError;
+
+            // Reload companies after creation
+            const { data: companiesDataAfter, error: companiesErrorAfter } = await supabase
+              .from('companies')
+              .select('*')
+              .eq('id', companyData.id);
+            if (companiesErrorAfter) throw companiesErrorAfter;
+
+            setCompanies(companiesDataAfter || [companyData]);
+            setActiveCompanyState(companyData);
+            localStorage.setItem('activeCompanyId', companyData.id);
+            await loadCompanySettings(companyData.id);
+            setLoading(false);
+            return;
+          } catch (createErr) {
+            console.error('Auto-create company failed:', createErr);
+            setCompanies([]);
+            setActiveCompanyState(null);
+            setLoading(false);
+            return;
+          }
+        }
 
       const companyIds = memberData.map(m => m.company_id);
 
