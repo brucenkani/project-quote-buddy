@@ -4,9 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Calculator, Users, Settings, Shield, Home } from 'lucide-react';
+import { Building2, Calculator, Users, Settings, Home, Phone, Mail, MessageCircle, ArrowRight } from 'lucide-react';
 import { CompanySelector } from '@/components/CompanySelector';
 import { useCompany } from '@/contexts/CompanyContext';
+import bruceProfile from '@/assets/bruce-profile.png';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -99,7 +100,7 @@ export default function Landing() {
           </div>
         )}
 
-        <div className="grid sm:grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div className="grid sm:grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto mb-12">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/accounting')}>
             <CardHeader>
               <Calculator className="h-12 w-12 mb-4 text-primary" />
@@ -154,6 +155,58 @@ export default function Landing() {
                 <li>• Customer support tools</li>
                 <li>• Performance reports</li>
               </ul>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Need an Accountant Section */}
+        <div className="max-w-4xl mx-auto">
+          <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+            <CardContent className="p-8">
+              <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+                <div className="flex items-center gap-6">
+                  <div className="bg-primary text-primary-foreground rounded-2xl px-8 py-6 text-center">
+                    <h3 className="text-2xl font-bold">Need an Accountant?</h3>
+                    <ArrowRight className="h-6 w-6 mx-auto mt-2" />
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <Button variant="outline" className="gap-2" asChild>
+                        <a href="tel:+27659672215">
+                          <Phone className="h-4 w-4" />
+                          Call
+                        </a>
+                      </Button>
+                      <Button variant="outline" className="gap-2" asChild>
+                        <a href="https://wa.me/27659672215" target="_blank" rel="noopener noreferrer">
+                          <MessageCircle className="h-4 w-4" />
+                          WhatsApp
+                        </a>
+                      </Button>
+                    </div>
+                    <p className="text-sm text-muted-foreground">+27 65 967 2215</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-6">
+                  <div className="text-center">
+                    <Button className="gap-2 mb-2" asChild>
+                      <a href="mailto:bruce@nkani.co.za">
+                        <Mail className="h-4 w-4" />
+                        Email Us
+                      </a>
+                    </Button>
+                    <p className="text-sm text-muted-foreground">bruce@nkani.co.za</p>
+                  </div>
+                  
+                  <img 
+                    src={bruceProfile} 
+                    alt="Bruce - Professional Accountant" 
+                    className="w-24 h-24 rounded-full object-cover border-4 border-background shadow-lg"
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
