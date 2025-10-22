@@ -493,16 +493,16 @@ export default function Index() {
               </p>
               <Button 
                 variant="outline" 
-                onClick={handleWhatsAppContact}
-                className="gap-2"
+                asChild
               >
-                <MessageCircle className="h-4 w-4" />
-                Get a Quote
+                <a href="https://premwebs.com" target="_blank" rel="noopener noreferrer">
+                  Visit Premwebs
+                </a>
               </Button>
             </div>
           </div>
 
-          {/* Report & Document Makers */}
+          {/* Report & Document Builders */}
           <div className="flex items-center gap-6 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
             <div className="flex-shrink-0 hidden sm:block">
               <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
@@ -510,17 +510,17 @@ export default function Index() {
               </div>
             </div>
             <div className="flex-1">
-              <h3 className="text-xl font-bold mb-2">Report & Document Makers</h3>
+              <h3 className="text-xl font-bold mb-2">Report & Document Builders</h3>
               <p className="text-muted-foreground mb-4">
                 Custom reports, presentations, and professional documents tailored to your needs
               </p>
               <Button 
                 variant="outline" 
-                onClick={handleWhatsAppContact}
-                className="gap-2"
+                asChild
               >
-                <MessageCircle className="h-4 w-4" />
-                Get a Quote
+                <a href="https://smebox.co.za" target="_blank" rel="noopener noreferrer">
+                  Visit SMEBox
+                </a>
               </Button>
             </div>
           </div>
