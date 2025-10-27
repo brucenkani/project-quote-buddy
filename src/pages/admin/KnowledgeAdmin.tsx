@@ -37,7 +37,7 @@ export default function KnowledgeAdmin() {
     slug: '',
     description: '',
     category: 'eFiling',
-    content: '[]',
+    content: '',
     featured_image_url: '',
     is_published: false
   });
@@ -93,17 +93,23 @@ export default function KnowledgeAdmin() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      let contentData;
-      try {
-        contentData = JSON.parse(formData.content);
-      } catch {
-        toast.error('Invalid JSON in content field');
-        return;
-      }
+      // Convert markdown to simple content blocks
+      const contentBlocks = formData.content.split('\n\n').map(block => {
+        if (block.startsWith('## ')) {
+          return { type: 'heading', content: block.replace('## ', ''), level: 2 };
+        } else if (block.startsWith('# ')) {
+          return { type: 'heading', content: block.replace('# ', ''), level: 1 };
+        } else if (block.startsWith('### ')) {
+          return { type: 'heading', content: block.replace('### ', ''), level: 3 };
+        } else if (block.trim()) {
+          return { type: 'text', content: block };
+        }
+        return null;
+      }).filter(Boolean);
 
       const articleData = {
         ...formData,
-        content: contentData,
+        content: contentBlocks,
         created_by: user.id
       };
 
@@ -135,12 +141,22 @@ export default function KnowledgeAdmin() {
 
   const handleEdit = (article: KnowledgeArticle) => {
     setEditingArticle(article);
+    
+    // Convert content blocks back to markdown
+    const markdownContent = article.content.map((block: any) => {
+      if (block.type === 'heading') {
+        const prefix = '#'.repeat(block.level || 2);
+        return `${prefix} ${block.content}`;
+      }
+      return block.content || '';
+    }).join('\n\n');
+    
     setFormData({
       title: article.title,
       slug: article.slug,
       description: article.description || '',
       category: article.category,
-      content: JSON.stringify(article.content, null, 2),
+      content: markdownContent,
       featured_image_url: '',
       is_published: article.is_published
     });
@@ -172,7 +188,7 @@ export default function KnowledgeAdmin() {
       slug: '',
       description: '',
       category: 'eFiling',
-      content: '[]',
+      content: '',
       featured_image_url: '',
       is_published: false
     });
@@ -259,18 +275,17 @@ export default function KnowledgeAdmin() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="content">Content (JSON) *</Label>
+                  <Label htmlFor="content">Content (Markdown) *</Label>
                   <Textarea
                     id="content"
                     required
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    rows={10}
-                    placeholder='[{"type":"heading","content":"Introduction","level":2},{"type":"text","content":"Your text here"}]'
-                    className="font-mono text-sm"
+                    rows={12}
+                    placeholder="# Main Heading&#10;&#10;Your introduction text here.&#10;&#10;## Subheading&#10;&#10;More content with **bold** and *italic* text."
                   />
                   <p className="text-xs text-muted-foreground">
-                    Types: heading, text, image, flowchart. Example: {'{'}type: "text", content: "..."{'}'}
+                    Use Markdown: # for headings, ## for subheadings, **bold**, *italic*. Separate paragraphs with blank lines.
                   </p>
                 </div>
 
