@@ -29,15 +29,18 @@ export default function RecurringInvoiceBuilder() {
   });
 
   useEffect(() => {
-    const allInvoices = loadInvoices().filter(inv => inv.type === 'invoice');
-    setInvoices(allInvoices);
-    
-    if (templateId) {
-      const template = allInvoices.find(inv => inv.id === templateId);
-      if (template) {
-        setSelectedInvoice(template);
+    const load = async () => {
+      const allInvoices = (await loadInvoices()).filter(inv => inv.type === 'invoice');
+      setInvoices(allInvoices);
+      
+      if (templateId) {
+        const template = allInvoices.find(inv => inv.id === templateId);
+        if (template) {
+          setSelectedInvoice(template);
+        }
       }
-    }
+    };
+    load();
   }, [templateId]);
 
   const handleSubmit = () => {

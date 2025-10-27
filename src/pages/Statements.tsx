@@ -10,6 +10,7 @@ import { loadInvoices } from '@/utils/invoiceStorage';
 import { loadSettings } from '@/utils/settingsStorage';
 import { ArrowLeft, Printer, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import type { Invoice } from '@/types/invoice';
 
 export default function Statements() {
   const navigate = useNavigate();
@@ -29,7 +30,6 @@ export default function Statements() {
   const generateStatement = () => {
     if (!selectedContact) return;
 
-    const invoices = loadInvoices();
     const clientInvoices = invoices.filter(
       inv => inv.projectDetails.clientName === selectedContact.name &&
       new Date(inv.issueDate) >= new Date(dateRange.startDate) &&

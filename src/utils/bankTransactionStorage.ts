@@ -24,19 +24,23 @@ export const loadBankTransactions = async (): Promise<BankTransaction[]> => {
 
     if (error) throw error;
 
-    return (transactions || []).map(t => ({
-      id: t.id,
-      date: t.date,
-      description: t.description,
-      reference: t.reference || undefined,
-      debit: Number(t.debit),
-      credit: Number(t.credit),
-      balance: Number(t.balance),
-      category: t.category || undefined,
-      accountId: t.account_id || undefined,
-      isReconciled: t.is_reconciled || false,
-      createdAt: t.created_at,
-    }));
+    return (transactions || []).map(t => {
+      const debit = Number(t.debit || 0);
+      const credit = Number(t.credit || 0);
+      const isDebit = debit > 0;
+      return {
+        id: t.id,
+        date: t.date,
+        description: t.description,
+        reference: t.reference || '',
+        type: isDebit ? 'debit' : 'credit',
+        amount: isDebit ? debit : credit,
+        balance: Number(t.balance || 0),
+        status: t.is_reconciled ? 'allocated' : 'unallocated',
+        allocations: [],
+        importedAt: t.created_at,
+      } as BankTransaction;
+    });
   } catch (error) {
     console.error('Failed to load bank transactions:', error);
     return [];
@@ -67,12 +71,12 @@ export const saveBankTransaction = async (transaction: BankTransaction): Promise
         date: transaction.date,
         description: transaction.description,
         reference: transaction.reference || null,
-        debit: transaction.debit,
-        credit: transaction.credit,
+        debit: transaction.type === 'debit' ? transaction.amount : 0,
+        credit: transaction.type === 'credit' ? transaction.amount : 0,
         balance: transaction.balance,
-        category: transaction.category || null,
-        account_id: transaction.accountId || null,
-        is_reconciled: transaction.isReconciled,
+        category: null,
+        account_id: null,
+        is_reconciled: transaction.status === 'allocated' || transaction.status === 'partially-allocated',
       });
 
     if (error) throw error;

@@ -40,7 +40,6 @@ export const loadInvoices = async (): Promise<Invoice[]> => {
       const transformed: Invoice = {
         id: invoice.id,
         invoiceNumber: invoice.invoice_number,
-        customerId: invoice.customer_id,
         issueDate: invoice.issue_date,
         dueDate: invoice.due_date,
         lineItems: (invoice.invoice_line_items || []).map((item: any) => ({
@@ -75,7 +74,7 @@ export const loadInvoices = async (): Promise<Invoice[]> => {
 
       return {
         ...transformed,
-        status: calculateInvoiceStatus(transformed),
+        status: calculateInvoiceStatus(transformed, []),
       };
     });
   } catch (error) {
@@ -110,7 +109,7 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
         user_id: userId,
         company_id: memberData.company_id,
         invoice_number: invoice.invoiceNumber,
-        customer_id: invoice.customerId,
+        customer_id: null,
         issue_date: invoice.issueDate,
         due_date: invoice.dueDate,
         subtotal: invoice.subtotal,

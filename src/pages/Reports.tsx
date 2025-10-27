@@ -202,8 +202,8 @@ export default function Reports() {
     toast({ title: `Ledger Report ${format.toUpperCase()} generated successfully` });
   };
 
-  const handleGenerateVATReport = (format: 'pdf' | 'excel') => {
-    const invoices = loadInvoices().filter(inv => {
+  const handleGenerateVATReport = async (format: 'pdf' | 'excel') => {
+    const invoices = (await loadInvoices()).filter(inv => {
       const invDate = new Date(inv.issueDate);
       return invDate >= new Date(dateRange.startDate) && invDate <= new Date(dateRange.endDate);
     });

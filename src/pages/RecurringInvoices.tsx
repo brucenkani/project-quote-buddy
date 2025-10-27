@@ -24,7 +24,11 @@ export default function RecurringInvoices() {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string>('');
 
   useEffect(() => {
-    setRecurringInvoices(loadRecurringInvoices());
+    const load = async () => {
+      const data = await loadRecurringInvoices();
+      setRecurringInvoices(data);
+    };
+    load();
   }, []);
 
   const [formData, setFormData] = useState({
@@ -42,17 +46,19 @@ export default function RecurringInvoices() {
     navigate(`/invoices/recurring/new?templateId=${selectedInvoiceId}`);
   };
 
-  const handleToggleActive = (recurring: RecurringInvoice) => {
+  const handleToggleActive = async (recurring: RecurringInvoice) => {
     const updated = { ...recurring, isActive: !recurring.isActive, updatedAt: new Date().toISOString() };
-    saveRecurringInvoice(updated);
-    setRecurringInvoices(loadRecurringInvoices());
+    await saveRecurringInvoice(updated);
+    const data = await loadRecurringInvoices();
+    setRecurringInvoices(data);
     toast({ title: `Recurring invoice ${updated.isActive ? 'activated' : 'deactivated'}` });
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this recurring invoice?')) {
-      deleteRecurringInvoice(id);
-      setRecurringInvoices(loadRecurringInvoices());
+      await deleteRecurringInvoice(id);
+      const data = await loadRecurringInvoices();
+      setRecurringInvoices(data);
       toast({ title: 'Recurring invoice deleted' });
     }
   };

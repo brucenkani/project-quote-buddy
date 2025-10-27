@@ -120,9 +120,9 @@ export default function PurchaseOrders() {
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.vendor || lineItems.length === 0) {
-      toast({ title: 'Please provide vendor and at least one line item', variant: 'destructive' });
+      toast({ title: 'Please fill in vendor and at least one line item', variant: 'destructive' });
       return;
     }
 
@@ -191,7 +191,7 @@ export default function PurchaseOrders() {
 
     // Record in accounting
     try {
-      recordPurchase(purchase, settings.companyType || 'LLC');
+      recordPurchase(purchase, settings.companyType || 'trading');
     } catch (error) {
       console.error('Failed to record purchase:', error);
     }

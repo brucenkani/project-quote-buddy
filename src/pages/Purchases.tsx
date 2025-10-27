@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, ShoppingCart, Search, Pencil, Trash2, Package, Eye, DollarSign, History } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { loadPurchases, savePurchase, deletePurchase, generatePurchaseNumber } from '@/utils/purchaseStorage';
-import { loadSettings } from '@/utils/settingsStorage';
-import { loadInventory } from '@/utils/inventoryStorage';
+import { useSettings } from '@/contexts/SettingsContext';
+import { useInventory } from '@/contexts/InventoryContext';
 import { Purchase, PurchaseLineItem } from '@/types/purchase';
 import { useToast } from '@/hooks/use-toast';
 import { ContactSelector } from '@/components/ContactSelector';
@@ -22,16 +22,26 @@ import { recordPurchase } from '@/utils/purchaseDoubleEntry';
 export default function Purchases() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const settings = loadSettings();
-  const inventory = loadInventory();
-  const [purchases, setPurchases] = useState<Purchase[]>(loadPurchases());
+  const { settings } = useSettings();
+  const { inventory } = useInventory();
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingPurchase, setEditingPurchase] = useState<Purchase | null>(null);
   const [selectedVendor, setSelectedVendor] = useState<Contact | null>(null);
 
+  useEffect(() => {
+    const init = async () => {
+      const loaded = await loadPurchases();
+      setPurchases(loaded);
+      const num = await generatePurchaseNumber();
+      setFormData(prev => ({ ...prev, purchaseNumber: num }));
+    };
+    init();
+  }, []);
+
   const [formData, setFormData] = useState<Partial<Purchase>>({
-    purchaseNumber: generatePurchaseNumber(),
+    purchaseNumber: '',
     vendor: '',
     date: new Date().toISOString().split('T')[0],
     lineItems: [],
@@ -104,7 +114,7 @@ export default function Purchases() {
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.vendor || lineItems.length === 0) {
       toast({ title: 'Please provide vendor and at least one line item', variant: 'destructive' });
       return;
@@ -131,7 +141,7 @@ export default function Purchases() {
       updatedAt: new Date().toISOString(),
     };
 
-    savePurchase(purchase);
+    await savePurchase(purchase);
 
     // Record double-entry accounting
     try {
@@ -145,14 +155,15 @@ export default function Purchases() {
       });
     }
 
-    setPurchases(loadPurchases());
+    setPurchases(await loadPurchases());
     setIsDialogOpen(false);
     resetForm();
   };
 
-  const resetForm = () => {
+  const resetForm = async () => {
+    const num = await generatePurchaseNumber();
     setFormData({
-      purchaseNumber: generatePurchaseNumber(),
+      purchaseNumber: num,
       vendor: '',
       date: new Date().toISOString().split('T')[0],
       lineItems: [],
@@ -176,10 +187,10 @@ export default function Purchases() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this purchase?')) {
-      deletePurchase(id);
-      setPurchases(loadPurchases());
+      await deletePurchase(id);
+      setPurchases(await loadPurchases());
       toast({ title: 'Purchase deleted' });
     }
   };
