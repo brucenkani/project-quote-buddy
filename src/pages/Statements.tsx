@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,20 +7,29 @@ import { Navigation } from '@/components/Navigation';
 import { ContactSelector } from '@/components/ContactSelector';
 import { Contact } from '@/types/contacts';
 import { loadInvoices } from '@/utils/invoiceStorage';
-import { loadSettings } from '@/utils/settingsStorage';
-import { ArrowLeft, Printer, Download } from 'lucide-react';
+import { useSettings } from '@/contexts/SettingsContext';
+import { ArrowLeft, Printer } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import type { Invoice } from '@/types/invoice';
 
 export default function Statements() {
   const navigate = useNavigate();
-  const settings = loadSettings();
+  const { settings } = useSettings();
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [selectedContactId, setSelectedContactId] = useState('');
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [dateRange, setDateRange] = useState({
     startDate: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
   });
+
+  useEffect(() => {
+    const load = async () => {
+      const data = await loadInvoices();
+      setInvoices(data);
+    };
+    load();
+  }, []);
 
   const handleContactSelect = (contact: Contact) => {
     setSelectedContact(contact);
