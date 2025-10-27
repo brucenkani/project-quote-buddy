@@ -58,7 +58,7 @@ const [viewCount, setViewCount] = useState<number>(0);
       const { data: userData } = await supabase.auth.getUser();
       try {
         if (userData?.user) {
-          (supabase as any)
+          await (supabase as any)
             .from('knowledge_article_views')
             .upsert(
               { article_id: data.id, user_id: userData.user.id },

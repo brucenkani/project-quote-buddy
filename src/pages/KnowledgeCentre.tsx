@@ -43,6 +43,19 @@ export default function KnowledgeCentre() {
     loadArticles();
   }, []);
 
+  // Refresh counts when returning to this page or tab regains visibility
+  useEffect(() => {
+    const onFocus = () => loadArticles();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') loadArticles();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
   const loadArticles = async () => {
     try {
       const { data, error } = await supabase
