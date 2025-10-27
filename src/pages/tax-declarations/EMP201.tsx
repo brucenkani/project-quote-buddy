@@ -3,22 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, ArrowLeft } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Download, ArrowLeft, CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateEMP201PDF } from '@/utils/emp201Generator';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 export default function EMP201() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [payrollData, setPayrollData] = useState<any[]>([]);
   const [companySettings, setCompanySettings] = useState<any>(null);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [startDate, setStartDate] = useState<Date>(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const [endDate, setEndDate] = useState<Date>(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0));
 
   useEffect(() => {
     checkAuth();
     loadData();
-  }, [selectedMonth, selectedYear]);
+  }, [startDate, endDate]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -51,11 +55,9 @@ export default function EMP201() {
 
       setCompanySettings(settings);
 
-      // Build date strings without timezone issues
-      const monthStr = String(selectedMonth + 1).padStart(2, '0');
-      const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
-      const startDateStr = `${selectedYear}-${monthStr}-01`;
-      const endDateStr = `${selectedYear}-${monthStr}-${String(daysInMonth).padStart(2, '0')}`;
+      // Use selected date range
+      const startDateStr = format(startDate, 'yyyy-MM-dd');
+      const endDateStr = format(endDate, 'yyyy-MM-dd');
 
       // Fetch employees for this company
       const { data: employeesList } = await supabase
@@ -94,7 +96,9 @@ export default function EMP201() {
 
   const handleDownload = async () => {
     try {
-      await generateEMP201PDF(payrollData, companySettings, selectedMonth, selectedYear);
+      const month = startDate.getMonth();
+      const year = startDate.getFullYear();
+      await generateEMP201PDF(payrollData, companySettings, month, year);
       toast.success('EMP201 downloaded successfully');
     } catch (error) {
       console.error('Error generating EMP201:', error);
@@ -107,11 +111,6 @@ export default function EMP201() {
     uif: acc.uif + Number(record.uif || 0),
     grossSalary: acc.grossSalary + Number(record.gross_salary || 0),
   }), { paye: 0, uif: 0, grossSalary: 0 });
-
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -131,29 +130,46 @@ export default function EMP201() {
         </div>
 
         <div className="mb-6 flex gap-4">
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(Number(e.target.value))}
-            className="border rounded px-4 py-2"
-          >
-            {months.map((month, index) => (
-              <option key={index} value={index}>{month}</option>
-            ))}
-          </select>
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="border rounded px-4 py-2"
-          >
-            {[2023, 2024, 2025, 2026].map(year => (
-              <option key={year} value={year}>{year}</option>
-            ))}
-          </select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("w-[240px] justify-start text-left font-normal")}>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {startDate ? format(startDate, 'PPP') : <span>Start date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={startDate}
+                onSelect={(date) => date && setStartDate(date)}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("w-[240px] justify-start text-left font-normal")}>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {endDate ? format(endDate, 'PPP') : <span>End date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={endDate}
+                onSelect={(date) => date && setEndDate(date)}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Tax Period: {months[selectedMonth]} {selectedYear}</CardTitle>
+            <CardTitle>Tax Period: {format(startDate, 'MMMM yyyy')} to {format(endDate, 'MMMM yyyy')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
@@ -190,7 +206,7 @@ export default function EMP201() {
 
             <div className="border-t pt-6">
               <h3 className="font-semibold mb-4">Payment Details</h3>
-              <p className="text-sm text-muted-foreground">Payment Reference: PAYE {selectedYear}{String(selectedMonth + 1).padStart(2, '0')}</p>
+              <p className="text-sm text-muted-foreground">Payment Reference: PAYE {format(startDate, 'yyyyMM')}</p>
               <p className="text-sm text-muted-foreground">Due Date: 7th of following month</p>
               <p className="text-sm text-muted-foreground">SARS Bank Details: Available on eFiling portal</p>
             </div>

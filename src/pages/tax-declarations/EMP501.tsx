@@ -3,21 +3,27 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, ArrowLeft } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Download, ArrowLeft, CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateEMP501PDF } from '@/utils/emp501Generator';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 export default function EMP501() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [payrollData, setPayrollData] = useState<any[]>([]);
   const [companySettings, setCompanySettings] = useState<any>(null);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const currentYear = new Date().getFullYear();
+  const [startDate, setStartDate] = useState<Date>(new Date(currentYear - 1, 2, 1)); // March 1st previous year
+  const [endDate, setEndDate] = useState<Date>(new Date(currentYear, 1, 28)); // Feb 28th current year
 
   useEffect(() => {
     checkAuth();
     loadData();
-  }, [selectedYear]);
+  }, [startDate, endDate]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -50,9 +56,9 @@ export default function EMP501() {
 
       setCompanySettings(settings);
 
-      // Get all payroll data for selected year (March to February tax year)
-      const startDate = `${selectedYear - 1}-03-01`;
-      const endDate = `${selectedYear}-02-28`;
+      // Use selected date range
+      const startDateStr = format(startDate, 'yyyy-MM-dd');
+      const endDateStr = format(endDate, 'yyyy-MM-dd');
 
       // Fetch employees for this company
       const { data: employeesList } = await supabase
@@ -71,8 +77,8 @@ export default function EMP501() {
         .from('payroll')
         .select('*')
         .in('employee_id', employeeIds)
-        .gte('period_start', startDate)
-        .lte('period_end', endDate);
+        .gte('period_start', startDateStr)
+        .lte('period_end', endDateStr);
 
       // Attach employee details
       const employeesById = Object.fromEntries((employeesList || []).map(e => [e.id, e]));
@@ -90,7 +96,8 @@ export default function EMP501() {
 
   const handleDownload = async () => {
     try {
-      await generateEMP501PDF(payrollData, companySettings, selectedYear);
+      const year = endDate.getFullYear();
+      await generateEMP501PDF(payrollData, companySettings, year);
       toast.success('EMP501 downloaded successfully');
     } catch (error) {
       console.error('Error generating EMP501:', error);
@@ -140,21 +147,47 @@ export default function EMP501() {
           </Button>
         </div>
 
-        <div className="mb-6">
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="border rounded px-4 py-2"
-          >
-            {[2023, 2024, 2025, 2026].map(year => (
-              <option key={year} value={year}>Tax Year {year - 1}/{year}</option>
-            ))}
-          </select>
+        <div className="mb-6 flex gap-4">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("w-[280px] justify-start text-left font-normal")}>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {startDate ? format(startDate, 'PPP') : <span>Tax year start</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={startDate}
+                onSelect={(date) => date && setStartDate(date)}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("w-[280px] justify-start text-left font-normal")}>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {endDate ? format(endDate, 'PPP') : <span>Tax year end</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={endDate}
+                onSelect={(date) => date && setEndDate(date)}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Tax Year: 1 March {selectedYear - 1} to 28 February {selectedYear}</CardTitle>
+            <CardTitle>Tax Year: {format(startDate, 'dd MMMM yyyy')} to {format(endDate, 'dd MMMM yyyy')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
