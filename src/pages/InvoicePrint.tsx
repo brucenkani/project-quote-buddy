@@ -13,13 +13,20 @@ export default function InvoicePrint() {
 
   useEffect(() => {
     const loadCompanySettings = async () => {
-      if (!activeCompany?.id) return;
+      if (!activeCompany?.id) {
+        console.log('No active company');
+        return;
+      }
       
+      console.log('Loading settings for company:', activeCompany.id);
       const { data, error } = await supabase
         .from('company_settings')
         .select('*')
         .eq('company_id', activeCompany.id)
         .maybeSingle();
+      
+      console.log('Company settings data:', data);
+      console.log('Company settings error:', error);
       
       if (data && !error) {
         setSettings(data);
@@ -78,9 +85,11 @@ export default function InvoicePrint() {
               <img src={settings.logo_url} alt={settings.company_name} className="w-auto max-w-[200px] h-auto mb-4" style={{ width: 'fit-content' }} />
             )}
             <div className="text-xs space-y-0.5">
-              <p className="font-semibold text-sm">{settings.company_name}</p>
+              <p className="font-semibold text-sm">{settings.company_name || 'Company Name Not Set'}</p>
               {settings.address && <p>{settings.address}</p>}
-              {settings.vat_number && <p>VAT No: {settings.vat_number}</p>}
+              {settings.email && <p>{settings.email}</p>}
+              {settings.phone && <p>{settings.phone}</p>}
+              {settings.tax_number && <p>Tax No: {settings.tax_number}</p>}
             </div>
           </div>
           <div className="text-right">
