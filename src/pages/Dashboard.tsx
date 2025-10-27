@@ -26,7 +26,11 @@ import {
 export default function Dashboard() {
   const { toast } = useToast();
   const { settings } = useSettings();
-  const chartOfAccounts = loadChartOfAccounts();
+  
+  const [chartOfAccounts, setChartOfAccounts] = useState<ChartAccount[]>([]);
+  const [journalEntries, setJournalEntries] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [loading, setLoading] = useState(true);
   
   const [dateRange, setDateRange] = useState({
     startDate: formatLocalISO(new Date(new Date().getFullYear(), 0, 1)),
@@ -40,6 +44,75 @@ export default function Dashboard() {
     startDate: formatLocalISO(new Date(new Date().getFullYear() - 1, 0, 1)),
     endDate: formatLocalISO(new Date(new Date().getFullYear() - 1, 11, 31)),
   });
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const activeCompanyId = localStorage.getItem('activeCompanyId');
+      if (!activeCompanyId) {
+        console.error('No active company');
+        return;
+      }
+
+      // Load Chart of Accounts
+      const { data: coaData } = await supabase
+        .from('chart_of_accounts')
+        .select('*')
+        .eq('company_id', activeCompanyId)
+        .order('account_number');
+
+      if (coaData) {
+        setChartOfAccounts(coaData.map(row => ({
+          id: row.id,
+          accountNumber: row.account_number,
+          accountName: row.account_name,
+          accountType: row.account_type as any,
+          isDefault: false,
+          openingBalance: Number(row.opening_balance),
+          createdAt: row.created_at || new Date().toISOString(),
+        })));
+      }
+
+      // Load Journal Entries
+      const entries = await loadJournalEntriesFromDB();
+      setJournalEntries(entries);
+
+      // Load Expenses
+      const { data: expensesData } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('company_id', activeCompanyId)
+        .order('date', { ascending: false });
+
+      if (expensesData) {
+        setExpenses(expensesData.map(exp => ({
+          id: exp.id,
+          date: exp.date,
+          vendor: exp.supplier_id,
+          category: 'General Expense',
+          description: exp.notes || '',
+          amount: Number(exp.total),
+          paymentMethod: 'unpaid',
+          status: exp.status as any,
+          dueDate: exp.due_date,
+          payments: [],
+          createdAt: exp.created_at,
+          updatedAt: exp.updated_at,
+        })));
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error);
+      setLoading(false);
+    }
+  };
 
   const calculateFinancialYearDates = () => {
     const today = new Date();
@@ -83,17 +156,17 @@ export default function Dashboard() {
   };
 
   const getPeriodData = (startDate: string, endDate: string) => {
-    const journalEntries = loadJournalEntries().filter(entry => {
+    const filteredJournalEntries = journalEntries.filter(entry => {
       const entryDate = new Date(entry.date);
       return entryDate >= new Date(startDate) && entryDate <= new Date(endDate);
     });
 
-    const expenses = loadExpenses().filter(expense => {
+    const filteredExpenses = expenses.filter(expense => {
       const expenseDate = new Date(expense.date);
       return expenseDate >= new Date(startDate) && expenseDate <= new Date(endDate);
     });
 
-    return { startDate, endDate, journalEntries, expenses };
+    return { startDate, endDate, journalEntries: filteredJournalEntries, expenses: filteredExpenses };
   };
 
   const kpis = calculateEnhancedKPIs(
