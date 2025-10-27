@@ -110,13 +110,15 @@ export default function Payroll() {
     const country = payrollSettings?.country || 'ZA';
     const paye = calculateMonthlyPAYE(grossSalary, age, taxBrackets, country);
     
-    // Get statutory deductions based on country
+    // Get statutory deductions based on country (EXCLUDING PAYE to avoid double counting)
     const statutoryDeductions = getStatutoryDeductions(grossSalary, paye, country);
-    const totalStatutoryDeductions = statutoryDeductions.reduce((sum, d) => sum + d.amount, 0);
+    // Filter out PAYE from statutory deductions since we're adding it separately
+    const nonPAYEDeductions = statutoryDeductions.filter(d => d.name !== 'PAYE');
+    const totalNonPAYEStatutory = nonPAYEDeductions.reduce((sum, d) => sum + d.amount, 0);
     
     // Add custom deductions to total deductions
     const customDeductionsTotal = customDeductions.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-    const totalDeductions = totalStatutoryDeductions + otherDeductions + customDeductionsTotal;
+    const totalDeductions = paye + totalNonPAYEStatutory + otherDeductions + customDeductionsTotal;
     const netSalary = grossSalary - totalDeductions;
 
     return {
