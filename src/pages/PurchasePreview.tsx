@@ -1,9 +1,10 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Navigation } from '@/components/Navigation';
 import { loadPurchases } from '@/utils/purchaseStorage';
-import { loadSettings } from '@/utils/settingsStorage';
+import { useSettings } from '@/contexts/SettingsContext';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,8 +12,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 export default function PurchasePreview() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const purchase = loadPurchases().find(p => p.id === id);
-  const settings = loadSettings();
+  const { settings } = useSettings();
+  const [purchase, setPurchase] = useState<any>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const purchases = await loadPurchases();
+      const found = purchases.find(p => p.id === id);
+      setPurchase(found);
+    };
+    loadData();
+  }, [id]);
 
   if (!purchase) {
     return (

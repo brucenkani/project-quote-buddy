@@ -188,10 +188,7 @@ export default function InvoicePayment() {
                 <div className="flex justify-between text-lg border-t pt-2">
                   <span className="text-muted-foreground">Amount Due:</span>
                   <span className="font-bold text-primary">
-                    {settings.currencySymbol}{(async () => {
-                      const amountDue = await calculateAmountDue(invoice, allInvoices);
-                      return amountDue.toFixed(2);
-                    })()}
+                    {settings.currencySymbol}{paymentData.amount.toFixed(2)}
                   </span>
                 </div>
               </div>

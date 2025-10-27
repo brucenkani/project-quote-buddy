@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Navigation } from '@/components/Navigation';
 import { loadPurchases, savePurchase } from '@/utils/purchaseStorage';
 import { savePurchasePayment, getPurchasePayments, getTotalPaid } from '@/utils/purchasePaymentStorage';
-import { loadSettings } from '@/utils/settingsStorage';
+import { useSettings } from '@/contexts/SettingsContext';
 import { ArrowLeft, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { PurchasePayment, PaymentMethod } from '@/types/purchasePayment';
@@ -21,18 +21,35 @@ export default function PurchasePayment() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const purchase = loadPurchases().find(p => p.id === id);
-  const settings = loadSettings();
-  const payments = getPurchasePayments(id!);
-  const totalPaid = getTotalPaid(id!);
+  const { settings } = useSettings();
+  const [purchase, setPurchase] = useState<any>(null);
+  const [payments, setPayments] = useState<PurchasePayment[]>([]);
+  const [totalPaid, setTotalPaid] = useState(0);
 
   const [formData, setFormData] = useState({
-    amount: purchase ? purchase.total - totalPaid : 0,
+    amount: 0,
     date: new Date().toISOString().split('T')[0],
     method: 'bank-transfer' as PaymentMethod,
     reference: '',
     notes: '',
   });
+
+  useEffect(() => {
+    const loadData = async () => {
+      const purchases = await loadPurchases();
+      const found = purchases.find(p => p.id === id);
+      setPurchase(found);
+      
+      if (found) {
+        const purchasePayments = await getPurchasePayments(id!);
+        setPayments(purchasePayments);
+        const paid = await getTotalPaid(id!);
+        setTotalPaid(paid);
+        setFormData(prev => ({ ...prev, amount: found.total - paid }));
+      }
+    };
+    loadData();
+  }, [id]);
 
   if (!purchase) {
     return (

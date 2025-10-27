@@ -43,7 +43,7 @@ export default function Invoices() {
     loadData();
   }, [activeTab]); // Reload when tab changes
 
-  const handleDelete = (id: string, isCreditNote: boolean = false) => {
+  const handleDelete = async (id: string, isCreditNote: boolean = false) => {
     const message = isCreditNote 
       ? 'Are you sure you want to delete this credit note? This will remove it from the original invoice.'
       : 'Are you sure you want to delete this invoice?';
@@ -66,7 +66,7 @@ export default function Invoices() {
             };
             // Save the updated parent invoice first
             const { saveInvoice } = require('@/utils/invoiceStorage');
-            saveInvoice(updatedParentInvoice);
+            await saveInvoice(updatedParentInvoice);
           }
         }
       }
@@ -234,7 +234,7 @@ export default function Invoices() {
                         </TableCell>
                         {activeTab !== 'credit-notes' && (
                           <TableCell className="text-right">
-                            {settings.currencySymbol}{calculateAmountDue(invoice, invoices).toFixed(2)}
+                            {settings.currencySymbol}{invoice.total.toFixed(2)}
                           </TableCell>
                         )}
                         <TableCell className="text-center">
