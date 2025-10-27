@@ -1,42 +1,96 @@
 import { RecurringInvoice, Invoice } from '@/types/invoice';
 import { saveInvoice, generateNextInvoiceNumber } from './invoiceStorage';
+import { supabase } from '@/integrations/supabase/client';
 
-const STORAGE_KEY = 'quotebuilder-recurring-invoices';
-
-export const loadRecurringInvoices = (): RecurringInvoice[] => {
+export const loadRecurringInvoices = async (): Promise<RecurringInvoice[]> => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session?.user?.id) return [];
+
+    const userId = session.session.user.id;
+
+    const { data: memberData } = await supabase
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', userId)
+      .single();
+
+    if (!memberData?.company_id) return [];
+
+    const { data: recurring, error } = await supabase
+      .from('recurring_invoices')
+      .select('*')
+      .eq('company_id', memberData.company_id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return (recurring || []).map(r => ({
+      id: r.id,
+      invoiceTemplate: {} as Invoice,
+      frequency: r.frequency as any,
+      nextGenerationDate: r.next_invoice_date,
+      isActive: r.status === 'active',
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }));
   } catch (error) {
     console.error('Failed to load recurring invoices:', error);
+    return [];
   }
-  return [];
 };
 
-export const saveRecurringInvoices = (invoices: RecurringInvoice[]): void => {
+export const saveRecurringInvoice = async (invoice: RecurringInvoice): Promise<void> => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(invoices));
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session?.user?.id) throw new Error('No authenticated user');
+
+    const userId = session.session.user.id;
+
+    const { data: memberData } = await supabase
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', userId)
+      .single();
+
+    if (!memberData?.company_id) throw new Error('No active company');
+
+    const { error } = await supabase
+      .from('recurring_invoices')
+      .upsert({
+        id: invoice.id,
+        user_id: userId,
+        company_id: memberData.company_id,
+        customer_id: invoice.invoiceTemplate.customerId,
+        frequency: invoice.frequency,
+        next_invoice_date: invoice.nextGenerationDate,
+        subtotal: invoice.invoiceTemplate.subtotal,
+        tax_amount: invoice.invoiceTemplate.taxAmount,
+        total_amount: invoice.invoiceTemplate.total,
+        status: invoice.isActive ? 'active' : 'paused',
+        notes: invoice.invoiceTemplate.notes || null,
+        updated_at: new Date().toISOString(),
+      });
+
+    if (error) throw error;
   } catch (error) {
-    console.error('Failed to save recurring invoices:', error);
+    console.error('Failed to save recurring invoice:', error);
+    throw error;
   }
 };
 
-export const saveRecurringInvoice = (invoice: RecurringInvoice): void => {
-  const invoices = loadRecurringInvoices();
-  const index = invoices.findIndex(i => i.id === invoice.id);
-  if (index >= 0) {
-    invoices[index] = invoice;
-  } else {
-    invoices.push(invoice);
-  }
-  saveRecurringInvoices(invoices);
-};
+export const deleteRecurringInvoice = async (id: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('recurring_invoices')
+      .delete()
+      .eq('id', id);
 
-export const deleteRecurringInvoice = (id: string): void => {
-  const invoices = loadRecurringInvoices().filter(i => i.id !== id);
-  saveRecurringInvoices(invoices);
+    if (error) throw error;
+  } catch (error) {
+    console.error('Failed to delete recurring invoice:', error);
+    throw error;
+  }
 };
 
 export const calculateNextGenerationDate = (startDate: string, frequency: RecurringInvoice['frequency']): string => {
@@ -60,26 +114,19 @@ export const calculateNextGenerationDate = (startDate: string, frequency: Recurr
   return date.toISOString().split('T')[0];
 };
 
-export const generateInvoicesFromRecurring = (): number => {
-  const recurringInvoices = loadRecurringInvoices();
+export const generateInvoicesFromRecurring = async (): Promise<number> => {
+  const recurringInvoices = await loadRecurringInvoices();
   const today = new Date().toISOString().split('T')[0];
   let generatedCount = 0;
 
-  recurringInvoices.forEach(recurring => {
-    if (!recurring.isActive) return;
+  for (const recurring of recurringInvoices) {
+    if (!recurring.isActive) continue;
     
-    // Check if it's time to generate
     if (recurring.nextGenerationDate <= today) {
-      // Check if we haven't passed the end date
-      if (recurring.endDate && recurring.nextGenerationDate > recurring.endDate) {
-        return;
-      }
-
-      // Generate the invoice
       const newInvoice: Invoice = {
         ...recurring.invoiceTemplate,
         id: crypto.randomUUID(),
-        invoiceNumber: generateNextInvoiceNumber(),
+        invoiceNumber: await generateNextInvoiceNumber(),
         issueDate: today,
         type: 'invoice',
         payments: [],
@@ -88,16 +135,14 @@ export const generateInvoicesFromRecurring = (): number => {
         updatedAt: new Date().toISOString(),
       };
 
-      saveInvoice(newInvoice);
+      await saveInvoice(newInvoice);
       generatedCount++;
 
-      // Update the recurring invoice
       const nextDate = calculateNextGenerationDate(recurring.nextGenerationDate, recurring.frequency);
-      recurring.lastGeneratedDate = today;
       recurring.nextGenerationDate = nextDate;
-      saveRecurringInvoice(recurring);
+      await saveRecurringInvoice(recurring);
     }
-  });
+  }
 
   return generatedCount;
 };
