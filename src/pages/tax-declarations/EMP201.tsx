@@ -59,14 +59,15 @@ export default function EMP201() {
         .from('payroll')
         .select(`
           *,
-          employees (
+          employees!inner (
             first_name,
             last_name,
             employee_number,
-            tax_number
+            tax_number,
+            company_id
           )
         `)
-        .eq('company_id', memberData.company_id)
+        .eq('employees.company_id', memberData.company_id)
         .gte('period_start', startDate.toISOString().split('T')[0])
         .lte('period_end', endDate.toISOString().split('T')[0]);
 
