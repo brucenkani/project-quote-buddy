@@ -50,6 +50,7 @@ export default function PayrollSettings() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [settings, setSettings] = useState<PayrollSettings | null>(null);
+  const [loading, setLoading] = useState(true);
   const [taxBrackets, setTaxBrackets] = useState<TaxBracket[]>([]);
   const [newBracket, setNewBracket] = useState({
     age_group: 'under_65',
@@ -74,6 +75,7 @@ export default function PayrollSettings() {
   };
 
   const loadData = async () => {
+    setLoading(true);
     try {
       // Get current user's company
       const { data: { user } } = await supabase.auth.getUser();
@@ -134,12 +136,28 @@ export default function PayrollSettings() {
 
       setSettings(settingsData);
       loadTaxBrackets(settingsData.country, settingsData.current_tax_year);
+      setLoading(false);
     } catch (error: any) {
       toast({
         title: 'Error',
         description: error.message || 'Failed to load payroll settings',
         variant: 'destructive',
       });
+      // Fallback to read-only defaults so the page renders
+      setSettings({
+        id: 'readonly',
+        country: 'ZA',
+        currency: 'ZAR',
+        currency_symbol: 'R',
+        current_tax_year: new Date().getFullYear(),
+        smtp_host: '',
+        smtp_port: 587,
+        smtp_user: '',
+        smtp_password: '',
+        smtp_from_email: '',
+        smtp_from_name: 'Payroll System',
+      });
+      setLoading(false);
     }
   };
 
@@ -309,7 +327,7 @@ export default function PayrollSettings() {
     }
   };
 
-  if (!settings) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
         <PayrollNavigation />
