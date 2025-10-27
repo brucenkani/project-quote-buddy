@@ -63,23 +63,65 @@ export default function LandingSettings() {
   }, [activeCompany]);
 
   const loadPayrollSettings = async () => {
-    if (!activeCompany || !activeCompanySettings) return;
+    try {
+      if (!activeCompany || !activeCompanySettings) return;
 
-    const { data: settingsData } = await supabase
-      .from('payroll_settings')
-      .select('*')
-      .single();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    if (settingsData) {
-      // Override with active company's settings
-      const updatedSettings = {
-        ...settingsData,
-        country: activeCompanySettings.country || 'ZA',
-        currency: activeCompanySettings.currency || 'ZAR',
-        currency_symbol: activeCompanySettings.currency_symbol || 'R',
-      };
-      setPayrollSettings(updatedSettings);
-      loadTaxBrackets(activeCompanySettings.country || 'ZA', settingsData.current_tax_year);
+      const { data: member } = await supabase
+        .from('company_members')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('company_id', activeCompany.id)
+        .maybeSingle();
+
+      const isOwner = member?.role === 'owner';
+
+      let { data: settingsData, error } = await supabase
+        .from('payroll_settings')
+        .select('*')
+        .eq('company_id', activeCompany.id)
+        .maybeSingle();
+
+      if (!settingsData && isOwner) {
+        const countryMeta = countries.find(c => c.code === (activeCompanySettings.country || 'ZA'));
+        const { data: newSettings, error: insertError } = await supabase
+          .from('payroll_settings')
+          .insert([{
+            company_id: activeCompany.id,
+            country: activeCompanySettings.country || 'ZA',
+            currency: countryMeta?.currency || 'ZAR',
+            currency_symbol: countryMeta?.symbol || 'R',
+            current_tax_year: new Date().getFullYear(),
+          }])
+          .select()
+          .single();
+        if (insertError) throw insertError;
+        settingsData = newSettings;
+      } else if (!settingsData) {
+        settingsData = {
+          id: 'readonly',
+          company_id: activeCompany.id,
+          country: activeCompanySettings.country || 'ZA',
+          currency: activeCompanySettings.currency || 'ZAR',
+          currency_symbol: activeCompanySettings.currency_symbol || 'R',
+          current_tax_year: new Date().getFullYear(),
+        } as any;
+      }
+
+      setPayrollSettings(settingsData);
+      loadTaxBrackets(settingsData.country, settingsData.current_tax_year);
+    } catch (e) {
+      // Always set a safe fallback so the UI renders
+      setPayrollSettings({
+        id: 'readonly',
+        company_id: activeCompany?.id,
+        country: activeCompanySettings?.country || 'ZA',
+        currency: activeCompanySettings?.currency || 'ZAR',
+        currency_symbol: activeCompanySettings?.currency_symbol || 'R',
+        current_tax_year: new Date().getFullYear(),
+      } as any);
     }
   };
 
@@ -150,7 +192,7 @@ export default function LandingSettings() {
       .from('company_settings')
       .select('*')
       .eq('company_id', company.id)
-      .single();
+      .maybeSingle();
     
     setCompanyFormData({
       companyName: company.name || '',
