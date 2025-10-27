@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { calculateAge, calculateMonthlyPAYE, calculateUIF, calculateGrossSalary, calculateNetSalary } from '@/utils/sarsCalculator';
+import { calculateAge, calculateMonthlyPAYE, calculateGrossSalary, calculateNetSalary, getStatutoryDeductions } from '@/utils/dynamicPAYECalculator';
 import { generatePayslipPDF } from '@/utils/payslipGenerator';
 import { Loader2 } from 'lucide-react';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -38,6 +38,7 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
   const { activeCompanySettings } = useCompany();
   const [employees, setEmployees] = useState<EmployeePayroll[]>([]);
   const [taxBrackets, setTaxBrackets] = useState<any[]>([]);
+  const [payrollSettings, setPayrollSettings] = useState<any>(null);
   const [periodStart, setPeriodStart] = useState('');
   const [periodEnd, setPeriodEnd] = useState('');
   const [processing, setProcessing] = useState(false);
@@ -46,6 +47,7 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
     if (open) {
       loadEmployees();
       loadTaxBrackets();
+      loadPayrollSettings();
     }
   }, [open]);
 
@@ -75,6 +77,27 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
     if (data) setTaxBrackets(data);
   };
 
+  const loadPayrollSettings = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: memberData } = await supabase
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (!memberData) return;
+
+    const { data } = await supabase
+      .from('payroll_settings')
+      .select('*')
+      .eq('company_id', memberData.company_id)
+      .maybeSingle();
+
+    if (data) setPayrollSettings(data);
+  };
+
   const toggleEmployee = (id: string) => {
     setEmployees(employees.map(emp =>
       emp.id === id ? { ...emp, selected: !emp.selected } : emp
@@ -96,16 +119,23 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
       employee.bonuses
     );
     const age = calculateAge(employee.date_of_birth);
-    const paye = calculateMonthlyPAYE(grossSalary, age, taxBrackets);
-    const uif = calculateUIF(grossSalary);
-    const totalDeductions = paye + uif + employee.other_deductions;
-    const netSalary = calculateNetSalary(grossSalary, paye, uif, employee.other_deductions);
+    const country = payrollSettings?.country || 'ZA';
+    const paye = calculateMonthlyPAYE(grossSalary, age, taxBrackets, country);
+    
+    // Get statutory deductions based on country
+    const statutoryDeductions = getStatutoryDeductions(grossSalary, paye, country);
+    const totalStatutoryDeductions = statutoryDeductions.reduce((sum, d) => sum + d.amount, 0);
+    const totalDeductions = totalStatutoryDeductions + employee.other_deductions;
+    const netSalary = grossSalary - totalDeductions;
 
     return {
       basic_salary: basicSalary,
       gross_salary: grossSalary,
       paye,
-      uif,
+      uif: statutoryDeductions.find(d => d.name === 'UIF')?.amount || 0,
+      napsa: statutoryDeductions.find(d => d.name === 'NAPSA')?.amount || 0,
+      nhima: statutoryDeductions.find(d => d.name === 'NHIMA')?.amount || 0,
+      nssa: statutoryDeductions.find(d => d.name === 'NSSA')?.amount || 0,
       total_deductions: totalDeductions,
       net_salary: netSalary,
     };
@@ -129,7 +159,7 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
       for (const employee of selectedEmployees) {
         const calculations = calculatePayrollForEmployee(employee);
 
-        // Create payroll record
+        // Create payroll record with all country-specific deductions
         const { data: payrollData, error: payrollError } = await supabase
           .from('payroll')
           .insert([{
@@ -142,11 +172,15 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
             bonuses: employee.bonuses,
             gross_salary: calculations.gross_salary,
             paye: calculations.paye,
-            uif: calculations.uif,
+            uif: calculations.uif || 0,
+            napsa: calculations.napsa || 0,
+            nhima: calculations.nhima || 0,
+            nssa: calculations.nssa || 0,
             other_deductions: employee.other_deductions,
             total_deductions: calculations.total_deductions,
             net_salary: calculations.net_salary,
             status: 'pending',
+            currency_symbol: payrollSettings?.currency_symbol || 'R',
           }])
           .select()
           .single();

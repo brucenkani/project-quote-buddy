@@ -195,6 +195,22 @@ export default function Payroll() {
       }
 
       toast({ title: 'Success', description: 'Payroll record created successfully' });
+      
+      // Optionally send payslip email if SMTP configured
+      if (payrollData && payrollData[0] && payrollSettings?.smtp_host) {
+        try {
+          const payrollWithEmployee = {
+            ...payrollData[0],
+            employees: selectedEmployee,
+            currency_symbol: payrollSettings.currency_symbol || 'R',
+          };
+          await generatePayslipPDF(payrollWithEmployee, activeCompanySettings || {});
+          // Note: Email sending would require implementation of the send-payslip-email edge function
+        } catch (error) {
+          console.error('Error generating payslip:', error);
+        }
+      }
+      
       setShowDialog(false);
       resetForm();
       loadData();
