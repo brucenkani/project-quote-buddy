@@ -59,13 +59,12 @@ const [viewCount, setViewCount] = useState<number>(0);
       
       try {
         if (userData?.user) {
-          // Logged-in user - upsert to prevent duplicate views
-          await supabase
+          // Logged-in user - insert and ignore duplicates (no UPDATE needed for RLS)
+          await (supabase as any)
             .from('knowledge_article_views')
-            .upsert(
-              { article_id: data.id, user_id: userData.user.id },
-              { onConflict: 'article_id,user_id' }
-            );
+            .insert([
+              { article_id: data.id, user_id: userData.user.id }
+            ], { onConflict: 'article_id,user_id', ignoreDuplicates: true });
         } else {
           // Guest user - insert new view (no user_id)
           await supabase
