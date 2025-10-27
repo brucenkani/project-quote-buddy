@@ -190,13 +190,16 @@ export default function InvoiceBuilder() {
     };
 
     try {
+      console.log('Attempting to save invoice:', invoice);
       await saveInvoice(invoice);
+      console.log('Invoice saved successfully');
       
       if (!id && invoice.status === 'unpaid') {
         try {
           recordInvoice(invoice);
           toast({ title: 'Invoice and journal entry created successfully' });
         } catch (error) {
+          console.error('Journal entry error:', error);
           toast({ 
             title: 'Warning: Invoice saved but journal entry failed', 
             description: error instanceof Error ? error.message : 'Unknown error',
@@ -209,6 +212,7 @@ export default function InvoiceBuilder() {
       
       navigate('/invoices');
     } catch (error) {
+      console.error('Save invoice error:', error);
       toast({
         title: 'Error saving invoice',
         description: error instanceof Error ? error.message : 'Unknown error',
