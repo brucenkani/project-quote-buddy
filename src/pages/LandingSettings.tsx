@@ -270,6 +270,7 @@ export default function LandingSettings() {
       .from('tax_brackets')
       .insert([{
         ...newBracket,
+        rate: newBracket.rate / 100, // Convert percentage to decimal
         year: payrollSettings.current_tax_year,
         country: activeCompanySettings.country || 'ZA',
       }]);
@@ -342,7 +343,7 @@ export default function LandingSettings() {
             .update({
               bracket_min: b.bracket_min,
               bracket_max: b.bracket_max,
-              rate: b.rate,
+              rate: b.rate / 100, // Convert percentage to decimal
               threshold: b.threshold,
               rebate: b.rebate,
             })
@@ -1303,7 +1304,7 @@ export default function LandingSettings() {
                                       <Input
                                         type="number"
                                         step="0.01"
-                                        value={bracket.rate ?? 0}
+                                        value={(bracket.rate ?? 0) * 100}
                                         onChange={(e) => handleBracketFieldChange(bracket.id, 'rate', Number(e.target.value))}
                                         className="h-9"
                                       />
