@@ -23,9 +23,11 @@ import {
 import { generatePayslipPDF } from '@/utils/payslipGenerator';
 import { format } from 'date-fns';
 import { BulkPayrollDialog } from '@/components/payroll/BulkPayrollDialog';
+import { useCompany } from '@/contexts/CompanyContext';
 
 export default function Payroll() {
   const navigate = useNavigate();
+  const { activeCompanySettings } = useCompany();
   const [payrollRecords, setPayrollRecords] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [taxBrackets, setTaxBrackets] = useState<any[]>([]);
@@ -220,7 +222,7 @@ export default function Payroll() {
 
   const handleDownloadPayslip = async (record: any) => {
     try {
-      await generatePayslipPDF(record);
+      await generatePayslipPDF(record, activeCompanySettings || {});
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     }

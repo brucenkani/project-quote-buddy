@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { calculateAge, calculateMonthlyPAYE, calculateUIF, calculateGrossSalary, calculateNetSalary } from '@/utils/sarsCalculator';
 import { generatePayslipPDF } from '@/utils/payslipGenerator';
 import { Loader2 } from 'lucide-react';
+import { useCompany } from '@/contexts/CompanyContext';
 
 interface BulkPayrollDialogProps {
   open: boolean;
@@ -34,6 +35,7 @@ interface EmployeePayroll {
 }
 
 export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrollDialogProps) {
+  const { activeCompanySettings } = useCompany();
   const [employees, setEmployees] = useState<EmployeePayroll[]>([]);
   const [taxBrackets, setTaxBrackets] = useState<any[]>([]);
   const [periodStart, setPeriodStart] = useState('');
@@ -159,7 +161,7 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
         
         try {
           // Generate PDF and get blob
-          await generatePayslipPDF(payrollWithEmployee);
+          await generatePayslipPDF(payrollWithEmployee, activeCompanySettings || {});
           // Note: generatePayslipPDF downloads the PDF directly, so we skip email for now
           // In production, you would modify generatePayslipPDF to return the blob
         } catch (error) {

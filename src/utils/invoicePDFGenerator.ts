@@ -2,7 +2,6 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import QRCode from 'qrcode';
 import { Invoice } from '@/types/invoice';
-import { loadSettings } from './settingsStorage';
 import { type Country } from '@/types/settings';
 
 const hexToRgb = (hex: string): [number, number, number] => {
@@ -30,8 +29,7 @@ const generateQRCode = async (data: string): Promise<string> => {
 };
 
 // Generate QR code data based on country
-const getQRCodeData = (invoice: Invoice, country: Country): string => {
-  const settings = loadSettings();
+const getQRCodeData = (invoice: Invoice, country: Country, settings: any): string => {
   
   switch (country) {
     case 'ZM': // Zambia - ZRA Smart Invoice format
@@ -70,8 +68,21 @@ const getQRCodeData = (invoice: Invoice, country: Country): string => {
   }
 };
 
-export const generateInvoicePDF = async (invoice: Invoice) => {
-  const settings = loadSettings();
+export const generateInvoicePDF = async (invoice: Invoice, companySettings: any) => {
+  // Map database schema to expected format
+  const settings = {
+    companyName: companySettings.company_name || companySettings.companyName || '',
+    email: companySettings.email || '',
+    phone: companySettings.phone || '',
+    address: companySettings.address || '',
+    logoUrl: companySettings.logo_url || companySettings.logoUrl,
+    primaryColor: companySettings.primary_color || companySettings.primaryColor || '#3b82f6',
+    currencySymbol: companySettings.currency_symbol || companySettings.currencySymbol || 'R',
+    country: companySettings.country || 'ZA',
+    vatNumber: companySettings.tax_number || companySettings.vatNumber,
+    incomeTaxNumber: companySettings.tax_number || companySettings.incomeTaxNumber,
+    companyRegistrationNumber: companySettings.registration_number || companySettings.companyRegistrationNumber,
+  };
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -81,7 +92,7 @@ export const generateInvoicePDF = async (invoice: Invoice) => {
   // Generate QR code for countries that require it
   let qrCodeImage = '';
   if (country === 'ZM' || country === 'ZW') {
-    const qrData = getQRCodeData(invoice, country);
+    const qrData = getQRCodeData(invoice, country, settings);
     qrCodeImage = await generateQRCode(qrData);
   }
   

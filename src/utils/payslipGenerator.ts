@@ -1,10 +1,15 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
-import { loadSettings } from './settingsStorage';
 
-export const generatePayslipPDF = async (payrollRecord: any) => {
-  const settings = loadSettings();
+export const generatePayslipPDF = async (payrollRecord: any, companySettings: any) => {
+  // Map database schema to expected format
+  const settings = {
+    companyName: companySettings.company_name || companySettings.companyName || '',
+    email: companySettings.email || '',
+    phone: companySettings.phone || '',
+    address: companySettings.address || '',
+  };
   const doc = new jsPDF();
   const employee = payrollRecord.employees;
 

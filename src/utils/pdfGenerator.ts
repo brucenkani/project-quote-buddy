@@ -1,7 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Quote } from '@/types/quote';
-import { loadSettings } from './settingsStorage';
 
 const hexToRgb = (hex: string): [number, number, number] => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -10,8 +9,15 @@ const hexToRgb = (hex: string): [number, number, number] => {
     : [59, 130, 246];
 };
 
-export const generateQuotePDF = (quote: Quote) => {
-  const settings = loadSettings();
+export const generateQuotePDF = (quote: Quote, companySettings: any) => {
+  // Map database schema to expected format
+  const settings = {
+    companyName: companySettings.company_name || companySettings.companyName || '',
+    email: companySettings.email || '',
+    phone: companySettings.phone || '',
+    currencySymbol: companySettings.currency_symbol || companySettings.currencySymbol || 'R',
+    primaryColor: companySettings.primary_color || companySettings.primaryColor || '#3b82f6',
+  };
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const brandColor = hexToRgb(settings.primaryColor);
@@ -155,8 +161,13 @@ export const generateQuotePDF = (quote: Quote) => {
   return doc;
 };
 
-export const generateBillOfMaterialsPDF = (quote: Quote) => {
-  const settings = loadSettings();
+export const generateBillOfMaterialsPDF = (quote: Quote, companySettings: any) => {
+  // Map database schema to expected format
+  const settings = {
+    companyName: companySettings.company_name || companySettings.companyName || '',
+    currencySymbol: companySettings.currency_symbol || companySettings.currencySymbol || 'R',
+    primaryColor: companySettings.primary_color || companySettings.primaryColor || '#3b82f6',
+  };
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const brandColor = hexToRgb(settings.primaryColor);
