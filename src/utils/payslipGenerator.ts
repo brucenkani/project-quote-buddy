@@ -13,25 +13,42 @@ export const generatePayslipPDF = async (payrollRecord: any, companySettings: an
   const doc = new jsPDF();
   const employee = payrollRecord.employees;
 
-  // Header
-  doc.setFontSize(20);
-  doc.setFont('helvetica', 'bold');
-  doc.text(settings.companyName, 14, 20);
-  
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text(settings.address || '', 14, 27);
-  doc.text(settings.email || '', 14, 32);
-  doc.text(settings.phone || '', 14, 37);
-
   // Title
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text('PAYSLIP', 105, 50, { align: 'center' });
+  doc.text('PAYSLIP', 105, 20, { align: 'center' });
 
-  // Employee Details
+  // Company Details (Left Column) & Employee Details (Right Column) - Side by Side
+  let yPos = 35;
+  
+  // Company Details - Left
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Company Details', 14, yPos);
+  
+  yPos += 7;
   doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text(settings.companyName, 14, yPos);
+  
+  yPos += 5;
   doc.setFont('helvetica', 'normal');
+  doc.text(settings.address || '', 14, yPos, { maxWidth: 85 });
+  
+  yPos += 5;
+  doc.text(settings.email || '', 14, yPos);
+  
+  yPos += 5;
+  doc.text(settings.phone || '', 14, yPos);
+
+  // Employee Details - Right
+  let employeeYPos = 35;
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Employee Details', 110, employeeYPos);
+  
+  employeeYPos += 7;
+  doc.setFontSize(10);
   
   const employeeDetails = [
     ['Employee Number:', employee.employee_number],
@@ -41,14 +58,15 @@ export const generatePayslipPDF = async (payrollRecord: any, companySettings: an
     ['Department:', employee.department || '-'],
   ];
 
-  let yPos = 60;
   employeeDetails.forEach(([label, value]) => {
     doc.setFont('helvetica', 'bold');
-    doc.text(label, 14, yPos);
+    doc.text(label, 110, employeeYPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(value, 70, yPos);
-    yPos += 6;
+    doc.text(value, 155, employeeYPos);
+    employeeYPos += 5;
   });
+
+  yPos = Math.max(yPos, employeeYPos) + 5;
 
   // Pay Period
   doc.setFont('helvetica', 'bold');
