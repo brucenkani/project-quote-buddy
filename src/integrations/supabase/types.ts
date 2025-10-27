@@ -883,6 +883,53 @@ export type Database = {
           },
         ]
       }
+      expense_line_items: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string
+          expense_id: string
+          id: string
+          quantity: number
+          tax_rate: number
+          total: number
+          unit: string
+          unit_price: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description: string
+          expense_id: string
+          id?: string
+          quantity: number
+          tax_rate: number
+          total: number
+          unit: string
+          unit_price: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string
+          expense_id?: string
+          id?: string
+          quantity?: number
+          tax_rate?: number
+          total?: number
+          unit?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_line_items_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expense_payments: {
         Row: {
           amount: number
@@ -929,6 +976,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      expenses: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          date: string
+          discount: number | null
+          due_date: string
+          expense_number: string
+          id: string
+          notes: string | null
+          payment_terms: string | null
+          status: string
+          subtotal: number
+          supplier_id: string
+          tax_amount: number
+          tax_rate: number
+          total: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          date: string
+          discount?: number | null
+          due_date: string
+          expense_number: string
+          id?: string
+          notes?: string | null
+          payment_terms?: string | null
+          status?: string
+          subtotal: number
+          supplier_id: string
+          tax_amount: number
+          tax_rate: number
+          total: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          date?: string
+          discount?: number | null
+          due_date?: string
+          expense_number?: string
+          id?: string
+          notes?: string | null
+          payment_terms?: string | null
+          status?: string
+          subtotal?: number
+          supplier_id?: string
+          tax_amount?: number
+          tax_rate?: number
+          total?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       inventory_items: {
         Row: {
