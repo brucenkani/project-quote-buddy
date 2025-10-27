@@ -1115,8 +1115,59 @@ export default function LandingSettings() {
                     {/* Add New Bracket */}
                     <div className="p-4 bg-secondary/20 rounded-lg">
                       <h3 className="font-medium mb-3">Add New Tax Bracket</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
-                        {activeCompanySettings?.country !== 'ZA' && (
+                      {activeCompanySettings?.country === 'ZA' ? (
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                          <div>
+                            <Label className="text-xs">Min Income (R)</Label>
+                            <Input
+                              type="number"
+                              value={newBracket.bracket_min}
+                              onChange={(e) => setNewBracket({ ...newBracket, bracket_min: Number(e.target.value) })}
+                              className="h-9"
+                            />
+                          </div>
+
+                          <div>
+                            <Label className="text-xs">Max Income (R)</Label>
+                            <Input
+                              type="number"
+                              value={newBracket.bracket_max || ''}
+                              onChange={(e) => setNewBracket({ ...newBracket, bracket_max: e.target.value ? Number(e.target.value) : null })}
+                              placeholder="No limit"
+                              className="h-9"
+                            />
+                          </div>
+
+                          <div>
+                            <Label className="text-xs">Rate (%)</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={newBracket.rate}
+                              onChange={(e) => setNewBracket({ ...newBracket, rate: Number(e.target.value) })}
+                              className="h-9"
+                            />
+                          </div>
+
+                          <div>
+                            <Label className="text-xs">Base Amount (R)</Label>
+                            <Input
+                              type="number"
+                              value={newBracket.threshold}
+                              onChange={(e) => setNewBracket({ ...newBracket, threshold: Number(e.target.value) })}
+                              className="h-9"
+                            />
+                          </div>
+
+                          <div className="flex items-end">
+                            <Button onClick={handleAddBracket} size="sm" className="h-9 w-full">
+                              <Plus className="h-4 w-4 mr-1" />
+                              Add
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
                           <div>
                             <Label className="text-xs">Age Group</Label>
                             <Select 
@@ -1133,67 +1184,67 @@ export default function LandingSettings() {
                               </SelectContent>
                             </Select>
                           </div>
-                        )}
 
-                        <div>
-                          <Label className="text-xs">Min</Label>
-                          <Input
-                            type="number"
-                            value={newBracket.bracket_min}
-                            onChange={(e) => setNewBracket({ ...newBracket, bracket_min: Number(e.target.value) })}
-                            className="h-9"
-                          />
-                        </div>
+                          <div>
+                            <Label className="text-xs">Min</Label>
+                            <Input
+                              type="number"
+                              value={newBracket.bracket_min}
+                              onChange={(e) => setNewBracket({ ...newBracket, bracket_min: Number(e.target.value) })}
+                              className="h-9"
+                            />
+                          </div>
 
-                        <div>
-                          <Label className="text-xs">Max</Label>
-                          <Input
-                            type="number"
-                            value={newBracket.bracket_max || ''}
-                            onChange={(e) => setNewBracket({ ...newBracket, bracket_max: e.target.value ? Number(e.target.value) : null })}
-                            placeholder="No limit"
-                            className="h-9"
-                          />
-                        </div>
+                          <div>
+                            <Label className="text-xs">Max</Label>
+                            <Input
+                              type="number"
+                              value={newBracket.bracket_max || ''}
+                              onChange={(e) => setNewBracket({ ...newBracket, bracket_max: e.target.value ? Number(e.target.value) : null })}
+                              placeholder="No limit"
+                              className="h-9"
+                            />
+                          </div>
 
-                        <div>
-                          <Label className="text-xs">Rate %</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={newBracket.rate}
-                            onChange={(e) => setNewBracket({ ...newBracket, rate: Number(e.target.value) })}
-                            className="h-9"
-                          />
-                        </div>
+                          <div>
+                            <Label className="text-xs">Rate %</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={newBracket.rate}
+                              onChange={(e) => setNewBracket({ ...newBracket, rate: Number(e.target.value) })}
+                              className="h-9"
+                            />
+                          </div>
 
-                        <div>
-                          <Label className="text-xs">Threshold</Label>
-                          <Input
-                            type="number"
-                            value={newBracket.threshold}
-                            onChange={(e) => setNewBracket({ ...newBracket, threshold: Number(e.target.value) })}
-                            className="h-9"
-                          />
-                        </div>
+                          <div>
+                            <Label className="text-xs">Threshold</Label>
+                            <Input
+                              type="number"
+                              value={newBracket.threshold}
+                              onChange={(e) => setNewBracket({ ...newBracket, threshold: Number(e.target.value) })}
+                              className="h-9"
+                            />
+                          </div>
 
-                        <div>
-                          <Label className="text-xs">Rebate</Label>
-                          <Input
-                            type="number"
-                            value={newBracket.rebate}
-                            onChange={(e) => setNewBracket({ ...newBracket, rebate: Number(e.target.value) })}
-                            className="h-9"
-                          />
-                        </div>
+                          <div>
+                            <Label className="text-xs">Rebate</Label>
+                            <Input
+                              type="number"
+                              value={newBracket.rebate}
+                              onChange={(e) => setNewBracket({ ...newBracket, rebate: Number(e.target.value) })}
+                              className="h-9"
+                            />
+                          </div>
 
-                        <div className="flex items-end">
-                          <Button onClick={handleAddBracket} size="sm" className="h-9 w-full">
-                            <Plus className="h-4 w-4 mr-1" />
-                            Add
-                          </Button>
+                          <div className="flex items-end">
+                            <Button onClick={handleAddBracket} size="sm" className="h-9 w-full">
+                              <Plus className="h-4 w-4 mr-1" />
+                              Add
+                            </Button>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
 
                     {/* Existing Brackets */}
