@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { calculateAge, calculateMonthlyPAYE, calculateGrossSalary, calculateNetSalary, getStatutoryDeductions } from '@/utils/dynamicPAYECalculator';
+import { calculateAge, calculateMonthlyPAYE, calculateGrossSalary, calculateNetSalary, getStatutoryDeductions, fetchTaxBrackets } from '@/utils/dynamicPAYECalculator';
 import { generatePayslipPDF } from '@/utils/payslipGenerator';
 import { Loader2 } from 'lucide-react';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -73,8 +73,12 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
   };
 
   const loadTaxBrackets = async () => {
-    const { data } = await supabase.from('tax_brackets').select('*');
-    if (data) setTaxBrackets(data);
+    if (!payrollSettings) return;
+    const data = await fetchTaxBrackets(
+      payrollSettings.country || 'ZA',
+      payrollSettings.current_tax_year || new Date().getFullYear()
+    );
+    setTaxBrackets(data || []);
   };
 
   const loadPayrollSettings = async () => {
@@ -95,7 +99,14 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
       .eq('company_id', memberData.company_id)
       .maybeSingle();
 
-    if (data) setPayrollSettings(data);
+    if (data) {
+      setPayrollSettings(data);
+      const tb = await fetchTaxBrackets(
+        data.country || 'ZA',
+        data.current_tax_year || new Date().getFullYear()
+      );
+      setTaxBrackets(tb || []);
+    }
   };
 
   const toggleEmployee = (id: string) => {
