@@ -122,10 +122,13 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
     const country = payrollSettings?.country || 'ZA';
     const paye = calculateMonthlyPAYE(grossSalary, age, taxBrackets, country);
     
-    // Get statutory deductions based on country
+    // Get statutory deductions based on country (EXCLUDING PAYE to avoid double counting)
     const statutoryDeductions = getStatutoryDeductions(grossSalary, paye, country);
-    const totalStatutoryDeductions = statutoryDeductions.reduce((sum, d) => sum + d.amount, 0);
-    const totalDeductions = totalStatutoryDeductions + employee.other_deductions;
+    // Filter out PAYE from statutory deductions since we're storing it separately
+    const nonPAYEDeductions = statutoryDeductions.filter(d => d.name !== 'PAYE');
+    const totalNonPAYEStatutory = nonPAYEDeductions.reduce((sum, d) => sum + d.amount, 0);
+    
+    const totalDeductions = paye + totalNonPAYEStatutory + employee.other_deductions;
     const netSalary = grossSalary - totalDeductions;
 
     return {
