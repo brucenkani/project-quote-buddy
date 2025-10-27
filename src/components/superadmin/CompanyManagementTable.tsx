@@ -5,7 +5,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Trash2, Search, Users } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Trash2, Search, Users, Plus, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Company {
@@ -21,6 +23,9 @@ export default function CompanyManagementTable() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [formData, setFormData] = useState({ name: '' });
 
   useEffect(() => {
     loadCompanies();
@@ -60,6 +65,74 @@ export default function CompanyManagementTable() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateCompany = () => {
+    setEditingCompany(null);
+    setFormData({ name: '' });
+    setIsDialogOpen(true);
+  };
+
+  const handleEditCompany = (company: Company) => {
+    setEditingCompany(company);
+    setFormData({ name: company.name });
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.name.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Company name is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      if (editingCompany) {
+        const { error } = await supabase
+          .from('companies')
+          .update({ name: formData.name })
+          .eq('id', editingCompany.id);
+
+        if (error) throw error;
+
+        toast({
+          title: 'Success',
+          description: 'Company updated successfully',
+        });
+      } else {
+        const { error } = await supabase
+          .from('companies')
+          .insert([{ 
+            name: formData.name,
+            created_by: user.id 
+          }]);
+
+        if (error) throw error;
+
+        toast({
+          title: 'Success',
+          description: 'Company created successfully',
+        });
+      }
+
+      setIsDialogOpen(false);
+      loadCompanies();
+    } catch (error) {
+      console.error('Error saving company:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save company',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -114,9 +187,15 @@ export default function CompanyManagementTable() {
             <CardTitle>All Companies</CardTitle>
             <CardDescription>Manage all companies in the system</CardDescription>
           </div>
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            {filteredCompanies.length} Companies
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge variant="secondary" className="text-lg px-4 py-2">
+              {filteredCompanies.length} Companies
+            </Badge>
+            <Button onClick={handleCreateCompany}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Company
+            </Button>
+          </div>
         </div>
         <div className="relative mt-4">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -158,14 +237,23 @@ export default function CompanyManagementTable() {
                       {new Date(company.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteCompany(company.id, company.name)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditCompany(company)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteCompany(company.id, company.name)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -174,6 +262,37 @@ export default function CompanyManagementTable() {
           </div>
         )}
       </CardContent>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingCompany ? 'Edit Company' : 'Create Company'}</DialogTitle>
+            <DialogDescription>
+              {editingCompany ? 'Update company details' : 'Create a new company in the system'}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Company Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ name: e.target.value })}
+                placeholder="Enter company name"
+                required
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">
+                {editingCompany ? 'Update' : 'Create'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
