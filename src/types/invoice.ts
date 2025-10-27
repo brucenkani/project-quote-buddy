@@ -1,12 +1,30 @@
-import { Quote } from './quote';
+export interface ProjectDetails {
+  clientName: string;
+  clientEmail: string;
+  clientPhone: string;
+  projectAddress?: string;
+  projectName?: string;
+  projectLocation?: string;
+}
+
+export interface LineItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  taxRate: number;
+  amount: number;
+  total: number;
+}
 
 export interface Invoice {
   id: string;
   invoiceNumber: string;
   quoteId?: string;
   type: 'invoice' | 'credit-note';
-  projectDetails: Quote['projectDetails'];
-  lineItems: Quote['lineItems'];
+  projectDetails: ProjectDetails;
+  lineItems: LineItem[];
   subtotal: number;
   taxRate: number;
   taxAmount: number;

@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { QuoteBuilder } from '@/components/QuoteBuilder';
+
 import ProtectedRoute from "@/components/ProtectedRoute";
 import SubscriptionGuard from "@/components/SubscriptionGuard";
 import { DataProvider } from "@/contexts/DataProvider";
@@ -124,7 +124,7 @@ const App = () => (
           <Route path="/tax-declarations/emp201" element={<ProtectedRoute><EMP201 /></ProtectedRoute>} />
           <Route path="/tax-declarations/emp501" element={<ProtectedRoute><EMP501 /></ProtectedRoute>} />
           
-          <Route path="/quotes" element={<ProtectedRoute><QuoteBuilder /></ProtectedRoute>} />
+          
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/tax-compliance" element={<ProtectedRoute><TaxComplianceSettings /></ProtectedRoute>} />
           <Route path="/purchases" element={<ProtectedRoute><Purchases /></ProtectedRoute>} />

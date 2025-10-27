@@ -33,7 +33,6 @@ export const Navigation = () => {
   }, []);
   
   const customerMenuItems = [
-    { path: '/quotes', label: 'Quotes', icon: FileText },
     { path: '/invoices', label: 'Invoices', icon: DollarSign },
     { path: '/invoices/recurring', label: 'Recurring Invoices', icon: FileText },
     { path: '/invoices/statements', label: 'Statements', icon: FileText },

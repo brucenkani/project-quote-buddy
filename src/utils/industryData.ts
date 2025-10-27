@@ -1,4 +1,4 @@
-import { Industry } from '@/types/quote';
+export type Industry = 'construction' | 'plumbing' | 'electrical' | 'professional-services';
 
 export const industryOptions = [
   { value: 'construction', label: 'Construction' },
