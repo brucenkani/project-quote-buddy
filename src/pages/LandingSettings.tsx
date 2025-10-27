@@ -41,6 +41,7 @@ export default function LandingSettings() {
     rebate: 0,
   });
   const [editedBrackets, setEditedBrackets] = useState<any[]>([]);
+  const [isOwner, setIsOwner] = useState(false);
   useEffect(() => {
     setEditedBrackets(taxBrackets.map((b) => ({ ...b })));
   }, [taxBrackets]);
@@ -80,6 +81,7 @@ export default function LandingSettings() {
         .maybeSingle();
 
       const isOwner = member?.role === 'owner';
+      setIsOwner(isOwner);
 
       let { data: settingsData } = await supabase
         .from('payroll_settings')
@@ -265,6 +267,10 @@ export default function LandingSettings() {
 
   const handleAddBracket = async () => {
     if (!payrollSettings || !activeCompany || !activeCompanySettings) return;
+    if (!isOwner) {
+      toast({ title: 'Permission denied', description: 'Only owners can manage tax brackets.', variant: 'destructive' });
+      return;
+    }
 
     const { error } = await supabase
       .from('tax_brackets')
@@ -276,9 +282,12 @@ export default function LandingSettings() {
       }]);
 
     if (error) {
+      const message = error.message?.toLowerCase().includes('row-level security')
+        ? 'Only owners can manage tax brackets.'
+        : 'Failed to add tax bracket';
       toast({
         title: 'Error',
-        description: 'Failed to add tax bracket',
+        description: message,
         variant: 'destructive',
       });
       return;
@@ -301,6 +310,10 @@ export default function LandingSettings() {
   };
 
   const handleDeleteBracket = async (id: string) => {
+    if (!isOwner) {
+      toast({ title: 'Permission denied', description: 'Only owners can manage tax brackets.', variant: 'destructive' });
+      return;
+    }
     const { error } = await supabase
       .from('tax_brackets')
       .delete()
@@ -335,6 +348,10 @@ export default function LandingSettings() {
   };
 
   const handleSaveBrackets = async () => {
+    if (!isOwner) {
+      toast({ title: 'Permission denied', description: 'Only owners can manage tax brackets.', variant: 'destructive' });
+      return;
+    }
     try {
       await Promise.all(
         editedBrackets.map((b) =>
@@ -1239,7 +1256,7 @@ export default function LandingSettings() {
                           </div>
 
                           <div className="flex items-end">
-                            <Button onClick={handleAddBracket} size="sm" className="h-9 w-full">
+                            <Button onClick={handleAddBracket} size="sm" className="h-9 w-full" disabled={!isOwner} title={!isOwner ? 'Only owners can manage tax brackets' : undefined}>
                               <Plus className="h-4 w-4 mr-1" />
                               Add
                             </Button>
@@ -1322,6 +1339,8 @@ export default function LandingSettings() {
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => handleDeleteBracket(bracket.id)}
+                                        disabled={!isOwner}
+                                        title={!isOwner ? 'Only owners can manage tax brackets' : undefined}
                                       >
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                       </Button>
@@ -1345,6 +1364,8 @@ export default function LandingSettings() {
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => handleDeleteBracket(bracket.id)}
+                                        disabled={!isOwner}
+                                        title={!isOwner ? 'Only owners can manage tax brackets' : undefined}
                                       >
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                       </Button>
@@ -1358,11 +1379,14 @@ export default function LandingSettings() {
                         </Table>
                         {activeCompanySettings?.country === 'ZA' && (
                           <div className="flex gap-2 pt-2">
-                            <Button variant="outline" onClick={handleAddBracket} className="gap-2">
+                            <Button variant="outline" onClick={handleAddBracket} className="gap-2" disabled={!isOwner} title={!isOwner ? 'Only owners can manage tax brackets' : undefined}>
                               <Plus className="h-4 w-4" />
                               Add Bracket
                             </Button>
-                            <Button onClick={handleSaveBrackets}>Save Tax Brackets</Button>
+                            <Button onClick={handleSaveBrackets} disabled={!isOwner} title={!isOwner ? 'Only owners can manage tax brackets' : undefined}>Save Tax Brackets</Button>
+                            {!isOwner && (
+                              <p className="text-xs text-muted-foreground">Only owners can manage tax tables.</p>
+                            )}
                           </div>
                         )}
                       </div>
