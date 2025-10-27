@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Users, Activity, TrendingUp, LogOut, Shield, BookOpen, Network } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Building2, Users, Activity, TrendingUp, LogOut, Shield, BookOpen, Network, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import CompanyManagementTable from '@/components/superadmin/CompanyManagementTable';
 import UserManagementTable from '@/components/superadmin/UserManagementTable';
@@ -19,6 +21,10 @@ export default function SuperAdminDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [createAdminOpen, setCreateAdminOpen] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [creatingAdmin, setCreatingAdmin] = useState(false);
   const [stats, setStats] = useState<DashboardStats>({
     totalCompanies: 0,
     totalUsers: 0,
@@ -98,6 +104,38 @@ export default function SuperAdminDashboard() {
     navigate('/auth');
   };
 
+  const handleCreateSuperAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreatingAdmin(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-super-admin', {
+        body: { email: adminEmail, password: adminPassword }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({
+        title: "Success",
+        description: "Super admin account created successfully",
+      });
+      
+      setCreateAdminOpen(false);
+      setAdminEmail('');
+      setAdminPassword('');
+    } catch (err: any) {
+      console.error('Error creating super admin:', err);
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setCreatingAdmin(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -119,10 +157,49 @@ export default function SuperAdminDashboard() {
                 <p className="text-sm text-muted-foreground">System-wide management & analytics</p>
               </div>
             </div>
-            <Button onClick={handleSignOut} variant="outline" className="gap-2">
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
+            <div className="flex items-center gap-2">
+              <Dialog open={createAdminOpen} onOpenChange={setCreateAdminOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <UserPlus className="h-4 w-4" />
+                    Create Super Admin
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create Super Admin Account</DialogTitle>
+                    <DialogDescription>Create a new super admin account for system management</DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleCreateSuperAdmin} className="space-y-4">
+                    <div>
+                      <Input
+                        type="email"
+                        placeholder="Email"
+                        value={adminEmail}
+                        onChange={(e) => setAdminEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        type="password"
+                        placeholder="Password"
+                        value={adminPassword}
+                        onChange={(e) => setAdminPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" disabled={creatingAdmin} className="w-full">
+                      {creatingAdmin ? "Creating..." : "Create Super Admin"}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+              <Button onClick={handleSignOut} variant="outline" className="gap-2">
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </header>
