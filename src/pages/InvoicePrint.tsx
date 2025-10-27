@@ -119,7 +119,7 @@ export default function InvoicePrint() {
             <tr className="border-b-2" style={{ borderColor: settings.primary_color || '#3b82f6' }}>
               <th className="text-left py-2 text-sm font-semibold">Description</th>
               <th className="text-right py-2 text-sm font-semibold">Quantity</th>
-              <th className="text-right py-2 text-sm font-semibold">Incl. Price</th>
+              <th className="text-right py-2 text-sm font-semibold">Excl. Price</th>
               <th className="text-right py-2 text-sm font-semibold">Total</th>
             </tr>
           </thead>
