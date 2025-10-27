@@ -54,24 +54,32 @@ export default function EMP501() {
       const startDate = `${selectedYear - 1}-03-01`;
       const endDate = `${selectedYear}-02-28`;
 
+      // Fetch employees for this company
+      const { data: employeesList } = await supabase
+        .from('employees')
+        .select('id, first_name, last_name, employee_number, tax_number, id_number')
+        .eq('company_id', memberData.company_id);
+
+      const employeeIds = (employeesList || []).map(e => e.id);
+      if (employeeIds.length === 0) {
+        setPayrollData([]);
+        return;
+      }
+
+      // Fetch payroll for those employees within tax year
       const { data: payroll } = await supabase
         .from('payroll')
-        .select(`
-          *,
-          employees!inner (
-            first_name,
-            last_name,
-            employee_number,
-            tax_number,
-            id_number,
-            company_id
-          )
-        `)
-        .eq('employees.company_id', memberData.company_id)
+        .select('*')
+        .in('employee_id', employeeIds)
         .gte('period_start', startDate)
         .lte('period_end', endDate);
 
-      setPayrollData(payroll || []);
+      // Attach employee details
+      const employeesById = Object.fromEntries((employeesList || []).map(e => [e.id, e]));
+      const payrollWithEmployees = (payroll || []).map(p => ({ ...p, employees: employeesById[p.employee_id] }));
+
+      setPayrollData(payrollWithEmployees);
+
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Failed to load payroll data');

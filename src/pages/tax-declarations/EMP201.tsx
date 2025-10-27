@@ -51,27 +51,39 @@ export default function EMP201() {
 
       setCompanySettings(settings);
 
-      // Get payroll data for selected month
-      const startDate = new Date(selectedYear, selectedMonth, 1);
-      const endDate = new Date(selectedYear, selectedMonth + 1, 0);
+      // Build date strings without timezone issues
+      const monthStr = String(selectedMonth + 1).padStart(2, '0');
+      const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+      const startDateStr = `${selectedYear}-${monthStr}-01`;
+      const endDateStr = `${selectedYear}-${monthStr}-${String(daysInMonth).padStart(2, '0')}`;
 
+      // Fetch employees for this company
+      const { data: employeesList } = await supabase
+        .from('employees')
+        .select('id, first_name, last_name, employee_number, tax_number')
+        .eq('company_id', memberData.company_id);
+
+      const employeeIds = (employeesList || []).map(e => e.id);
+      if (employeeIds.length === 0) {
+        setPayrollData([]);
+        return;
+      }
+
+      // Fetch payroll for those employees within period
       const { data: payroll } = await supabase
         .from('payroll')
-        .select(`
-          *,
-          employees!inner (
-            first_name,
-            last_name,
-            employee_number,
-            tax_number,
-            company_id
-          )
-        `)
-        .eq('employees.company_id', memberData.company_id)
-        .gte('period_start', startDate.toISOString().split('T')[0])
-        .lte('period_end', endDate.toISOString().split('T')[0]);
+        .select('*')
+        .in('employee_id', employeeIds)
+        .gte('period_start', startDateStr)
+        .lte('period_end', endDateStr);
 
-      setPayrollData(payroll || []);
+      // Attach employee details
+      const employeesById = Object.fromEntries((employeesList || []).map(e => [e.id, e]));
+      const payrollWithEmployees = (payroll || []).map(p => ({ ...p, employees: employeesById[p.employee_id] }));
+
+      setPayrollData(payrollWithEmployees);
+
+      
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Failed to load payroll data');
