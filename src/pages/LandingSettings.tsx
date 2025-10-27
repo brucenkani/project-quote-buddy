@@ -1163,84 +1163,48 @@ export default function LandingSettings() {
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-primary/90 hover:bg-primary/90">
-                            {activeCompanySettings?.country === 'ZA' ? (
-                              <>
-                                <TableHead className="text-primary-foreground">Taxable income ({payrollSettings.currency_symbol})</TableHead>
-                                <TableHead className="text-primary-foreground">Rates of tax ({payrollSettings.currency_symbol})</TableHead>
-                                <TableHead className="text-primary-foreground w-20">Actions</TableHead>
-                              </>
-                            ) : (
-                              <>
-                                <TableHead className="text-primary-foreground">Tax Bands</TableHead>
-                                <TableHead className="text-primary-foreground">Chargeable Income</TableHead>
-                                <TableHead className="text-primary-foreground">Tax Rate</TableHead>
-                                <TableHead className="text-primary-foreground w-20">Actions</TableHead>
-                              </>
-                            )}
+                          <TableRow>
+                            <TableHead>Age Group</TableHead>
+                            <TableHead>Minimum</TableHead>
+                            <TableHead>Maximum</TableHead>
+                            <TableHead>Rate</TableHead>
+                            <TableHead>Threshold</TableHead>
+                            <TableHead>Rebate</TableHead>
+                            <TableHead className="w-20">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {taxBrackets.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={activeCompanySettings?.country === 'ZA' ? 3 : 4} className="text-center text-muted-foreground">
+                              <TableCell colSpan={7} className="text-center text-muted-foreground">
                                 No tax brackets configured for this year. Add one above.
                               </TableCell>
                             </TableRow>
                           ) : (
-                            taxBrackets
-                              .sort((a, b) => Number(a.bracket_min) - Number(b.bracket_min))
-                              .map((bracket, index) => (
+                            taxBrackets.map((bracket) => (
                               <TableRow key={bracket.id}>
-                                {activeCompanySettings?.country === 'ZA' ? (
-                                  <>
-                                    <TableCell>
-                                      {payrollSettings.currency_symbol}{Number(bracket.bracket_min).toLocaleString()} – {bracket.bracket_max 
-                                        ? `${payrollSettings.currency_symbol}${Number(bracket.bracket_max).toLocaleString()}`
-                                        : 'and above'
-                                      }
-                                    </TableCell>
-                                    <TableCell>
-                                      {index === 0 ? (
-                                        `${(Number(bracket.rate) * 100).toFixed(0)}% of taxable income`
-                                      ) : (
-                                        `${payrollSettings.currency_symbol}${Number(bracket.threshold).toLocaleString()} + ${(Number(bracket.rate) * 100).toFixed(0)}% of taxable income above ${payrollSettings.currency_symbol}${Number(bracket.bracket_min).toLocaleString()}`
-                                      )}
-                                    </TableCell>
-                                    <TableCell>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleDeleteBracket(bracket.id)}
-                                      >
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                      </Button>
-                                    </TableCell>
-                                  </>
-                                ) : (
-                                  <>
-                                    <TableCell>
-                                      {index === 0 ? (
-                                        `First ${payrollSettings.currency_symbol}${Number(bracket.bracket_max || bracket.bracket_min).toLocaleString()} @`
-                                      ) : bracket.bracket_max ? (
-                                        `Next ${payrollSettings.currency_symbol}${Number(bracket.bracket_min).toLocaleString()} but not exceeding ${payrollSettings.currency_symbol}${Number(bracket.bracket_max).toLocaleString()}`
-                                      ) : (
-                                        `${payrollSettings.currency_symbol}${Number(bracket.bracket_min).toLocaleString()} and Above`
-                                      )}
-                                    </TableCell>
-                                    <TableCell>{Number(bracket.threshold).toLocaleString()}</TableCell>
-                                    <TableCell>{(Number(bracket.rate) * 100).toFixed(0)}%</TableCell>
-                                    <TableCell>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleDeleteBracket(bracket.id)}
-                                      >
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                      </Button>
-                                    </TableCell>
-                                  </>
-                                )}
+                                <TableCell className="capitalize">
+                                  {bracket.age_group.replace('_', ' ')}
+                                </TableCell>
+                                <TableCell>{payrollSettings.currency_symbol}{bracket.bracket_min.toLocaleString()}</TableCell>
+                                <TableCell>
+                                  {bracket.bracket_max 
+                                    ? `${payrollSettings.currency_symbol}${bracket.bracket_max.toLocaleString()}`
+                                    : 'No limit'
+                                  }
+                                </TableCell>
+                                <TableCell>{bracket.rate}%</TableCell>
+                                <TableCell>{payrollSettings.currency_symbol}{bracket.threshold.toLocaleString()}</TableCell>
+                                <TableCell>{payrollSettings.currency_symbol}{bracket.rebate.toLocaleString()}</TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteBracket(bracket.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </TableCell>
                               </TableRow>
                             ))
                           )}
