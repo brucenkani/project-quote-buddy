@@ -27,7 +27,7 @@ import { useCompany } from '@/contexts/CompanyContext';
 
 export default function Payroll() {
   const navigate = useNavigate();
-  const { activeCompanySettings } = useCompany();
+  const { activeCompany, activeCompanySettings } = useCompany();
   const [payrollRecords, setPayrollRecords] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [taxBrackets, setTaxBrackets] = useState<any[]>([]);
@@ -204,7 +204,11 @@ export default function Payroll() {
             employees: selectedEmployee,
             currency_symbol: payrollSettings.currency_symbol || 'R',
           };
-          await generatePayslipPDF(payrollWithEmployee, activeCompanySettings || {});
+          const companySettings = {
+            ...activeCompanySettings,
+            company_name: activeCompany?.name || '',
+          };
+          await generatePayslipPDF(payrollWithEmployee, companySettings);
           // Note: Email sending would require implementation of the send-payslip-email edge function
         } catch (error) {
           console.error('Error generating payslip:', error);
@@ -238,7 +242,11 @@ export default function Payroll() {
 
   const handleDownloadPayslip = async (record: any) => {
     try {
-      await generatePayslipPDF(record, activeCompanySettings || {});
+      const companySettings = {
+        ...activeCompanySettings,
+        company_name: activeCompany?.name || '',
+      };
+      await generatePayslipPDF(record, companySettings);
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     }
