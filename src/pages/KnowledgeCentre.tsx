@@ -69,7 +69,7 @@ export default function KnowledgeCentre() {
       // Fetch unique view counts for each article
       const articlesWithViews: ArticleWithViews[] = await Promise.all(
         (data || []).map(async (article) => {
-          const { count } = await (supabase as any)
+          const { count } = await supabase
             .from('knowledge_article_views')
             .select('*', { count: 'exact', head: true })
             .eq('article_id', article.id);

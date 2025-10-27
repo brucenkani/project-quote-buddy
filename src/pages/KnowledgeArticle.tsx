@@ -56,20 +56,27 @@ const [viewCount, setViewCount] = useState<number>(0);
       
       // Record unique view and fetch total unique views
       const { data: userData } = await supabase.auth.getUser();
+      
       try {
         if (userData?.user) {
-          await (supabase as any)
+          // Logged-in user - upsert to prevent duplicate views
+          await supabase
             .from('knowledge_article_views')
             .upsert(
               { article_id: data.id, user_id: userData.user.id },
               { onConflict: 'article_id,user_id' }
             );
+        } else {
+          // Guest user - insert new view (no user_id)
+          await supabase
+            .from('knowledge_article_views')
+            .insert({ article_id: data.id, user_id: null });
         }
       } catch (e) {
-        console.warn('View upsert failed', e);
+        console.warn('View insert failed', e);
       }
 
-      const { count } = await (supabase as any)
+      const { count } = await supabase
         .from('knowledge_article_views')
         .select('*', { count: 'exact', head: true })
         .eq('article_id', data.id);

@@ -1328,19 +1328,19 @@ export type Database = {
           article_id: string
           created_at: string
           id: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           article_id: string
           created_at?: string
           id?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           article_id?: string
           created_at?: string
           id?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
