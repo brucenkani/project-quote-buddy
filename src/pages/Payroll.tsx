@@ -253,23 +253,6 @@ export default function Payroll() {
     }
   };
 
-  const handleStatusUpdate = async (id: string, status: string) => {
-    const { error } = await supabase
-      .from('payroll')
-      .update({ 
-        status,
-        payment_date: status === 'paid' ? new Date().toISOString().split('T')[0] : null
-      })
-      .eq('id', id);
-
-    if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: 'Success', description: `Payroll ${status}` });
-      loadData();
-    }
-  };
-
   const handleDownloadPayslip = async (record: any) => {
     try {
       const companySettings = {
@@ -615,8 +598,8 @@ export default function Payroll() {
                   <TableHead>Gross Salary</TableHead>
                   <TableHead>PAYE</TableHead>
                   <TableHead>UIF</TableHead>
+                  <TableHead>Total Deductions</TableHead>
                   <TableHead>Net Salary</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -632,22 +615,8 @@ export default function Payroll() {
                     <TableCell>R {parseFloat(record.gross_salary).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell>R {parseFloat(record.paye).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell>R {parseFloat(record.uif).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell>R {parseFloat(record.total_deductions).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell>R {parseFloat(record.net_salary).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell>
-                      <Select
-                        value={record.status}
-                        onValueChange={(value) => handleStatusUpdate(record.id, value)}
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="approved">Approved</SelectItem>
-                          <SelectItem value="paid">Paid</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button
