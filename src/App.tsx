@@ -72,6 +72,7 @@ import VarianceAnalysis from "./pages/analytics/VarianceAnalysis";
 import StrategicPlanning from "./pages/analytics/StrategicPlanning";
 import CustomReports from "./pages/analytics/CustomReports";
 import DashboardBuilder from "./pages/analytics/DashboardBuilder";
+import CreateSuperAdmin from "./pages/CreateSuperAdmin";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +86,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/create-super-admin" element={<CreateSuperAdmin />} />
           <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
           <Route path="/business-community" element={<BusinessCommunity />} />
           <Route path="/community" element={<BusinessCommunity />} />
