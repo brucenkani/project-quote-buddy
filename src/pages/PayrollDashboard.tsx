@@ -13,6 +13,7 @@ export default function PayrollDashboard() {
     pendingPayroll: 0,
     pendingLeave: 0,
   });
+  const [country, setCountry] = useState<string>('ZA');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -27,13 +28,15 @@ export default function PayrollDashboard() {
   }, [navigate]);
 
   const loadStats = async () => {
-    const [employeesResult, payrollResult, leaveResult] = await Promise.all([
+    const [employeesResult, payrollResult, leaveResult, settingsResult] = await Promise.all([
       supabase.from('employees').select('*', { count: 'exact' }),
       supabase.from('payroll').select('*', { count: 'exact' }).eq('status', 'pending'),
       supabase.from('leave_requests').select('*', { count: 'exact' }).eq('status', 'pending'),
+      supabase.from('payroll_settings').select('country').maybeSingle(),
     ]);
 
     const activeEmployees = employeesResult.data?.filter(e => e.status === 'active').length || 0;
+    setCountry(settingsResult.data?.country || 'ZA');
 
     setStats({
       totalEmployees: employeesResult.count || 0,
@@ -41,6 +44,31 @@ export default function PayrollDashboard() {
       pendingPayroll: payrollResult.count || 0,
       pendingLeave: leaveResult.count || 0,
     });
+  };
+
+  const getTaxDeclarations = () => {
+    switch (country) {
+      case 'ZA':
+        return {
+          monthly: { code: 'EMP201', name: 'SARS Monthly Employer Declaration' },
+          annual: { code: 'EMP501', name: 'SARS Annual Employer Reconciliation' },
+        };
+      case 'ZW':
+        return {
+          monthly: { code: 'IT14', name: 'ZIMRA Monthly PAYE Return' },
+          annual: { code: 'IT19', name: 'ZIMRA Annual Return of Employees' },
+        };
+      case 'ZM':
+        return {
+          monthly: { code: 'PAYE Schedule', name: 'ZRA Monthly PAYE Schedule' },
+          annual: { code: 'Annual PAYE', name: 'ZRA Annual PAYE Reconciliation' },
+        };
+      default:
+        return {
+          monthly: { code: 'EMP201', name: 'Monthly Employer Declaration' },
+          annual: { code: 'EMP501', name: 'Annual Employer Reconciliation' },
+        };
+    }
   };
 
   return (
@@ -52,7 +80,7 @@ export default function PayrollDashboard() {
           <p className="text-muted-foreground">Manage employees, payroll, and leave</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 mb-8">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/payroll/employees')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
@@ -75,6 +103,32 @@ export default function PayrollDashboard() {
               <div className="text-2xl font-bold">{stats.pendingLeave}</div>
               <p className="text-xs text-muted-foreground">
                 Requests to review
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/tax-declarations/emp201')}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Monthly Tax Declaration</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{getTaxDeclarations().monthly.code}</div>
+              <p className="text-xs text-muted-foreground">
+                {getTaxDeclarations().monthly.name}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/tax-declarations/emp501')}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Annual Tax Declaration</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{getTaxDeclarations().annual.code}</div>
+              <p className="text-xs text-muted-foreground">
+                {getTaxDeclarations().annual.name}
               </p>
             </CardContent>
           </Card>
