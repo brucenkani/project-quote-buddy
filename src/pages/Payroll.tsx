@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Download, Eye, Users, Trash2 } from 'lucide-react';
+import { Plus, Download, Eye, Users, Trash2, FileText } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -343,6 +343,49 @@ export default function Payroll() {
     <div className="min-h-screen bg-background">
       <PayrollNavigation />
       <main className="container mx-auto px-4 py-8">
+        {/* Tax Declaration Forms */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Monthly Tax Declaration</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-2">EMP201</div>
+              <p className="text-xs text-muted-foreground mb-4">SARS Monthly Employer Declaration</p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate('/tax-declarations/emp201')}
+                className="w-full"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Generate EMP201
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Annual Tax Declaration</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold mb-2">EMP501</div>
+              <p className="text-xs text-muted-foreground mb-4">SARS Annual Employer Reconciliation</p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate('/tax-declarations/emp501')}
+                className="w-full"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Generate EMP501
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold">Payroll Management</h1>

@@ -21,6 +21,8 @@ import PayrollDashboard from "./pages/PayrollDashboard";
 import Employees from "./pages/Employees";
 import Payroll from "./pages/Payroll";
 import LeaveManagement from "./pages/LeaveManagement";
+import EMP201 from "./pages/tax-declarations/EMP201";
+import EMP501 from "./pages/tax-declarations/EMP501";
 
 import Settings from "./pages/Settings";
 import TaxComplianceSettings from "./pages/TaxComplianceSettings";
@@ -119,6 +121,8 @@ const App = () => (
           <Route path="/payroll/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
           <Route path="/payroll/payroll" element={<ProtectedRoute><Payroll /></ProtectedRoute>} />
           <Route path="/payroll/leave" element={<ProtectedRoute><LeaveManagement /></ProtectedRoute>} />
+          <Route path="/tax-declarations/emp201" element={<ProtectedRoute><EMP201 /></ProtectedRoute>} />
+          <Route path="/tax-declarations/emp501" element={<ProtectedRoute><EMP501 /></ProtectedRoute>} />
           
           <Route path="/quotes" element={<ProtectedRoute><QuoteBuilder /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
