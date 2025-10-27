@@ -8,16 +8,22 @@ export default function InvoicePrint() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
-  const invoice = loadInvoices().find(inv => inv.id === id);
+  const [invoice, setInvoice] = useState<any>(null);
   const [settings, setSettings] = useState<any>(null);
 
   useEffect(() => {
-    const loadCompanySettings = async () => {
+    const loadData = async () => {
       if (!activeCompany?.id) {
         console.log('No active company');
         return;
       }
       
+      // Load invoice
+      const invoices = await loadInvoices();
+      const found = invoices.find(inv => inv.id === id);
+      setInvoice(found || null);
+      
+      // Load settings
       console.log('Loading settings for company:', activeCompany.id);
       const { data, error } = await supabase
         .from('company_settings')
@@ -33,8 +39,8 @@ export default function InvoicePrint() {
       }
     };
     
-    loadCompanySettings();
-  }, [activeCompany?.id]);
+    loadData();
+  }, [activeCompany?.id, id]);
 
   useEffect(() => {
     if (invoice && settings) {

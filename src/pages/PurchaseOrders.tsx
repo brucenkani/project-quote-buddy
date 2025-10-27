@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,8 +13,8 @@ import { Plus, FileText, Search, Pencil, Trash2, CheckCircle, XCircle, ArrowRigh
 import { Navigation } from '@/components/Navigation';
 import { loadPurchaseOrders, savePurchaseOrder, deletePurchaseOrder, generatePONumber } from '@/utils/purchaseOrderStorage';
 import { savePurchase, generatePurchaseNumber } from '@/utils/purchaseStorage';
-import { loadSettings } from '@/utils/settingsStorage';
-import { loadInventory } from '@/utils/inventoryStorage';
+import { useSettings } from '@/contexts/SettingsContext';
+import { useInventory } from '@/contexts/InventoryContext';
 import { PurchaseOrder, PurchaseOrderLineItem } from '@/types/purchaseOrder';
 import { Purchase, PurchaseLineItem } from '@/types/purchase';
 import { useToast } from '@/hooks/use-toast';
@@ -25,26 +25,43 @@ import { recordPurchase } from '@/utils/purchaseDoubleEntry';
 export default function PurchaseOrders() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const settings = loadSettings();
-  const inventory = loadInventory();
-  const [orders, setOrders] = useState<PurchaseOrder[]>(loadPurchaseOrders());
+  const { settings } = useSettings();
+  const { inventory } = useInventory();
+  const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingOrder, setEditingOrder] = useState<PurchaseOrder | null>(null);
   const [selectedVendor, setSelectedVendor] = useState<Contact | null>(null);
+  const [nextPONumber, setNextPONumber] = useState('');
+
+  useEffect(() => {
+    const loadData = async () => {
+      const loadedOrders = await loadPurchaseOrders();
+      setOrders(loadedOrders);
+      const poNumber = await generatePONumber();
+      setNextPONumber(poNumber);
+    };
+    loadData();
+  }, []);
 
   const [formData, setFormData] = useState<Partial<PurchaseOrder>>({
-    poNumber: generatePONumber(),
+    poNumber: '',
     vendor: '',
     date: new Date().toISOString().split('T')[0],
     lineItems: [],
     subtotal: 0,
-    taxRate: settings.taxRate,
+    taxRate: settings.taxRate || 0.15,
     taxAmount: 0,
     discount: 0,
     total: 0,
     status: 'draft',
   });
+
+  useEffect(() => {
+    if (nextPONumber && !formData.poNumber) {
+      setFormData(prev => ({ ...prev, poNumber: nextPONumber }));
+    }
+  }, [nextPONumber]);
 
   const [lineItems, setLineItems] = useState<PurchaseOrderLineItem[]>([]);
   const [currentLineItem, setCurrentLineItem] = useState<Partial<PurchaseOrderLineItem>>({
@@ -131,22 +148,24 @@ export default function PurchaseOrders() {
       updatedAt: new Date().toISOString(),
     };
 
-    savePurchaseOrder(order);
-    setOrders(loadPurchaseOrders());
+    await savePurchaseOrder(order);
+    const updated = await loadPurchaseOrders();
+    setOrders(updated);
     toast({ title: editingOrder ? 'Purchase order updated' : 'Purchase order created' });
     setIsDialogOpen(false);
     resetForm();
   };
 
-  const handleConvertToPurchase = (order: PurchaseOrder) => {
+  const handleConvertToPurchase = async (order: PurchaseOrder) => {
     if (order.status === 'converted') {
       toast({ title: 'This PO has already been converted', variant: 'destructive' });
       return;
     }
 
+    const purchaseNum = await generatePurchaseNumber();
     const purchase: Purchase = {
       id: crypto.randomUUID(),
-      purchaseNumber: generatePurchaseNumber(),
+      purchaseNumber: purchaseNum,
       vendor: order.vendor,
       vendorContact: order.vendorContact,
       date: new Date().toISOString().split('T')[0],
@@ -168,32 +187,34 @@ export default function PurchaseOrders() {
       updatedAt: new Date().toISOString(),
     };
 
-    savePurchase(purchase);
+    await savePurchase(purchase);
 
     // Record in accounting
     try {
-      recordPurchase(purchase, settings.companyType);
+      recordPurchase(purchase, settings.companyType || 'LLC');
     } catch (error) {
       console.error('Failed to record purchase:', error);
     }
 
     // Update PO status
     const updatedOrder = { ...order, status: 'converted' as const, convertedToPurchaseId: purchase.id, updatedAt: new Date().toISOString() };
-    savePurchaseOrder(updatedOrder);
-    setOrders(loadPurchaseOrders());
+    await savePurchaseOrder(updatedOrder);
+    const updated = await loadPurchaseOrders();
+    setOrders(updated);
 
     toast({ title: 'Converted to purchase', description: `Purchase ${purchase.purchaseNumber} created` });
     navigate('/purchases');
   };
 
-  const resetForm = () => {
+  const resetForm = async () => {
+    const poNumber = await generatePONumber();
     setFormData({
-      poNumber: generatePONumber(),
+      poNumber,
       vendor: '',
       date: new Date().toISOString().split('T')[0],
       lineItems: [],
       subtotal: 0,
-      taxRate: settings.taxRate,
+      taxRate: settings.taxRate || 0.15,
       taxAmount: 0,
       discount: 0,
       total: 0,
@@ -211,18 +232,20 @@ export default function PurchaseOrders() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this purchase order?')) {
-      deletePurchaseOrder(id);
-      setOrders(loadPurchaseOrders());
+      await deletePurchaseOrder(id);
+      const updated = await loadPurchaseOrders();
+      setOrders(updated);
       toast({ title: 'Purchase order deleted' });
     }
   };
 
-  const handleStatusChange = (order: PurchaseOrder, status: PurchaseOrder['status']) => {
+  const handleStatusChange = async (order: PurchaseOrder, status: PurchaseOrder['status']) => {
     const updatedOrder = { ...order, status, updatedAt: new Date().toISOString() };
-    savePurchaseOrder(updatedOrder);
-    setOrders(loadPurchaseOrders());
+    await savePurchaseOrder(updatedOrder);
+    const updated = await loadPurchaseOrders();
+    setOrders(updated);
     toast({ title: `Status updated to ${status}` });
   };
 

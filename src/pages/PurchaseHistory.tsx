@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,11 +7,28 @@ import { loadPurchases } from '@/utils/purchaseStorage';
 import { getPurchasePayments } from '@/utils/purchasePaymentStorage';
 import { ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Purchase } from '@/types/purchase';
+import { PurchasePayment } from '@/types/purchasePayment';
 
 export default function PurchaseHistory() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const purchase = loadPurchases().find(p => p.id === id);
+  const [purchase, setPurchase] = useState<Purchase | null>(null);
+  const [payments, setPayments] = useState<PurchasePayment[]>([]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const purchases = await loadPurchases();
+      const found = purchases.find(p => p.id === id);
+      setPurchase(found || null);
+      
+      if (found) {
+        const purchasePayments = await getPurchasePayments(found.id);
+        setPayments(purchasePayments);
+      }
+    };
+    loadData();
+  }, [id]);
 
   if (!purchase) {
     return (
@@ -30,8 +48,7 @@ export default function PurchaseHistory() {
     );
   }
 
-  const payments = getPurchasePayments(purchase.id);
-
+  // Compile history events
   const history = [
     {
       date: purchase.createdAt,
