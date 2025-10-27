@@ -3,13 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { loadExpenses } from '@/utils/accountingStorage';
-import { loadSettings } from '@/utils/settingsStorage';
+import { useSettings } from '@/contexts/SettingsContext';
 import { Expense } from '@/types/accounting';
 
 export default function ExpensePrint() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const settings = loadSettings();
+  const { settings } = useSettings();
   const [expense, setExpense] = useState<Expense | null>(null);
 
   useEffect(() => {

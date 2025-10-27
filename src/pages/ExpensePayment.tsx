@@ -10,7 +10,7 @@ import { DollarSign, ArrowLeft } from 'lucide-react';
 import { loadExpenses, saveExpense } from '@/utils/accountingStorage';
 import { Expense } from '@/types/accounting';
 import { useToast } from '@/hooks/use-toast';
-import { loadSettings } from '@/utils/settingsStorage';
+import { useSettings } from '@/contexts/SettingsContext';
 import { calculateExpenseAmountDue } from '@/utils/expenseStatusCalculator';
 import { recordExpensePayment } from '@/utils/doubleEntryManager';
 
@@ -18,7 +18,7 @@ export default function ExpensePayment() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { id } = useParams();
-  const settings = loadSettings();
+  const { settings } = useSettings();
 
   const [expense, setExpense] = useState<Expense | null>(null);
   const [paymentData, setPaymentData] = useState({

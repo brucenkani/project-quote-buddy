@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Navigation } from '@/components/Navigation';
 import { Plus, X, Save, FileText } from 'lucide-react';
-import { loadSettings } from '@/utils/settingsStorage';
+import { useSettings } from '@/contexts/SettingsContext';
 import { saveInvoice } from '@/utils/invoiceStorage';
 import { Invoice } from '@/types/invoice';
 import { useToast } from '@/hooks/use-toast';
@@ -36,8 +36,9 @@ const invoiceFormSchema = z.object({
 export default function InvoiceBuilder() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const settings = loadSettings();
+  const { settings } = useSettings();
   const { id } = useParams();
+  const [invoiceNumber, setInvoiceNumber] = useState('');
 
   const form = useForm<z.infer<typeof invoiceFormSchema>>({
     resolver: zodResolver(invoiceFormSchema),
@@ -65,8 +66,8 @@ export default function InvoiceBuilder() {
   // Load existing invoice when editing
   useEffect(() => {
     if (id) {
-      const invoices = loadInvoices();
-      const invoice = invoices.find(inv => inv.id === id);
+      loadInvoices().then(invoices => {
+        const invoice = invoices.find(inv => inv.id === id);
       
       if (invoice) {
         setExistingInvoice(invoice);
@@ -97,7 +98,8 @@ export default function InvoiceBuilder() {
           variant: 'destructive' 
         });
         navigate('/invoices');
-      }
+        }
+      });
     }
   }, [id, navigate, toast, form]);
 

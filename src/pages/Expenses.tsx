@@ -14,7 +14,7 @@ import { Plus, Receipt, Pencil, Trash2, Upload, Download, Check, X } from 'lucid
 import * as XLSX from 'xlsx';
 import { Navigation } from '@/components/Navigation';
 import { loadExpenses, saveExpense, deleteExpense } from '@/utils/accountingStorage';
-import { loadSettings } from '@/utils/settingsStorage';
+import { useSettings } from '@/contexts/SettingsContext';
 import { loadChartOfAccounts, addChartAccount } from '@/utils/chartOfAccountsStorage';
 import { Expense } from '@/types/accounting';
 import { AccountType } from '@/types/accounting';
@@ -25,7 +25,7 @@ import { calculateExpenseStatus, calculateExpenseAmountDue } from '@/utils/expen
 export default function Expenses() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const settings = loadSettings();
+  const { settings } = useSettings();
   const [expenses, setExpenses] = useState<Expense[]>(loadExpenses());
   const [chartAccounts, setChartAccounts] = useState(loadChartOfAccounts());
   const [isDialogOpen, setIsDialogOpen] = useState(false);

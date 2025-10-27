@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { FileDown, Calendar, FileSpreadsheet } from 'lucide-react';
 import { loadChartOfAccounts } from '@/utils/chartOfAccountsStorage';
 import { loadJournalEntries, loadExpenses } from '@/utils/accountingStorage';
-import { loadSettings } from '@/utils/settingsStorage';
+import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
 import { KPIDashboard } from '@/components/reports/KPIDashboard';
 import { calculateEnhancedKPIs } from '@/utils/financialStatements';
@@ -23,7 +23,7 @@ import {
 
 export default function Dashboard() {
   const { toast } = useToast();
-  const settings = loadSettings();
+  const { settings } = useSettings();
   const chartOfAccounts = loadChartOfAccounts();
   
   const [dateRange, setDateRange] = useState({

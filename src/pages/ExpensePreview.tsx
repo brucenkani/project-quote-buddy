@@ -6,13 +6,13 @@ import { Navigation } from '@/components/Navigation';
 import { ArrowLeft, Printer, Mail } from 'lucide-react';
 import { loadExpenses } from '@/utils/accountingStorage';
 import { Expense } from '@/types/accounting';
-import { loadSettings } from '@/utils/settingsStorage';
+import { useSettings } from '@/contexts/SettingsContext';
 import { Badge } from '@/components/ui/badge';
 
 export default function ExpensePreview() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const settings = loadSettings();
+  const { settings } = useSettings();
   const [expense, setExpense] = useState<Expense | null>(null);
 
   useEffect(() => {

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Navigation } from '@/components/Navigation';
 import { loadInvoices, saveInvoice } from '@/utils/invoiceStorage';
-import { loadSettings } from '@/utils/settingsStorage';
+import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
 import { Invoice } from '@/types/invoice';
 
@@ -15,8 +15,17 @@ export default function InvoiceCreditNote() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const settings = loadSettings();
-  const invoice = loadInvoices().find(inv => inv.id === id);
+  const { settings } = useSettings();
+  const [invoice, setInvoice] = useState<Invoice | null>(null);
+  
+  useEffect(() => {
+    if (id) {
+      loadInvoices().then(invoices => {
+        const found = invoices.find(inv => inv.id === id);
+        setInvoice(found || null);
+      });
+    }
+  }, [id]);
   
   const [creditNoteReason, setCreditNoteReason] = useState('');
   const [creditAmount, setCreditAmount] = useState(invoice?.total || 0);
