@@ -1164,47 +1164,69 @@ export default function LandingSettings() {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Age Group</TableHead>
-                            <TableHead>Minimum</TableHead>
-                            <TableHead>Maximum</TableHead>
-                            <TableHead>Rate</TableHead>
-                            <TableHead>Threshold</TableHead>
-                            <TableHead>Rebate</TableHead>
-                            <TableHead className="w-20">Actions</TableHead>
+                            {activeCompanySettings?.country === 'ZA' ? (
+                              <>
+                                <TableHead>Taxable income</TableHead>
+                                <TableHead>Rates of tax</TableHead>
+                                <TableHead className="w-20">Actions</TableHead>
+                              </>
+                            ) : (
+                              <>
+                                <TableHead>Tax Bands</TableHead>
+                                <TableHead>Chargeable Income</TableHead>
+                                <TableHead>Tax Rate</TableHead>
+                                <TableHead className="w-20">Actions</TableHead>
+                              </>
+                            )}
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {taxBrackets.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={7} className="text-center text-muted-foreground">
+                              <TableCell colSpan={activeCompanySettings?.country === 'ZA' ? 3 : 4} className="text-center text-muted-foreground">
                                 No tax brackets configured for this year. Add one above.
                               </TableCell>
                             </TableRow>
                           ) : (
-                            taxBrackets.map((bracket) => (
+                            taxBrackets.sort((a, b) => a.bracket_min - b.bracket_min).map((bracket, index) => (
                               <TableRow key={bracket.id}>
-                                <TableCell className="capitalize">
-                                  {bracket.age_group.replace('_', ' ')}
-                                </TableCell>
-                                <TableCell>{payrollSettings.currency_symbol}{bracket.bracket_min.toLocaleString()}</TableCell>
-                                <TableCell>
-                                  {bracket.bracket_max 
-                                    ? `${payrollSettings.currency_symbol}${bracket.bracket_max.toLocaleString()}`
-                                    : 'No limit'
-                                  }
-                                </TableCell>
-                                <TableCell>{bracket.rate}%</TableCell>
-                                <TableCell>{payrollSettings.currency_symbol}{bracket.threshold.toLocaleString()}</TableCell>
-                                <TableCell>{payrollSettings.currency_symbol}{bracket.rebate.toLocaleString()}</TableCell>
-                                <TableCell>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleDeleteBracket(bracket.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                  </Button>
-                                </TableCell>
+                                {activeCompanySettings?.country === 'ZA' ? (
+                                  <>
+                                    <TableCell>
+                                      {bracket.bracket_min.toLocaleString()} - {bracket.bracket_max ? bracket.bracket_max.toLocaleString() : 'and above'}
+                                    </TableCell>
+                                    <TableCell>
+                                      {bracket.rate}% of taxable income {bracket.bracket_min > 0 ? `above ${bracket.bracket_min.toLocaleString()}` : ''}
+                                      {bracket.threshold > 0 && ` + ${payrollSettings.currency_symbol}${bracket.threshold.toLocaleString()}`}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleDeleteBracket(bracket.id)}
+                                      >
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                      </Button>
+                                    </TableCell>
+                                  </>
+                                ) : (
+                                  <>
+                                    <TableCell>{index + 1}</TableCell>
+                                    <TableCell>
+                                      {payrollSettings.currency_symbol}{bracket.bracket_min.toLocaleString()} - {bracket.bracket_max ? `${payrollSettings.currency_symbol}${bracket.bracket_max.toLocaleString()}` : 'Above'}
+                                    </TableCell>
+                                    <TableCell>{bracket.rate}%</TableCell>
+                                    <TableCell>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleDeleteBracket(bracket.id)}
+                                      >
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                      </Button>
+                                    </TableCell>
+                                  </>
+                                )}
                               </TableRow>
                             ))
                           )}
