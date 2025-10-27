@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Eye, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import ReactMarkdown from 'react-markdown';
 
 interface ArticleContent {
   type: 'text' | 'image' | 'flowchart' | 'heading';
@@ -73,14 +74,33 @@ export default function KnowledgeArticle() {
         const HeadingTag = `h${contentItem.level || 2}` as keyof JSX.IntrinsicElements;
         return (
           <HeadingTag key={index} className="font-bold mb-4 mt-6">
-            {contentItem.content}
+            <span className="inline">
+              <ReactMarkdown components={{
+                p: ({ children }) => <>{children}</>,
+                strong: ({ children }) => <strong>{children}</strong>,
+                em: ({ children }) => <em>{children}</em>
+              }}>
+                {contentItem.content}
+              </ReactMarkdown>
+            </span>
           </HeadingTag>
         );
       case 'text':
         return (
-          <p key={index} className="mb-4 text-muted-foreground leading-relaxed">
-            {contentItem.content}
-          </p>
+          <div key={index} className="mb-4 leading-relaxed">
+            <ReactMarkdown 
+              components={{
+                p: ({ children }) => <p className="text-muted-foreground mb-2">{children}</p>,
+                strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                em: ({ children }) => <em className="italic">{children}</em>,
+                ul: ({ children }) => <ul className="list-disc pl-6 mb-2">{children}</ul>,
+                ol: ({ children }) => <ol className="list-decimal pl-6 mb-2">{children}</ol>,
+                li: ({ children }) => <li className="text-muted-foreground">{children}</li>
+              }}
+            >
+              {contentItem.content}
+            </ReactMarkdown>
+          </div>
         );
       case 'image':
         return (
