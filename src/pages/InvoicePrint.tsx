@@ -85,7 +85,7 @@ export default function InvoicePrint() {
               <img src={settings.logo_url} alt={settings.company_name} className="w-auto max-w-[200px] h-auto mb-4" style={{ width: 'fit-content' }} />
             )}
             <div className="text-xs space-y-0.5">
-              <p className="font-semibold text-sm">{settings.company_name || 'Company Name Not Set'}</p>
+              <p className="font-semibold text-sm">{settings.company_name || activeCompany?.name || 'Company Name Not Set'}</p>
               {settings.address && <p>{settings.address}</p>}
               {settings.email && <p>{settings.email}</p>}
               {settings.phone && <p>{settings.phone}</p>}
@@ -187,7 +187,7 @@ export default function InvoicePrint() {
 
       {/* Footer - Always at bottom */}
       <div className="px-8 pb-8 pt-4 border-t border-gray-300 text-center text-xs text-gray-600">
-        <p>BizManager Systems (Registered to {settings.company_name})</p>
+        <p>BizManager Systems (Registered to {settings.company_name || activeCompany?.name || 'Company Name Not Set'})</p>
       </div>
     </div>
   );
