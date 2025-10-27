@@ -194,7 +194,6 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
             total_deductions: calculations.total_deductions,
             net_salary: calculations.net_salary,
             status: 'pending',
-            currency_symbol: payrollSettings?.currency_symbol || 'R',
           }])
           .select()
           .single();
@@ -308,6 +307,7 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
                   <TableHead>Overtime</TableHead>
                   <TableHead>Bonuses</TableHead>
                   <TableHead>Deductions</TableHead>
+                  <TableHead>PAYE</TableHead>
                   <TableHead>Net Salary</TableHead>
                 </TableRow>
               </TableHeader>
@@ -363,6 +363,9 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
                           onChange={(e) => updateEmployeeField(employee.id, 'other_deductions', parseFloat(e.target.value) || 0)}
                           className="w-24"
                         />
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        R {calc.paye.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}
                       </TableCell>
                       <TableCell className="font-semibold">
                         R {calc.net_salary.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}
