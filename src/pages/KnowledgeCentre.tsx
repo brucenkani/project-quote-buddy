@@ -19,21 +19,24 @@ interface KnowledgeArticle {
   created_at: string;
 }
 
+interface ArticleWithViews extends KnowledgeArticle {
+  unique_views: number;
+}
+
 export default function KnowledgeCentre() {
   const navigate = useNavigate();
-  const [articles, setArticles] = useState<KnowledgeArticle[]>([]);
+  const [articles, setArticles] = useState<ArticleWithViews[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const categories = [
     'all',
-    'eFiling',
-    'CIDB Registration',
-    'Company Registration',
-    'VAT Returns',
-    'Income Tax',
-    'Other'
+    'Accounting',
+    'Tax',
+    'Human Resources',
+    'Compliance',
+    'General'
   ];
 
   useEffect(() => {
@@ -49,7 +52,23 @@ export default function KnowledgeCentre() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setArticles(data || []);
+      
+      // Fetch unique view counts for each article
+      const articlesWithViews: ArticleWithViews[] = await Promise.all(
+        (data || []).map(async (article) => {
+          const { count } = await (supabase as any)
+            .from('knowledge_article_views')
+            .select('*', { count: 'exact', head: true })
+            .eq('article_id', article.id);
+          
+          return {
+            ...article,
+            unique_views: count || 0
+          };
+        })
+      );
+      
+      setArticles(articlesWithViews);
     } catch (error) {
       console.error('Error loading articles:', error);
       toast.error('Failed to load articles');
@@ -158,7 +177,7 @@ export default function KnowledgeCentre() {
                       <Badge variant="secondary">{article.category}</Badge>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Eye className="h-4 w-4" />
-                        <span>{article.view_count}</span>
+                        <span>{article.unique_views}</span>
                       </div>
                     </div>
                     <CardTitle className="line-clamp-2">{article.title}</CardTitle>
