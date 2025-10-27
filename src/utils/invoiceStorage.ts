@@ -1,6 +1,7 @@
 import { Invoice } from '@/types/invoice';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateInvoiceStatus } from './invoiceStatusCalculator';
+import { recordInvoice } from './doubleEntryManager';
 
 export const loadInvoices = async (): Promise<Invoice[]> => {
   try {
@@ -146,6 +147,14 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
         );
 
       if (lineItemsError) throw lineItemsError;
+    }
+
+    // Create journal entry for the invoice
+    try {
+      recordInvoice(invoice);
+    } catch (journalError) {
+      console.error('Failed to create journal entry for invoice:', journalError);
+      // Don't throw - invoice is saved, journal entry is supplementary
     }
   } catch (error) {
     console.error('Failed to save invoice:', error);
