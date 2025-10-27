@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -22,8 +22,8 @@ import { loadExpenses, saveExpense } from '@/utils/accountingStorage';
 import { savePurchasePayment } from '@/utils/purchasePaymentStorage';
 import { saveExpensePayment } from '@/utils/expensePaymentStorage';
 import { recordPaymentReceived, recordSupplierPayment } from '@/utils/doubleEntryManager';
-import { loadSettings } from '@/utils/settingsStorage';
-import { loadContacts, saveContact } from '@/utils/contactsStorage';
+import { useSettings } from '@/contexts/SettingsContext';
+import { useContacts } from '@/contexts/ContactsContext';
 import { loadChartOfAccounts, saveChartOfAccounts, generateNextAccountNumber } from '@/utils/chartOfAccountsStorage';
 import { Contact } from '@/types/contacts';
 import { cn } from '@/lib/utils';
@@ -44,8 +44,12 @@ const calculateVATFromInclusive = (amount: number, vatRate: number = 0.15) => {
 };
 
 export default function BankFeeds() {
-  const [transactions, setTransactions] = useState<TransactionRow[]>(loadBankTransactions());
-  const [contacts, setContacts] = useState(loadContacts());
+  const { settings } = useSettings();
+  const { contacts: contextContacts, saveContact } = useContacts();
+  const { toast } = useToast();
+  
+  const [transactions, setTransactions] = useState<TransactionRow[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [chartOfAccounts, setChartOfAccounts] = useState(loadChartOfAccounts());
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createDialogType, setCreateDialogType] = useState<TransactionType | null>(null);
@@ -57,8 +61,18 @@ export default function BankFeeds() {
     accountName: '',
     accountType: 'expense' as 'current-asset' | 'non-current-asset' | 'current-liability' | 'non-current-liability' | 'equity' | 'revenue' | 'expense',
   });
-  const { toast } = useToast();
-  const settings = loadSettings();
+
+  useEffect(() => {
+    const loadData = async () => {
+      const bankTransactions = await loadBankTransactions();
+      setTransactions(bankTransactions);
+    };
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    setContacts(contextContacts);
+  }, [contextContacts]);
 
   const downloadTemplate = () => {
     const template = [
@@ -351,7 +365,7 @@ export default function BankFeeds() {
     });
   };
 
-  const handleCreateSubmit = () => {
+  const handleCreateSubmit = async () => {
     if (!createDialogType || !currentTransactionId) return;
 
     try {
@@ -377,12 +391,8 @@ export default function BankFeeds() {
           updatedAt: new Date().toISOString(),
         };
 
-        // Save contact using the storage utility
-        saveContact(newContact);
-        
-        // Reload all contacts to ensure we have the latest data
-        const refreshedContacts = loadContacts();
-        setContacts(refreshedContacts);
+        // Save contact using context
+        await saveContact(newContact);
         
         // Update the transaction with the new contact ID
         updateTransaction(currentTransactionId, { selectionId: newContact.id });

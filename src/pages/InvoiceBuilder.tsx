@@ -40,10 +40,17 @@ export default function InvoiceBuilder() {
   const { id } = useParams();
   const [invoiceNumber, setInvoiceNumber] = useState('');
 
+  // Generate invoice number on mount
+  useEffect(() => {
+    if (!id) {
+      generateNextInvoiceNumber().then(num => setInvoiceNumber(num));
+    }
+  }, [id]);
+
   const form = useForm<z.infer<typeof invoiceFormSchema>>({
     resolver: zodResolver(invoiceFormSchema),
     defaultValues: {
-      invoiceNumber: generateNextInvoiceNumber(),
+      invoiceNumber: invoiceNumber,
       clientName: '',
       clientEmail: '',
       clientPhone: '',
@@ -65,8 +72,9 @@ export default function InvoiceBuilder() {
 
   // Load existing invoice when editing
   useEffect(() => {
-    if (id) {
-      loadInvoices().then(invoices => {
+    const loadInvoice = async () => {
+      if (id) {
+        const invoices = await loadInvoices();
         const invoice = invoices.find(inv => inv.id === id);
       
       if (invoice) {
@@ -97,10 +105,11 @@ export default function InvoiceBuilder() {
           title: 'Invoice not found', 
           variant: 'destructive' 
         });
-        navigate('/invoices');
+          navigate('/invoices');
         }
-      });
-    }
+      }
+    };
+    loadInvoice();
   }, [id, navigate, toast, form]);
 
   const addLineItem = () => {
