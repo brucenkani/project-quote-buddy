@@ -57,14 +57,14 @@ export default function LandingSettings() {
   }, [activeCompanySettings]);
 
   useEffect(() => {
-    if (activeCompany && activeCompanySettings) {
+    if (activeCompany) {
       loadPayrollSettings();
     }
-  }, [activeCompany, activeCompanySettings]);
+  }, [activeCompany]);
 
   const loadPayrollSettings = async () => {
     try {
-      if (!activeCompany || !activeCompanySettings) return;
+      if (!activeCompany) return;
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -78,19 +78,20 @@ export default function LandingSettings() {
 
       const isOwner = member?.role === 'owner';
 
-      let { data: settingsData, error } = await supabase
+      let { data: settingsData } = await supabase
         .from('payroll_settings')
         .select('*')
         .eq('company_id', activeCompany.id)
         .maybeSingle();
 
       if (!settingsData && isOwner) {
-        const countryMeta = countries.find(c => c.code === (activeCompanySettings.country || 'ZA'));
+        const countryCode = activeCompanySettings?.country || 'ZA';
+        const countryMeta = countries.find(c => c.code === countryCode);
         const { data: newSettings, error: insertError } = await supabase
           .from('payroll_settings')
           .insert([{
             company_id: activeCompany.id,
-            country: activeCompanySettings.country || 'ZA',
+            country: countryCode,
             currency: countryMeta?.currency || 'ZAR',
             currency_symbol: countryMeta?.symbol || 'R',
             current_tax_year: new Date().getFullYear(),
@@ -100,20 +101,21 @@ export default function LandingSettings() {
         if (insertError) throw insertError;
         settingsData = newSettings;
       } else if (!settingsData) {
-        settingsData = {
+        const countryCode = activeCompanySettings?.country || 'ZA';
+        setPayrollSettings({
           id: 'readonly',
           company_id: activeCompany.id,
-          country: activeCompanySettings.country || 'ZA',
-          currency: activeCompanySettings.currency || 'ZAR',
-          currency_symbol: activeCompanySettings.currency_symbol || 'R',
+          country: countryCode,
+          currency: activeCompanySettings?.currency || (countries.find(c => c.code === countryCode)?.currency || 'ZAR'),
+          currency_symbol: activeCompanySettings?.currency_symbol || (countries.find(c => c.code === countryCode)?.symbol || 'R'),
           current_tax_year: new Date().getFullYear(),
-        } as any;
+        } as any);
+        return;
       }
 
       setPayrollSettings(settingsData);
       loadTaxBrackets(settingsData.country, settingsData.current_tax_year);
     } catch (e) {
-      // Always set a safe fallback so the UI renders
       setPayrollSettings({
         id: 'readonly',
         company_id: activeCompany?.id,
