@@ -66,35 +66,56 @@ export default function PayrollSettings() {
 
   const loadData = async () => {
     try {
-      // Load payroll settings
-      let { data: settingsData, error } = await supabase
+      // Try to fetch a single settings row (table is global, not per company)
+      let { data: settingsData } = await supabase
         .from('payroll_settings')
         .select('*')
+        .order('created_at', { ascending: true })
+        .limit(1)
         .maybeSingle();
 
-      // If no settings exist, create default ones
       if (!settingsData) {
-        const { data: newSettings, error: insertError } = await supabase
-          .from('payroll_settings')
-          .insert([{
+        // Check if current user is an owner; only owners can create settings
+        const { data: userRes } = await supabase.auth.getUser();
+        const userId = userRes?.user?.id;
+        let isOwner = false;
+        if (userId) {
+          const { data: roles } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', userId);
+          isOwner = (roles || []).some((r: any) => r.role === 'owner');
+        }
+
+        if (isOwner) {
+          const { data: newSettings, error: insertError } = await supabase
+            .from('payroll_settings')
+            .insert([{
+              country: 'ZA',
+              currency: 'ZAR',
+              currency_symbol: 'R',
+              current_tax_year: new Date().getFullYear(),
+            }])
+            .select()
+            .single();
+          if (insertError) throw insertError;
+          settingsData = newSettings;
+        } else {
+          // Fallback to read-only defaults so the UI doesn't get stuck
+          settingsData = {
+            id: 'readonly',
             country: 'ZA',
             currency: 'ZAR',
             currency_symbol: 'R',
-            current_tax_year: new Date().getFullYear()
-          }])
-          .select()
-          .single();
-
-        if (insertError) {
-          throw insertError;
+            current_tax_year: new Date().getFullYear(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          } as any;
         }
-        settingsData = newSettings;
       }
 
-      if (settingsData) {
-        setSettings(settingsData);
-        loadTaxBrackets(settingsData.country, settingsData.current_tax_year);
-      }
+      setSettings(settingsData);
+      loadTaxBrackets(settingsData.country, settingsData.current_tax_year);
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -246,7 +267,7 @@ export default function PayrollSettings() {
       <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
         <PayrollNavigation />
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center">Loading...</div>
+          <div className="text-center">Loading payroll settings...</div>
         </div>
       </div>
     );
