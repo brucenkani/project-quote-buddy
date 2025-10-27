@@ -38,6 +38,7 @@ export const calculateAge = (dateOfBirth: string): number => {
 
 // Determine age group for tax purposes (primarily for South Africa)
 export const getAgeGroup = (age: number): 'under_65' | '65_to_75' | 'over_75' => {
+  if (Number.isNaN(age)) return 'under_65';
   if (age < 65) return 'under_65';
   if (age >= 65 && age < 75) return '65_to_75';
   return 'over_75';
@@ -74,17 +75,28 @@ export const calculateAnnualPAYE = (
     return 0; // No tax brackets configured
   }
 
-  // For South Africa, filter by age group
+  // For South Africa, filter by age group and handle age-based threshold/rebate
   let applicableBrackets = taxBrackets;
+  let rebateToApply = 0;
   if (country === 'ZA') {
     const ageGroup = getAgeGroup(age);
+    const ageMeta = taxBrackets.find(b => b.age_group === ageGroup && b.bracket_min === 0);
+    const incomeThreshold = ageMeta?.threshold ?? 0;
+    rebateToApply = ageMeta?.rebate ?? 0;
+
+    // If income is below age-based tax threshold, no tax
+    if (annualIncome <= incomeThreshold) {
+      return 0;
+    }
+
+    // Only use real brackets (min > 0)
     applicableBrackets = taxBrackets
-      .filter(b => b.age_group === ageGroup)
+      .filter(b => b.age_group === ageGroup && (b.bracket_min ?? 0) > 0)
       .sort((a, b) => a.bracket_min - b.bracket_min);
   } else {
-    // For other countries, use all brackets for the standard age group
+    // For other countries, use standard brackets (ignore any meta rows like min=0)
     applicableBrackets = taxBrackets
-      .filter(b => b.age_group === 'under_65')
+      .filter(b => b.age_group === 'under_65' && (b.bracket_min ?? 0) > 0)
       .sort((a, b) => a.bracket_min - b.bracket_min);
   }
 
@@ -94,35 +106,27 @@ export const calculateAnnualPAYE = (
 
   let tax = 0;
 
-  // Calculate tax based on progressive brackets
+  // Calculate tax based on progressive brackets using base tax (threshold) and rate
   for (let i = 0; i < applicableBrackets.length; i++) {
     const bracket = applicableBrackets[i];
     const bracketMin = bracket.bracket_min;
     const bracketMax = bracket.bracket_max || Infinity;
 
     if (annualIncome > bracketMin) {
-      // Calculate taxable amount in this bracket
-      const taxableInBracket = Math.min(annualIncome, bracketMax) - bracketMin;
-      
-      // Rate is already stored as decimal in DB (e.g., 0.18 for 18%)
-      if (i === 0 && annualIncome <= bracketMax) {
-        // First bracket
-        tax = taxableInBracket * bracket.rate;
-      } else {
-        // Subsequent brackets: add base amount + percentage of income above minimum
-        tax = bracket.threshold + (taxableInBracket * bracket.rate);
-      }
-
       if (annualIncome <= bracketMax) {
+        // Tax = base tax at start of bracket + rate * (income - bracketMin)
+        tax = (bracket.threshold || 0) + (annualIncome - bracketMin) * (bracket.rate || 0);
         break;
+      } else {
+        // If income exceeds this bracket, continue to next; final tax will be set when income falls inside a bracket
+        continue;
       }
     }
   }
 
-  // Apply rebate (primarily for South Africa)
+  // Apply rebate where applicable
   if (country === 'ZA') {
-    const rebate = applicableBrackets[0]?.rebate || 0;
-    tax = Math.max(0, tax - rebate);
+    tax = Math.max(0, tax - rebateToApply);
   }
 
   return tax;
