@@ -72,17 +72,14 @@ export default function KnowledgeArticle() {
     switch (contentItem.type) {
       case 'heading':
         const HeadingTag = `h${contentItem.level || 2}` as keyof JSX.IntrinsicElements;
+        const headingClasses = contentItem.level === 1 
+          ? "text-3xl font-bold mb-4 mt-8" 
+          : contentItem.level === 2 
+          ? "text-2xl font-bold mb-3 mt-6" 
+          : "text-xl font-semibold mb-2 mt-4";
         return (
-          <HeadingTag key={index} className="font-bold mb-4 mt-6">
-            <span className="inline">
-              <ReactMarkdown components={{
-                p: ({ children }) => <>{children}</>,
-                strong: ({ children }) => <strong>{children}</strong>,
-                em: ({ children }) => <em>{children}</em>
-              }}>
-                {contentItem.content}
-              </ReactMarkdown>
-            </span>
+          <HeadingTag key={index} className={headingClasses}>
+            {contentItem.content}
           </HeadingTag>
         );
       case 'text':
