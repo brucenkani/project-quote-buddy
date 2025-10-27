@@ -12,23 +12,14 @@ serve(async (req) => {
   }
 
   try {
+    // This is a one-time setup function - should only be run once
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') || '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
     );
 
-    // Get email and password from request body
-    const { email, password } = await req.json();
-
-    if (!email || !password) {
-      return new Response(
-        JSON.stringify({ error: 'Email and password are required' }), 
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      );
-    }
+    const email = 'superadmin@system.local';
+    const password = 'SuperAdmin2024!';
 
     // Check if super admin already exists
     const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();
