@@ -71,14 +71,9 @@ export const Navigation = () => {
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Home</span>
             </Button>
-            <div className="flex items-center gap-2 md:gap-3">
-              {activeCompanySettings?.logo_url && (
-                <img src={activeCompanySettings.logo_url} alt="Logo" className="h-6 md:h-8 w-auto object-contain" />
-              )}
-              <h1 className="text-lg md:text-xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
-                Accounting
-              </h1>
-            </div>
+            <h1 className="text-lg md:text-xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
+              Accounting
+            </h1>
           </div>
           
           {/* Desktop Navigation */}
@@ -189,15 +184,6 @@ export const Navigation = () => {
               </Link>
             </Button>
 
-            {/* Your Users Link - Admin Only */}
-            {isAdmin && (
-              <Button variant={location.pathname === '/invite' ? 'secondary' : 'ghost'} size="sm" asChild>
-                <Link to="/invite" className="gap-2">
-                  <UserPlus className="h-4 w-4" />
-                  <span>Your Users</span>
-                </Link>
-              </Button>
-            )}
 
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               Sign Out
@@ -339,20 +325,6 @@ export const Navigation = () => {
                   </Link>
                 </Button>
 
-                {/* Your Users - Admin Only */}
-                {isAdmin && (
-                  <Button
-                    variant={location.pathname === '/invite' ? 'default' : 'ghost'}
-                    asChild
-                    className="justify-start gap-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Link to="/invite">
-                      <UserPlus className="h-4 w-4" />
-                      Your Users
-                    </Link>
-                  </Button>
-                )}
 
                 <div className="pt-4 border-t">
                   <Button 
