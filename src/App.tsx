@@ -21,7 +21,7 @@ import PayrollDashboard from "./pages/PayrollDashboard";
 import Employees from "./pages/Employees";
 import Payroll from "./pages/Payroll";
 import LeaveManagement from "./pages/LeaveManagement";
-import PayrollSettings from "./pages/PayrollSettings";
+
 import Settings from "./pages/Settings";
 import TaxComplianceSettings from "./pages/TaxComplianceSettings";
 import Purchases from "./pages/Purchases";
@@ -119,7 +119,7 @@ const App = () => (
           <Route path="/payroll/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
           <Route path="/payroll/payroll" element={<ProtectedRoute><Payroll /></ProtectedRoute>} />
           <Route path="/payroll/leave" element={<ProtectedRoute><LeaveManagement /></ProtectedRoute>} />
-          <Route path="/payroll/settings" element={<ProtectedRoute><PayrollSettings /></ProtectedRoute>} />
+          
           <Route path="/quotes" element={<ProtectedRoute><QuoteBuilder /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/tax-compliance" element={<ProtectedRoute><TaxComplianceSettings /></ProtectedRoute>} />

@@ -436,6 +436,35 @@ export default function LandingSettings() {
     }
   };
 
+  const handleSMTPUpdate = async (field: string, value: string | number) => {
+    try {
+      if (!payrollSettings) return;
+
+      const { error } = await supabase
+        .from('payroll_settings')
+        .update({ [field]: value })
+        .eq('id', payrollSettings.id);
+
+      if (error) throw error;
+
+      setPayrollSettings({
+        ...payrollSettings,
+        [field]: value
+      });
+
+      toast({
+        title: 'Success',
+        description: 'SMTP settings updated successfully',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleSaveCompanyForm = async () => {
     if (!companyFormData.companyName.trim()) {
       toast({
@@ -1503,12 +1532,95 @@ export default function LandingSettings() {
                          )}
                        </div>
                      </CardContent>
-                   </Card>
-                 )}
+                    </Card>
+                  )}
 
-               </>
-             )}
-           </TabsContent>
+                {/* SMTP Email Configuration */}
+                <Card className="shadow-[var(--shadow-elegant)] border-border/50">
+                  <CardHeader>
+                    <CardTitle>Email Configuration (SMTP)</CardTitle>
+                    <CardDescription>
+                      Configure SMTP settings for sending payslips via email to employees
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="smtp_host">SMTP Host</Label>
+                      <Input
+                        id="smtp_host"
+                        type="text"
+                        value={payrollSettings?.smtp_host || ''}
+                        onChange={(e) => handleSMTPUpdate('smtp_host', e.target.value)}
+                        placeholder="smtp.gmail.com"
+                        disabled={!isOwner}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="smtp_port">SMTP Port</Label>
+                      <Input
+                        id="smtp_port"
+                        type="number"
+                        value={payrollSettings?.smtp_port || 587}
+                        onChange={(e) => handleSMTPUpdate('smtp_port', parseInt(e.target.value))}
+                        placeholder="587"
+                        disabled={!isOwner}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="smtp_user">SMTP Username</Label>
+                      <Input
+                        id="smtp_user"
+                        type="text"
+                        value={payrollSettings?.smtp_user || ''}
+                        onChange={(e) => handleSMTPUpdate('smtp_user', e.target.value)}
+                        placeholder="your-email@example.com"
+                        disabled={!isOwner}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="smtp_password">SMTP Password</Label>
+                      <Input
+                        id="smtp_password"
+                        type="password"
+                        value={payrollSettings?.smtp_password || ''}
+                        onChange={(e) => handleSMTPUpdate('smtp_password', e.target.value)}
+                        placeholder="••••••••"
+                        disabled={!isOwner}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="smtp_from_email">From Email Address</Label>
+                      <Input
+                        id="smtp_from_email"
+                        type="email"
+                        value={payrollSettings?.smtp_from_email || ''}
+                        onChange={(e) => handleSMTPUpdate('smtp_from_email', e.target.value)}
+                        placeholder="payroll@yourcompany.com"
+                        disabled={!isOwner}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="smtp_from_name">From Name</Label>
+                      <Input
+                        id="smtp_from_name"
+                        type="text"
+                        value={payrollSettings?.smtp_from_name || 'Payroll System'}
+                        onChange={(e) => handleSMTPUpdate('smtp_from_name', e.target.value)}
+                        placeholder="Payroll System"
+                        disabled={!isOwner}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                </>
+              )}
+            </TabsContent>
          </Tabs>
        </div>
        
