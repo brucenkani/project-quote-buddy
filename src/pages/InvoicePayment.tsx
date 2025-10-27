@@ -11,16 +11,17 @@ import { loadInvoices, saveInvoice } from '@/utils/invoiceStorage';
 import { Invoice } from '@/types/invoice';
 import { useToast } from '@/hooks/use-toast';
 import { recordPaymentReceived } from '@/utils/doubleEntryManager';
-import { loadSettings } from '@/utils/settingsStorage';
+import { useSettings } from '@/contexts/SettingsContext';
 import { calculateInvoiceStatus, calculateAmountDue } from '@/utils/invoiceStatusCalculator';
 
 export default function InvoicePayment() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { id } = useParams();
-  const settings = loadSettings();
+  const { settings } = useSettings();
 
   const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
   const [paymentData, setPaymentData] = useState({
     amount: 0,
     paymentMethod: 'bank' as 'cash' | 'bank',
@@ -29,23 +30,27 @@ export default function InvoicePayment() {
   });
 
   useEffect(() => {
-    if (id) {
-      const invoices = loadInvoices();
-      const found = invoices.find(inv => inv.id === id);
-      if (found) {
-        setInvoice(found);
-        const amountDue = calculateAmountDue(found, invoices);
-        setPaymentData(prev => ({
-          ...prev,
-          amount: amountDue,
-          paymentReference: `PAY-${found.invoiceNumber}`,
-        }));
+    const loadData = async () => {
+      if (id) {
+        const invoices = await loadInvoices();
+        setAllInvoices(invoices);
+        const found = invoices.find(inv => inv.id === id);
+        if (found) {
+          setInvoice(found);
+          const amountDue = await calculateAmountDue(found, invoices);
+          setPaymentData(prev => ({
+            ...prev,
+            amount: amountDue,
+            paymentReference: `PAY-${found.invoiceNumber}`,
+          }));
+        }
       }
-    }
+    };
+    loadData();
   }, [id]);
 
 
-  const handleRecordPayment = () => {
+  const handleRecordPayment = async () => {
     if (!invoice) return;
 
     if (!paymentData.amount || paymentData.amount <= 0) {
@@ -58,8 +63,7 @@ export default function InvoicePayment() {
       return;
     }
 
-    const invoices = loadInvoices();
-    const currentAmountDue = calculateAmountDue(invoice, invoices);
+    const currentAmountDue = await calculateAmountDue(invoice, allInvoices);
 
     if (paymentData.amount > currentAmountDue) {
       toast({ 
@@ -84,15 +88,15 @@ export default function InvoicePayment() {
       const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
       
       // Calculate new amount due
-      const newAmountDue = calculateAmountDue(
+      const newAmountDue = await calculateAmountDue(
         { ...invoice, payments },
-        invoices
+        allInvoices
       );
 
       // Update invoice status
       // Calculate the updated status dynamically
       const tempInvoice = { ...invoice, payments };
-      const updatedStatus = calculateInvoiceStatus(tempInvoice, invoices);
+      const updatedStatus = await calculateInvoiceStatus(tempInvoice, allInvoices);
 
       const updatedInvoice: Invoice = {
         ...invoice,
@@ -184,7 +188,10 @@ export default function InvoicePayment() {
                 <div className="flex justify-between text-lg border-t pt-2">
                   <span className="text-muted-foreground">Amount Due:</span>
                   <span className="font-bold text-primary">
-                    {settings.currencySymbol}{calculateAmountDue(invoice, loadInvoices()).toFixed(2)}
+                    {settings.currencySymbol}{(async () => {
+                      const amountDue = await calculateAmountDue(invoice, allInvoices);
+                      return amountDue.toFixed(2);
+                    })()}
                   </span>
                 </div>
               </div>

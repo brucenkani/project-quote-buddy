@@ -10,14 +10,14 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Plus, BookOpen, X, Eye, Pencil, Trash2 } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { loadJournalEntries, saveJournalEntry, deleteJournalEntry } from '@/utils/accountingStorage';
-import { loadSettings } from '@/utils/settingsStorage';
+import { useSettings } from '@/contexts/SettingsContext';
 import { loadChartOfAccounts, addChartAccount, generateNextAccountNumber } from '@/utils/chartOfAccountsStorage';
 import { JournalEntry, JournalEntryLine, AccountType } from '@/types/accounting';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Journal() {
   const { toast } = useToast();
-  const settings = loadSettings();
+  const { settings } = useSettings();
   const [entries, setEntries] = useState<JournalEntry[]>(loadJournalEntries());
   const [chartAccounts, setChartAccounts] = useState(loadChartOfAccounts());
   const [isDialogOpen, setIsDialogOpen] = useState(false);

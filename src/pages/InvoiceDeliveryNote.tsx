@@ -1,13 +1,23 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { loadInvoices } from '@/utils/invoiceStorage';
-import { loadSettings } from '@/utils/settingsStorage';
+import { useSettings } from '@/contexts/SettingsContext';
+import { Invoice } from '@/types/invoice';
 
 export default function InvoiceDeliveryNote() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const settings = loadSettings();
-  const invoice = loadInvoices().find(inv => inv.id === id);
+  const { settings } = useSettings();
+  const [invoice, setInvoice] = useState<Invoice | null>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const invoices = await loadInvoices();
+      const found = invoices.find(inv => inv.id === id);
+      if (found) setInvoice(found);
+    };
+    loadData();
+  }, [id]);
 
   useEffect(() => {
     if (invoice) {

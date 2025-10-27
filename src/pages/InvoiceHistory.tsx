@@ -1,15 +1,26 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Navigation } from '@/components/Navigation';
 import { loadInvoices } from '@/utils/invoiceStorage';
 import { ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Invoice } from '@/types/invoice';
 
 export default function InvoiceHistory() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const invoice = loadInvoices().find(inv => inv.id === id);
+  const [invoice, setInvoice] = useState<Invoice | null>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      const invoices = await loadInvoices();
+      const found = invoices.find(inv => inv.id === id);
+      if (found) setInvoice(found);
+    };
+    loadData();
+  }, [id]);
 
   if (!invoice) {
     return (

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,22 +7,38 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Navigation } from '@/components/Navigation';
 import { loadInvoices } from '@/utils/invoiceStorage';
-import { loadSettings } from '@/utils/settingsStorage';
+import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Send } from 'lucide-react';
+import { Invoice } from '@/types/invoice';
 
 export default function InvoiceEmail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const settings = loadSettings();
-  const invoice = loadInvoices().find(inv => inv.id === id);
-
+  const { settings } = useSettings();
+  const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [emailData, setEmailData] = useState({
-    to: invoice?.projectDetails.clientEmail || '',
-    subject: `Invoice ${invoice?.invoiceNumber} from ${settings.companyName}`,
-    message: `Dear ${invoice?.projectDetails.clientName},\n\nPlease find attached invoice ${invoice?.invoiceNumber}.\n\nTotal Amount: ${settings.currencySymbol}${invoice?.total.toFixed(2)}\nDue Date: ${invoice ? new Date(invoice.dueDate).toLocaleDateString() : ''}\n\nThank you for your business.\n\nBest regards,\n${settings.companyName}`,
+    to: '',
+    subject: '',
+    message: '',
   });
+
+  useEffect(() => {
+    const loadData = async () => {
+      const invoices = await loadInvoices();
+      const found = invoices.find(inv => inv.id === id);
+      if (found) {
+        setInvoice(found);
+        setEmailData({
+          to: found.projectDetails.clientEmail || '',
+          subject: `Invoice ${found.invoiceNumber} from ${settings.companyName}`,
+          message: `Dear ${found.projectDetails.clientName},\n\nPlease find attached invoice ${found.invoiceNumber}.\n\nTotal Amount: ${settings.currencySymbol}${found.total.toFixed(2)}\nDue Date: ${new Date(found.dueDate).toLocaleDateString()}\n\nThank you for your business.\n\nBest regards,\n${settings.companyName}`,
+        });
+      }
+    };
+    loadData();
+  }, [id, settings]);
 
   const handleSend = () => {
     // In a real application, this would send the email via an API

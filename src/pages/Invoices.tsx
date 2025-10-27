@@ -8,7 +8,7 @@ import { Navigation } from '@/components/Navigation';
 import { loadInvoices, deleteInvoice } from '@/utils/invoiceStorage';
 import { Invoice } from '@/types/invoice';
 import { useToast } from '@/hooks/use-toast';
-import { loadSettings } from '@/utils/settingsStorage';
+import { useSettings } from '@/contexts/SettingsContext';
 import { calculateAmountDue } from '@/utils/invoiceStatusCalculator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -30,14 +30,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 export default function Invoices() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const settings = loadSettings();
+  const { settings } = useSettings();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [activeTab, setActiveTab] = useState<'invoices' | 'credit-notes' | 'statements'>('invoices');
 
   useEffect(() => {
-    const loadedInvoices = loadInvoices();
-    console.log('Loaded invoices:', loadedInvoices);
-    setInvoices(loadedInvoices);
+    const loadData = async () => {
+      const loadedInvoices = await loadInvoices();
+      console.log('Loaded invoices:', loadedInvoices);
+      setInvoices(loadedInvoices);
+    };
+    loadData();
   }, [activeTab]); // Reload when tab changes
 
   const handleDelete = (id: string, isCreditNote: boolean = false) => {
@@ -68,8 +71,9 @@ export default function Invoices() {
         }
       }
       
-      deleteInvoice(id);
-      setInvoices(loadInvoices());
+      await deleteInvoice(id);
+      const updated = await loadInvoices();
+      setInvoices(updated);
       toast({ 
         title: isCreditNote ? 'Credit note deleted successfully' : 'Invoice deleted successfully' 
       });
