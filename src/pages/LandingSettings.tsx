@@ -40,7 +40,10 @@ export default function LandingSettings() {
     threshold: 0,
     rebate: 0,
   });
-  
+  const [editedBrackets, setEditedBrackets] = useState<any[]>([]);
+  useEffect(() => {
+    setEditedBrackets(taxBrackets.map((b) => ({ ...b })));
+  }, [taxBrackets]);
   // Load company settings when active company changes
   useEffect(() => {
     if (activeCompanySettings) {
@@ -319,6 +322,38 @@ export default function LandingSettings() {
       title: 'Success',
       description: 'Tax bracket deleted',
     });
+  };
+
+  // Editing helpers for SA tax table
+  const handleBracketFieldChange = (
+    id: string,
+    field: 'bracket_min' | 'bracket_max' | 'rate' | 'threshold' | 'rebate',
+    value: number | null
+  ) => {
+    setEditedBrackets((prev) => prev.map((b) => (b.id === id ? { ...b, [field]: value } : b)));
+  };
+
+  const handleSaveBrackets = async () => {
+    try {
+      await Promise.all(
+        editedBrackets.map((b) =>
+          supabase
+            .from('tax_brackets')
+            .update({
+              bracket_min: b.bracket_min,
+              bracket_max: b.bracket_max,
+              rate: b.rate,
+              threshold: b.threshold,
+              rebate: b.rebate,
+            })
+            .eq('id', b.id)
+        )
+      );
+      setTaxBrackets(editedBrackets);
+      toast({ title: 'Saved', description: 'Tax brackets updated successfully.' });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to save tax brackets', variant: 'destructive' });
+    }
   };
 
   const handleSaveCompanyForm = async () => {
@@ -1081,22 +1116,24 @@ export default function LandingSettings() {
                     <div className="p-4 bg-secondary/20 rounded-lg">
                       <h3 className="font-medium mb-3">Add New Tax Bracket</h3>
                       <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
-                        <div>
-                          <Label className="text-xs">Age Group</Label>
-                          <Select 
-                            value={newBracket.age_group} 
-                            onValueChange={(value) => setNewBracket({ ...newBracket, age_group: value })}
-                          >
-                            <SelectTrigger className="h-9">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="under_65">Under 65</SelectItem>
-                              <SelectItem value="65_to_75">65 to 75</SelectItem>
-                              <SelectItem value="over_75">Over 75</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                        {activeCompanySettings?.country !== 'ZA' && (
+                          <div>
+                            <Label className="text-xs">Age Group</Label>
+                            <Select 
+                              value={newBracket.age_group} 
+                              onValueChange={(value) => setNewBracket({ ...newBracket, age_group: value })}
+                            >
+                              <SelectTrigger className="h-9">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="under_65">Under 65</SelectItem>
+                                <SelectItem value="65_to_75">65 to 75</SelectItem>
+                                <SelectItem value="over_75">Over 75</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
 
                         <div>
                           <Label className="text-xs">Min</Label>
@@ -1166,8 +1203,10 @@ export default function LandingSettings() {
                           <TableRow>
                             {activeCompanySettings?.country === 'ZA' ? (
                               <>
-                                <TableHead>Taxable income (R)</TableHead>
-                                <TableHead>Rates of tax (R)</TableHead>
+                                <TableHead>Min Income (R)</TableHead>
+                                <TableHead>Max Income (R)</TableHead>
+                                <TableHead>Rate (%)</TableHead>
+                                <TableHead>Base Amount (R)</TableHead>
                                 <TableHead className="w-20">Actions</TableHead>
                               </>
                             ) : (
@@ -1183,7 +1222,7 @@ export default function LandingSettings() {
                         <TableBody>
                           {taxBrackets.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={activeCompanySettings?.country === 'ZA' ? 3 : 4} className="text-center text-muted-foreground">
+                              <TableCell colSpan={activeCompanySettings?.country === 'ZA' ? 5 : 4} className="text-center text-muted-foreground">
                                 No tax brackets configured for this year. Add one above.
                               </TableCell>
                             </TableRow>
@@ -1193,17 +1232,38 @@ export default function LandingSettings() {
                                 {activeCompanySettings?.country === 'ZA' ? (
                                   <>
                                     <TableCell>
-                                      {bracket.bracket_min === 1 ? '1' : bracket.bracket_min.toLocaleString()} – {bracket.bracket_max ? bracket.bracket_max.toLocaleString() : 'and above'}
+                                      <Input
+                                        type="number"
+                                        value={bracket.bracket_min ?? 0}
+                                        onChange={(e) => handleBracketFieldChange(bracket.id, 'bracket_min', Number(e.target.value))}
+                                        className="h-9"
+                                      />
                                     </TableCell>
                                     <TableCell>
-                                      {index === 0 && bracket.bracket_min <= 1 ? (
-                                        `${bracket.rate}% of taxable income`
-                                      ) : (
-                                        <>
-                                          {bracket.threshold > 0 && `${bracket.threshold.toLocaleString()} + `}
-                                          {bracket.rate}% of taxable income above {bracket.bracket_min.toLocaleString()}
-                                        </>
-                                      )}
+                                      <Input
+                                        type="number"
+                                        placeholder="No limit"
+                                        value={bracket.bracket_max ?? ''}
+                                        onChange={(e) => handleBracketFieldChange(bracket.id, 'bracket_max', e.target.value ? Number(e.target.value) : null)}
+                                        className="h-9"
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        value={bracket.rate ?? 0}
+                                        onChange={(e) => handleBracketFieldChange(bracket.id, 'rate', Number(e.target.value))}
+                                        className="h-9"
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <Input
+                                        type="number"
+                                        value={bracket.threshold ?? 0}
+                                        onChange={(e) => handleBracketFieldChange(bracket.id, 'threshold', Number(e.target.value))}
+                                        className="h-9"
+                                      />
                                     </TableCell>
                                     <TableCell>
                                       <Button
@@ -1243,10 +1303,67 @@ export default function LandingSettings() {
                             ))
                           )}
                         </TableBody>
-                      </Table>
-                    </div>
+                        </Table>
+                        {activeCompanySettings?.country === 'ZA' && (
+                          <div className="flex gap-2 pt-2">
+                            <Button variant="outline" onClick={handleAddBracket} className="gap-2">
+                              <Plus className="h-4 w-4" />
+                              Add Bracket
+                            </Button>
+                            <Button onClick={handleSaveBrackets}>Save Tax Brackets</Button>
+                          </div>
+                        )}
+                      </div>
                   </CardContent>
                 </Card>
+
+                {activeCompanySettings?.country === 'ZA' && (
+                  <Card className="shadow-[var(--shadow-elegant)] border-border/50">
+                    <CardHeader>
+                      <CardTitle>Age-Based Tax Thresholds & Rebates</CardTitle>
+                      <CardDescription>
+                        Configure age-based tax thresholds and rebates per requirements
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {[
+                        { id: 'under_65', label: 'Under 65' },
+                        { id: '65_to_75', label: '65 to 75' },
+                        { id: 'over_75', label: 'Over 75' },
+                      ].map((g) => {
+                        const row = editedBrackets.find((b) => b.age_group === g.id && b.bracket_min === 0);
+                        return (
+                          <div key={g.id} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center p-3 border rounded-lg">
+                            <div>
+                              <Label className="text-xs">Age Group</Label>
+                              <Input value={g.label} disabled />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Tax Threshold (R)</Label>
+                              <Input
+                                type="number"
+                                value={row?.threshold ?? 0}
+                                onChange={(e) => row && handleBracketFieldChange(row.id, 'threshold', Number(e.target.value))}
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Tax Rebate (R)</Label>
+                              <Input
+                                type="number"
+                                value={row?.rebate ?? 0}
+                                onChange={(e) => row && handleBracketFieldChange(row.id, 'rebate', Number(e.target.value))}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div className="flex justify-end">
+                        <Button onClick={handleSaveBrackets}>Save Thresholds & Rebates</Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
               </>
             )}
           </TabsContent>
