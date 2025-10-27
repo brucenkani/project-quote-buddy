@@ -12,7 +12,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { calculateAge, calculateMonthlyPAYE, calculateUIF, calculateGrossSalary, calculateNetSalary } from '@/utils/sarsCalculator';
+import { 
+  calculateAge, 
+  calculateMonthlyPAYE, 
+  calculateGrossSalary, 
+  calculateNetSalary,
+  fetchTaxBrackets,
+  getStatutoryDeductions
+} from '@/utils/dynamicPAYECalculator';
 import { generatePayslipPDF } from '@/utils/payslipGenerator';
 import { format } from 'date-fns';
 import { BulkPayrollDialog } from '@/components/payroll/BulkPayrollDialog';
@@ -22,6 +29,7 @@ export default function Payroll() {
   const [payrollRecords, setPayrollRecords] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [taxBrackets, setTaxBrackets] = useState<any[]>([]);
+  const [payrollSettings, setPayrollSettings] = useState<any>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState({
     employee_id: '',
@@ -50,10 +58,25 @@ export default function Payroll() {
   };
 
   const loadData = async () => {
-    const [payrollResult, employeesResult, taxResult] = await Promise.all([
+    // First load payroll settings to get country
+    const settingsResult = await supabase
+      .from('payroll_settings')
+      .select('*')
+      .maybeSingle();
+
+    const settings = settingsResult.data;
+    setPayrollSettings(settings);
+
+    const country = settings?.country || 'ZA';
+    const taxYear = settings?.current_tax_year || new Date().getFullYear();
+
+    // Load tax brackets for the specific country and year
+    const taxBrackets = await fetchTaxBrackets(country, taxYear);
+    setTaxBrackets(taxBrackets);
+
+    const [payrollResult, employeesResult] = await Promise.all([
       supabase.from('payroll').select('*, employees(*)').order('created_at', { ascending: false }),
       supabase.from('employees').select('*').eq('status', 'active'),
-      supabase.from('tax_brackets').select('*'),
     ]);
 
     if (payrollResult.error) {
@@ -64,10 +87,6 @@ export default function Payroll() {
 
     if (!employeesResult.error) {
       setEmployees(employeesResult.data || []);
-    }
-
-    if (!taxResult.error) {
-      setTaxBrackets(taxResult.data || []);
     }
   };
 
@@ -86,21 +105,26 @@ export default function Payroll() {
     const grossSalary = calculateGrossSalary(basicSalary, allowances, overtime, bonuses) + customIncomeTotal;
     
     const age = calculateAge(employee.date_of_birth);
-    const paye = calculateMonthlyPAYE(grossSalary, age, taxBrackets);
-    const uif = calculateUIF(grossSalary);
+    const country = payrollSettings?.country || 'ZA';
+    const paye = calculateMonthlyPAYE(grossSalary, age, taxBrackets, country);
+    
+    // Get statutory deductions based on country
+    const statutoryDeductions = getStatutoryDeductions(grossSalary, paye, country);
+    const totalStatutoryDeductions = statutoryDeductions.reduce((sum, d) => sum + d.amount, 0);
     
     // Add custom deductions to total deductions
     const customDeductionsTotal = customDeductions.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-    const totalDeductions = paye + uif + otherDeductions + customDeductionsTotal;
-    const netSalary = calculateNetSalary(grossSalary, paye, uif, otherDeductions + customDeductionsTotal);
+    const totalDeductions = totalStatutoryDeductions + otherDeductions + customDeductionsTotal;
+    const netSalary = grossSalary - totalDeductions;
 
     return {
       basic_salary: basicSalary,
       gross_salary: grossSalary,
       paye,
-      uif,
+      uif: statutoryDeductions.find(d => d.name === 'UIF')?.amount || 0,
       total_deductions: totalDeductions,
       net_salary: netSalary,
+      statutory_deductions: statutoryDeductions,
     };
   };
 

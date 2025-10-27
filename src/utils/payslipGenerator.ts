@@ -65,11 +65,12 @@ export const generatePayslipPDF = async (payrollRecord: any) => {
     yPos
   );
 
-  // Earnings Table
+  // Earnings Table - Dynamic currency
+  const currencySymbol = payrollRecord.currency_symbol || 'R';
   yPos += 12;
   autoTable(doc, {
     startY: yPos,
-    head: [['Earnings', 'Amount (R)']],
+    head: [[`Earnings`, `Amount (${currencySymbol})`]],
     body: [
       ['Basic Salary', parseFloat(payrollRecord.basic_salary).toFixed(2)],
       ['Allowances', parseFloat(payrollRecord.allowances).toFixed(2)],
@@ -85,16 +86,34 @@ export const generatePayslipPDF = async (payrollRecord: any) => {
     },
   });
 
-  // Deductions Table
+  // Deductions Table - Dynamic based on country
   yPos = (doc as any).lastAutoTable.finalY + 10;
+  
+  const deductionsBody: any[] = [
+    ['PAYE (Pay As You Earn)', parseFloat(payrollRecord.paye).toFixed(2)],
+  ];
+  
+  // Add country-specific deductions
+  if (parseFloat(payrollRecord.uif || 0) > 0) {
+    deductionsBody.push(['UIF (Unemployment Insurance)', parseFloat(payrollRecord.uif).toFixed(2)]);
+  }
+  if (parseFloat(payrollRecord.napsa || 0) > 0) {
+    deductionsBody.push(['NAPSA (Social Security)', parseFloat(payrollRecord.napsa).toFixed(2)]);
+  }
+  if (parseFloat(payrollRecord.nhima || 0) > 0) {
+    deductionsBody.push(['NHIMA (Health Insurance)', parseFloat(payrollRecord.nhima).toFixed(2)]);
+  }
+  if (parseFloat(payrollRecord.nssa || 0) > 0) {
+    deductionsBody.push(['NSSA (Social Security)', parseFloat(payrollRecord.nssa).toFixed(2)]);
+  }
+  if (parseFloat(payrollRecord.other_deductions) > 0) {
+    deductionsBody.push(['Other Deductions', parseFloat(payrollRecord.other_deductions).toFixed(2)]);
+  }
+
   autoTable(doc, {
     startY: yPos,
-    head: [['Deductions', 'Amount (R)']],
-    body: [
-      ['PAYE (Pay As You Earn)', parseFloat(payrollRecord.paye).toFixed(2)],
-      ['UIF (Unemployment Insurance)', parseFloat(payrollRecord.uif).toFixed(2)],
-      ['Other Deductions', parseFloat(payrollRecord.other_deductions).toFixed(2)],
-    ],
+    head: [['Deductions', 'Amount']],
+    body: deductionsBody,
     foot: [['Total Deductions', parseFloat(payrollRecord.total_deductions).toFixed(2)]],
     theme: 'grid',
     headStyles: { fillColor: [66, 66, 66] },
@@ -113,7 +132,7 @@ export const generatePayslipPDF = async (payrollRecord: any) => {
   doc.setFont('helvetica', 'bold');
   doc.text('NET PAY:', 20, yPos + 10);
   doc.text(
-    `R ${parseFloat(payrollRecord.net_salary).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`,
+    `${currencySymbol} ${parseFloat(payrollRecord.net_salary).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
     190,
     yPos + 10,
     { align: 'right' }
