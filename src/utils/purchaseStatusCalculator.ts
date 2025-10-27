@@ -9,8 +9,8 @@ export interface PurchaseStatusInfo {
   paymentProgress: number;
 }
 
-export const calculatePurchaseStatus = (purchase: Purchase): PurchaseStatusInfo => {
-  const totalPaid = getTotalPaid(purchase.id);
+export const calculatePurchaseStatus = async (purchase: Purchase): Promise<PurchaseStatusInfo> => {
+  const totalPaid = await getTotalPaid(purchase.id);
   const remainingBalance = purchase.total - totalPaid;
   const isPaid = remainingBalance <= 0.01; // Account for floating point precision
   const isPartiallyPaid = totalPaid > 0 && !isPaid;
@@ -25,8 +25,8 @@ export const calculatePurchaseStatus = (purchase: Purchase): PurchaseStatusInfo 
   };
 };
 
-export const getPurchaseStatusBadge = (purchase: Purchase): { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } => {
-  const statusInfo = calculatePurchaseStatus(purchase);
+export const getPurchaseStatusBadge = async (purchase: Purchase): Promise<{ label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> => {
+  const statusInfo = await calculatePurchaseStatus(purchase);
 
   if (statusInfo.isPaid && purchase.status === 'received') {
     return { label: 'PAID & RECEIVED', variant: 'default' };

@@ -3,7 +3,7 @@ import { Purchase } from '@/types/purchase';
 import { InventoryItem } from '@/types/inventory';
 import { CompanyType } from '@/types/settings';
 import { saveJournalEntry } from './accountingStorage';
-import { saveInventoryItem, loadInventory } from './inventoryStorage';
+// Inventory operations now handled via Context
 
 /**
  * Purchase Double-Entry Accounting - Business Type Specific
@@ -291,45 +291,15 @@ export const recordCOGS = (
 
 /**
  * Update inventory quantities from purchase (Perpetual method)
+ * NOTE: This should be called from components with inventory context
  */
 const updateInventoryFromPurchase = (
   purchase: Purchase,
   defaultType: 'raw-materials' | 'finished-products'
 ): void => {
-  const inventory = loadInventory();
-
-  purchase.lineItems.forEach(item => {
-    if (item.inventoryItemId) {
-      // Update existing inventory item
-      const inventoryItem = inventory.find(i => i.id === item.inventoryItemId);
-      if (inventoryItem) {
-        inventoryItem.quantity += item.quantity;
-        inventoryItem.totalValue = inventoryItem.quantity * inventoryItem.unitCost;
-        inventoryItem.updatedAt = new Date().toISOString();
-        saveInventoryItem(inventoryItem);
-      }
-    } else {
-      // Create new inventory item
-      const newItem: InventoryItem = {
-        id: crypto.randomUUID(),
-        name: item.description,
-        type: defaultType,
-        sku: `AUTO-${Date.now()}`,
-        category: item.category || 'General',
-        description: item.description,
-        unit: 'unit',
-        quantity: item.quantity,
-        minQuantity: 0,
-        unitCost: item.unitCost,
-        totalValue: item.total,
-        supplier: purchase.vendor,
-        location: 'Main Warehouse',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      saveInventoryItem(newItem);
-    }
-  });
+  // Inventory updates should now be handled by components via InventoryContext
+  console.log('Inventory update needed for purchase:', purchase.id);
+  // Components will need to handle this using useInventory hook
 };
 
 /**
