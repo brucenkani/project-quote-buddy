@@ -104,13 +104,13 @@ export const calculateAnnualPAYE = (
       // Calculate taxable amount in this bracket
       const taxableInBracket = Math.min(annualIncome, bracketMax) - bracketMin;
       
-      // Add threshold (base amount) and calculate tax on income in this bracket
+      // Rate is already stored as decimal in DB (e.g., 0.18 for 18%)
       if (i === 0 && annualIncome <= bracketMax) {
         // First bracket
-        tax = taxableInBracket * (bracket.rate / 100);
+        tax = taxableInBracket * bracket.rate;
       } else {
         // Subsequent brackets: add base amount + percentage of income above minimum
-        tax = bracket.threshold + (taxableInBracket * (bracket.rate / 100));
+        tax = bracket.threshold + (taxableInBracket * bracket.rate);
       }
 
       if (annualIncome <= bracketMax) {
