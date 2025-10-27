@@ -13,10 +13,19 @@ import { useNavigate } from 'react-router-dom';
 
 interface PayrollSettings {
   id: string;
+  company_id?: string;
   country: string;
   currency: string;
   currency_symbol: string;
   current_tax_year: number;
+  smtp_host?: string;
+  smtp_port?: number;
+  smtp_user?: string;
+  smtp_password?: string;
+  smtp_from_email?: string;
+  smtp_from_name?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface TaxBracket {
@@ -66,52 +75,61 @@ export default function PayrollSettings() {
 
   const loadData = async () => {
     try {
-      // Try to fetch a single settings row (table is global, not per company)
+      // Get current user's company
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: memberData } = await supabase
+        .from('company_members')
+        .select('company_id, role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!memberData) throw new Error('No company association found');
+
+      const companyId = memberData.company_id;
+      const isOwner = memberData.role === 'owner';
+
+      // Load company-specific payroll settings
       let { data: settingsData } = await supabase
         .from('payroll_settings')
         .select('*')
-        .order('created_at', { ascending: true })
-        .limit(1)
+        .eq('company_id', companyId)
         .maybeSingle();
 
-      if (!settingsData) {
-        // Check if current user is an owner; only owners can create settings
-        const { data: userRes } = await supabase.auth.getUser();
-        const userId = userRes?.user?.id;
-        let isOwner = false;
-        if (userId) {
-          const { data: roles } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', userId);
-          isOwner = (roles || []).some((r: any) => r.role === 'owner');
-        }
-
-        if (isOwner) {
-          const { data: newSettings, error: insertError } = await supabase
-            .from('payroll_settings')
-            .insert([{
-              country: 'ZA',
-              currency: 'ZAR',
-              currency_symbol: 'R',
-              current_tax_year: new Date().getFullYear(),
-            }])
-            .select()
-            .single();
-          if (insertError) throw insertError;
-          settingsData = newSettings;
-        } else {
-          // Fallback to read-only defaults so the UI doesn't get stuck
-          settingsData = {
-            id: 'readonly',
+      if (!settingsData && isOwner) {
+        // Create default settings for this company
+        const { data: newSettings, error: insertError } = await supabase
+          .from('payroll_settings')
+          .insert([{
+            company_id: companyId,
             country: 'ZA',
             currency: 'ZAR',
             currency_symbol: 'R',
             current_tax_year: new Date().getFullYear(),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          } as any;
-        }
+          }])
+          .select()
+          .single();
+        if (insertError) throw insertError;
+        settingsData = newSettings;
+      } else if (!settingsData) {
+        // Read-only defaults for non-owners
+        settingsData = {
+          id: 'readonly',
+          company_id: companyId,
+          country: 'ZA',
+          currency: 'ZAR',
+          currency_symbol: 'R',
+          current_tax_year: new Date().getFullYear(),
+          smtp_host: '',
+          smtp_port: 587,
+          smtp_user: '',
+          smtp_password: '',
+          smtp_from_email: '',
+          smtp_from_name: 'Payroll System',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
       }
 
       setSettings(settingsData);
@@ -260,6 +278,35 @@ export default function PayrollSettings() {
       title: 'Success',
       description: 'Tax bracket deleted',
     });
+  };
+
+  const handleSMTPUpdate = async (field: string, value: string | number) => {
+    try {
+      if (!settings) return;
+
+      const { error } = await supabase
+        .from('payroll_settings')
+        .update({ [field]: value })
+        .eq('id', settings.id);
+
+      if (error) throw error;
+
+      setSettings({
+        ...settings,
+        [field]: value
+      } as PayrollSettings);
+
+      toast({
+        title: 'Success',
+        description: 'SMTP settings updated successfully',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
   };
 
   if (!settings) {
@@ -481,6 +528,82 @@ export default function PayrollSettings() {
                   )}
                 </TableBody>
               </Table>
+            </div>
+          </Card>
+
+          {/* SMTP Email Configuration */}
+          <Card className="p-6">
+            <h2 className="text-2xl font-bold mb-6">Email Configuration (SMTP)</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Configure SMTP settings for sending payslips via email to employees.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="smtp_host">SMTP Host</Label>
+                <Input
+                  id="smtp_host"
+                  type="text"
+                  value={settings?.smtp_host || ''}
+                  onChange={(e) => handleSMTPUpdate('smtp_host', e.target.value)}
+                  placeholder="smtp.gmail.com"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="smtp_port">SMTP Port</Label>
+                <Input
+                  id="smtp_port"
+                  type="number"
+                  value={settings?.smtp_port || 587}
+                  onChange={(e) => handleSMTPUpdate('smtp_port', parseInt(e.target.value))}
+                  placeholder="587"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="smtp_user">SMTP Username</Label>
+                <Input
+                  id="smtp_user"
+                  type="text"
+                  value={settings?.smtp_user || ''}
+                  onChange={(e) => handleSMTPUpdate('smtp_user', e.target.value)}
+                  placeholder="your-email@example.com"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="smtp_password">SMTP Password</Label>
+                <Input
+                  id="smtp_password"
+                  type="password"
+                  value={settings?.smtp_password || ''}
+                  onChange={(e) => handleSMTPUpdate('smtp_password', e.target.value)}
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="smtp_from_email">From Email Address</Label>
+                <Input
+                  id="smtp_from_email"
+                  type="email"
+                  value={settings?.smtp_from_email || ''}
+                  onChange={(e) => handleSMTPUpdate('smtp_from_email', e.target.value)}
+                  placeholder="payroll@yourcompany.com"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="smtp_from_name">From Name</Label>
+                <Input
+                  id="smtp_from_name"
+                  type="text"
+                  value={settings?.smtp_from_name || 'Payroll System'}
+                  onChange={(e) => handleSMTPUpdate('smtp_from_name', e.target.value)}
+                  placeholder="Payroll System"
+                />
+              </div>
             </div>
           </Card>
         </div>

@@ -1637,33 +1637,62 @@ export type Database = {
       }
       payroll_settings: {
         Row: {
+          company_id: string | null
           country: string
           created_at: string
           currency: string
           currency_symbol: string
           current_tax_year: number
           id: string
+          smtp_from_email: string | null
+          smtp_from_name: string | null
+          smtp_host: string | null
+          smtp_password: string | null
+          smtp_port: number | null
+          smtp_user: string | null
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           country?: string
           created_at?: string
           currency?: string
           currency_symbol?: string
           current_tax_year?: number
           id?: string
+          smtp_from_email?: string | null
+          smtp_from_name?: string | null
+          smtp_host?: string | null
+          smtp_password?: string | null
+          smtp_port?: number | null
+          smtp_user?: string | null
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           country?: string
           created_at?: string
           currency?: string
           currency_symbol?: string
           current_tax_year?: number
           id?: string
+          smtp_from_email?: string | null
+          smtp_from_name?: string | null
+          smtp_host?: string | null
+          smtp_password?: string | null
+          smtp_port?: number | null
+          smtp_user?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payroll_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

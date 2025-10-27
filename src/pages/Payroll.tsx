@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Download, Eye } from 'lucide-react';
+import { Plus, Download, Eye, Users } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +15,7 @@ import { toast } from '@/hooks/use-toast';
 import { calculateAge, calculateMonthlyPAYE, calculateUIF, calculateGrossSalary, calculateNetSalary } from '@/utils/sarsCalculator';
 import { generatePayslipPDF } from '@/utils/payslipGenerator';
 import { format } from 'date-fns';
+import { BulkPayrollDialog } from '@/components/payroll/BulkPayrollDialog';
 
 export default function Payroll() {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ export default function Payroll() {
   });
   const [customIncome, setCustomIncome] = useState<{ description: string; amount: string }[]>([]);
   const [customDeductions, setCustomDeductions] = useState<{ description: string; amount: string }[]>([]);
+  const [showBulkDialog, setShowBulkDialog] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -227,14 +229,19 @@ export default function Payroll() {
             <h1 className="text-3xl font-bold">Payroll Management</h1>
             <p className="text-muted-foreground">Process employee payroll with SARS compliance</p>
           </div>
-          <Dialog open={showDialog} onOpenChange={setShowDialog}>
-            <DialogTrigger asChild>
-              <Button onClick={() => resetForm()}>
-                <Plus className="mr-2 h-4 w-4" />
-                Process Payroll
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="flex gap-2">
+            <Button onClick={() => setShowBulkDialog(true)}>
+              <Users className="mr-2 h-4 w-4" />
+              Bulk Process Payroll
+            </Button>
+            <Dialog open={showDialog} onOpenChange={setShowDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" onClick={() => resetForm()}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Single Payroll
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Process Payroll</DialogTitle>
                 <DialogDescription>Calculate and create payroll for an employee</DialogDescription>
@@ -464,6 +471,7 @@ export default function Payroll() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         <Card>
@@ -529,6 +537,12 @@ export default function Payroll() {
           </CardContent>
         </Card>
       </main>
+
+      <BulkPayrollDialog
+        open={showBulkDialog}
+        onOpenChange={setShowBulkDialog}
+        onComplete={loadData}
+      />
     </div>
   );
 }
