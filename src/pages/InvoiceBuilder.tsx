@@ -40,13 +40,6 @@ export default function InvoiceBuilder() {
   const { id } = useParams();
   const [invoiceNumber, setInvoiceNumber] = useState('');
 
-  // Generate invoice number on mount
-  useEffect(() => {
-    if (!id) {
-      generateNextInvoiceNumber().then(num => setInvoiceNumber(num));
-    }
-  }, [id]);
-
   const form = useForm<z.infer<typeof invoiceFormSchema>>({
     resolver: zodResolver(invoiceFormSchema),
     defaultValues: {
@@ -61,6 +54,16 @@ export default function InvoiceBuilder() {
       notes: '',
     },
   });
+
+  // Generate invoice number on mount
+  useEffect(() => {
+    if (!id) {
+      generateNextInvoiceNumber().then(num => {
+        setInvoiceNumber(num);
+        form.setValue('invoiceNumber', num);
+      });
+    }
+  }, [id, form]);
 
   const [lineItems, setLineItems] = useState([
     { description: '', quantity: 1, unit: 'item', unitPrice: 0, total: 0 },
@@ -135,7 +138,7 @@ export default function InvoiceBuilder() {
   const taxAmount = (subtotal - discount) * settings.taxRate;
   const total = subtotal - discount + taxAmount;
 
-  const handleSave = form.handleSubmit((data) => {
+  const handleSave = form.handleSubmit(async (data) => {
     // Validate line items
     const errors = lineItems.map(item => item.description ? '' : 'Description is required');
     setLineItemErrors(errors);
@@ -186,24 +189,32 @@ export default function InvoiceBuilder() {
       updatedAt: new Date().toISOString(),
     };
 
-    saveInvoice(invoice);
-    
-    if (!id && invoice.status === 'unpaid') {
-      try {
-        recordInvoice(invoice);
-        toast({ title: 'Invoice and journal entry created successfully' });
-      } catch (error) {
-        toast({ 
-          title: 'Warning: Invoice saved but journal entry failed', 
-          description: error instanceof Error ? error.message : 'Unknown error',
-          variant: 'destructive' 
-        });
+    try {
+      await saveInvoice(invoice);
+      
+      if (!id && invoice.status === 'unpaid') {
+        try {
+          recordInvoice(invoice);
+          toast({ title: 'Invoice and journal entry created successfully' });
+        } catch (error) {
+          toast({ 
+            title: 'Warning: Invoice saved but journal entry failed', 
+            description: error instanceof Error ? error.message : 'Unknown error',
+            variant: 'destructive' 
+          });
+        }
+      } else {
+        toast({ title: 'Invoice saved successfully' });
       }
-    } else {
-      toast({ title: 'Invoice saved successfully' });
+      
+      navigate('/invoices');
+    } catch (error) {
+      toast({
+        title: 'Error saving invoice',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive'
+      });
     }
-    
-    navigate('/invoices');
   });
 
   return (
