@@ -75,6 +75,7 @@ export default function PayrollSettings() {
   };
 
   const loadData = async () => {
+    console.log('[PayrollSettings] loadData start');
     setLoading(true);
     try {
       // Get current user's company
@@ -85,7 +86,7 @@ export default function PayrollSettings() {
         .from('company_members')
         .select('company_id, role')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (!memberData) throw new Error('No company association found');
 
