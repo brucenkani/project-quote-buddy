@@ -13,6 +13,7 @@ import { formatLocalISO } from '@/utils/date';
 import { generateKPIBreakdownPDF, generateKPIBreakdownExcel } from '@/utils/kpiBreakdownGenerator';
 import { supabase } from '@/integrations/supabase/client';
 import type { ChartAccount } from '@/types/chartOfAccounts';
+import { defaultChartOfAccounts } from '@/types/chartOfAccounts';
 import type { Expense } from '@/types/accounting';
 import { loadJournalEntriesFromDB, loadJournalEntries, loadExpenses } from '@/utils/accountingStorage';
 import {
@@ -55,68 +56,95 @@ export default function Dashboard() {
       if (!user) return;
 
       const activeCompanyId = localStorage.getItem('activeCompanyId');
+
+      // If there is no active company, still show KPIs using defaults and local cache
       if (!activeCompanyId) {
-        console.error('No active company');
+        const mappedDefaults: ChartAccount[] = defaultChartOfAccounts.map(acc => ({
+          id: crypto.randomUUID(),
+          accountNumber: acc.accountNumber,
+          accountName: acc.accountName,
+          accountType: acc.accountType,
+          isDefault: acc.isDefault,
+          openingBalance: 0,
+          createdAt: new Date().toISOString(),
+        }));
+        setChartOfAccounts(mappedDefaults);
+
+        // Load from DB (user scope) for journal entries; fallback to local
+        const entries = await loadJournalEntriesFromDB();
+        setJournalEntries(entries && entries.length > 0 ? entries : loadJournalEntries());
+
+        // Expenses fallback to local only when no company
+        setExpenses(loadExpenses());
+        setLoading(false);
         return;
       }
 
-    // Load Chart of Accounts
-    const { data: coaData } = await supabase
-      .from('chart_of_accounts')
-      .select('*')
-      .eq('company_id', activeCompanyId)
-      .order('account_number');
+      // Load Chart of Accounts from backend
+      const { data: coaData } = await supabase
+        .from('chart_of_accounts')
+        .select('*')
+        .eq('company_id', activeCompanyId)
+        .order('account_number');
 
-    if (coaData && coaData.length > 0) {
-      setChartOfAccounts(coaData.map(row => ({
-        id: row.id,
-        accountNumber: row.account_number,
-        accountName: row.account_name,
-        accountType: row.account_type as any,
-        isDefault: false,
-        openingBalance: Number(row.opening_balance),
-        createdAt: row.created_at || new Date().toISOString(),
-      })));
-    } else {
-      // Fallback: empty -> KPIs will still compute from journal entries
-      setChartOfAccounts([]);
-    }
+      if (coaData && coaData.length > 0) {
+        setChartOfAccounts(coaData.map(row => ({
+          id: row.id,
+          accountNumber: row.account_number,
+          accountName: row.account_name,
+          accountType: row.account_type as any,
+          isDefault: false,
+          openingBalance: Number(row.opening_balance),
+          createdAt: row.created_at || new Date().toISOString(),
+        })));
+      } else {
+        setChartOfAccounts(defaultChartOfAccounts.map(acc => ({
+          id: crypto.randomUUID(),
+          accountNumber: acc.accountNumber,
+          accountName: acc.accountName,
+          accountType: acc.accountType,
+          isDefault: acc.isDefault,
+          openingBalance: 0,
+          createdAt: new Date().toISOString(),
+        })));
+      }
 
-    // Load Journal Entries (DB first, fallback to local)
-    const entries = await loadJournalEntriesFromDB();
-    if (entries && entries.length > 0) {
-      setJournalEntries(entries);
-    } else {
-      setJournalEntries(loadJournalEntries());
-    }
+      // Load Journal Entries (DB first, fallback to local)
+      const entries = await loadJournalEntriesFromDB();
+      setJournalEntries(entries && entries.length > 0 ? entries : loadJournalEntries());
 
-    // Load Expenses (DB first, fallback to local)
-    const { data: expensesData } = await supabase
-      .from('expenses')
-      .select('*')
-      .eq('company_id', activeCompanyId)
-      .order('date', { ascending: false });
+      // Load Expenses (DB first, fallback to local)
+      const { data: expensesData } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('company_id', activeCompanyId)
+        .order('date', { ascending: false });
 
-    if (expensesData && expensesData.length > 0) {
-      setExpenses(expensesData.map(exp => ({
-        id: exp.id,
-        date: exp.date,
-        vendor: exp.supplier_id,
-        category: 'General Expense',
-        description: exp.notes || '',
-        amount: Number(exp.total),
-        paymentMethod: 'unpaid',
-        status: exp.status as any,
-        dueDate: exp.due_date,
-        payments: [],
-        createdAt: exp.created_at,
-        updatedAt: exp.updated_at,
-      })));
-    } else {
-      setExpenses(loadExpenses());
-    }
+      if (expensesData && expensesData.length > 0) {
+        setExpenses(expensesData.map(exp => ({
+          id: exp.id,
+          date: exp.date,
+          vendor: exp.supplier_id,
+          category: 'General Expense',
+          description: exp.notes || '',
+          amount: Number(exp.total),
+          paymentMethod: 'unpaid',
+          status: exp.status as any,
+          dueDate: exp.due_date,
+          payments: [],
+          createdAt: exp.created_at,
+          updatedAt: exp.updated_at,
+        })));
+      } else {
+        setExpenses(loadExpenses());
+      }
 
-    setLoading(false);
+      setLoading(false);
+      console.log('[Dashboard] Loaded', {
+        coa: (coaData && coaData.length) || 'default',
+        journalEntries: (entries && entries.length) || 0,
+        expenses: (expensesData && expensesData.length) || 0,
+      });
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
       setLoading(false);
@@ -140,28 +168,16 @@ export default function Dashboard() {
     }
 
     // Financial year starts on the day after year end
-    // e.g., if year ends June 30 (month 6), year starts July 1
-    // Convert 1-12 month to 0-11 for JavaScript Date
-    const jsYearEndMonth = yearEndMonth - 1; // June (6) becomes 5 in JS
-    
-    // Start = First day of month AFTER year end month
+    const jsYearEndMonth = yearEndMonth - 1; // 0-11
     const fyStart = new Date(fyStartYear, jsYearEndMonth + 1, 1);
-    
-    // End = Last day of year end month (use day 0 of next month)
     const fyEnd = new Date(fyEndYear, jsYearEndMonth + 1, 0);
 
     // Prior financial year
     const priorFyStart = new Date(fyStartYear - 1, jsYearEndMonth + 1, 1);
     const priorFyEnd = new Date(fyEndYear - 1, jsYearEndMonth + 1, 0);
 
-    setDateRange({
-      startDate: formatLocalISO(fyStart),
-      endDate: formatLocalISO(fyEnd),
-    });
-    setPriorDateRange({
-      startDate: formatLocalISO(priorFyStart),
-      endDate: formatLocalISO(priorFyEnd),
-    });
+    setDateRange({ startDate: formatLocalISO(fyStart), endDate: formatLocalISO(fyEnd) });
+    setPriorDateRange({ startDate: formatLocalISO(priorFyStart), endDate: formatLocalISO(priorFyEnd) });
   };
 
   const getPeriodData = (startDate: string, endDate: string) => {
