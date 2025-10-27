@@ -133,23 +133,21 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
     const country = payrollSettings?.country || 'ZA';
     const paye = calculateMonthlyPAYE(grossSalary, age, taxBrackets, country);
     
-    // Get statutory deductions based on country (EXCLUDING PAYE to avoid double counting)
+    // Get statutory deductions based on country
     const statutoryDeductions = getStatutoryDeductions(grossSalary, paye, country);
-    // Filter out PAYE from statutory deductions since we're storing it separately
-    const nonPAYEDeductions = statutoryDeductions.filter(d => d.name !== 'PAYE');
-    const totalNonPAYEStatutory = nonPAYEDeductions.reduce((sum, d) => sum + d.amount, 0);
+    const totalStatutoryDeductions = statutoryDeductions.reduce((sum, d) => sum + d.amount, 0);
     
-    const totalDeductions = paye + totalNonPAYEStatutory + employee.other_deductions;
+    const totalDeductions = totalStatutoryDeductions + employee.other_deductions;
     const netSalary = grossSalary - totalDeductions;
+
+    // Only extract UIF for storage (ZA specific, exists in DB)
+    const uif = statutoryDeductions.find(d => d.name === 'UIF')?.amount || 0;
 
     return {
       basic_salary: basicSalary,
       gross_salary: grossSalary,
       paye,
-      uif: statutoryDeductions.find(d => d.name === 'UIF')?.amount || 0,
-      napsa: statutoryDeductions.find(d => d.name === 'NAPSA')?.amount || 0,
-      nhima: statutoryDeductions.find(d => d.name === 'NHIMA')?.amount || 0,
-      nssa: statutoryDeductions.find(d => d.name === 'NSSA')?.amount || 0,
+      uif,
       total_deductions: totalDeductions,
       net_salary: netSalary,
     };
@@ -173,7 +171,7 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
       for (const employee of selectedEmployees) {
         const calculations = calculatePayrollForEmployee(employee);
 
-        // Create payroll record with all country-specific deductions
+        // Create payroll record - only insert columns that exist in DB
         const { data: payrollData, error: payrollError } = await supabase
           .from('payroll')
           .insert([{
@@ -186,10 +184,7 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
             bonuses: employee.bonuses,
             gross_salary: calculations.gross_salary,
             paye: calculations.paye,
-            uif: calculations.uif || 0,
-            napsa: calculations.napsa || 0,
-            nhima: calculations.nhima || 0,
-            nssa: calculations.nssa || 0,
+            uif: calculations.uif,
             other_deductions: employee.other_deductions,
             total_deductions: calculations.total_deductions,
             net_salary: calculations.net_salary,
