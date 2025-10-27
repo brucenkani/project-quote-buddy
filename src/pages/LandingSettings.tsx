@@ -57,10 +57,10 @@ export default function LandingSettings() {
   }, [activeCompanySettings]);
 
   useEffect(() => {
-    if (activeCompany) {
+    if (activeCompany && activeCompanySettings) {
       loadPayrollSettings();
     }
-  }, [activeCompany]);
+  }, [activeCompany, activeCompanySettings]);
 
   const loadPayrollSettings = async () => {
     try {
