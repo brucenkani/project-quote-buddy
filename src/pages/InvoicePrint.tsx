@@ -82,7 +82,7 @@ export default function InvoicePrint() {
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             {settings.logo_url && (
-              <img src={settings.logo_url} alt={settings.company_name} className="w-auto max-w-[200px] h-auto mb-4" style={{ width: 'fit-content' }} />
+              <img src={settings.logo_url} alt={settings.company_name} className="w-auto max-w-[200px] h-auto mb-2" style={{ width: 'fit-content' }} />
             )}
             <div className="text-xs space-y-0.5">
               <p className="font-semibold text-sm">{settings.company_name || activeCompany?.name || 'Company Name Not Set'}</p>
