@@ -1323,6 +1323,27 @@ export type Database = {
           },
         ]
       }
+      knowledge_article_views: {
+        Row: {
+          article_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       knowledge_articles: {
         Row: {
           category: string

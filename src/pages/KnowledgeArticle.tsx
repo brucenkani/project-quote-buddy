@@ -28,8 +28,9 @@ interface Article {
 export default function KnowledgeArticle() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const [article, setArticle] = useState<Article | null>(null);
-  const [loading, setLoading] = useState(true);
+const [article, setArticle] = useState<Article | null>(null);
+const [loading, setLoading] = useState(true);
+const [viewCount, setViewCount] = useState<number>(0);
 
   useEffect(() => {
     if (slug) {
@@ -53,11 +54,26 @@ export default function KnowledgeArticle() {
         content: Array.isArray(data.content) ? data.content : []
       } as unknown as Article);
       
-      // Increment view count
-      await supabase
-        .from('knowledge_articles')
-        .update({ view_count: (data.view_count || 0) + 1 })
-        .eq('id', data.id);
+      // Record unique view and fetch total unique views
+      const { data: userData } = await supabase.auth.getUser();
+      try {
+        if (userData?.user) {
+          (supabase as any)
+            .from('knowledge_article_views')
+            .upsert(
+              { article_id: data.id, user_id: userData.user.id },
+              { onConflict: 'article_id,user_id' }
+            );
+        }
+      } catch (e) {
+        console.warn('View upsert failed', e);
+      }
+
+      const { count } = await (supabase as any)
+        .from('knowledge_article_views')
+        .select('*', { count: 'exact', head: true })
+        .eq('article_id', data.id);
+      setViewCount(count || 0);
         
     } catch (error) {
       console.error('Error loading article:', error);
@@ -82,7 +98,11 @@ export default function KnowledgeArticle() {
             {contentItem.content}
           </HeadingTag>
         );
-      case 'text':
+      case 'text': {
+        const normalizedContent = (contentItem.content || '')
+          .replace(/^(#{1,6})([^#\s])/gm, '$1 $2')
+          .replace(/^(#{1,6})\s*(.+?)\s*#+\s*(.+)$/gm, '$1 $2\n\n$3')
+          .replace(/\s*#+\s*$/gm, '');
         return (
           <div key={index} className="mb-4 leading-relaxed">
             <ReactMarkdown 
@@ -95,10 +115,11 @@ export default function KnowledgeArticle() {
                 li: ({ children }) => <li className="text-muted-foreground">{children}</li>
               }}
             >
-              {contentItem.content}
+              {normalizedContent}
             </ReactMarkdown>
           </div>
         );
+      }
       case 'image':
         return (
           <img 
@@ -166,7 +187,7 @@ export default function KnowledgeArticle() {
                   <Badge>{article.category}</Badge>
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                     <Eye className="h-4 w-4" />
-                    <span>{article.view_count} views</span>
+                    <span>{viewCount} views</span>
                   </div>
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                     <Calendar className="h-4 w-4" />
