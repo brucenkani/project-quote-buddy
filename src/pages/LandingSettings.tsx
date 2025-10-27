@@ -1166,8 +1166,8 @@ export default function LandingSettings() {
                           <TableRow>
                             {activeCompanySettings?.country === 'ZA' ? (
                               <>
-                                <TableHead>Taxable income</TableHead>
-                                <TableHead>Rates of tax</TableHead>
+                                <TableHead>Taxable income (R)</TableHead>
+                                <TableHead>Rates of tax (R)</TableHead>
                                 <TableHead className="w-20">Actions</TableHead>
                               </>
                             ) : (
@@ -1193,11 +1193,17 @@ export default function LandingSettings() {
                                 {activeCompanySettings?.country === 'ZA' ? (
                                   <>
                                     <TableCell>
-                                      {bracket.bracket_min.toLocaleString()} - {bracket.bracket_max ? bracket.bracket_max.toLocaleString() : 'and above'}
+                                      {bracket.bracket_min === 1 ? '1' : bracket.bracket_min.toLocaleString()} – {bracket.bracket_max ? bracket.bracket_max.toLocaleString() : 'and above'}
                                     </TableCell>
                                     <TableCell>
-                                      {bracket.rate}% of taxable income {bracket.bracket_min > 0 ? `above ${bracket.bracket_min.toLocaleString()}` : ''}
-                                      {bracket.threshold > 0 && ` + ${payrollSettings.currency_symbol}${bracket.threshold.toLocaleString()}`}
+                                      {index === 0 && bracket.bracket_min <= 1 ? (
+                                        `${bracket.rate}% of taxable income`
+                                      ) : (
+                                        <>
+                                          {bracket.threshold > 0 && `${bracket.threshold.toLocaleString()} + `}
+                                          {bracket.rate}% of taxable income above {bracket.bracket_min.toLocaleString()}
+                                        </>
+                                      )}
                                     </TableCell>
                                     <TableCell>
                                       <Button
@@ -1211,10 +1217,16 @@ export default function LandingSettings() {
                                   </>
                                 ) : (
                                   <>
-                                    <TableCell>{index + 1}</TableCell>
                                     <TableCell>
-                                      {payrollSettings.currency_symbol}{bracket.bracket_min.toLocaleString()} - {bracket.bracket_max ? `${payrollSettings.currency_symbol}${bracket.bracket_max.toLocaleString()}` : 'Above'}
+                                      {index === 0 ? (
+                                        `First ${payrollSettings.currency_symbol}${bracket.bracket_max ? bracket.bracket_max.toLocaleString() : bracket.bracket_min.toLocaleString()} @`
+                                      ) : bracket.bracket_max ? (
+                                        `Next ${payrollSettings.currency_symbol}${bracket.bracket_min.toLocaleString()} but not exceeding ${payrollSettings.currency_symbol}${bracket.bracket_max.toLocaleString()}`
+                                      ) : (
+                                        `${payrollSettings.currency_symbol}${bracket.bracket_min.toLocaleString()} and Above`
+                                      )}
                                     </TableCell>
+                                    <TableCell>0</TableCell>
                                     <TableCell>{bracket.rate}%</TableCell>
                                     <TableCell>
                                       <Button
