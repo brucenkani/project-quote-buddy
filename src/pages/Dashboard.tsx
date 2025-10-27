@@ -14,7 +14,7 @@ import { generateKPIBreakdownPDF, generateKPIBreakdownExcel } from '@/utils/kpiB
 import { supabase } from '@/integrations/supabase/client';
 import type { ChartAccount } from '@/types/chartOfAccounts';
 import type { Expense } from '@/types/accounting';
-import { loadJournalEntriesFromDB } from '@/utils/accountingStorage';
+import { loadJournalEntriesFromDB, loadJournalEntries, loadExpenses } from '@/utils/accountingStorage';
 import {
   Dialog,
   DialogContent,
@@ -60,54 +60,63 @@ export default function Dashboard() {
         return;
       }
 
-      // Load Chart of Accounts
-      const { data: coaData } = await supabase
-        .from('chart_of_accounts')
-        .select('*')
-        .eq('company_id', activeCompanyId)
-        .order('account_number');
+    // Load Chart of Accounts
+    const { data: coaData } = await supabase
+      .from('chart_of_accounts')
+      .select('*')
+      .eq('company_id', activeCompanyId)
+      .order('account_number');
 
-      if (coaData) {
-        setChartOfAccounts(coaData.map(row => ({
-          id: row.id,
-          accountNumber: row.account_number,
-          accountName: row.account_name,
-          accountType: row.account_type as any,
-          isDefault: false,
-          openingBalance: Number(row.opening_balance),
-          createdAt: row.created_at || new Date().toISOString(),
-        })));
-      }
+    if (coaData && coaData.length > 0) {
+      setChartOfAccounts(coaData.map(row => ({
+        id: row.id,
+        accountNumber: row.account_number,
+        accountName: row.account_name,
+        accountType: row.account_type as any,
+        isDefault: false,
+        openingBalance: Number(row.opening_balance),
+        createdAt: row.created_at || new Date().toISOString(),
+      })));
+    } else {
+      // Fallback: empty -> KPIs will still compute from journal entries
+      setChartOfAccounts([]);
+    }
 
-      // Load Journal Entries
-      const entries = await loadJournalEntriesFromDB();
+    // Load Journal Entries (DB first, fallback to local)
+    const entries = await loadJournalEntriesFromDB();
+    if (entries && entries.length > 0) {
       setJournalEntries(entries);
+    } else {
+      setJournalEntries(loadJournalEntries());
+    }
 
-      // Load Expenses
-      const { data: expensesData } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('company_id', activeCompanyId)
-        .order('date', { ascending: false });
+    // Load Expenses (DB first, fallback to local)
+    const { data: expensesData } = await supabase
+      .from('expenses')
+      .select('*')
+      .eq('company_id', activeCompanyId)
+      .order('date', { ascending: false });
 
-      if (expensesData) {
-        setExpenses(expensesData.map(exp => ({
-          id: exp.id,
-          date: exp.date,
-          vendor: exp.supplier_id,
-          category: 'General Expense',
-          description: exp.notes || '',
-          amount: Number(exp.total),
-          paymentMethod: 'unpaid',
-          status: exp.status as any,
-          dueDate: exp.due_date,
-          payments: [],
-          createdAt: exp.created_at,
-          updatedAt: exp.updated_at,
-        })));
-      }
+    if (expensesData && expensesData.length > 0) {
+      setExpenses(expensesData.map(exp => ({
+        id: exp.id,
+        date: exp.date,
+        vendor: exp.supplier_id,
+        category: 'General Expense',
+        description: exp.notes || '',
+        amount: Number(exp.total),
+        paymentMethod: 'unpaid',
+        status: exp.status as any,
+        dueDate: exp.due_date,
+        payments: [],
+        createdAt: exp.created_at,
+        updatedAt: exp.updated_at,
+      })));
+    } else {
+      setExpenses(loadExpenses());
+    }
 
-      setLoading(false);
+    setLoading(false);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
       setLoading(false);
