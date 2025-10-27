@@ -224,25 +224,69 @@ export default function Payroll() {
         }
       }
 
-      toast({ title: 'Success', description: 'Payroll record created successfully' });
-      
-      // Optionally send payslip email if SMTP configured
-      if (payrollData && payrollData[0] && payrollSettings?.smtp_host) {
+      // Generate payslip and send email
+      if (payrollData && payrollData[0] && selectedEmployee) {
         try {
           const payrollWithEmployee = {
             ...payrollData[0],
             employees: selectedEmployee,
-            currency_symbol: payrollSettings.currency_symbol || 'R',
+            currency_symbol: payrollSettings?.currency_symbol || 'R',
           };
+          
           const companySettings = {
-            ...activeCompanySettings,
             company_name: activeCompany?.name || '',
+            email: activeCompanySettings?.email || '',
+            phone: activeCompanySettings?.phone || '',
+            address: activeCompanySettings?.address || '',
           };
+          
+          // Generate PDF
           await generatePayslipPDF(payrollWithEmployee, companySettings);
-          // Note: Email sending would require implementation of the send-payslip-email edge function
+          
+          // Send email notification (simplified - no attachment for now)
+          try {
+            const { error: emailError } = await supabase.functions.invoke('send-payslip-email', {
+              body: {
+                employeeEmail: selectedEmployee.email,
+                employeeName: `${selectedEmployee.first_name} ${selectedEmployee.last_name}`,
+                periodStart: formData.period_start,
+                periodEnd: formData.period_end,
+                netSalary: calculations.net_salary,
+                currencySymbol: payrollSettings?.currency_symbol || 'R',
+              },
+            });
+
+            if (emailError) {
+              console.error('Email error:', emailError);
+              toast({
+                title: 'Partial Success',
+                description: 'Payroll created but email notification failed',
+                variant: 'destructive',
+              });
+            } else {
+              toast({ 
+                title: 'Success', 
+                description: `Payroll created and email sent to ${selectedEmployee.email}` 
+              });
+            }
+          } catch (emailError) {
+            console.error('Email sending error:', emailError);
+            toast({
+              title: 'Partial Success',
+              description: 'Payroll created but email notification failed',
+              variant: 'destructive',
+            });
+          }
         } catch (error) {
           console.error('Error generating payslip:', error);
+          toast({
+            title: 'Partial Success',
+            description: 'Payroll created but payslip generation failed',
+            variant: 'destructive',
+          });
         }
+      } else {
+        toast({ title: 'Success', description: 'Payroll record created successfully' });
       }
       
       setShowDialog(false);
@@ -541,7 +585,7 @@ export default function Payroll() {
                   <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
                     Cancel
                   </Button>
-                  <Button type="submit">Create Payroll</Button>
+                  <Button type="submit">Create Payroll & Send Email</Button>
                 </div>
               </form>
             </DialogContent>
