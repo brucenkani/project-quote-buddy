@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Plus } from 'lucide-react';
 import { Contact, ContactType } from '@/types/contacts';
-import { loadContacts, saveContact } from '@/utils/contactsStorage';
+import { useContacts } from '@/contexts/ContactsContext';
 
 interface ContactSelectorProps {
   type: ContactType;
@@ -17,7 +17,8 @@ interface ContactSelectorProps {
 }
 
 export function ContactSelector({ type, value, onSelect, placeholder }: ContactSelectorProps) {
-  const [contacts, setContacts] = useState<Contact[]>(loadContacts().filter(c => c.type === type));
+  const { contacts: allContacts, saveContact, refreshContacts } = useContacts();
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -28,7 +29,11 @@ export function ContactSelector({ type, value, onSelect, placeholder }: ContactS
     notes: '',
   });
 
-  const handleCreateContact = () => {
+  useEffect(() => {
+    setContacts(allContacts.filter(c => c.type === type));
+  }, [allContacts, type]);
+
+  const handleCreateContact = async () => {
     if (!formData.name) return;
 
     const newContact: Contact = {
@@ -44,8 +49,8 @@ export function ContactSelector({ type, value, onSelect, placeholder }: ContactS
       updatedAt: new Date().toISOString(),
     };
 
-    saveContact(newContact);
-    setContacts(loadContacts().filter(c => c.type === type));
+    await saveContact(newContact);
+    await refreshContacts();
     onSelect(newContact);
     setIsDialogOpen(false);
     setFormData({ name: '', email: '', phone: '', address: '', taxId: '', notes: '' });
