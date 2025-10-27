@@ -42,8 +42,26 @@ export default function LandingSettings() {
   });
   const [editedBrackets, setEditedBrackets] = useState<any[]>([]);
   const [isOwner, setIsOwner] = useState(false);
+  // Local state for age-based thresholds/rebates to allow editing even if the rows don't exist yet
+  const [ageThresholds, setAgeThresholds] = useState<Record<string, { threshold: number; rebate: number; id?: string }>>({
+    under_65: { threshold: 0, rebate: 0 },
+    '65_to_75': { threshold: 0, rebate: 0 },
+    over_75: { threshold: 0, rebate: 0 },
+  });
   useEffect(() => {
     setEditedBrackets(taxBrackets.map((b) => ({ ...b })));
+    // Build a quick lookup map for age thresholds/rebates from fetched brackets
+    const map: Record<string, { threshold: number; rebate: number; id?: string }> = {
+      under_65: { threshold: 0, rebate: 0 },
+      '65_to_75': { threshold: 0, rebate: 0 },
+      over_75: { threshold: 0, rebate: 0 },
+    };
+    taxBrackets.forEach((b) => {
+      if (b.bracket_min === 0 && (b.age_group === 'under_65' || b.age_group === '65_to_75' || b.age_group === 'over_75')) {
+        map[b.age_group] = { threshold: b.threshold ?? 0, rebate: b.rebate ?? 0, id: b.id };
+      }
+    });
+    setAgeThresholds(map);
   }, [taxBrackets]);
   // Load company settings when active company changes
   useEffect(() => {
@@ -371,6 +389,50 @@ export default function LandingSettings() {
       toast({ title: 'Saved', description: 'Tax brackets updated successfully.' });
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to save tax brackets', variant: 'destructive' });
+    }
+  };
+
+  const handleSaveAgeThresholds = async () => {
+    if (!isOwner) {
+      toast({ title: 'Permission denied', description: 'Only owners can manage tax brackets.', variant: 'destructive' });
+      return;
+    }
+    if (!payrollSettings || !activeCompanySettings) return;
+    const year = payrollSettings.current_tax_year;
+    const country = activeCompanySettings.country || 'ZA';
+    const groups: Array<'under_65' | '65_to_75' | 'over_75'> = ['under_65', '65_to_75', 'over_75'];
+    try {
+      await Promise.all(
+        groups.map(async (g) => {
+          const vals = ageThresholds[g] || { threshold: 0, rebate: 0 };
+          const existing = taxBrackets.find((b) => b.age_group === g && b.bracket_min === 0);
+          if (existing) {
+            await supabase
+              .from('tax_brackets')
+              .update({ threshold: vals.threshold, rebate: vals.rebate })
+              .eq('id', existing.id);
+          } else {
+            await supabase
+              .from('tax_brackets')
+              .insert([
+                {
+                  age_group: g,
+                  bracket_min: 0,
+                  bracket_max: null,
+                  rate: 0,
+                  threshold: vals.threshold,
+                  rebate: vals.rebate,
+                  year,
+                  country,
+                },
+              ]);
+          }
+        })
+      );
+      await loadTaxBrackets(country, year);
+      toast({ title: 'Saved', description: 'Thresholds & rebates saved.' });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to save thresholds & rebates', variant: 'destructive' });
     }
   };
 
@@ -1402,51 +1464,55 @@ export default function LandingSettings() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {[
-                        { id: 'under_65', label: 'Under 65' },
-                        { id: '65_to_75', label: '65 to 75' },
-                        { id: 'over_75', label: 'Over 75' },
-                      ].map((g) => {
-                        const row = editedBrackets.find((b) => b.age_group === g.id && b.bracket_min === 0);
-                        return (
-                          <div key={g.id} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center p-3 border rounded-lg">
-                            <div>
-                              <Label className="text-xs">Age Group</Label>
-                              <Input value={g.label} disabled />
-                            </div>
-                            <div>
-                              <Label className="text-xs">Tax Threshold (R)</Label>
-                              <Input
-                                type="number"
-                                value={row?.threshold ?? 0}
-                                onChange={(e) => row && handleBracketFieldChange(row.id, 'threshold', Number(e.target.value))}
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-xs">Tax Rebate (R)</Label>
-                              <Input
-                                type="number"
-                                value={row?.rebate ?? 0}
-                                onChange={(e) => row && handleBracketFieldChange(row.id, 'rebate', Number(e.target.value))}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-                      <div className="flex justify-end">
-                        <Button onClick={handleSaveBrackets}>Save Thresholds & Rebates</Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+                       {[
+                         { id: 'under_65', label: 'Under 65' },
+                         { id: '65_to_75', label: '65 to 75' },
+                         { id: 'over_75', label: 'Over 75' },
+                       ].map((g) => {
+                         const vals = ageThresholds[g.id] || { threshold: 0, rebate: 0 };
+                         return (
+                           <div key={g.id} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center p-3 border rounded-lg">
+                             <div>
+                               <Label className="text-xs">Age Group</Label>
+                               <Input value={g.label} disabled />
+                             </div>
+                             <div>
+                               <Label className="text-xs">Tax Threshold (R)</Label>
+                               <Input
+                                 type="number"
+                                 value={vals.threshold}
+                                 onChange={(e) => setAgeThresholds(prev => ({ ...prev, [g.id]: { ...prev[g.id], threshold: Number(e.target.value) }}))}
+                               />
+                             </div>
+                             <div>
+                               <Label className="text-xs">Tax Rebate (R)</Label>
+                               <Input
+                                 type="number"
+                                 value={vals.rebate}
+                                 onChange={(e) => setAgeThresholds(prev => ({ ...prev, [g.id]: { ...prev[g.id], rebate: Number(e.target.value) }}))}
+                                 disabled={!isOwner}
+                               />
+                             </div>
+                           </div>
+                         );
+                       })}
+                       <div className="flex justify-end">
+                         <Button onClick={handleSaveAgeThresholds} disabled={!isOwner} title={!isOwner ? 'Only owners can manage tax brackets' : undefined}>Save Thresholds & Rebates</Button>
+                         {!isOwner && (
+                           <p className="text-xs text-muted-foreground">Only owners can manage tax tables.</p>
+                         )}
+                       </div>
+                     </CardContent>
+                   </Card>
+                 )}
 
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
-      
-      <CreateCompanyDialog open={showCreateCompanyDialog} onOpenChange={setShowCreateCompanyDialog} />
-    </div>
-  );
-}
+               </>
+             )}
+           </TabsContent>
+         </Tabs>
+       </div>
+       
+       <CreateCompanyDialog open={showCreateCompanyDialog} onOpenChange={setShowCreateCompanyDialog} />
+     </div>
+   );
+ }
