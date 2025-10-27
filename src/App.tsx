@@ -32,7 +32,7 @@ import PurchaseHistory from "./pages/PurchaseHistory";
 import PurchasePreview from "./pages/PurchasePreview";
 import PurchasePrint from "./pages/PurchasePrint";
 import PurchasePayment from "./pages/PurchasePayment";
-import CompanySettings from "./pages/CompanySettings";
+
 import Invoices from "./pages/Invoices";
 import InvoiceBuilder from "./pages/InvoiceBuilder";
 import InvoicePayment from "./pages/InvoicePayment";
@@ -133,7 +133,7 @@ const App = () => (
           <Route path="/purchase-preview/:id" element={<ProtectedRoute><PurchasePreview /></ProtectedRoute>} />
           <Route path="/purchase-print/:id" element={<ProtectedRoute><PurchasePrint /></ProtectedRoute>} />
           <Route path="/purchase-payment/:id" element={<ProtectedRoute><PurchasePayment /></ProtectedRoute>} />
-          <Route path="/company-settings" element={<ProtectedRoute><CompanySettings /></ProtectedRoute>} />
+          <Route path="/company-settings" element={<ProtectedRoute><LandingSettings /></ProtectedRoute>} />
           <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
           <Route path="/invoices/new" element={<ProtectedRoute><InvoiceBuilder /></ProtectedRoute>} />
           <Route path="/invoices/:id" element={<ProtectedRoute><InvoiceBuilder /></ProtectedRoute>} />
