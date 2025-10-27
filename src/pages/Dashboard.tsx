@@ -1,11 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FileDown, Calendar, FileSpreadsheet } from 'lucide-react';
-import { loadChartOfAccounts } from '@/utils/chartOfAccountsStorage';
-import { loadJournalEntries, loadExpenses } from '@/utils/accountingStorage';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
 import { KPIDashboard } from '@/components/reports/KPIDashboard';
@@ -13,6 +11,10 @@ import { calculateEnhancedKPIs } from '@/utils/financialStatements';
 import { generateDashboardPDF } from '@/utils/dashboardPDFGenerator';
 import { formatLocalISO } from '@/utils/date';
 import { generateKPIBreakdownPDF, generateKPIBreakdownExcel } from '@/utils/kpiBreakdownGenerator';
+import { supabase } from '@/integrations/supabase/client';
+import type { ChartAccount } from '@/types/chartOfAccounts';
+import type { Expense } from '@/types/accounting';
+import { loadJournalEntriesFromDB } from '@/utils/accountingStorage';
 import {
   Dialog,
   DialogContent,
