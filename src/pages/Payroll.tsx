@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Download, Eye, Users } from 'lucide-react';
+import { Plus, Download, Eye, Users, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,10 +30,14 @@ export default function Payroll() {
   const navigate = useNavigate();
   const { activeCompany, activeCompanySettings } = useCompany();
   const [payrollRecords, setPayrollRecords] = useState<any[]>([]);
+  const [filteredRecords, setFilteredRecords] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [taxBrackets, setTaxBrackets] = useState<any[]>([]);
   const [payrollSettings, setPayrollSettings] = useState<any>(null);
   const [showDialog, setShowDialog] = useState(false);
+  const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>('all');
+  const [dateRangeStart, setDateRangeStart] = useState<string>('');
+  const [dateRangeEnd, setDateRangeEnd] = useState<string>('');
   const [formData, setFormData] = useState({
     employee_id: '',
     period_start: '',
@@ -51,6 +56,10 @@ export default function Payroll() {
     checkAuth();
     loadData();
   }, []);
+
+  useEffect(() => {
+    filterRecords();
+  }, [selectedEmployeeFilter, dateRangeStart, dateRangeEnd, payrollRecords]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -90,6 +99,25 @@ export default function Payroll() {
     if (!employeesResult.error) {
       setEmployees(employeesResult.data || []);
     }
+  };
+
+  const filterRecords = () => {
+    let filtered = [...payrollRecords];
+
+    // Filter by employee
+    if (selectedEmployeeFilter !== 'all') {
+      filtered = filtered.filter(record => record.employee_id === selectedEmployeeFilter);
+    }
+
+    // Filter by date range
+    if (dateRangeStart) {
+      filtered = filtered.filter(record => new Date(record.period_start) >= new Date(dateRangeStart));
+    }
+    if (dateRangeEnd) {
+      filtered = filtered.filter(record => new Date(record.period_end) <= new Date(dateRangeEnd));
+    }
+
+    setFilteredRecords(filtered);
   };
 
   const calculatePayroll = () => {
@@ -249,6 +277,18 @@ export default function Payroll() {
         company_name: activeCompany?.name || '',
       };
       await generatePayslipPDF(record, companySettings);
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleDeletePayroll = async (id: string) => {
+    try {
+      const { error } = await supabase.from('payroll').delete().eq('id', id);
+      if (error) throw error;
+      
+      toast({ title: 'Success', description: 'Payroll record deleted' });
+      loadData();
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     }
@@ -531,6 +571,42 @@ export default function Payroll() {
             <CardTitle>Payroll Records</CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="space-y-2">
+                <Label htmlFor="employee-filter">Filter by Employee</Label>
+                <Select value={selectedEmployeeFilter} onValueChange={setSelectedEmployeeFilter}>
+                  <SelectTrigger id="employee-filter">
+                    <SelectValue placeholder="Select employee" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Employees</SelectItem>
+                    {employees.map((emp) => (
+                      <SelectItem key={emp.id} value={emp.id}>
+                        {emp.first_name} {emp.last_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="date-start">Date From</Label>
+                <Input
+                  id="date-start"
+                  type="date"
+                  value={dateRangeStart}
+                  onChange={(e) => setDateRangeStart(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="date-end">Date To</Label>
+                <Input
+                  id="date-end"
+                  type="date"
+                  value={dateRangeEnd}
+                  onChange={(e) => setDateRangeEnd(e.target.value)}
+                />
+              </div>
+            </div>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -545,7 +621,7 @@ export default function Payroll() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {payrollRecords.map((record) => (
+                {filteredRecords.map((record) => (
                   <TableRow key={record.id}>
                     <TableCell>
                       {record.employees.first_name} {record.employees.last_name}
@@ -573,14 +649,37 @@ export default function Payroll() {
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDownloadPayslip(record)}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Payslip
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDownloadPayslip(record)}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Payslip
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Payroll Record</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete this payroll record for {record.employees.first_name} {record.employees.last_name}? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeletePayroll(record.id)}>
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -48,17 +48,51 @@ export default function LeaveManagement() {
   };
 
   const loadData = async () => {
-    const [requestsResult, typesResult, employeesResult, balancesResult] = await Promise.all([
+    const [requestsResult, typesResult, employeesResult] = await Promise.all([
       supabase.from('leave_requests').select('*, employees(*), leave_types(*)').order('created_at', { ascending: false }),
       supabase.from('leave_types').select('*'),
       supabase.from('employees').select('*').eq('status', 'active'),
-      supabase.from('leave_balances').select('*, employees(*), leave_types(*)'),
     ]);
 
     if (!requestsResult.error) setLeaveRequests(requestsResult.data || []);
     if (!typesResult.error) setLeaveTypes(typesResult.data || []);
-    if (!employeesResult.error) setEmployees(employeesResult.data || []);
-    if (!balancesResult.error) setLeaveBalances(balancesResult.data || []);
+    if (!employeesResult.error) {
+      setEmployees(employeesResult.data || []);
+      
+      // Calculate leave balances dynamically
+      const currentYear = new Date().getFullYear();
+      const balances: any[] = [];
+      
+      for (const employee of employeesResult.data || []) {
+        for (const leaveType of typesResult.data || []) {
+          const usedDays = (requestsResult.data || [])
+            .filter(req => 
+              req.employee_id === employee.id && 
+              req.leave_type_id === leaveType.id &&
+              req.status === 'approved' &&
+              new Date(req.start_date).getFullYear() === currentYear
+            )
+            .reduce((sum, req) => sum + Number(req.days_requested), 0);
+          
+          const totalDays = leaveType.days_per_year;
+          const availableDays = totalDays - usedDays;
+          
+          balances.push({
+            id: `${employee.id}-${leaveType.id}`,
+            employee_id: employee.id,
+            leave_type_id: leaveType.id,
+            employees: employee,
+            leave_types: leaveType,
+            year: currentYear,
+            total_days: totalDays,
+            used_days: usedDays,
+            available_days: availableDays,
+          });
+        }
+      }
+      
+      setLeaveBalances(balances);
+    }
   };
 
   const calculateDays = () => {
@@ -108,28 +142,6 @@ export default function LeaveManagement() {
         .eq('id', requestId);
 
       if (updateError) throw updateError;
-
-      // Update leave balance
-      const currentYear = new Date().getFullYear();
-      const { data: balanceData, error: balanceError } = await supabase
-        .from('leave_balances')
-        .select('*')
-        .eq('employee_id', employeeId)
-        .eq('leave_type_id', leaveTypeId)
-        .eq('year', currentYear)
-        .maybeSingle();
-
-      if (balanceData) {
-        const { error: updateBalanceError } = await supabase
-          .from('leave_balances')
-          .update({
-            used_days: Number(balanceData.used_days) + daysRequested,
-            available_days: Number(balanceData.available_days) - daysRequested,
-          })
-          .eq('id', balanceData.id);
-
-        if (updateBalanceError) throw updateBalanceError;
-      }
 
       toast({ title: 'Success', description: 'Leave request approved' });
       loadData();
