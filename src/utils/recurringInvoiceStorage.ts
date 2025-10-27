@@ -62,7 +62,7 @@ export const saveRecurringInvoice = async (invoice: RecurringInvoice): Promise<v
         id: invoice.id,
         user_id: userId,
         company_id: memberData.company_id,
-        customer_id: null,
+        customer_id: invoice.invoiceTemplate.projectDetails.clientName,
         frequency: invoice.frequency,
         next_invoice_date: invoice.nextGenerationDate,
         subtotal: invoice.invoiceTemplate.subtotal,
