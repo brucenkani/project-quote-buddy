@@ -24,6 +24,7 @@ export default function LeaveManagement() {
   const [leaveBalances, setLeaveBalances] = useState<any[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>('all');
   const [formData, setFormData] = useState({
     employee_id: '',
     leave_type_id: '',
@@ -355,6 +356,22 @@ export default function LeaveManagement() {
                 <CardTitle>Leave Balances</CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="mb-4">
+                  <Label htmlFor="employee-filter">Filter by Employee</Label>
+                  <Select value={selectedEmployeeFilter} onValueChange={setSelectedEmployeeFilter}>
+                    <SelectTrigger id="employee-filter" className="w-64">
+                      <SelectValue placeholder="Select employee" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Employees</SelectItem>
+                      {employees.map((emp) => (
+                        <SelectItem key={emp.id} value={emp.id}>
+                          {emp.first_name} {emp.last_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -367,18 +384,20 @@ export default function LeaveManagement() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {leaveBalances.map((balance) => (
-                      <TableRow key={balance.id}>
-                        <TableCell>
-                          {balance.employees.first_name} {balance.employees.last_name}
-                        </TableCell>
-                        <TableCell>{balance.leave_types.name}</TableCell>
-                        <TableCell>{balance.year}</TableCell>
-                        <TableCell>{balance.total_days}</TableCell>
-                        <TableCell>{balance.used_days}</TableCell>
-                        <TableCell>{balance.available_days}</TableCell>
-                      </TableRow>
-                    ))}
+                    {leaveBalances
+                      .filter((balance) => selectedEmployeeFilter === 'all' || balance.employee_id === selectedEmployeeFilter)
+                      .map((balance) => (
+                        <TableRow key={balance.id}>
+                          <TableCell>
+                            {balance.employees.first_name} {balance.employees.last_name}
+                          </TableCell>
+                          <TableCell>{balance.leave_types.name}</TableCell>
+                          <TableCell>{balance.year}</TableCell>
+                          <TableCell>{balance.total_days}</TableCell>
+                          <TableCell>{balance.used_days}</TableCell>
+                          <TableCell>{balance.available_days}</TableCell>
+                        </TableRow>
+                      ))}
                   </TableBody>
                 </Table>
               </CardContent>

@@ -202,8 +202,16 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
         };
         
         try {
+          // Get company settings with proper mapping
+          const companySettings = {
+            company_name: activeCompanySettings?.company_name || '',
+            email: activeCompanySettings?.email || '',
+            phone: activeCompanySettings?.phone || '',
+            address: activeCompanySettings?.address || '',
+          };
+          
           // Generate PDF and get blob
-          await generatePayslipPDF(payrollWithEmployee, activeCompanySettings || {});
+          await generatePayslipPDF(payrollWithEmployee, companySettings);
           // Note: generatePayslipPDF downloads the PDF directly, so we skip email for now
           // In production, you would modify generatePayslipPDF to return the blob
         } catch (error) {
