@@ -65,15 +65,42 @@ export default function PayrollSettings() {
   };
 
   const loadData = async () => {
-    // Load payroll settings
-    const { data: settingsData } = await supabase
-      .from('payroll_settings')
-      .select('*')
-      .single();
+    try {
+      // Load payroll settings
+      let { data: settingsData, error } = await supabase
+        .from('payroll_settings')
+        .select('*')
+        .maybeSingle();
 
-    if (settingsData) {
-      setSettings(settingsData);
-      loadTaxBrackets(settingsData.country, settingsData.current_tax_year);
+      // If no settings exist, create default ones
+      if (!settingsData) {
+        const { data: newSettings, error: insertError } = await supabase
+          .from('payroll_settings')
+          .insert([{
+            country: 'ZA',
+            currency: 'ZAR',
+            currency_symbol: 'R',
+            current_tax_year: new Date().getFullYear()
+          }])
+          .select()
+          .single();
+
+        if (insertError) {
+          throw insertError;
+        }
+        settingsData = newSettings;
+      }
+
+      if (settingsData) {
+        setSettings(settingsData);
+        loadTaxBrackets(settingsData.country, settingsData.current_tax_year);
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to load payroll settings',
+        variant: 'destructive',
+      });
     }
   };
 

@@ -72,6 +72,28 @@ export default function Employees() {
     }
   };
 
+  const generateNextEmployeeNumber = async (companyId: string): Promise<string> => {
+    // Get the highest employee number for this company
+    const { data, error } = await supabase
+      .from('employees')
+      .select('employee_number')
+      .eq('company_id', companyId)
+      .order('employee_number', { ascending: false })
+      .limit(1);
+
+    if (error || !data || data.length === 0) {
+      return '0001';
+    }
+
+    // Extract numeric part and increment
+    const lastNumber = data[0].employee_number;
+    const numericPart = parseInt(lastNumber.replace(/\D/g, '')) || 0;
+    const nextNumber = numericPart + 1;
+    
+    // Format with leading zeros
+    return nextNumber.toString().padStart(4, '0');
+  };
+
   const loadEmployees = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
@@ -126,8 +148,16 @@ export default function Employees() {
 
       if (!companyMembers) throw new Error('No company found for user');
 
+      let employeeNumber = formData.employee_number;
+      
+      // Auto-generate employee number for new employees if not provided
+      if (!editingEmployee && !employeeNumber) {
+        employeeNumber = await generateNextEmployeeNumber(companyMembers.company_id);
+      }
+
       const dataToSubmit = {
         ...formData,
+        employee_number: employeeNumber,
         user_id: user.id,
         company_id: companyMembers.company_id,
         basic_salary: parseFloat(formData.basic_salary),
@@ -267,7 +297,7 @@ export default function Employees() {
                       id="employee_number"
                       value={formData.employee_number}
                       onChange={(e) => setFormData({ ...formData, employee_number: e.target.value })}
-                      required
+                      placeholder={editingEmployee ? '' : 'Auto-generated if left blank'}
                     />
                   </div>
                   <div className="space-y-2">

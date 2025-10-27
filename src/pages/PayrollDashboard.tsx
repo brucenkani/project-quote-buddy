@@ -53,7 +53,7 @@ export default function PayrollDashboard() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card>
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/payroll/employees')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -66,7 +66,7 @@ export default function PayrollDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/payroll/payroll')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending Payroll</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -79,7 +79,7 @@ export default function PayrollDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/payroll/leave')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending Leave</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -92,7 +92,7 @@ export default function PayrollDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/payroll/payroll')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Reports</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
