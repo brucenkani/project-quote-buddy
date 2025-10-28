@@ -54,7 +54,7 @@ export const recordTradingPurchase = (purchase: Purchase): JournalEntry => {
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
-      account: '1320 - Finished Goods',
+      account: '1110 - Finished Goods',
       accountType: 'current-asset',
       debit: purchase.total,
       credit: 0,
@@ -62,7 +62,7 @@ export const recordTradingPurchase = (purchase: Purchase): JournalEntry => {
     },
     {
       id: crypto.randomUUID(),
-      account: '2110 - Trade Creditors',
+      account: '3101 - Trade Creditors',
       accountType: 'current-liability',
       debit: 0,
       credit: purchase.total,
@@ -143,7 +143,7 @@ export const recordManufacturingPurchase = (purchase: Purchase): JournalEntry =>
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
-      account: '1310 - Raw Materials',
+      account: '1109 - Raw Materials',
       accountType: 'current-asset',
       debit: purchase.total,
       credit: 0,
@@ -221,7 +221,7 @@ export const recordProductionCompletion = (
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
-      account: '1320 - Finished Goods',
+      account: '1110 - Finished Goods',
       accountType: 'current-asset',
       debit: productionCost,
       credit: 0,
@@ -257,15 +257,15 @@ export const recordCOGS = (
   companyType: CompanyType
 ): JournalEntry => {
   const inventoryAccount = companyType === 'trading' 
-    ? '1320 - Finished Goods'
+    ? '1110 - Finished Goods'
     : companyType === 'manufacturer'
-    ? '1320 - Finished Goods'
+    ? '1110 - Finished Goods'
     : 'Work-in-Progress';
 
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
-      account: '5100 - Cost of Goods Sold',
+      account: '7100 - Cost of Goods Sold',
       accountType: 'expense',
       debit: cost,
       credit: 0,

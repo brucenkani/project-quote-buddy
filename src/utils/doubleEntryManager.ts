@@ -57,7 +57,7 @@ export const recordInvoice = (invoice: Invoice): JournalEntry => {
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
-      account: '1210 - Trade Debtors',
+      account: '1106 - Trade Debtors',
       accountType: 'current-asset',
       debit: invoice.total,
       credit: 0,
@@ -65,7 +65,7 @@ export const recordInvoice = (invoice: Invoice): JournalEntry => {
     },
     {
       id: crypto.randomUUID(),
-      account: '4100 - Revenue',
+      account: '6100 - Revenue',
       accountType: 'revenue',
       debit: 0,
       credit: invoice.subtotal,
@@ -77,7 +77,7 @@ export const recordInvoice = (invoice: Invoice): JournalEntry => {
   if (invoice.discount > 0) {
     entries.push({
       id: crypto.randomUUID(),
-      account: '5100 - Cost of Goods Sold',
+      account: '7100 - Cost of Goods Sold',
       accountType: 'expense',
       debit: invoice.discount,
       credit: 0,
@@ -89,7 +89,7 @@ export const recordInvoice = (invoice: Invoice): JournalEntry => {
   if (invoice.taxAmount > 0) {
     entries.push({
       id: crypto.randomUUID(),
-      account: '2210 - VAT Payable',
+      account: '3104 - VAT Payable',
       accountType: 'current-liability',
       debit: 0,
       credit: invoice.taxAmount,
@@ -114,7 +114,7 @@ export const recordCreditNote = (creditNote: Invoice): JournalEntry => {
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
-      account: '4100 - Revenue',
+      account: '6100 - Revenue',
       accountType: 'revenue',
       debit: amountSubtotal,
       credit: 0,
@@ -125,7 +125,7 @@ export const recordCreditNote = (creditNote: Invoice): JournalEntry => {
   if (amountTax > 0) {
     entries.push({
       id: crypto.randomUUID(),
-      account: '2210 - VAT Payable',
+      account: '3104 - VAT Payable',
       accountType: 'current-liability',
       debit: amountTax,
       credit: 0,
@@ -135,7 +135,7 @@ export const recordCreditNote = (creditNote: Invoice): JournalEntry => {
 
   entries.push({
     id: crypto.randomUUID(),
-    account: '1210 - Trade Debtors',
+    account: '1106 - Trade Debtors',
     accountType: 'current-asset',
     debit: 0,
     credit: amountTotal,
@@ -174,7 +174,7 @@ export const recordPaymentReceived = (
     },
     {
       id: crypto.randomUUID(),
-      account: '1210 - Trade Debtors',
+      account: '1106 - Trade Debtors',
       accountType: 'current-asset',
       debit: 0,
       credit: invoice.total,

@@ -220,8 +220,8 @@ const createPurchaseJournalEntry = async (
       .from('journal_entry_lines')
       .insert({
         journal_entry_id: journal.id,
-        account_id: '1500', // Inventory account
-        account_name: 'Inventory',
+        account_id: '1108', // Inventory account
+        account_name: '1108 - Inventory',
         debit: purchase.total,
         credit: 0,
       });
@@ -231,8 +231,8 @@ const createPurchaseJournalEntry = async (
       .from('journal_entry_lines')
       .insert({
         journal_entry_id: journal.id,
-        account_id: '2100', // Accounts Payable
-        account_name: `Accounts Payable - ${purchase.vendor}`,
+        account_id: '3100', // Accounts Payable
+        account_name: '3100 - Trade and Other Payables',
         debit: 0,
         credit: purchase.total,
       });
