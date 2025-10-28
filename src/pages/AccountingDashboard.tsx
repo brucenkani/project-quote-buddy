@@ -50,7 +50,7 @@ export default function AccountingDashboard() {
       title: 'Create a Supplier Invoice',
       description: 'Purchase items from a supplier.',
       icon: ShoppingCart,
-      path: '/purchases/new',
+      path: '/purchases',
       iconColor: 'text-amber-600',
       iconBg: 'bg-amber-100'
     },
@@ -95,31 +95,15 @@ export default function AccountingDashboard() {
       iconBg: 'bg-blue-100'
     },
     {
-      title: 'Profit and Loss',
-      description: 'View your Profit and Loss report.',
-      icon: TrendingUp,
+      title: 'Reports',
+      description: 'View Profit and Loss, Balance Sheet, VAT returns and more.',
+      icon: FileCheck,
       path: '/reports',
       iconColor: 'text-indigo-600',
       iconBg: 'bg-indigo-100'
     },
     {
-      title: 'Balance Sheet',
-      description: 'Balance sheet report.',
-      icon: Scale,
-      path: '/reports',
-      iconColor: 'text-slate-600',
-      iconBg: 'bg-slate-100'
-    },
-    {
-      title: 'Prepare your VAT Return',
-      description: 'VAT returns and VAT reporting.',
-      icon: FileCheck,
-      path: '/reports',
-      iconColor: 'text-red-600',
-      iconBg: 'bg-red-100'
-    },
-    {
-      title: 'Change Company Settings',
+      title: 'Accounting Settings',
       description: 'Manage branding, financial years, VAT and so on.',
       icon: Settings,
       path: '/settings',
