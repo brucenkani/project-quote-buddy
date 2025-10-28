@@ -36,8 +36,29 @@ export const loadInvoices = async (): Promise<Invoice[]> => {
 
     if (error) throw error;
 
-    // Transform and recalculate status
-    return (invoices || []).map(invoice => {
+    // Load all payments for this company
+    const { data: paymentsData } = await supabase
+      .from('invoice_payments')
+      .select('*')
+      .eq('company_id', memberData.company_id);
+
+    // Group payments by invoice_id
+    const paymentsByInvoice = (paymentsData || []).reduce((acc, payment) => {
+      if (!acc[payment.invoice_id]) {
+        acc[payment.invoice_id] = [];
+      }
+      acc[payment.invoice_id].push({
+        id: payment.id,
+        amount: Number(payment.amount),
+        date: payment.date,
+        method: payment.method,
+        reference: payment.reference || '',
+      });
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    // Transform invoices
+    const allInvoices = (invoices || []).map(invoice => {
       const transformed: Invoice = {
         id: invoice.id,
         invoiceNumber: invoice.invoice_number,
@@ -62,7 +83,7 @@ export const loadInvoices = async (): Promise<Invoice[]> => {
         paymentTerms: invoice.terms || '',
         notes: invoice.notes || '',
         type: 'invoice',
-        payments: [],
+        payments: paymentsByInvoice[invoice.id] || [],
         creditNotes: [],
         projectDetails: {
           clientName: invoice.customer_id || '',
@@ -73,11 +94,14 @@ export const loadInvoices = async (): Promise<Invoice[]> => {
         updatedAt: invoice.updated_at,
       };
 
-      return {
-        ...transformed,
-        status: calculateInvoiceStatus(transformed, []),
-      };
+      return transformed;
     });
+
+    // Recalculate statuses with full invoice context
+    return allInvoices.map(invoice => ({
+      ...invoice,
+      status: calculateInvoiceStatus(invoice, allInvoices),
+    }));
   } catch (error) {
     console.error('Failed to load invoices:', error);
     return [];
@@ -147,6 +171,33 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
         );
 
       if (lineItemsError) throw lineItemsError;
+    }
+
+    // Save invoice payments to database
+    if (invoice.payments && invoice.payments.length > 0) {
+      // Delete existing payments
+      await supabase
+        .from('invoice_payments')
+        .delete()
+        .eq('invoice_id', invoice.id);
+
+      // Insert new payments
+      const { error: paymentsError } = await supabase
+        .from('invoice_payments')
+        .insert(
+          invoice.payments.map(payment => ({
+            id: payment.id,
+            invoice_id: invoice.id,
+            user_id: userId,
+            company_id: memberData.company_id,
+            amount: payment.amount,
+            date: payment.date,
+            method: payment.method,
+            reference: payment.reference || null,
+          }))
+        );
+
+      if (paymentsError) throw paymentsError;
     }
 
 
