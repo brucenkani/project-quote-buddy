@@ -933,6 +933,7 @@ export type Database = {
       expense_payments: {
         Row: {
           amount: number
+          bank_account_id: string | null
           company_id: string | null
           created_at: string | null
           date: string
@@ -945,6 +946,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          bank_account_id?: string | null
           company_id?: string | null
           created_at?: string | null
           date: string
@@ -957,6 +959,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          bank_account_id?: string | null
           company_id?: string | null
           created_at?: string | null
           date?: string
@@ -968,6 +971,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "expense_payments_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "expense_payments_company_id_fkey"
             columns: ["company_id"]
@@ -1978,6 +1988,7 @@ export type Database = {
       purchase_payments: {
         Row: {
           amount: number
+          bank_account_id: string | null
           company_id: string | null
           created_at: string | null
           date: string
@@ -1990,6 +2001,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          bank_account_id?: string | null
           company_id?: string | null
           created_at?: string | null
           date: string
@@ -2002,6 +2014,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          bank_account_id?: string | null
           company_id?: string | null
           created_at?: string | null
           date?: string
@@ -2013,6 +2026,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "purchase_payments_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchase_payments_company_id_fkey"
             columns: ["company_id"]

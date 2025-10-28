@@ -16,15 +16,19 @@ import type { PurchasePayment, PaymentMethod } from '@/types/purchasePayment';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { saveJournalEntry } from '@/utils/accountingStorage';
 import { JournalEntry, JournalEntryLine } from '@/types/accounting';
+import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
 
 export default function PurchasePayment() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { settings } = useSettings();
+  const { activeCompany } = useCompany();
   const [purchase, setPurchase] = useState<any>(null);
   const [payments, setPayments] = useState<PurchasePayment[]>([]);
   const [totalPaid, setTotalPaid] = useState(0);
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     amount: 0,
@@ -32,6 +36,7 @@ export default function PurchasePayment() {
     method: 'bank-transfer' as PaymentMethod,
     reference: '',
     notes: '',
+    bankAccountId: '',
   });
 
   useEffect(() => {
@@ -47,9 +52,26 @@ export default function PurchasePayment() {
         setTotalPaid(paid);
         setFormData(prev => ({ ...prev, amount: found.total - paid }));
       }
+
+      // Load bank accounts
+      if (activeCompany) {
+        const { data: accounts } = await supabase
+          .from('bank_accounts')
+          .select('*')
+          .eq('company_id', activeCompany.id)
+          .eq('is_active', true)
+          .order('account_name');
+        
+        if (accounts) {
+          setBankAccounts(accounts);
+          if (accounts.length > 0) {
+            setFormData(prev => ({ ...prev, bankAccountId: accounts[0].id }));
+          }
+        }
+      }
     };
     loadData();
-  }, [id]);
+  }, [id, activeCompany]);
 
   if (!purchase) {
     return (
@@ -84,6 +106,11 @@ export default function PurchasePayment() {
       return;
     }
 
+    if (!formData.bankAccountId) {
+      toast({ title: 'Please select a bank account', variant: 'destructive' });
+      return;
+    }
+
     const payment: PurchasePayment = {
       id: crypto.randomUUID(),
       purchaseId: purchase.id,
@@ -92,6 +119,7 @@ export default function PurchasePayment() {
       method: formData.method,
       reference: formData.reference,
       notes: formData.notes,
+      bankAccountId: formData.bankAccountId,
       createdAt: new Date().toISOString(),
     };
 
@@ -197,6 +225,25 @@ export default function PurchasePayment() {
                       required
                     />
                   </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="bankAccount">Bank Account *</Label>
+                  <Select
+                    value={formData.bankAccountId}
+                    onValueChange={(value) => setFormData({ ...formData, bankAccountId: value })}
+                  >
+                    <SelectTrigger id="bankAccount">
+                      <SelectValue placeholder="Select bank account" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {bankAccounts.map(account => (
+                        <SelectItem key={account.id} value={account.id}>
+                          {account.account_name} - {account.bank_name} ({account.account_number})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

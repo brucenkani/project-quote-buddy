@@ -32,6 +32,7 @@ export const loadPurchasePayments = async (): Promise<PurchasePayment[]> => {
       method: p.method as any,
       reference: p.reference || undefined,
       notes: p.notes || undefined,
+      bankAccountId: p.bank_account_id || undefined,
       createdAt: p.created_at,
     }));
   } catch (error) {
@@ -67,6 +68,7 @@ export const savePurchasePayment = async (payment: PurchasePayment): Promise<voi
         method: payment.method,
         reference: payment.reference || '',
         notes: payment.notes || null,
+        bank_account_id: payment.bankAccountId || null,
       });
 
     if (error) throw error;

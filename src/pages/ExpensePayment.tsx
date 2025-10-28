@@ -13,36 +13,61 @@ import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/contexts/SettingsContext';
 import { calculateExpenseAmountDue } from '@/utils/expenseStatusCalculator';
 import { recordExpensePayment } from '@/utils/doubleEntryManager';
+import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
 
 export default function ExpensePayment() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { id } = useParams();
   const { settings } = useSettings();
+  const { activeCompany } = useCompany();
 
   const [expense, setExpense] = useState<Expense | null>(null);
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [paymentData, setPaymentData] = useState({
     amount: 0,
     paymentMethod: 'bank' as 'cash' | 'bank',
     paymentDate: new Date().toISOString().split('T')[0],
     paymentReference: '',
+    bankAccountId: '',
   });
 
   useEffect(() => {
-    if (id) {
-      const expenses = loadExpenses();
-      const found = expenses.find(exp => exp.id === id);
-      if (found) {
-        setExpense(found);
-        const amountDue = calculateExpenseAmountDue(found);
-        setPaymentData(prev => ({
-          ...prev,
-          amount: amountDue,
-          paymentReference: `PAY-EXP-${found.id.substring(0, 8).toUpperCase()}`,
-        }));
+    const loadData = async () => {
+      if (id) {
+        const expenses = loadExpenses();
+        const found = expenses.find(exp => exp.id === id);
+        if (found) {
+          setExpense(found);
+          const amountDue = calculateExpenseAmountDue(found);
+          setPaymentData(prev => ({
+            ...prev,
+            amount: amountDue,
+            paymentReference: `PAY-EXP-${found.id.substring(0, 8).toUpperCase()}`,
+          }));
+        }
       }
-    }
-  }, [id]);
+
+      // Load bank accounts
+      if (activeCompany) {
+        const { data: accounts } = await supabase
+          .from('bank_accounts')
+          .select('*')
+          .eq('company_id', activeCompany.id)
+          .eq('is_active', true)
+          .order('account_name');
+        
+        if (accounts) {
+          setBankAccounts(accounts);
+          if (accounts.length > 0) {
+            setPaymentData(prev => ({ ...prev, bankAccountId: accounts[0].id }));
+          }
+        }
+      }
+    };
+    loadData();
+  }, [id, activeCompany]);
 
   const handleRecordPayment = () => {
     if (!expense) return;
@@ -54,6 +79,11 @@ export default function ExpensePayment() {
 
     if (!paymentData.paymentDate || !paymentData.paymentReference) {
       toast({ title: 'Please fill in all payment details', variant: 'destructive' });
+      return;
+    }
+
+    if (!paymentData.bankAccountId) {
+      toast({ title: 'Please select a bank account', variant: 'destructive' });
       return;
     }
 
@@ -187,6 +217,27 @@ export default function ExpensePayment() {
                 <p className="text-xs text-muted-foreground">
                   You can enter a partial payment amount
                 </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bankAccount">Bank Account *</Label>
+                <Select
+                  value={paymentData.bankAccountId}
+                  onValueChange={(value) =>
+                    setPaymentData({ ...paymentData, bankAccountId: value })
+                  }
+                >
+                  <SelectTrigger id="bankAccount">
+                    <SelectValue placeholder="Select bank account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bankAccounts.map(account => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.account_name} - {account.bank_name} ({account.account_number})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">

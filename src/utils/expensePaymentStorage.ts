@@ -8,6 +8,7 @@ export interface ExpensePayment {
   method: string;
   reference: string;
   notes?: string;
+  bankAccountId?: string;
 }
 
 export const loadExpensePayments = async (): Promise<ExpensePayment[]> => {
@@ -41,6 +42,7 @@ export const loadExpensePayments = async (): Promise<ExpensePayment[]> => {
       method: p.method,
       reference: p.reference,
       notes: p.notes || undefined,
+      bankAccountId: p.bank_account_id || undefined,
     }));
   } catch (error) {
     console.error('Failed to load expense payments:', error);
@@ -75,6 +77,7 @@ export const saveExpensePayment = async (payment: ExpensePayment): Promise<void>
         method: payment.method,
         reference: payment.reference,
         notes: payment.notes || null,
+        bank_account_id: payment.bankAccountId || null,
       });
 
     if (error) throw error;

@@ -8,5 +8,6 @@ export interface PurchasePayment {
   method: PaymentMethod;
   reference?: string;
   notes?: string;
+  bankAccountId?: string;
   createdAt: string;
 }
