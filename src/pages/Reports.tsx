@@ -63,7 +63,7 @@ export default function Reports() {
               .order('account_number');
 
             if (accountsData && accountsData.length > 0) {
-              setChartOfAccounts(accountsData.map(row => ({
+              const dbAccounts = accountsData.map(row => ({
                 id: row.id,
                 accountNumber: row.account_number,
                 accountName: row.account_name,
@@ -71,7 +71,26 @@ export default function Reports() {
                 isDefault: false,
                 openingBalance: Number(row.opening_balance),
                 createdAt: row.created_at || new Date().toISOString(),
-              })));
+              })) as ChartAccount[];
+
+              // Merge with defaults to ensure all standard accounts exist
+              const existing = new Set(dbAccounts.map(a => a.accountNumber));
+              const merged = [
+                ...dbAccounts,
+                ...defaultChartOfAccounts
+                  .filter(def => !existing.has(def.accountNumber))
+                  .map(def => ({
+                    id: crypto.randomUUID(),
+                    accountNumber: def.accountNumber,
+                    accountName: def.accountName,
+                    accountType: def.accountType,
+                    isDefault: true,
+                    openingBalance: def.openingBalance || 0,
+                    createdAt: new Date().toISOString(),
+                  }) as ChartAccount)
+              ];
+
+              setChartOfAccounts(merged);
             } else {
               // Fallback to standard chart if none in backend
               setChartOfAccounts(defaultChartOfAccounts.map(acc => ({
@@ -256,12 +275,7 @@ export default function Reports() {
 
     const filteredJournalEntries = journalEntries.filter(entry => {
       const entryDate = new Date(entry.date);
-      const hasAccount = entry.entries.some(line => 
-        line.account === account.accountName || 
-        line.account === `${account.accountNumber} - ${account.accountName}` ||
-        line.account.startsWith(account.accountNumber + ' -')
-      );
-      return hasAccount && entryDate >= new Date(dateRange.startDate) && entryDate <= new Date(dateRange.endDate);
+      return entryDate >= new Date(dateRange.startDate) && entryDate <= new Date(dateRange.endDate);
     });
 
     const expenses = loadExpenses().filter(expense => {

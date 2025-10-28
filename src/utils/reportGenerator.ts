@@ -70,8 +70,49 @@ export const generateTrialBalancePDF = (
     };
   }).filter(b => b.balance !== 0);
 
+
+  // Fallback: include lines not present in chart
+  const numbersSet = new Set(accounts.map(a => a.accountNumber));
+  const fallbackMap = new Map<string, { name: string; debit: number; credit: number; type: string }>();
+
+  journalEntries.forEach(entry => {
+    entry.entries.forEach(line => {
+      const num = extractAccountNumber(line.account);
+      if (!numbersSet.has(num)) {
+        const key = num || line.account;
+        const prev = fallbackMap.get(key) || { name: line.account, debit: 0, credit: 0, type: '' };
+        prev.debit += line.debit;
+        prev.credit += line.credit;
+        prev.type = /^[0-9]/.test(num) ? (getAccountTypeFromNumber(num) as any) : 'expense';
+        fallbackMap.set(key, prev);
+      }
+    });
+  });
+
+  expenses.forEach(exp => {
+    const num = extractAccountNumber(exp.category);
+    if (!numbersSet.has(num)) {
+      const key = num || exp.category;
+      const netAmount = exp.includesVAT && exp.vatAmount ? exp.amount - exp.vatAmount : exp.amount;
+      const prev = fallbackMap.get(key) || { name: exp.category, debit: 0, credit: 0, type: '' };
+      prev.debit += netAmount;
+      prev.type = /^[0-9]/.test(num) ? (getAccountTypeFromNumber(num) as any) : 'expense';
+      fallbackMap.set(key, prev);
+    }
+  });
+
+  const allBalances = [
+    ...balances,
+    ...Array.from(fallbackMap.entries()).map(([code, v]) => ({
+      code,
+      name: v.name,
+      type: v.type,
+      balance: v.debit - v.credit,
+    }))
+  ].filter(b => b.balance !== 0);
+
   // Table data - single column showing net balance
-  const tableData = balances.map(b => [
+  const tableData = allBalances.map(b => [
     b.code,
     b.name,
     b.type,
