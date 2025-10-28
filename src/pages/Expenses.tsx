@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,7 @@ export default function Expenses() {
   const { toast } = useToast();
   const { settings } = useSettings();
   const [expenses, setExpenses] = useState<Expense[]>(loadExpenses());
-  const [chartAccounts, setChartAccounts] = useState(loadChartOfAccounts());
+  const [chartAccounts, setChartAccounts] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [showNewAccountDialog, setShowNewAccountDialog] = useState(false);
@@ -50,9 +50,19 @@ export default function Expenses() {
     vatRate: settings.taxRate,
   });
 
+  // Load chart of accounts on mount and when dialog opens
+  useEffect(() => {
+    refreshChartAccounts();
+  }, []);
+
+  const refreshChartAccounts = () => {
+    const accounts = loadChartOfAccounts();
+    setChartAccounts(accounts);
+  };
+
   // Filter expense accounts: 7xxx (Cost of Sales) and 8xxx (Operating Expenses)
   const expenseAccounts = chartAccounts.filter(acc => {
-    const firstDigit = acc.accountNumber.charAt(0);
+    const firstDigit = acc.accountNumber?.charAt(0);
     return acc.accountType === 'expense' && (firstDigit === '7' || firstDigit === '8');
   });
 
@@ -63,7 +73,7 @@ export default function Expenses() {
     }
     
     const created = addChartAccount({ ...newAccount, isDefault: false });
-    setChartAccounts(loadChartOfAccounts());
+    refreshChartAccounts();
     setFormData({ ...formData, category: created.accountName });
     setShowNewAccountDialog(false);
     setNewAccount({ accountNumber: '', accountName: '', accountType: 'expense' });
@@ -142,6 +152,7 @@ export default function Expenses() {
   };
 
   const handleEdit = (expense: Expense) => {
+    refreshChartAccounts();
     setEditingExpense(expense);
     setFormData(expense);
     setIsDialogOpen(true);
@@ -226,6 +237,13 @@ export default function Expenses() {
     setBulkExpenses(updated);
   };
 
+  // Refresh accounts when bulk upload opens
+  useEffect(() => {
+    if (isBulkUploadOpen) {
+      refreshChartAccounts();
+    }
+  }, [isBulkUploadOpen]);
+
   const removeBulkExpense = (index: number) => {
     setBulkExpenses(bulkExpenses.filter((_, i) => i !== index));
   };
@@ -296,7 +314,12 @@ export default function Expenses() {
                 />
               </label>
             </Button>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              if (open) {
+                refreshChartAccounts();
+              }
+              setIsDialogOpen(open);
+            }}>
               <DialogTrigger asChild>
                 <Button className="gap-2" onClick={() => { 
                   setEditingExpense(null); 
@@ -314,6 +337,7 @@ export default function Expenses() {
                     includesVAT: false,
                     vatRate: settings.taxRate,
                   });
+                  refreshChartAccounts();
                 }}>
                   <Plus className="h-4 w-4" />
                   Add Expense
