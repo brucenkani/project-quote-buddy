@@ -15,7 +15,7 @@ import * as XLSX from 'xlsx';
 import { Navigation } from '@/components/Navigation';
 import { loadExpenses, saveExpense, deleteExpense } from '@/utils/accountingStorage';
 import { useSettings } from '@/contexts/SettingsContext';
-import { loadChartOfAccounts, addChartAccount } from '@/utils/chartOfAccountsStorage';
+import { loadChartOfAccounts, addChartAccount, generateNextAccountNumber } from '@/utils/chartOfAccountsStorage';
 import { Expense } from '@/types/accounting';
 import { AccountType } from '@/types/accounting';
 import { useToast } from '@/hooks/use-toast';
@@ -50,7 +50,11 @@ export default function Expenses() {
     vatRate: settings.taxRate,
   });
 
-  const expenseAccounts = chartAccounts.filter(acc => acc.accountType === 'expense');
+  // Filter expense accounts: 7xxx (Cost of Sales) and 8xxx (Operating Expenses)
+  const expenseAccounts = chartAccounts.filter(acc => {
+    const firstDigit = acc.accountNumber.charAt(0);
+    return acc.accountType === 'expense' && (firstDigit === '7' || firstDigit === '8');
+  });
 
   const handleCreateAccount = () => {
     if (!newAccount.accountNumber || !newAccount.accountName) {
@@ -442,18 +446,42 @@ export default function Expenses() {
           </div>
         </div>
 
-        <Dialog open={showNewAccountDialog} onOpenChange={setShowNewAccountDialog}>
+        <Dialog open={showNewAccountDialog} onOpenChange={(open) => {
+          if (open) {
+            // Auto-generate next account number for expenses (7xxx or 8xxx)
+            const nextNumber = generateNextAccountNumber('expense');
+            setNewAccount({ ...newAccount, accountNumber: nextNumber });
+          }
+          setShowNewAccountDialog(open);
+        }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create New Expense Account</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
+                <Label>Account Type</Label>
+                <Select
+                  value={newAccount.accountType}
+                  onValueChange={(value: AccountType) => {
+                    const nextNumber = generateNextAccountNumber(value);
+                    setNewAccount({ ...newAccount, accountType: value, accountNumber: nextNumber });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="expense">Expense (7xxx-9xxx)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label>Account Number</Label>
                 <Input
                   value={newAccount.accountNumber}
-                  onChange={(e) => setNewAccount({ ...newAccount, accountNumber: e.target.value })}
-                  placeholder="e.g., 507"
+                  disabled
+                  className="bg-muted"
                 />
               </div>
               <div className="space-y-2">

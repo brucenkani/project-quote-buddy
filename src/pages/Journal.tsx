@@ -248,11 +248,13 @@ export default function Journal() {
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        <SelectItem value="asset">Asset</SelectItem>
-                                        <SelectItem value="liability">Liability</SelectItem>
-                                        <SelectItem value="equity">Equity</SelectItem>
-                                        <SelectItem value="revenue">Revenue</SelectItem>
-                                        <SelectItem value="expense">Expense</SelectItem>
+                                        <SelectItem value="current-asset">Current Asset (1xxx)</SelectItem>
+                                        <SelectItem value="non-current-asset">Non-Current Asset (2xxx)</SelectItem>
+                                        <SelectItem value="current-liability">Current Liability (3xxx)</SelectItem>
+                                        <SelectItem value="non-current-liability">Non-Current Liability (4xxx)</SelectItem>
+                                        <SelectItem value="equity">Equity (5xxx)</SelectItem>
+                                        <SelectItem value="revenue">Revenue (6xxx)</SelectItem>
+                                        <SelectItem value="expense">Expense (7xxx-9xxx)</SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
