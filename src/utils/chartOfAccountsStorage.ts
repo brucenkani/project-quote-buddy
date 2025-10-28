@@ -139,23 +139,49 @@ export const deleteChartAccount = (id: string): void => {
 export const generateNextAccountNumber = (accountType: string): string => {
   const typeAccounts = chartCache.filter(acc => acc.accountType === accountType);
   
-  if (typeAccounts.length === 0) {
-    const startingNumbers: Record<string, number> = {
-      'current-asset': 100,
-      'non-current-asset': 150,
-      'current-liability': 200,
-      'non-current-liability': 250,
-      equity: 300,
-      revenue: 400,
-      expense: 500,
-    };
-    return String(startingNumbers[accountType] || 100);
+  // Define the account number ranges for each category
+  const accountRanges: Record<string, { start: number; end: number }> = {
+    'current-asset': { start: 1100, end: 1599 },
+    'non-current-asset': { start: 1600, end: 1999 },
+    'current-liability': { start: 2100, end: 2599 },
+    'non-current-liability': { start: 2600, end: 2999 },
+    equity: { start: 3100, end: 3699 },
+    revenue: { start: 4100, end: 4299 },
+    expense: { start: 5100, end: 8299 },
+  };
+  
+  const range = accountRanges[accountType];
+  if (!range) {
+    return '1000'; // Fallback
   }
   
+  if (typeAccounts.length === 0) {
+    return String(range.start);
+  }
+  
+  // Get all account numbers in this category and find the next sequential number
   const numbers = typeAccounts
     .map(acc => parseInt(acc.accountNumber, 10))
-    .filter(n => !isNaN(n));
+    .filter(n => !isNaN(n) && n >= range.start && n <= range.end)
+    .sort((a, b) => a - b);
   
-  const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
-  return String(maxNumber + 1);
+  if (numbers.length === 0) {
+    return String(range.start);
+  }
+  
+  // Find the next available number in sequence
+  let nextNumber = numbers[numbers.length - 1] + 10;
+  
+  // Ensure we stay within the range
+  if (nextNumber > range.end) {
+    // Find gaps in the sequence
+    for (let i = range.start; i <= range.end; i += 10) {
+      if (!numbers.includes(i)) {
+        nextNumber = i;
+        break;
+      }
+    }
+  }
+  
+  return String(nextNumber);
 };
