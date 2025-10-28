@@ -82,7 +82,7 @@ export default function ExpensePayment() {
       return;
     }
 
-    if (!paymentData.bankAccountId) {
+    if (paymentData.paymentMethod === 'bank' && !paymentData.bankAccountId) {
       toast({ title: 'Please select a bank account', variant: 'destructive' });
       return;
     }
@@ -220,27 +220,6 @@ export default function ExpensePayment() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="bankAccount">Bank Account *</Label>
-                <Select
-                  value={paymentData.bankAccountId}
-                  onValueChange={(value) =>
-                    setPaymentData({ ...paymentData, bankAccountId: value })
-                  }
-                >
-                  <SelectTrigger id="bankAccount">
-                    <SelectValue placeholder="Select bank account" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {bankAccounts.map(account => (
-                      <SelectItem key={account.id} value={account.id}>
-                        {account.account_name} - {account.bank_name} ({account.account_number})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="paymentMethod">Payment Method</Label>
                 <Select
                   value={paymentData.paymentMethod}
@@ -257,6 +236,41 @@ export default function ExpensePayment() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {paymentData.paymentMethod === 'bank' && (
+                <div className="space-y-2">
+                  <Label htmlFor="bankAccount">Bank Account *</Label>
+                  <Select
+                    value={paymentData.bankAccountId}
+                    onValueChange={(value) =>
+                      setPaymentData({ ...paymentData, bankAccountId: value })
+                    }
+                  >
+                    <SelectTrigger id="bankAccount">
+                      <SelectValue placeholder="Select bank account" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {bankAccounts.map(account => (
+                        <SelectItem key={account.id} value={account.id}>
+                          {account.account_name} - {account.bank_name} ({account.account_number})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {paymentData.paymentMethod === 'cash' && (
+                <div className="space-y-2">
+                  <Label htmlFor="cashNote">Cash Account</Label>
+                  <Input
+                    id="cashNote"
+                    value="Cash"
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="paymentDate">Payment Date</Label>

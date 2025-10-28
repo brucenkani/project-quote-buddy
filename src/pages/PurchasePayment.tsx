@@ -106,7 +106,7 @@ export default function PurchasePayment() {
       return;
     }
 
-    if (!formData.bankAccountId) {
+    if (formData.method === 'bank-transfer' && !formData.bankAccountId) {
       toast({ title: 'Please select a bank account', variant: 'destructive' });
       return;
     }
@@ -227,25 +227,6 @@ export default function PurchasePayment() {
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="bankAccount">Bank Account *</Label>
-                  <Select
-                    value={formData.bankAccountId}
-                    onValueChange={(value) => setFormData({ ...formData, bankAccountId: value })}
-                  >
-                    <SelectTrigger id="bankAccount">
-                      <SelectValue placeholder="Select bank account" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {bankAccounts.map(account => (
-                        <SelectItem key={account.id} value={account.id}>
-                          {account.account_name} - {account.bank_name} ({account.account_number})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="method">Payment Method</Label>
@@ -275,6 +256,39 @@ export default function PurchasePayment() {
                     />
                   </div>
                 </div>
+
+                {formData.method === 'bank-transfer' && (
+                  <div>
+                    <Label htmlFor="bankAccount">Bank Account *</Label>
+                    <Select
+                      value={formData.bankAccountId}
+                      onValueChange={(value) => setFormData({ ...formData, bankAccountId: value })}
+                    >
+                      <SelectTrigger id="bankAccount">
+                        <SelectValue placeholder="Select bank account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {bankAccounts.map(account => (
+                          <SelectItem key={account.id} value={account.id}>
+                            {account.account_name} - {account.bank_name} ({account.account_number})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {formData.method === 'cash' && (
+                  <div>
+                    <Label htmlFor="cashNote">Cash Account</Label>
+                    <Input
+                      id="cashNote"
+                      value="Cash"
+                      disabled
+                      className="bg-muted"
+                    />
+                  </div>
+                )}
 
                 <div>
                   <Label htmlFor="notes">Notes</Label>
