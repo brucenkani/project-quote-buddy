@@ -69,7 +69,7 @@ export const Navigation = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => navigate(location.pathname === '/accounting' ? '/' : '/accounting')} 
+              onClick={() => navigate(location.pathname === '/accounting' ? '/dashboard' : '/accounting')} 
               className="gap-1 md:gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
