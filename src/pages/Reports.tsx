@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Navigation } from '@/components/Navigation';
 import { FileDown, FileSpreadsheet, Calendar } from 'lucide-react';
-import { loadChartOfAccounts } from '@/utils/chartOfAccountsStorage';
+import { supabase } from '@/integrations/supabase/client';
+import { ChartAccount } from '@/types/chartOfAccounts';
 import { loadJournalEntriesFromDB, loadExpenses } from '@/utils/accountingStorage';
 import { loadInvoices } from '@/utils/invoiceStorage';
 import { generateTrialBalancePDF, generateTrialBalanceExcel, generateLedgerPDF, generateLedgerExcel } from '@/utils/reportGenerator';
@@ -22,14 +23,15 @@ import {
   generateEquityStatementExcel
 } from '@/utils/managementReportGenerator';
 import { generateVATReportPDF, generateVATReportExcel } from '@/utils/vatReportGenerator';
-import { loadSettings } from '@/utils/settingsStorage';
+import { useSettings } from '@/contexts/SettingsContext';
+import { useCompany } from '@/contexts/CompanyContext';
 import { useToast } from '@/hooks/use-toast';
 import { formatLocalISO } from '@/utils/date';
 
 export default function Reports() {
   const { toast } = useToast();
-  const settings = loadSettings();
-  const chartOfAccounts = loadChartOfAccounts();
+  const { settings } = useSettings();
+  const { activeCompany } = useCompany();
   
   const [dateRange, setDateRange] = useState({
     startDate: formatLocalISO(new Date(new Date().getFullYear(), 0, 1)),
@@ -123,9 +125,9 @@ export default function Reports() {
     });
 
     if (format === 'pdf') {
-      generateTrialBalancePDF(chartOfAccounts, filteredJournalEntries, expenses, dateRange, settings);
+      generateTrialBalancePDF(loadChartOfAccounts(), filteredJournalEntries, expenses, dateRange, settings);
     } else {
-      generateTrialBalanceExcel(chartOfAccounts, filteredJournalEntries, expenses, dateRange, settings);
+      generateTrialBalanceExcel(loadChartOfAccounts(), filteredJournalEntries, expenses, dateRange, settings);
     }
 
     toast({ title: `Trial Balance ${format.toUpperCase()} generated successfully` });
@@ -136,9 +138,9 @@ export default function Reports() {
     const priorPeriod = getPeriodData(priorDateRange.startDate, priorDateRange.endDate);
 
     if (format === 'pdf') {
-      generateIncomeStatementPDF(chartOfAccounts, currentPeriod, priorPeriod, settings);
+      generateIncomeStatementPDF(loadChartOfAccounts(), currentPeriod, priorPeriod, settings);
     } else {
-      generateIncomeStatementExcel(chartOfAccounts, currentPeriod, priorPeriod, settings);
+      generateIncomeStatementExcel(loadChartOfAccounts(), currentPeriod, priorPeriod, settings);
     }
 
     toast({ title: `Income Statement ${format.toUpperCase()} generated successfully` });
@@ -149,9 +151,9 @@ export default function Reports() {
     const priorPeriod = getPeriodData(priorDateRange.startDate, priorDateRange.endDate);
 
     if (format === 'pdf') {
-      generateBalanceSheetPDF(chartOfAccounts, currentPeriod, priorPeriod, settings);
+      generateBalanceSheetPDF(loadChartOfAccounts(), currentPeriod, priorPeriod, settings);
     } else {
-      generateBalanceSheetExcel(chartOfAccounts, currentPeriod, priorPeriod, settings);
+      generateBalanceSheetExcel(loadChartOfAccounts(), currentPeriod, priorPeriod, settings);
     }
 
     toast({ title: `Balance Sheet ${format.toUpperCase()} generated successfully` });
@@ -162,9 +164,9 @@ export default function Reports() {
     const priorPeriod = getPeriodData(priorDateRange.startDate, priorDateRange.endDate);
 
     if (format === 'pdf') {
-      generateCashFlowPDF(chartOfAccounts, currentPeriod, priorPeriod, settings);
+      generateCashFlowPDF(loadChartOfAccounts(), currentPeriod, priorPeriod, settings);
     } else {
-      generateCashFlowExcel(chartOfAccounts, currentPeriod, settings);
+      generateCashFlowExcel(loadChartOfAccounts(), currentPeriod, settings);
     }
 
     toast({ title: `Cash Flow Statement ${format.toUpperCase()} generated successfully` });
