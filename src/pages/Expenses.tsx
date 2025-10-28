@@ -274,6 +274,12 @@ export default function Expenses() {
     setBulkExpenses(updated);
   };
 
+  const updateBulkExpenseVAT = (index: number, includesVAT: boolean) => {
+    const updated = [...bulkExpenses];
+    updated[index] = { ...updated[index], includesVAT };
+    setBulkExpenses(updated);
+  };
+
   // Refresh accounts when bulk upload opens
   useEffect(() => {
     if (isBulkUploadOpen) {
@@ -299,10 +305,10 @@ export default function Expenses() {
     let savedCount = 0;
     bulkExpenses.forEach((exp) => {
       if (exp.category && exp.amount) {
-        // Calculate VAT if included
+        // Calculate VAT if included for this specific expense
         let vatAmount = 0;
         let amountExclVAT = exp.amount!;
-        if (bulkIncludesVAT) {
+        if (exp.includesVAT) {
           vatAmount = exp.amount! * (settings.taxRate / (100 + settings.taxRate));
           amountExclVAT = exp.amount! - vatAmount;
         }
@@ -318,9 +324,9 @@ export default function Expenses() {
           reference: '',
           status: 'paid',
           bankAccountId: bulkPaymentMethod === 'bank-transfer' ? bulkBankAccountId : undefined,
-          includesVAT: bulkIncludesVAT,
+          includesVAT: exp.includesVAT || false,
           vatRate: settings.taxRate,
-          vatAmount: bulkIncludesVAT ? vatAmount : 0,
+          vatAmount: exp.includesVAT ? vatAmount : 0,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -679,24 +685,12 @@ export default function Expenses() {
                     )}
                   </div>
 
-                  {/* VAT Checkbox for bulk expenses */}
-                  <div className="col-span-2 flex items-center space-x-2 p-4 bg-muted/30 rounded-lg">
-                    <Checkbox 
-                      id="bulkIncludesVAT" 
-                      checked={bulkIncludesVAT}
-                      onCheckedChange={(checked) => setBulkIncludesVAT(checked as boolean)}
-                    />
-                    <Label htmlFor="bulkIncludesVAT" className="cursor-pointer">
-                      These expenses include VAT/Tax (VAT will be calculated at {settings.taxRate}%)
-                    </Label>
-                  </div>
-
                   {/* Expenses Table */}
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Date</TableHead>
-                        <TableHead>Vendor</TableHead>
+                        <TableHead>Incl. VAT</TableHead>
                         <TableHead>Expense Account</TableHead>
                         <TableHead>Amount</TableHead>
                         <TableHead>Payment</TableHead>
@@ -708,7 +702,12 @@ export default function Expenses() {
                       {bulkExpenses.map((exp, index) => (
                         <TableRow key={index}>
                           <TableCell className="text-sm">{exp.date}</TableCell>
-                          <TableCell className="text-sm">{exp.vendor}</TableCell>
+                          <TableCell>
+                            <Checkbox 
+                              checked={exp.includesVAT || false}
+                              onCheckedChange={(checked) => updateBulkExpenseVAT(index, checked as boolean)}
+                            />
+                          </TableCell>
                           <TableCell>
                             <Select
                               value={exp.category}
