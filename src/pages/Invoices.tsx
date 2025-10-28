@@ -215,6 +215,7 @@ export default function Invoices() {
                 <TableBody>
                   {displayInvoices.map((invoice) => {
                     const isCreditNote = invoice.type === 'credit-note';
+                    const amountDue = calculateAmountDue(invoice, invoices);
                     return (
                       <TableRow key={invoice.id}>
                         <TableCell>
@@ -234,7 +235,7 @@ export default function Invoices() {
                         </TableCell>
                         {activeTab !== 'credit-notes' && (
                           <TableCell className="text-right">
-                            {settings.currencySymbol}{invoice.total.toFixed(2)}
+                            {settings.currencySymbol}{amountDue.toFixed(2)}
                           </TableCell>
                         )}
                         <TableCell className="text-center">
