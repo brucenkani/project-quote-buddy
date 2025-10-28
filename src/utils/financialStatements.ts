@@ -78,6 +78,21 @@ export const getAccountTypeFromNumber = (accountNumber: string): AccountType => 
   }
 };
 
+// Classify a journal line to an AccountType using number, stored type or keywords
+const classifyLineType = (line: { account: string; accountType?: AccountType }): AccountType => {
+  const num = extractAccountNumber(line.account);
+  if (/^\d+$/.test(num)) {
+    return getAccountTypeFromNumber(num);
+  }
+  if (line.accountType) return line.accountType;
+  const lower = line.account.toLowerCase();
+  if (lower.includes('revenue') || lower.includes('sales') || lower.includes('income')) return 'revenue';
+  if (lower.includes('cogs') || lower.includes('cost of goods') || lower.includes('expense')) return 'expense';
+  if (lower.includes('payable') || lower.includes('creditors')) return 'current-liability';
+  if (lower.includes('receivable') || lower.includes('debtors')) return 'current-asset';
+  if (lower.includes('inventory') || lower.includes('stock')) return 'current-asset';
+  return 'expense';
+};
 // Calculate account balance
 export const calculateAccountBalance = (
   account: ChartAccount,
@@ -125,7 +140,8 @@ export const calculateAccountBalance = (
   });
 
   // For normal balance: Assets/Expenses = Debit, Liabilities/Equity/Revenue = Credit
-  if (account.accountType === 'current-asset' || account.accountType === 'non-current-asset' || account.accountType === 'expense') {
+  const acctType = getAccountTypeFromNumber(account.accountNumber);
+  if (acctType === 'current-asset' || acctType === 'non-current-asset' || acctType === 'expense') {
     return debit - credit;
   } else {
     return credit - debit;
@@ -153,8 +169,30 @@ export const generateIncomeStatement = (
     }
   });
 
-  const totalRevenue = revenue.reduce((sum, item) => sum + item.amount, 0);
-  const totalExpenses = expenses.reduce((sum, item) => sum + item.amount, 0);
+  // Compute totals based on matched chart accounts
+  let totalRevenue = revenue.reduce((sum, item) => sum + item.amount, 0);
+  let totalExpenses = expenses.reduce((sum, item) => sum + item.amount, 0);
+
+  // Fallback: derive totals directly from journal lines by classifying each line
+  if (totalRevenue === 0 && totalExpenses === 0) {
+    let fallbackRevenue = 0;
+    let fallbackExpenses = 0;
+
+    periodData.journalEntries.forEach(entry => {
+      entry.entries.forEach((line: any) => {
+        const t = classifyLineType({ account: line.account, accountType: line.accountType });
+        if (t === 'revenue') {
+          fallbackRevenue += (line.credit - line.debit);
+        } else if (t === 'expense') {
+          fallbackExpenses += (line.debit - line.credit);
+        }
+      });
+    });
+
+    totalRevenue = fallbackRevenue;
+    totalExpenses = fallbackExpenses;
+  }
+
   const netIncome = totalRevenue - totalExpenses;
 
   return { revenue, expenses, totalRevenue, totalExpenses, netIncome };
