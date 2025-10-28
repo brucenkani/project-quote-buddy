@@ -47,8 +47,11 @@ const createValidatedJournalEntry = (
 
 /**
  * Transaction Type 1: Invoice (Sale on Credit)
- * Debit: Accounts Receivable (Asset ↑)
- * Credit: Sales Revenue (Income ↑)
+ * For an invoice with discount:
+ * Debit: Accounts Receivable (what customer owes after discount)
+ * Debit: Sales Discounts (discount amount - contra-revenue)
+ * Credit: Sales Revenue (gross sales before discount)
+ * Credit: Taxes Payable (tax amount)
  */
 export const recordInvoice = (invoice: Invoice): JournalEntry => {
   const entries: JournalEntryLine[] = [
@@ -69,6 +72,18 @@ export const recordInvoice = (invoice: Invoice): JournalEntry => {
       description: `Sales to ${invoice.projectDetails.clientName}`,
     },
   ];
+
+  // Add discount entry if applicable (contra-revenue account)
+  if (invoice.discount > 0) {
+    entries.push({
+      id: crypto.randomUUID(),
+      account: 'Sales Discounts',
+      accountType: 'expense',
+      debit: invoice.discount,
+      credit: 0,
+      description: `Discount on Invoice ${invoice.invoiceNumber}`,
+    });
+  }
 
   // Add tax liability if applicable
   if (invoice.taxAmount > 0) {
