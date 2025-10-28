@@ -21,13 +21,17 @@ import { AccountType } from '@/types/accounting';
 import { useToast } from '@/hooks/use-toast';
 import { recordExpense } from '@/utils/doubleEntryManager';
 import { calculateExpenseStatus, calculateExpenseAmountDue } from '@/utils/expenseStatusCalculator';
+import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
 
 export default function Expenses() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { settings } = useSettings();
+  const { activeCompany } = useCompany();
   const [expenses, setExpenses] = useState<Expense[]>(loadExpenses());
   const [chartAccounts, setChartAccounts] = useState<any[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [showNewAccountDialog, setShowNewAccountDialog] = useState(false);
@@ -48,12 +52,29 @@ export default function Expenses() {
     payments: [],
     includesVAT: false,
     vatRate: settings.taxRate,
+    bankAccountId: '',
   });
 
-  // Load chart of accounts on mount and when dialog opens
+  // Load chart of accounts and bank accounts on mount and when dialog opens
   useEffect(() => {
     refreshChartAccounts();
-  }, []);
+    loadBankAccounts();
+  }, [activeCompany]);
+
+  const loadBankAccounts = async () => {
+    if (!activeCompany) return;
+    
+    const { data: accounts } = await supabase
+      .from('bank_accounts')
+      .select('*')
+      .eq('company_id', activeCompany.id)
+      .eq('is_active', true)
+      .order('account_name');
+    
+    if (accounts) {
+      setBankAccounts(accounts);
+    }
+  };
 
   const refreshChartAccounts = () => {
     const accounts = loadChartOfAccounts();
@@ -409,6 +430,26 @@ export default function Expenses() {
                     </SelectContent>
                   </Select>
                 </div>
+                {formData.paymentMethod === 'bank-transfer' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="bankAccount">Bank Account *</Label>
+                    <Select 
+                      value={formData.bankAccountId} 
+                      onValueChange={(value) => setFormData({ ...formData, bankAccountId: value })}
+                    >
+                      <SelectTrigger id="bankAccount">
+                        <SelectValue placeholder="Select bank account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {bankAccounts.map(account => (
+                          <SelectItem key={account.id} value={account.id}>
+                            {account.account_name} - {account.bank_name} ({account.account_number})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
                   <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>

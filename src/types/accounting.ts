@@ -37,6 +37,7 @@ export interface Expense {
   includesVAT?: boolean; // Whether VAT is included in the amount
   vatRate?: number; // VAT rate (e.g., 0.15 for 15%)
   vatAmount?: number; // Calculated VAT amount
+  bankAccountId?: string; // Bank account for bank transfer payments
   createdAt: string;
   updatedAt: string;
 }
