@@ -1,5 +1,5 @@
 import { ChartAccount } from '@/types/chartOfAccounts';
-import { JournalEntry, Expense } from '@/types/accounting';
+import { JournalEntry, Expense, AccountType } from '@/types/accounting';
 import { loadInvoices } from './invoiceStorage';
 
 export interface PeriodData {
@@ -37,6 +37,47 @@ export interface EquityStatementData {
   closingBalance: number;
 }
 
+// Helper function to extract account number from various formats
+const extractAccountNumber = (accountString: string): string => {
+  // If it's just a number, return it
+  if (/^\d+$/.test(accountString)) return accountString;
+  
+  // Extract number from "1234 - Account Name" format
+  const match = accountString.match(/^(\d+)\s*-/);
+  if (match) return match[1];
+  
+  // Return original if no number found
+  return accountString;
+};
+
+// Helper function to get account type from account number
+export const getAccountTypeFromNumber = (accountNumber: string): AccountType => {
+  const firstDigit = accountNumber.charAt(0);
+  const firstTwo = accountNumber.substring(0, 2);
+  
+  switch (firstDigit) {
+    case '1':
+      // 16xx-19xx are non-current assets
+      if (parseInt(firstTwo) >= 16) return 'non-current-asset';
+      return 'current-asset';
+    case '2':
+      // 26xx-29xx are non-current liabilities
+      if (parseInt(firstTwo) >= 26) return 'non-current-liability';
+      return 'current-liability';
+    case '3':
+      return 'equity';
+    case '4':
+      return 'revenue';
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+      return 'expense';
+    default:
+      return 'expense'; // Default fallback
+  }
+};
+
 // Calculate account balance
 export const calculateAccountBalance = (
   account: ChartAccount,
@@ -48,15 +89,18 @@ export const calculateAccountBalance = (
 
   // Create matching patterns for this account
   const accountMatches = (lineAccount: string): boolean => {
+    // Extract account number from the line account
+    const lineAccountNumber = extractAccountNumber(lineAccount);
+    
+    // Match by account number
+    if (lineAccountNumber === account.accountNumber) return true;
+    
     // Match by exact account name
     if (lineAccount === account.accountName) return true;
     
     // Match by "accountNumber - accountName" format
     const fullFormat = `${account.accountNumber} - ${account.accountName}`;
     if (lineAccount === fullFormat) return true;
-    
-    // Match by account number prefix
-    if (lineAccount.startsWith(account.accountNumber + ' -')) return true;
     
     return false;
   };
@@ -99,10 +143,13 @@ export const generateIncomeStatement = (
   accounts.forEach(account => {
     const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
     
-    if (account.accountType === 'revenue' && balance !== 0) {
-      revenue.push({ account: account.accountName, amount: balance });
-    } else if (account.accountType === 'expense' && balance !== 0) {
-      expenses.push({ account: account.accountName, amount: balance });
+    // Determine account type from account number for more accurate categorization
+    const accountType = getAccountTypeFromNumber(account.accountNumber);
+    
+    if (accountType === 'revenue' && balance !== 0) {
+      revenue.push({ account: `${account.accountNumber} - ${account.accountName}`, amount: balance });
+    } else if (accountType === 'expense' && balance !== 0) {
+      expenses.push({ account: `${account.accountNumber} - ${account.accountName}`, amount: balance });
     }
   });
 
@@ -127,12 +174,16 @@ export const generateBalanceSheet = (
     
     if (balance === 0) return;
 
-    if (account.accountType === 'current-asset' || account.accountType === 'non-current-asset') {
-      assets.push({ account: account.accountName, amount: balance });
-    } else if (account.accountType === 'current-liability' || account.accountType === 'non-current-liability') {
-      liabilities.push({ account: account.accountName, amount: balance });
-    } else if (account.accountType === 'equity') {
-      equity.push({ account: account.accountName, amount: balance });
+    // Determine account type from account number for accurate categorization
+    const accountType = getAccountTypeFromNumber(account.accountNumber);
+    const accountLabel = `${account.accountNumber} - ${account.accountName}`;
+
+    if (accountType === 'current-asset' || accountType === 'non-current-asset') {
+      assets.push({ account: accountLabel, amount: balance });
+    } else if (accountType === 'current-liability' || accountType === 'non-current-liability') {
+      liabilities.push({ account: accountLabel, amount: balance });
+    } else if (accountType === 'equity') {
+      equity.push({ account: accountLabel, amount: balance });
     }
   });
 
@@ -158,29 +209,38 @@ export const generateCashFlowStatement = (
     
     if (balance === 0) return;
 
-    if (account.accountType === 'revenue') {
-      operating.push({ description: account.accountName, amount: balance });
-    } else if (account.accountType === 'expense') {
-      operating.push({ description: account.accountName, amount: -balance });
+    const accountType = getAccountTypeFromNumber(account.accountNumber);
+    const accountLabel = `${account.accountNumber} - ${account.accountName}`;
+
+    if (accountType === 'revenue') {
+      operating.push({ description: accountLabel, amount: balance });
+    } else if (accountType === 'expense') {
+      operating.push({ description: accountLabel, amount: -balance });
     }
   });
 
-  // Investing activities - equipment, furniture, buildings
+  // Investing activities - non-current assets (16xx-19xx)
   accounts.forEach(account => {
-    if (['Equipment', 'Furniture', 'Buildings'].includes(account.accountName)) {
+    const accountType = getAccountTypeFromNumber(account.accountNumber);
+    if (accountType === 'non-current-asset') {
       const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
       if (balance !== 0) {
-        investing.push({ description: account.accountName, amount: -balance });
+        const accountLabel = `${account.accountNumber} - ${account.accountName}`;
+        investing.push({ description: accountLabel, amount: -balance });
       }
     }
   });
 
-  // Financing activities - loans, capital, drawings
+  // Financing activities - equity (3xxx) and long-term liabilities (26xx-29xx)
   accounts.forEach(account => {
-    if (['Loan Payable', "Owner's Capital", "Owner's Drawings"].includes(account.accountName)) {
+    const accountType = getAccountTypeFromNumber(account.accountNumber);
+    const firstTwo = account.accountNumber.substring(0, 2);
+    
+    if (accountType === 'equity' || (accountType === 'non-current-liability' && parseInt(firstTwo) >= 26)) {
       const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
       if (balance !== 0) {
-        financing.push({ description: account.accountName, amount: balance });
+        const accountLabel = `${account.accountNumber} - ${account.accountName}`;
+        financing.push({ description: accountLabel, amount: balance });
       }
     }
   });
