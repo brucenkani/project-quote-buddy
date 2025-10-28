@@ -33,6 +33,9 @@ export function ContactSelector({ type, value, onSelect, placeholder }: ContactS
     setContacts(allContacts.filter(c => c.type === type));
   }, [allContacts, type]);
 
+  // Find the contact ID from the name (value could be either ID or name)
+  const selectedContactId = contacts.find(c => c.id === value || c.name === value)?.id || '';
+
   const handleCreateContact = async () => {
     if (!formData.name) return;
 
@@ -59,7 +62,7 @@ export function ContactSelector({ type, value, onSelect, placeholder }: ContactS
   return (
     <div className="flex gap-2">
       <Select
-        value={value}
+        value={selectedContactId}
         onValueChange={(contactId) => {
           const contact = contacts.find(c => c.id === contactId);
           if (contact) onSelect(contact);
@@ -68,7 +71,7 @@ export function ContactSelector({ type, value, onSelect, placeholder }: ContactS
         <SelectTrigger className="flex-1">
           <SelectValue placeholder={placeholder || `Select ${type}...`} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-popover z-50">
           {contacts.map((contact) => (
             <SelectItem key={contact.id} value={contact.id}>
               {contact.name}
