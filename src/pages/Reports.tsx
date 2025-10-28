@@ -8,8 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Navigation } from '@/components/Navigation';
 import { FileDown, FileSpreadsheet, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { ChartAccount } from '@/types/chartOfAccounts';
-import { loadJournalEntriesFromDB, loadExpenses } from '@/utils/accountingStorage';
+import { ChartAccount, defaultChartOfAccounts } from '@/types/chartOfAccounts';
+import { loadJournalEntriesFromDB, loadJournalEntries as loadJournalEntriesLocal, loadExpenses } from '@/utils/accountingStorage';
 import { loadInvoices } from '@/utils/invoiceStorage';
 import { generateTrialBalancePDF, generateTrialBalanceExcel, generateLedgerPDF, generateLedgerExcel } from '@/utils/reportGenerator';
 import { 
@@ -62,7 +62,7 @@ export default function Reports() {
               .eq('company_id', activeCompany.id)
               .order('account_number');
 
-            if (accountsData) {
+            if (accountsData && accountsData.length > 0) {
               setChartOfAccounts(accountsData.map(row => ({
                 id: row.id,
                 accountNumber: row.account_number,
@@ -72,13 +72,32 @@ export default function Reports() {
                 openingBalance: Number(row.opening_balance),
                 createdAt: row.created_at || new Date().toISOString(),
               })));
+            } else {
+              // Fallback to standard chart if none in backend
+              setChartOfAccounts(defaultChartOfAccounts.map(acc => ({
+                ...acc,
+                id: crypto.randomUUID(),
+                createdAt: new Date().toISOString(),
+              })) as ChartAccount[]);
             }
           }
+        } else {
+          // No active company yet: use standard chart for preview
+          setChartOfAccounts(defaultChartOfAccounts.map(acc => ({
+            ...acc,
+            id: crypto.randomUUID(),
+            createdAt: new Date().toISOString(),
+          })) as ChartAccount[]);
         }
 
-        // Load journal entries
-        const entries = await loadJournalEntriesFromDB();
-        setJournalEntries(entries);
+        // Load journal entries with local fallback
+        const entriesFromDb = await loadJournalEntriesFromDB();
+        if (entriesFromDb && entriesFromDb.length > 0) {
+          setJournalEntries(entriesFromDb);
+        } else {
+          const local = loadJournalEntriesLocal();
+          setJournalEntries(local);
+        }
       } catch (error) {
         console.error('Failed to load data:', error);
       } finally {
@@ -168,10 +187,12 @@ export default function Reports() {
     const currentPeriod = getPeriodData(dateRange.startDate, dateRange.endDate);
     const priorPeriod = getPeriodData(priorDateRange.startDate, priorDateRange.endDate);
 
+    const effectiveSettings = { ...settings, companyName: activeCompany?.name || settings.companyName } as any;
+
     if (format === 'pdf') {
-      generateIncomeStatementPDF(chartOfAccounts, currentPeriod, priorPeriod, settings);
+      generateIncomeStatementPDF(chartOfAccounts, currentPeriod, priorPeriod, effectiveSettings);
     } else {
-      generateIncomeStatementExcel(chartOfAccounts, currentPeriod, priorPeriod, settings);
+      generateIncomeStatementExcel(chartOfAccounts, currentPeriod, priorPeriod, effectiveSettings);
     }
 
     toast({ title: `Income Statement ${format.toUpperCase()} generated successfully` });
@@ -181,10 +202,12 @@ export default function Reports() {
     const currentPeriod = getPeriodData(dateRange.startDate, dateRange.endDate);
     const priorPeriod = getPeriodData(priorDateRange.startDate, priorDateRange.endDate);
 
+    const effectiveSettings = { ...settings, companyName: activeCompany?.name || settings.companyName } as any;
+
     if (format === 'pdf') {
-      generateBalanceSheetPDF(chartOfAccounts, currentPeriod, priorPeriod, settings);
+      generateBalanceSheetPDF(chartOfAccounts, currentPeriod, priorPeriod, effectiveSettings);
     } else {
-      generateBalanceSheetExcel(chartOfAccounts, currentPeriod, priorPeriod, settings);
+      generateBalanceSheetExcel(chartOfAccounts, currentPeriod, priorPeriod, effectiveSettings);
     }
 
     toast({ title: `Balance Sheet ${format.toUpperCase()} generated successfully` });
@@ -194,10 +217,12 @@ export default function Reports() {
     const currentPeriod = getPeriodData(dateRange.startDate, dateRange.endDate);
     const priorPeriod = getPeriodData(priorDateRange.startDate, priorDateRange.endDate);
 
+    const effectiveSettings = { ...settings, companyName: activeCompany?.name || settings.companyName } as any;
+
     if (format === 'pdf') {
-      generateCashFlowPDF(chartOfAccounts, currentPeriod, priorPeriod, settings);
+      generateCashFlowPDF(chartOfAccounts, currentPeriod, priorPeriod, effectiveSettings);
     } else {
-      generateCashFlowExcel(chartOfAccounts, currentPeriod, settings);
+      generateCashFlowExcel(chartOfAccounts, currentPeriod, effectiveSettings);
     }
 
     toast({ title: `Cash Flow Statement ${format.toUpperCase()} generated successfully` });
