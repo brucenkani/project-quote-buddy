@@ -135,7 +135,7 @@ export default function InvoiceBuilder() {
   };
 
   const subtotal = lineItems.reduce((sum, item) => sum + item.total, 0);
-  const taxAmount = (subtotal - discount) * settings.taxRate;
+  const taxAmount = (subtotal - discount) * (settings.taxRate / 100);
   const total = subtotal - discount + taxAmount;
 
   const handleSave = form.handleSubmit(async (data) => {
