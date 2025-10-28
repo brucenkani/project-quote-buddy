@@ -83,10 +83,17 @@ export default function Expenses() {
     setChartAccounts(accounts);
   };
 
-  // Filter expense accounts: 7xxx (Cost of Sales) and 8xxx (Operating Expenses)
+  // Filter expense accounts: 7xxx (Cost of Sales) and 8xxx (Operating Expenses), excluding tax accounts (81xx, 82xx)
   const expenseAccounts = chartAccounts.filter(acc => {
-    const firstDigit = acc.accountNumber?.charAt(0);
-    return acc.accountType === 'expense' && (firstDigit === '7' || firstDigit === '8');
+    const accountNum = acc.accountNumber || '';
+    const firstDigit = accountNum.charAt(0);
+    const firstTwoDigits = accountNum.substring(0, 2);
+    
+    // Include 7xxx and 8xxx accounts, but exclude 81xx and 82xx (tax accounts)
+    return acc.accountType === 'expense' && 
+           (firstDigit === '7' || firstDigit === '8') &&
+           firstTwoDigits !== '81' && 
+           firstTwoDigits !== '82';
   });
 
   const handleCreateAccount = () => {
