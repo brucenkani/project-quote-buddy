@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DataTableFilters } from '@/components/ui/data-table-filters';
+import { SortableTableHeader } from '@/components/ui/sortable-table-header';
 
 export default function Invoices() {
   const navigate = useNavigate();
@@ -33,6 +35,18 @@ export default function Invoices() {
   const { settings } = useSettings();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [activeTab, setActiveTab] = useState<'invoices' | 'credit-notes' | 'statements'>('invoices');
+  
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [customerFilter, setCustomerFilter] = useState('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  
+  // Sort state
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({
+    key: 'issueDate',
+    direction: 'desc',
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -110,13 +124,109 @@ export default function Invoices() {
     }
   };
 
-  const displayInvoices = invoices.filter(inv => {
-    if (activeTab === 'statements') return false; // Don't show invoices in statements tab
-    const isInvoice = inv.type === 'invoice' || !inv.type;
-    const isCreditNote = inv.type === 'credit-note';
-    console.log(`Invoice ${inv.invoiceNumber} - type: ${inv.type}, isInvoice: ${isInvoice}, isCreditNote: ${isCreditNote}`);
-    return activeTab === 'invoices' ? isInvoice : isCreditNote;
-  });
+  // Get unique customers for filter
+  const uniqueCustomers = useMemo(() => {
+    const customers = new Set(invoices.map(inv => inv.projectDetails.clientName));
+    return Array.from(customers).sort();
+  }, [invoices]);
+
+  // Handle sort
+  const handleSort = (key: string) => {
+    setSortConfig({
+      key,
+      direction: sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc',
+    });
+  };
+
+  // Clear all filters
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setCustomerFilter('all');
+    setStartDate('');
+    setEndDate('');
+  };
+
+  // Filter and sort invoices
+  const displayInvoices = useMemo(() => {
+    let filtered = invoices.filter(inv => {
+      if (activeTab === 'statements') return false;
+      const isInvoice = inv.type === 'invoice' || !inv.type;
+      const isCreditNote = inv.type === 'credit-note';
+      const matchesTab = activeTab === 'invoices' ? isInvoice : isCreditNote;
+      
+      if (!matchesTab) return false;
+
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = 
+          inv.invoiceNumber.toLowerCase().includes(query) ||
+          inv.projectDetails.clientName.toLowerCase().includes(query) ||
+          (inv.projectDetails.projectName?.toLowerCase() || '').includes(query);
+        if (!matchesSearch) return false;
+      }
+
+      // Customer filter
+      if (customerFilter !== 'all' && inv.projectDetails.clientName !== customerFilter) {
+        return false;
+      }
+
+      // Date range filter
+      if (startDate && new Date(inv.issueDate) < new Date(startDate)) {
+        return false;
+      }
+      if (endDate && new Date(inv.issueDate) > new Date(endDate)) {
+        return false;
+      }
+
+      return true;
+    });
+
+    // Sort
+    filtered.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortConfig.key) {
+        case 'customer':
+          aValue = a.projectDetails.clientName;
+          bValue = b.projectDetails.clientName;
+          break;
+        case 'invoiceNumber':
+          aValue = a.invoiceNumber;
+          bValue = b.invoiceNumber;
+          break;
+        case 'issueDate':
+          aValue = new Date(a.issueDate).getTime();
+          bValue = new Date(b.issueDate).getTime();
+          break;
+        case 'dueDate':
+          aValue = new Date(a.dueDate).getTime();
+          bValue = new Date(b.dueDate).getTime();
+          break;
+        case 'total':
+          aValue = a.total;
+          bValue = b.total;
+          break;
+        case 'amountDue':
+          aValue = calculateAmountDue(a, invoices);
+          bValue = calculateAmountDue(b, invoices);
+          break;
+        case 'status':
+          aValue = a.status;
+          bValue = b.status;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return filtered;
+  }, [invoices, activeTab, searchQuery, customerFilter, startDate, endDate, sortConfig]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
@@ -162,6 +272,29 @@ export default function Invoices() {
           </TabsList>
         </Tabs>
 
+        {activeTab !== 'statements' && (
+          <DataTableFilters
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder={`Search ${activeTab === 'invoices' ? 'invoices' : 'credit notes'}...`}
+            filters={[
+              {
+                label: 'Customer',
+                value: customerFilter,
+                onValueChange: setCustomerFilter,
+                options: uniqueCustomers.map(c => ({ label: c, value: c })),
+              },
+            ]}
+            dateFilters={{
+              startDate,
+              endDate,
+              onStartDateChange: setStartDate,
+              onEndDateChange: setEndDate,
+            }}
+            onClearFilters={handleClearFilters}
+          />
+        )}
+
         {activeTab === 'statements' ? (
           <Card>
             <CardContent className="p-6">
@@ -200,15 +333,63 @@ export default function Invoices() {
                     <TableHead className="w-[50px]">
                       <Checkbox />
                     </TableHead>
-                    <TableHead>Customer Name</TableHead>
-                    <TableHead>Doc. No.</TableHead>
+                    <SortableTableHeader
+                      sortKey="customer"
+                      currentSort={sortConfig}
+                      onSort={handleSort}
+                    >
+                      Customer Name
+                    </SortableTableHeader>
+                    <SortableTableHeader
+                      sortKey="invoiceNumber"
+                      currentSort={sortConfig}
+                      onSort={handleSort}
+                    >
+                      Doc. No.
+                    </SortableTableHeader>
                     <TableHead>Cust. Ref.</TableHead>
-                    <TableHead>Date</TableHead>
-                    {activeTab !== 'credit-notes' && <TableHead>Due Date</TableHead>}
-                    <TableHead className="text-right">Total</TableHead>
-                    {activeTab !== 'credit-notes' && <TableHead className="text-right">Amount Due</TableHead>}
+                    <SortableTableHeader
+                      sortKey="issueDate"
+                      currentSort={sortConfig}
+                      onSort={handleSort}
+                    >
+                      Date
+                    </SortableTableHeader>
+                    {activeTab !== 'credit-notes' && (
+                      <SortableTableHeader
+                        sortKey="dueDate"
+                        currentSort={sortConfig}
+                        onSort={handleSort}
+                      >
+                        Due Date
+                      </SortableTableHeader>
+                    )}
+                    <SortableTableHeader
+                      sortKey="total"
+                      currentSort={sortConfig}
+                      onSort={handleSort}
+                      className="text-right"
+                    >
+                      Total
+                    </SortableTableHeader>
+                    {activeTab !== 'credit-notes' && (
+                      <SortableTableHeader
+                        sortKey="amountDue"
+                        currentSort={sortConfig}
+                        onSort={handleSort}
+                        className="text-right"
+                      >
+                        Amount Due
+                      </SortableTableHeader>
+                    )}
                     <TableHead className="text-center">Printed</TableHead>
-                    <TableHead>Status</TableHead>
+                    <SortableTableHeader
+                      sortKey="status"
+                      currentSort={sortConfig}
+                      onSort={handleSort}
+                    >
+                      Status
+                    </SortableTableHeader>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
