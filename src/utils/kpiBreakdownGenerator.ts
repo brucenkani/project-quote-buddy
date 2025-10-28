@@ -32,6 +32,25 @@ interface BreakdownLine {
   account?: string;
 }
 
+// Robust matcher: aligns with financialStatements.calculateAccountBalance
+const accountMatches = (lineAccount: string, account: ChartAccount): boolean => {
+  // If the line stores "1234 - Name", extract the number
+  const numberMatch = lineAccount.match(/^(\d+)\s*-/);
+  const lineAccountNumber = numberMatch ? numberMatch[1] : lineAccount;
+
+  // Match by account number
+  if (/^\d+$/.test(lineAccountNumber) && lineAccountNumber === account.accountNumber) return true;
+
+  // Match by exact account name
+  if (lineAccount === account.accountName) return true;
+
+  // Match by "number - name" format
+  const fullFormat = `${account.accountNumber} - ${account.accountName}`;
+  if (lineAccount === fullFormat) return true;
+
+  return false;
+};
+
 const getKPIBreakdown = async (
   kpiType: KPIType,
   accounts: ChartAccount[],
