@@ -4,6 +4,15 @@ import * as XLSX from 'xlsx';
 import { ChartAccount } from '@/types/chartOfAccounts';
 import { JournalEntry, Expense } from '@/types/accounting';
 import { CompanySettings } from '@/types/settings';
+import { getAccountTypeFromNumber } from './financialStatements';
+
+// Helper to extract account number from various formats
+const extractAccountNumber = (accountString: string): string => {
+  if (/^\d+$/.test(accountString)) return accountString;
+  const match = accountString.match(/^(\d+)\s*-/);
+  if (match) return match[1];
+  return accountString;
+};
 
 export const generateTrialBalancePDF = (
   accounts: ChartAccount[],
@@ -26,19 +35,23 @@ export const generateTrialBalancePDF = (
     let debit = 0;
     let credit = 0;
 
-    // From journal entries
+    // From journal entries - match by account number or name
     journalEntries.forEach(entry => {
       entry.entries.forEach(line => {
-        if (line.account === account.accountName) {
+        const lineNum = extractAccountNumber(line.account);
+        if (lineNum === account.accountNumber || line.account === account.accountName || 
+            line.account === `${account.accountNumber} - ${account.accountName}`) {
           debit += line.debit;
           credit += line.credit;
         }
       });
     });
 
-    // From expenses (VAT-exclusive amounts)
+    // From expenses (VAT-exclusive amounts) - match by account number or name
     expenses.forEach(expense => {
-      if (expense.category === account.accountName) {
+      const expNum = extractAccountNumber(expense.category);
+      if (expNum === account.accountNumber || expense.category === account.accountName ||
+          expense.category === `${account.accountNumber} - ${account.accountName}`) {
         const netAmount = expense.includesVAT && expense.vatAmount 
           ? expense.amount - expense.vatAmount 
           : expense.amount;
@@ -98,7 +111,9 @@ export const generateTrialBalanceExcel = (
 
     journalEntries.forEach(entry => {
       entry.entries.forEach(line => {
-        if (line.account === account.accountName) {
+        const lineNum = extractAccountNumber(line.account);
+        if (lineNum === account.accountNumber || line.account === account.accountName ||
+            line.account === `${account.accountNumber} - ${account.accountName}`) {
           debit += line.debit;
           credit += line.credit;
         }
@@ -106,7 +121,9 @@ export const generateTrialBalanceExcel = (
     });
 
     expenses.forEach(expense => {
-      if (expense.category === account.accountName) {
+      const expNum = extractAccountNumber(expense.category);
+      if (expNum === account.accountNumber || expense.category === account.accountName ||
+          expense.category === `${account.accountNumber} - ${account.accountName}`) {
         const netAmount = expense.includesVAT && expense.vatAmount 
           ? expense.amount - expense.vatAmount 
           : expense.amount;
@@ -163,7 +180,9 @@ export const generateLedgerPDF = (
 
   journalEntries.forEach(entry => {
     entry.entries.forEach(line => {
-      if (line.account === account.accountName) {
+      const lineNum = extractAccountNumber(line.account);
+      if (lineNum === account.accountNumber || line.account === account.accountName ||
+          line.account === `${account.accountNumber} - ${account.accountName}`) {
         transactions.push({
           date: entry.date,
           description: entry.description,
@@ -176,7 +195,9 @@ export const generateLedgerPDF = (
   });
 
   expenses.forEach(expense => {
-    if (expense.category === account.accountName) {
+    const expNum = extractAccountNumber(expense.category);
+    if (expNum === account.accountNumber || expense.category === account.accountName ||
+        expense.category === `${account.accountNumber} - ${account.accountName}`) {
       const netAmount = expense.includesVAT && expense.vatAmount 
         ? expense.amount - expense.vatAmount 
         : expense.amount;

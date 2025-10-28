@@ -174,10 +174,12 @@ export default function Reports() {
       return expenseDate >= new Date(dateRange.startDate) && expenseDate <= new Date(dateRange.endDate);
     });
 
+    const effectiveSettings = { ...settings, companyName: activeCompany?.name || settings.companyName } as any;
+
     if (format === 'pdf') {
-      generateTrialBalancePDF(chartOfAccounts, filteredJournalEntries, expenses, dateRange, settings);
+      generateTrialBalancePDF(chartOfAccounts, filteredJournalEntries, expenses, dateRange, effectiveSettings);
     } else {
-      generateTrialBalanceExcel(chartOfAccounts, filteredJournalEntries, expenses, dateRange, settings);
+      generateTrialBalanceExcel(chartOfAccounts, filteredJournalEntries, expenses, dateRange, effectiveSettings);
     }
 
     toast({ title: `Trial Balance ${format.toUpperCase()} generated successfully` });
@@ -232,10 +234,12 @@ export default function Reports() {
     const currentPeriod = getPeriodData(dateRange.startDate, dateRange.endDate);
     const priorPeriod = getPeriodData(priorDateRange.startDate, priorDateRange.endDate);
 
+    const effectiveSettings = { ...settings, companyName: activeCompany?.name || settings.companyName } as any;
+
     if (format === 'pdf') {
-      generateEquityStatementPDF(chartOfAccounts, currentPeriod, priorPeriod, settings);
+      generateEquityStatementPDF(chartOfAccounts, currentPeriod, priorPeriod, effectiveSettings);
     } else {
-      generateEquityStatementExcel(chartOfAccounts, currentPeriod, priorPeriod, settings);
+      generateEquityStatementExcel(chartOfAccounts, currentPeriod, priorPeriod, effectiveSettings);
     }
 
     toast({ title: `Equity Statement ${format.toUpperCase()} generated successfully` });
@@ -252,21 +256,30 @@ export default function Reports() {
 
     const filteredJournalEntries = journalEntries.filter(entry => {
       const entryDate = new Date(entry.date);
-      const hasAccount = entry.entries.some(line => line.account === account.accountName);
+      const hasAccount = entry.entries.some(line => 
+        line.account === account.accountName || 
+        line.account === `${account.accountNumber} - ${account.accountName}` ||
+        line.account.startsWith(account.accountNumber + ' -')
+      );
       return hasAccount && entryDate >= new Date(dateRange.startDate) && entryDate <= new Date(dateRange.endDate);
     });
 
     const expenses = loadExpenses().filter(expense => {
       const expenseDate = new Date(expense.date);
-      return expense.category === account.accountName && 
+      const matchesAccount = expense.category === account.accountName || 
+                            expense.category === `${account.accountNumber} - ${account.accountName}` ||
+                            expense.category.startsWith(account.accountNumber + ' -');
+      return matchesAccount && 
              expenseDate >= new Date(dateRange.startDate) && 
              expenseDate <= new Date(dateRange.endDate);
     });
 
+    const effectiveSettings = { ...settings, companyName: activeCompany?.name || settings.companyName } as any;
+
     if (format === 'pdf') {
-      generateLedgerPDF(account, filteredJournalEntries, expenses, dateRange, settings);
+      generateLedgerPDF(account, filteredJournalEntries, expenses, dateRange, effectiveSettings);
     } else {
-      generateLedgerExcel(account, filteredJournalEntries, expenses, dateRange, settings);
+      generateLedgerExcel(account, filteredJournalEntries, expenses, dateRange, effectiveSettings);
     }
 
     toast({ title: `Ledger Report ${format.toUpperCase()} generated successfully` });
@@ -283,10 +296,12 @@ export default function Reports() {
       return expenseDate >= new Date(dateRange.startDate) && expenseDate <= new Date(dateRange.endDate);
     });
 
+    const effectiveSettings = { ...settings, companyName: activeCompany?.name || settings.companyName } as any;
+
     if (format === 'pdf') {
-      generateVATReportPDF(invoices, expenses, dateRange, settings);
+      generateVATReportPDF(invoices, expenses, dateRange, effectiveSettings);
     } else {
-      generateVATReportExcel(invoices, expenses, dateRange, settings);
+      generateVATReportExcel(invoices, expenses, dateRange, effectiveSettings);
     }
 
     toast({ title: `VAT Report ${format.toUpperCase()} generated successfully` });
