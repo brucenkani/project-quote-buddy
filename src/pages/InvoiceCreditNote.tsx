@@ -51,44 +51,49 @@ export default function InvoiceCreditNote() {
     );
   }
 
-  const handleCreateCreditNote = () => {
+  const handleCreateCreditNote = async () => {
     if (!creditNoteReason.trim() || creditAmount <= 0) {
       toast({ title: 'Please provide a reason and valid amount', variant: 'destructive' });
       return;
     }
 
-    const creditNoteId = `CN-${Date.now()}`;
-    
-    const creditNote: Invoice = {
-      ...invoice,
-      id: creditNoteId,
-      invoiceNumber: `CN-${invoice.invoiceNumber}`,
-      type: 'credit-note',
-      total: -Math.abs(creditAmount),
-      subtotal: -Math.abs(creditAmount / (1 + invoice.taxRate)),
-      taxAmount: -Math.abs((creditAmount / (1 + invoice.taxRate)) * invoice.taxRate),
-      notes: `Credit Note for Invoice ${invoice.invoiceNumber}\nReason: ${creditNoteReason}`,
-      issueDate: new Date().toISOString().split('T')[0],
-      payments: [],
-      creditNotes: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      status: 'paid', // Credit notes are always marked as paid
-    };
+    try {
+      const creditNoteId = crypto.randomUUID();
+      
+      const creditNote: Invoice = {
+        ...invoice,
+        id: creditNoteId,
+        invoiceNumber: `CN-${invoice.invoiceNumber}`,
+        type: 'credit-note',
+        total: -Math.abs(creditAmount),
+        subtotal: -Math.abs(creditAmount / (1 + invoice.taxRate)),
+        taxAmount: -Math.abs((creditAmount / (1 + invoice.taxRate)) * invoice.taxRate),
+        notes: `Credit Note for Invoice ${invoice.invoiceNumber}\nReason: ${creditNoteReason}`,
+        issueDate: new Date().toISOString().split('T')[0],
+        payments: [],
+        creditNotes: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: 'paid', // Credit notes are always marked as paid
+      };
 
-    // Link credit note to original invoice
-    const updatedInvoice = {
-      ...invoice,
-      creditNotes: [...(invoice.creditNotes || []), creditNoteId],
-      updatedAt: new Date().toISOString(),
-    };
+      // Link credit note to original invoice
+      const updatedInvoice = {
+        ...invoice,
+        creditNotes: [...(invoice.creditNotes || []), creditNoteId],
+        updatedAt: new Date().toISOString(),
+      };
 
-    // Save both invoices
-    saveInvoice(creditNote);
-    saveInvoice(updatedInvoice);
-    
-    toast({ title: 'Credit Note created successfully' });
-    navigate('/invoices');
+      // Save both invoices
+      await saveInvoice(creditNote);
+      await saveInvoice(updatedInvoice);
+      
+      toast({ title: 'Credit Note created successfully' });
+      navigate('/invoices');
+    } catch (error) {
+      console.error('Failed to create credit note:', error);
+      toast({ title: 'Failed to create credit note', variant: 'destructive' });
+    }
   };
 
   return (
