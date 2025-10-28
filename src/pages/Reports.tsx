@@ -44,18 +44,49 @@ export default function Reports() {
   });
 
   const [selectedAccount, setSelectedAccount] = useState<string>('');
+  const [chartOfAccounts, setChartOfAccounts] = useState<ChartAccount[]>([]);
   const [journalEntries, setJournalEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      const entries = await loadJournalEntriesFromDB();
-      setJournalEntries(entries);
-      setLoading(false);
+      try {
+        // Load chart of accounts
+        if (activeCompany) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: accountsData } = await supabase
+              .from('chart_of_accounts')
+              .select('*')
+              .eq('company_id', activeCompany.id)
+              .order('account_number');
+
+            if (accountsData) {
+              setChartOfAccounts(accountsData.map(row => ({
+                id: row.id,
+                accountNumber: row.account_number,
+                accountName: row.account_name,
+                accountType: row.account_type as any,
+                isDefault: false,
+                openingBalance: Number(row.opening_balance),
+                createdAt: row.created_at || new Date().toISOString(),
+              })));
+            }
+          }
+        }
+
+        // Load journal entries
+        const entries = await loadJournalEntriesFromDB();
+        setJournalEntries(entries);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
-  }, []);
+  }, [activeCompany]);
 
   // Calculate financial year dates based on year-end month
   const calculateFinancialYearDates = () => {
@@ -125,9 +156,9 @@ export default function Reports() {
     });
 
     if (format === 'pdf') {
-      generateTrialBalancePDF(loadChartOfAccounts(), filteredJournalEntries, expenses, dateRange, settings);
+      generateTrialBalancePDF(chartOfAccounts, filteredJournalEntries, expenses, dateRange, settings);
     } else {
-      generateTrialBalanceExcel(loadChartOfAccounts(), filteredJournalEntries, expenses, dateRange, settings);
+      generateTrialBalanceExcel(chartOfAccounts, filteredJournalEntries, expenses, dateRange, settings);
     }
 
     toast({ title: `Trial Balance ${format.toUpperCase()} generated successfully` });
@@ -138,9 +169,9 @@ export default function Reports() {
     const priorPeriod = getPeriodData(priorDateRange.startDate, priorDateRange.endDate);
 
     if (format === 'pdf') {
-      generateIncomeStatementPDF(loadChartOfAccounts(), currentPeriod, priorPeriod, settings);
+      generateIncomeStatementPDF(chartOfAccounts, currentPeriod, priorPeriod, settings);
     } else {
-      generateIncomeStatementExcel(loadChartOfAccounts(), currentPeriod, priorPeriod, settings);
+      generateIncomeStatementExcel(chartOfAccounts, currentPeriod, priorPeriod, settings);
     }
 
     toast({ title: `Income Statement ${format.toUpperCase()} generated successfully` });
@@ -151,9 +182,9 @@ export default function Reports() {
     const priorPeriod = getPeriodData(priorDateRange.startDate, priorDateRange.endDate);
 
     if (format === 'pdf') {
-      generateBalanceSheetPDF(loadChartOfAccounts(), currentPeriod, priorPeriod, settings);
+      generateBalanceSheetPDF(chartOfAccounts, currentPeriod, priorPeriod, settings);
     } else {
-      generateBalanceSheetExcel(loadChartOfAccounts(), currentPeriod, priorPeriod, settings);
+      generateBalanceSheetExcel(chartOfAccounts, currentPeriod, priorPeriod, settings);
     }
 
     toast({ title: `Balance Sheet ${format.toUpperCase()} generated successfully` });
@@ -164,9 +195,9 @@ export default function Reports() {
     const priorPeriod = getPeriodData(priorDateRange.startDate, priorDateRange.endDate);
 
     if (format === 'pdf') {
-      generateCashFlowPDF(loadChartOfAccounts(), currentPeriod, priorPeriod, settings);
+      generateCashFlowPDF(chartOfAccounts, currentPeriod, priorPeriod, settings);
     } else {
-      generateCashFlowExcel(loadChartOfAccounts(), currentPeriod, settings);
+      generateCashFlowExcel(chartOfAccounts, currentPeriod, settings);
     }
 
     toast({ title: `Cash Flow Statement ${format.toUpperCase()} generated successfully` });
