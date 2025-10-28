@@ -133,7 +133,7 @@ const App = () => (
           <Route path="/purchase-preview/:id" element={<ProtectedRoute><PurchasePreview /></ProtectedRoute>} />
           <Route path="/purchase-print/:id" element={<ProtectedRoute><PurchasePrint /></ProtectedRoute>} />
           <Route path="/purchase-payment/:id" element={<ProtectedRoute><PurchasePayment /></ProtectedRoute>} />
-          <Route path="/company-settings" element={<ProtectedRoute><LandingSettings /></ProtectedRoute>} />
+          
           <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
           <Route path="/invoices/new" element={<ProtectedRoute><InvoiceBuilder /></ProtectedRoute>} />
           <Route path="/invoices/:id" element={<ProtectedRoute><InvoiceBuilder /></ProtectedRoute>} />
