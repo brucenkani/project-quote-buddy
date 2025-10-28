@@ -51,8 +51,9 @@ const extractAccountNumber = (accountString: string): string => {
 };
 
 // Helper function to get account type from account number
-// NEW MAPPING: 1xxx=Current Asset, 2xxx=Non-Current Asset, 3xxx=Current Liability, 
-// 4xxx=Non-Current Liability, 5xxx=Equity, 6xxx=Revenue, 7xxx=Expense
+// MAPPING: 1xxx=Current Assets, 2xxx=Non-Current Assets, 3xxx=Current Liabilities,
+// 4xxx=Non-Current Liabilities, 5xxx=Equity, 6xxx=Income, 
+// 7xxx=Cost of Sales, 8xxx=Operating Expenses, 9xxx=Other Comprehensive Income
 export const getAccountTypeFromNumber = (accountNumber: string): AccountType => {
   const firstDigit = accountNumber.charAt(0);
   
@@ -69,9 +70,9 @@ export const getAccountTypeFromNumber = (accountNumber: string): AccountType => 
       return 'equity';
     case '6':
       return 'revenue';
-    case '7':
-    case '8':
-    case '9':
+    case '7': // Cost of Sales
+    case '8': // Operating Expenses
+    case '9': // Other Comprehensive Income
       return 'expense';
     default:
       return 'expense'; // Default fallback

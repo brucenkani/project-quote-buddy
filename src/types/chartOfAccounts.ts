@@ -10,10 +10,11 @@ export interface ChartAccount {
   openingBalance?: number;
 }
 
-// NEW MAPPING: 1xxx=Current Asset, 2xxx=Non-Current Asset, 3xxx=Current Liability, 
-// 4xxx=Non-Current Liability, 5xxx=Equity, 6xxx=Revenue, 7xxx=Expense
+// MAPPING: 1xxx=Current Assets, 2xxx=Non-Current Assets, 3xxx=Current Liabilities,
+// 4xxx=Non-Current Liabilities, 5xxx=Equity, 6xxx=Income, 
+// 7xxx=Cost of Sales, 8xxx=Operating Expenses, 9xxx=Other Comprehensive Income
 export const defaultChartOfAccounts: Omit<ChartAccount, 'id' | 'createdAt'>[] = [
-  // Current Assets (1100-1999)
+  // Current Assets (1xxx)
   { accountNumber: '1100', accountName: 'Cash and Cash Equivalents', accountType: 'current-asset', isDefault: true },
   { accountNumber: '1101', accountName: 'Petty Cash', accountType: 'current-asset', isDefault: true },
   { accountNumber: '1102', accountName: 'Cash on Hand', accountType: 'current-asset', isDefault: true },
@@ -31,7 +32,7 @@ export const defaultChartOfAccounts: Omit<ChartAccount, 'id' | 'createdAt'>[] = 
   { accountNumber: '1114', accountName: 'Short-Term Investments', accountType: 'current-asset', isDefault: true },
   { accountNumber: '1115', accountName: 'Money Market Funds', accountType: 'current-asset', isDefault: true },
   
-  // Non-current Assets (2100-2999)
+  // Non-current Assets (2xxx)
   { accountNumber: '2100', accountName: 'Property, Plant & Equipment', accountType: 'non-current-asset', isDefault: true },
   { accountNumber: '2101', accountName: 'Land', accountType: 'non-current-asset', isDefault: true },
   { accountNumber: '2102', accountName: 'Buildings', accountType: 'non-current-asset', isDefault: true },
@@ -47,7 +48,7 @@ export const defaultChartOfAccounts: Omit<ChartAccount, 'id' | 'createdAt'>[] = 
   { accountNumber: '2112', accountName: 'Long-Term Equity Investments', accountType: 'non-current-asset', isDefault: true },
   { accountNumber: '2113', accountName: 'Deferred Tax Asset', accountType: 'non-current-asset', isDefault: true },
   
-  // Current Liabilities (3100-3999)
+  // Current Liabilities (3xxx)
   { accountNumber: '3100', accountName: 'Trade and Other Payables', accountType: 'current-liability', isDefault: true },
   { accountNumber: '3101', accountName: 'Trade Creditors', accountType: 'current-liability', isDefault: true },
   { accountNumber: '3102', accountName: 'Accrued Expenses', accountType: 'current-liability', isDefault: true },
@@ -62,14 +63,14 @@ export const defaultChartOfAccounts: Omit<ChartAccount, 'id' | 'createdAt'>[] = 
   { accountNumber: '3111', accountName: 'Deferred Income', accountType: 'current-liability', isDefault: true },
   { accountNumber: '3112', accountName: 'Unearned Revenue', accountType: 'current-liability', isDefault: true },
   
-  // Non-current Liabilities (4100-4999)
+  // Non-current Liabilities (4xxx)
   { accountNumber: '4100', accountName: 'Long-Term Borrowings', accountType: 'non-current-liability', isDefault: true },
   { accountNumber: '4101', accountName: 'Bank Loans', accountType: 'non-current-liability', isDefault: true },
   { accountNumber: '4102', accountName: 'Shareholder Loans', accountType: 'non-current-liability', isDefault: true },
   { accountNumber: '4103', accountName: 'Lease Liabilities', accountType: 'non-current-liability', isDefault: true },
   { accountNumber: '4104', accountName: 'Deferred Tax Liability', accountType: 'non-current-liability', isDefault: true },
   
-  // Equity (5100-5999)
+  // Equity (5xxx)
   { accountNumber: '5100', accountName: 'Share Capital', accountType: 'equity', isDefault: true },
   { accountNumber: '5101', accountName: 'Ordinary Share Capital', accountType: 'equity', isDefault: true },
   { accountNumber: '5102', accountName: 'Preference Share Capital', accountType: 'equity', isDefault: true },
@@ -80,7 +81,7 @@ export const defaultChartOfAccounts: Omit<ChartAccount, 'id' | 'createdAt'>[] = 
   { accountNumber: '5107', accountName: 'Foreign Currency Translation Reserve', accountType: 'equity', isDefault: true },
   { accountNumber: '5108', accountName: "Owner's Drawings", accountType: 'equity', isDefault: true },
   
-  // Revenue (6100-6999)
+  // Income (6xxx)
   { accountNumber: '6100', accountName: 'Revenue', accountType: 'revenue', isDefault: true },
   { accountNumber: '6101', accountName: 'Product Sales', accountType: 'revenue', isDefault: true },
   { accountNumber: '6102', accountName: 'Service Income', accountType: 'revenue', isDefault: true },
@@ -89,27 +90,31 @@ export const defaultChartOfAccounts: Omit<ChartAccount, 'id' | 'createdAt'>[] = 
   { accountNumber: '6105', accountName: 'Interest Income', accountType: 'revenue', isDefault: true },
   { accountNumber: '6106', accountName: 'Dividend Income', accountType: 'revenue', isDefault: true },
   
-  // Expenses (7100-9999)
+  // Cost of Sales (7xxx)
   { accountNumber: '7100', accountName: 'Cost of Goods Sold', accountType: 'expense', isDefault: true },
   { accountNumber: '7101', accountName: 'Direct Labour', accountType: 'expense', isDefault: true },
   { accountNumber: '7102', accountName: 'Subcontracting Costs', accountType: 'expense', isDefault: true },
   { accountNumber: '7103', accountName: 'Freight & Import Duties', accountType: 'expense', isDefault: true },
-  { accountNumber: '7200', accountName: 'Administrative Expenses', accountType: 'expense', isDefault: true },
-  { accountNumber: '7201', accountName: 'Salaries and Wages (Admin)', accountType: 'expense', isDefault: true },
-  { accountNumber: '7202', accountName: 'Office Rent', accountType: 'expense', isDefault: true },
-  { accountNumber: '7203', accountName: 'Telephone & Internet', accountType: 'expense', isDefault: true },
-  { accountNumber: '7204', accountName: 'Stationery & Printing', accountType: 'expense', isDefault: true },
-  { accountNumber: '7205', accountName: 'Insurance (Admin)', accountType: 'expense', isDefault: true },
-  { accountNumber: '7300', accountName: 'Selling and Distribution Expenses', accountType: 'expense', isDefault: true },
-  { accountNumber: '7301', accountName: 'Advertising & Marketing', accountType: 'expense', isDefault: true },
-  { accountNumber: '7302', accountName: 'Travel & Accommodation (Sales)', accountType: 'expense', isDefault: true },
-  { accountNumber: '7303', accountName: 'Motor Vehicle Expenses', accountType: 'expense', isDefault: true },
-  { accountNumber: '7400', accountName: 'Finance Costs', accountType: 'expense', isDefault: true },
-  { accountNumber: '7401', accountName: 'Interest Expense – Loans', accountType: 'expense', isDefault: true },
-  { accountNumber: '7402', accountName: 'Bank Charges', accountType: 'expense', isDefault: true },
-  { accountNumber: '7500', accountName: 'Legal & Professional Fees', accountType: 'expense', isDefault: true },
-  { accountNumber: '7501', accountName: 'Audit & Accounting Fees', accountType: 'expense', isDefault: true },
-  { accountNumber: '7502', accountName: 'Consulting Fees', accountType: 'expense', isDefault: true },
-  { accountNumber: '8100', accountName: 'Current Income Tax Expense', accountType: 'expense', isDefault: true },
-  { accountNumber: '8200', accountName: 'Deferred Tax Expense/Income', accountType: 'expense', isDefault: true },
+  
+  // Operating Expenses (8xxx)
+  { accountNumber: '8100', accountName: 'Administrative Expenses', accountType: 'expense', isDefault: true },
+  { accountNumber: '8101', accountName: 'Salaries and Wages (Admin)', accountType: 'expense', isDefault: true },
+  { accountNumber: '8102', accountName: 'Office Rent', accountType: 'expense', isDefault: true },
+  { accountNumber: '8103', accountName: 'Telephone & Internet', accountType: 'expense', isDefault: true },
+  { accountNumber: '8104', accountName: 'Stationery & Printing', accountType: 'expense', isDefault: true },
+  { accountNumber: '8105', accountName: 'Insurance (Admin)', accountType: 'expense', isDefault: true },
+  { accountNumber: '8200', accountName: 'Selling and Distribution Expenses', accountType: 'expense', isDefault: true },
+  { accountNumber: '8201', accountName: 'Advertising & Marketing', accountType: 'expense', isDefault: true },
+  { accountNumber: '8202', accountName: 'Travel & Accommodation (Sales)', accountType: 'expense', isDefault: true },
+  { accountNumber: '8203', accountName: 'Motor Vehicle Expenses', accountType: 'expense', isDefault: true },
+  { accountNumber: '8300', accountName: 'Finance Costs', accountType: 'expense', isDefault: true },
+  { accountNumber: '8301', accountName: 'Interest Expense – Loans', accountType: 'expense', isDefault: true },
+  { accountNumber: '8302', accountName: 'Bank Charges', accountType: 'expense', isDefault: true },
+  { accountNumber: '8400', accountName: 'Legal & Professional Fees', accountType: 'expense', isDefault: true },
+  { accountNumber: '8401', accountName: 'Audit & Accounting Fees', accountType: 'expense', isDefault: true },
+  { accountNumber: '8402', accountName: 'Consulting Fees', accountType: 'expense', isDefault: true },
+  
+  // Other Comprehensive Income (9xxx)
+  { accountNumber: '9100', accountName: 'Current Income Tax Expense', accountType: 'expense', isDefault: true },
+  { accountNumber: '9200', accountName: 'Deferred Tax Expense/Income', accountType: 'expense', isDefault: true },
 ];
