@@ -123,11 +123,6 @@ export default function AccountingDashboard() {
           <p className="text-lg text-muted-foreground">What do you need to do today?</p>
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="default">Customise</Button>
-          <Button variant="outline">Reset</Button>
-          <Button variant="outline">Help Centre</Button>
-        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {shortcuts.map((shortcut) => (
