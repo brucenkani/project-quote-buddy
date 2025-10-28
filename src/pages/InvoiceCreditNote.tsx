@@ -29,11 +29,16 @@ export default function InvoiceCreditNote() {
   
   const [creditNoteReason, setCreditNoteReason] = useState('');
   const [creditAmount, setCreditAmount] = useState(0);
+  const [amountDue, setAmountDue] = useState(0);
 
-  // Update credit amount when invoice loads
+  // Calculate amount due when invoice loads
   useEffect(() => {
     if (invoice) {
-      setCreditAmount(invoice.total);
+      const paid = invoice.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
+      const creditNotes = invoice.creditNotes?.length || 0;
+      const due = invoice.total - paid;
+      setAmountDue(due);
+      setCreditAmount(due); // Default to full amount due
     }
   }, [invoice]);
 
@@ -124,8 +129,8 @@ export default function InvoiceCreditNote() {
                 <p className="font-medium">{invoice.projectDetails.clientName}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Status</p>
-                <p className="font-medium capitalize">{invoice.status}</p>
+                <p className="text-sm text-muted-foreground">Amount Due</p>
+                <p className="font-medium text-primary">{settings.currencySymbol}{amountDue.toFixed(2)}</p>
               </div>
             </div>
 
@@ -137,7 +142,11 @@ export default function InvoiceCreditNote() {
                 value={creditAmount}
                 onChange={(e) => setCreditAmount(parseFloat(e.target.value) || 0)}
                 step="0.01"
+                max={amountDue}
               />
+              <p className="text-xs text-muted-foreground">
+                Maximum credit: {settings.currencySymbol}{amountDue.toFixed(2)}
+              </p>
             </div>
 
             <div className="space-y-2">
