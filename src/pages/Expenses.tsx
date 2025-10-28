@@ -441,20 +441,22 @@ export default function Expenses() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="paymentMethod">Payment Method</Label>
-                  <Select value={formData.paymentMethod} onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}>
+                  <Select 
+                    value={formData.paymentMethod} 
+                    onValueChange={(value) => {
+                      setFormData({ ...formData, paymentMethod: value, bankAccountId: value === 'cash' ? '' : formData.bankAccountId });
+                    }}
+                  >
                     <SelectTrigger id="paymentMethod">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="card">Card</SelectItem>
                       <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
-                      <SelectItem value="check">Check</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                {formData.paymentMethod === 'bank-transfer' && (
+                {formData.paymentMethod === 'bank-transfer' ? (
                   <div className="space-y-2">
                     <Label htmlFor="bankAccount">Bank Account *</Label>
                     <Select 
@@ -467,11 +469,18 @@ export default function Expenses() {
                       <SelectContent>
                         {bankAccounts.map(account => (
                           <SelectItem key={account.id} value={account.id}>
-                            {account.account_name} - {account.bank_name} ({account.account_number})
+                            {account.account_name} - {account.account_number}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label>Cash Account</Label>
+                    <div className="h-10 flex items-center px-3 rounded-md border bg-background">
+                      <span className="text-sm text-muted-foreground">Cash on Hand</span>
+                    </div>
                   </div>
                 )}
                 <div className="space-y-2">
