@@ -38,6 +38,8 @@ export default function Expenses() {
   const [newAccount, setNewAccount] = useState({ accountNumber: '', accountName: '', accountType: 'expense' as AccountType });
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [bulkExpenses, setBulkExpenses] = useState<Partial<Expense>[]>([]);
+  const [bulkPaymentMethod, setBulkPaymentMethod] = useState<'cash' | 'bank-transfer'>('cash');
+  const [bulkBankAccountId, setBulkBankAccountId] = useState<string>('');
 
   const [formData, setFormData] = useState<Partial<Expense>>({
     date: new Date().toISOString().split('T')[0],
@@ -242,6 +244,8 @@ export default function Expenses() {
         }));
 
         setBulkExpenses(parsedExpenses);
+        setBulkPaymentMethod('cash');
+        setBulkBankAccountId('');
         setIsBulkUploadOpen(true);
         toast({ title: `${parsedExpenses.length} expenses loaded for review` });
       } catch (error) {
@@ -270,6 +274,16 @@ export default function Expenses() {
   };
 
   const saveBulkExpenses = () => {
+    // Validate bank account selection for bank transfer
+    if (bulkPaymentMethod === 'bank-transfer' && !bulkBankAccountId) {
+      toast({ 
+        title: 'Bank account required', 
+        description: 'Please select a bank account for bank transfer payments',
+        variant: 'destructive' 
+      });
+      return;
+    }
+
     let savedCount = 0;
     bulkExpenses.forEach((exp) => {
       if (exp.category && exp.amount) {
@@ -280,9 +294,10 @@ export default function Expenses() {
           category: exp.category!,
           description: exp.description || '',
           amount: exp.amount!,
-          paymentMethod: 'cash',
+          paymentMethod: bulkPaymentMethod,
           reference: '',
           status: 'paid',
+          bankAccountId: bulkPaymentMethod === 'bank-transfer' ? bulkBankAccountId : undefined,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -301,6 +316,8 @@ export default function Expenses() {
     
     setExpenses(loadExpenses());
     setBulkExpenses([]);
+    setBulkPaymentMethod('cash');
+    setBulkBankAccountId('');
     setIsBulkUploadOpen(false);
     toast({ title: `${savedCount} expenses saved with journal entries` });
   };
@@ -570,11 +587,66 @@ export default function Expenses() {
             <DialogHeader>
               <DialogTitle>Review and Confirm Bulk Expenses</DialogTitle>
             </DialogHeader>
-            <div className="mt-4">
+            <div className="mt-4 space-y-6">
               {bulkExpenses.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">No expenses to review</p>
               ) : (
                 <>
+                  {/* Payment Method Selection */}
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+                    <div className="space-y-2">
+                      <Label>Payment Method *</Label>
+                      <Select
+                        value={bulkPaymentMethod}
+                        onValueChange={(value: 'cash' | 'bank-transfer') => {
+                          setBulkPaymentMethod(value);
+                          if (value === 'cash') {
+                            setBulkBankAccountId('');
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cash">Cash</SelectItem>
+                          <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {bulkPaymentMethod === 'bank-transfer' ? (
+                      <div className="space-y-2">
+                        <Label>Bank Account *</Label>
+                        <Select
+                          value={bulkBankAccountId}
+                          onValueChange={setBulkBankAccountId}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select bank account" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {bankAccounts
+                              .filter(acc => acc.is_active)
+                              .map(acc => (
+                                <SelectItem key={acc.id} value={acc.id}>
+                                  {acc.account_name} - {acc.account_number}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Label>Cash Account</Label>
+                        <div className="h-10 flex items-center px-3 rounded-md border bg-background">
+                          <span className="text-sm text-muted-foreground">Cash on Hand</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Expenses Table */}
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -619,7 +691,7 @@ export default function Expenses() {
                             </Select>
                           </TableCell>
                           <TableCell className="text-sm font-semibold">{settings.currencySymbol}{exp.amount?.toFixed(2)}</TableCell>
-                          <TableCell className="text-sm">{exp.paymentMethod}</TableCell>
+                          <TableCell className="text-sm">{bulkPaymentMethod === 'bank-transfer' ? 'Bank Transfer' : 'Cash'}</TableCell>
                           <TableCell>
                             <Badge className="text-xs">{exp.status}</Badge>
                           </TableCell>
