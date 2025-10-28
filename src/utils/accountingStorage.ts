@@ -24,15 +24,27 @@ export const loadJournalEntriesFromDB = async (): Promise<JournalEntry[]> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return [];
 
-    const { data: entries, error } = await supabase
+    // Get active company ID
+    const activeCompanyId = localStorage.getItem('activeCompanyId');
+    
+    // Build query - filter by company_id if available
+    let query = supabase
       .from('journal_entries')
       .select(`
         *,
         journal_entry_lines (*)
-      `)
-      .order('date', { ascending: false });
+      `);
+    
+    if (activeCompanyId) {
+      query = query.eq('company_id', activeCompanyId);
+    }
+    
+    const { data: entries, error } = await query.order('date', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Journal entries query error:', error);
+      throw error;
+    }
 
     return entries?.map(entry => ({
       id: entry.id,
