@@ -107,12 +107,13 @@ export default function InvoicePayment() {
 
       await saveInvoice(updatedInvoice);
 
-      // Create double-entry journal entry for payment
+      // Create double-entry journal entry for payment (unique reference to allow multiple payments)
+      const uniqueRef = `${paymentData.paymentReference}-${newPayment.id.slice(0,6)}`;
       recordPaymentReceived(
         { ...invoice, total: paymentData.amount },
         paymentData.paymentMethod,
         paymentData.paymentDate,
-        paymentData.paymentReference
+        uniqueRef
       );
 
       toast({ 

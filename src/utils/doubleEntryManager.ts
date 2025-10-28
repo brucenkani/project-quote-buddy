@@ -105,6 +105,51 @@ export const recordInvoice = (invoice: Invoice): JournalEntry => {
   );
 };
 
+// Record a credit note (reduces AR and reverses revenue/tax)
+export const recordCreditNote = (creditNote: Invoice): JournalEntry => {
+  const amountTotal = Math.abs(creditNote.total);
+  const amountSubtotal = Math.abs(creditNote.subtotal);
+  const amountTax = Math.abs(creditNote.taxAmount);
+
+  const entries: JournalEntryLine[] = [
+    {
+      id: crypto.randomUUID(),
+      account: 'Sales Discounts',
+      accountType: 'expense',
+      debit: amountSubtotal,
+      credit: 0,
+      description: `Credit note for ${creditNote.projectDetails.clientName}`,
+    },
+  ];
+
+  if (amountTax > 0) {
+    entries.push({
+      id: crypto.randomUUID(),
+      account: 'Taxes Payable',
+      accountType: 'current-liability',
+      debit: amountTax,
+      credit: 0,
+      description: `Tax reversal on ${creditNote.invoiceNumber}`,
+    });
+  }
+
+  entries.push({
+    id: crypto.randomUUID(),
+    account: 'Accounts Receivable',
+    accountType: 'current-asset',
+    debit: 0,
+    credit: amountTotal,
+    description: `Credit Note ${creditNote.invoiceNumber}`,
+  });
+
+  return createValidatedJournalEntry(
+    creditNote.issueDate,
+    creditNote.invoiceNumber,
+    `Credit Note: ${creditNote.projectDetails.clientName}`,
+    entries
+  );
+};
+
 /**
  * Transaction Type 2: Receive Payment from Customer
  * Debit: Cash/Bank (Asset ↑)

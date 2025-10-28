@@ -1,7 +1,7 @@
 import { Invoice } from '@/types/invoice';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateInvoiceStatus } from './invoiceStatusCalculator';
-import { recordInvoice } from './doubleEntryManager';
+import { recordInvoice, recordCreditNote } from './doubleEntryManager';
 
 export const loadInvoices = async (): Promise<Invoice[]> => {
   try {
@@ -82,7 +82,7 @@ export const loadInvoices = async (): Promise<Invoice[]> => {
         status: invoice.status as any,
         paymentTerms: invoice.terms || '',
         notes: invoice.notes || '',
-        type: 'invoice',
+        type: invoice.invoice_number?.startsWith('CN-') ? 'credit-note' : 'invoice',
         payments: paymentsByInvoice[invoice.id] || [],
         creditNotes: [],
         projectDetails: {
@@ -97,11 +97,25 @@ export const loadInvoices = async (): Promise<Invoice[]> => {
       return transformed;
     });
 
-    // Recalculate statuses with full invoice context
-    return allInvoices.map(invoice => ({
-      ...invoice,
-      status: calculateInvoiceStatus(invoice, allInvoices),
-    }));
+    // Build credit note links based on invoice numbers (CN-<original>)
+    const creditNotesByOriginal: Record<string, string[]> = {};
+    allInvoices
+      .filter(inv => inv.invoiceNumber?.startsWith('CN-'))
+      .forEach(cn => {
+        const originalNumber = cn.invoiceNumber.replace(/^CN-/, '');
+        creditNotesByOriginal[originalNumber] = [...(creditNotesByOriginal[originalNumber] || []), cn.id];
+      });
+
+    // Attach credit notes to original invoices and recalc statuses
+    return allInvoices.map(inv => {
+      const withLinks = inv.invoiceNumber?.startsWith('CN-')
+        ? { ...inv, creditNotes: [] }
+        : { ...inv, creditNotes: creditNotesByOriginal[inv.invoiceNumber] || [] };
+      return {
+        ...withLinks,
+        status: calculateInvoiceStatus(withLinks, allInvoices),
+      };
+    });
   } catch (error) {
     console.error('Failed to load invoices:', error);
     return [];
@@ -216,9 +230,13 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
         .eq('company_id', companyId)
         .maybeSingle();
       
-      // Only create journal entry if it doesn't exist and invoice is not a credit note
-      if (!existingJournalEntry && invoice.type !== 'credit-note') {
-        recordInvoice(invoice);
+      // Only create journal entry if it doesn't exist
+      if (!existingJournalEntry) {
+        if (invoice.type === 'credit-note') {
+          recordCreditNote(invoice);
+        } else {
+          recordInvoice(invoice);
+        }
       }
     } catch (journalError) {
       console.error('Failed to create journal entry for invoice:', journalError);
