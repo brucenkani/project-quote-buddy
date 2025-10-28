@@ -40,6 +40,7 @@ export default function Expenses() {
   const [bulkExpenses, setBulkExpenses] = useState<Partial<Expense>[]>([]);
   const [bulkPaymentMethod, setBulkPaymentMethod] = useState<'cash' | 'bank-transfer'>('cash');
   const [bulkBankAccountId, setBulkBankAccountId] = useState<string>('');
+  const [bulkIncludesVAT, setBulkIncludesVAT] = useState(false);
 
   const [formData, setFormData] = useState<Partial<Expense>>({
     date: new Date().toISOString().split('T')[0],
@@ -80,6 +81,7 @@ export default function Expenses() {
 
   const refreshChartAccounts = () => {
     const accounts = loadChartOfAccounts();
+    console.log('Loaded chart accounts:', accounts);
     setChartAccounts(accounts);
   };
 
@@ -93,6 +95,8 @@ export default function Expenses() {
     const inExpenseRange = !isNaN(num) && num >= 7000 && num < 9000; // 7xxx and 8xxx
     return inExpenseRange && !isTax;
   });
+
+  console.log('Filtered expense accounts:', expenseAccounts);
 
   const handleCreateAccount = () => {
     if (!newAccount.accountNumber || !newAccount.accountName) {
@@ -246,11 +250,14 @@ export default function Expenses() {
           paymentMethod: 'cash' as const,
           reference: '',
           status: 'paid' as Expense['status'],
+          includesVAT: false,
+          vatRate: settings.taxRate,
         }));
 
         setBulkExpenses(parsedExpenses);
         setBulkPaymentMethod('cash');
         setBulkBankAccountId('');
+        setBulkIncludesVAT(false);
         setIsBulkUploadOpen(true);
         toast({ title: `${parsedExpenses.length} expenses loaded for review` });
       } catch (error) {
@@ -292,6 +299,14 @@ export default function Expenses() {
     let savedCount = 0;
     bulkExpenses.forEach((exp) => {
       if (exp.category && exp.amount) {
+        // Calculate VAT if included
+        let vatAmount = 0;
+        let amountExclVAT = exp.amount!;
+        if (bulkIncludesVAT) {
+          vatAmount = exp.amount! * (settings.taxRate / (100 + settings.taxRate));
+          amountExclVAT = exp.amount! - vatAmount;
+        }
+
         const expense: Expense = {
           id: crypto.randomUUID(),
           date: exp.date!,
@@ -303,6 +318,9 @@ export default function Expenses() {
           reference: '',
           status: 'paid',
           bankAccountId: bulkPaymentMethod === 'bank-transfer' ? bulkBankAccountId : undefined,
+          includesVAT: bulkIncludesVAT,
+          vatRate: settings.taxRate,
+          vatAmount: bulkIncludesVAT ? vatAmount : 0,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -323,6 +341,7 @@ export default function Expenses() {
     setBulkExpenses([]);
     setBulkPaymentMethod('cash');
     setBulkBankAccountId('');
+    setBulkIncludesVAT(false);
     setIsBulkUploadOpen(false);
     toast({ title: `${savedCount} expenses saved with journal entries` });
   };
@@ -658,6 +677,18 @@ export default function Expenses() {
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  {/* VAT Checkbox for bulk expenses */}
+                  <div className="col-span-2 flex items-center space-x-2 p-4 bg-muted/30 rounded-lg">
+                    <Checkbox 
+                      id="bulkIncludesVAT" 
+                      checked={bulkIncludesVAT}
+                      onCheckedChange={(checked) => setBulkIncludesVAT(checked as boolean)}
+                    />
+                    <Label htmlFor="bulkIncludesVAT" className="cursor-pointer">
+                      These expenses include VAT/Tax (VAT will be calculated at {settings.taxRate}%)
+                    </Label>
                   </div>
 
                   {/* Expenses Table */}
