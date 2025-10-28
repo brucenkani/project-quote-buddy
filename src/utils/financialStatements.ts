@@ -46,9 +46,24 @@ export const calculateAccountBalance = (
   let debit = 0;
   let credit = 0;
 
+  // Create matching patterns for this account
+  const accountMatches = (lineAccount: string): boolean => {
+    // Match by exact account name
+    if (lineAccount === account.accountName) return true;
+    
+    // Match by "accountNumber - accountName" format
+    const fullFormat = `${account.accountNumber} - ${account.accountName}`;
+    if (lineAccount === fullFormat) return true;
+    
+    // Match by account number prefix
+    if (lineAccount.startsWith(account.accountNumber + ' -')) return true;
+    
+    return false;
+  };
+
   journalEntries.forEach(entry => {
     entry.entries.forEach(line => {
-      if (line.account === account.accountName) {
+      if (accountMatches(line.account)) {
         debit += line.debit;
         credit += line.credit;
       }
@@ -56,7 +71,7 @@ export const calculateAccountBalance = (
   });
 
   expenses.forEach(expense => {
-    if (expense.category === account.accountName) {
+    if (accountMatches(expense.category)) {
       // Only recognize VAT-exclusive amount for expenses with VAT
       const netAmount = expense.includesVAT && expense.vatAmount 
         ? expense.amount - expense.vatAmount 
