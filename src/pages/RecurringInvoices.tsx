@@ -116,7 +116,9 @@ export default function RecurringInvoices() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recurringInvoices.map((recurring) => (
+                {recurringInvoices
+                  .filter(recurring => recurring.invoiceTemplate?.projectDetails?.clientName)
+                  .map((recurring) => (
                   <TableRow key={recurring.id}>
                     <TableCell className="font-medium">
                       {recurring.invoiceTemplate.projectDetails.clientName}
@@ -127,7 +129,7 @@ export default function RecurringInvoices() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {settings.currencySymbol}{recurring.invoiceTemplate.total.toFixed(2)}
+                      {settings.currencySymbol}{recurring.invoiceTemplate.total?.toFixed(2) || '0.00'}
                     </TableCell>
                     <TableCell>
                       {new Date(recurring.startDate).toLocaleDateString()}
