@@ -18,11 +18,30 @@ const initializeCache = async () => {
       return;
     }
 
-    // Get the active company_id from localStorage
-    const activeCompanyId = localStorage.getItem('activeCompanyId');
+    // Get the active company_id from localStorage - if not set, get user's first company
+    let activeCompanyId = localStorage.getItem('activeCompanyId');
+    
     if (!activeCompanyId) {
-      console.error('No active company selected');
-      chartCache = [];
+      // Try to get the user's first company from company_members
+      const { data: memberData } = await supabase
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single();
+      
+      if (memberData) {
+        activeCompanyId = memberData.company_id;
+      }
+    }
+    
+    if (!activeCompanyId) {
+      console.log('No company found for user, initializing with default chart');
+      chartCache = defaultChartOfAccounts.map(acc => ({
+        ...acc,
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+      }));
       cacheInitialized = true;
       return;
     }
@@ -59,7 +78,12 @@ const initializeCache = async () => {
     cacheInitialized = true;
   } catch (error) {
     console.error('Failed to initialize chart cache:', error);
-    chartCache = [];
+    // Still initialize with default chart on error
+    chartCache = defaultChartOfAccounts.map(acc => ({
+      ...acc,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    }));
     cacheInitialized = true;
   }
 };
@@ -69,10 +93,24 @@ const saveChartOfAccountsToDb = async (accounts: ChartAccount[]): Promise<void> 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Get the active company_id from localStorage
-    const activeCompanyId = localStorage.getItem('activeCompanyId');
+    // Get the active company_id from localStorage or user's first company
+    let activeCompanyId = localStorage.getItem('activeCompanyId');
+    
     if (!activeCompanyId) {
-      console.error('No active company selected');
+      const { data: memberData } = await supabase
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single();
+      
+      if (memberData) {
+        activeCompanyId = memberData.company_id;
+      }
+    }
+    
+    if (!activeCompanyId) {
+      console.error('No company found to save chart of accounts');
       return;
     }
 
@@ -102,11 +140,19 @@ initializeCache();
 
 export const loadChartOfAccounts = (): ChartAccount[] => {
   if (!cacheInitialized) {
-    // Return empty and trigger async init
+    // Trigger async init but return default chart immediately
     initializeCache();
-    return [];
+    return defaultChartOfAccounts.map(acc => ({
+      ...acc,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    }));
   }
-  return chartCache;
+  return chartCache.length > 0 ? chartCache : defaultChartOfAccounts.map(acc => ({
+    ...acc,
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+  }));
 };
 
 export const saveChartOfAccounts = (accounts: ChartAccount[]): void => {
