@@ -116,18 +116,17 @@ export const saveJournalEntryToDB = async (entry: JournalEntry): Promise<void> =
 
     if (!companyId) throw new Error('No active company found');
 
-    // Upsert journal entry
+    // Upsert journal entry with conflict on (company_id, reference)
     const { data: journalData, error: journalError } = await supabase
       .from('journal_entries')
       .upsert({
-        id: entry.id,
         user_id: user.id,
         company_id: companyId,
         entry_number: entry.reference,
         date: entry.date,
         description: entry.description,
         reference: entry.reference
-      })
+      }, { onConflict: 'company_id,reference' })
       .select()
       .single();
 
@@ -137,7 +136,7 @@ export const saveJournalEntryToDB = async (entry: JournalEntry): Promise<void> =
     await supabase
       .from('journal_entry_lines')
       .delete()
-      .eq('journal_entry_id', entry.id);
+      .eq('journal_entry_id', journalData.id);
 
     // Insert journal entry lines
     const lines = entry.entries.map(line => ({
