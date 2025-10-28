@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,11 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ArrowLeft, Save, Shield, FileDown, FileSpreadsheet, Database } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ArrowLeft, Save, Shield, FileDown, FileSpreadsheet, Database, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { loadSettings, saveSettings } from '@/utils/settingsStorage';
 import { loadChartOfAccounts, saveChartOfAccounts } from '@/utils/chartOfAccountsStorage';
 import { generateChartOfAccountsPDF, generateChartOfAccountsExcel } from '@/utils/chartOfAccountsReports';
+import { defaultChartOfAccounts } from '@/types/chartOfAccounts';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -27,6 +30,14 @@ export default function Settings() {
   const [accounts, setAccounts] = useState(() => loadChartOfAccounts());
   const [openingBalances, setOpeningBalances] = useState<Record<string, number>>({});
   const [showOpeningBalances, setShowOpeningBalances] = useState(false);
+
+  // Reload accounts when component mounts to ensure we have latest data
+  useEffect(() => {
+    const loadedAccounts = loadChartOfAccounts();
+    if (loadedAccounts.length > 0) {
+      setAccounts(loadedAccounts);
+    }
+  }, []);
 
   const handleSave = () => {
     const updatedSettings = {
@@ -76,11 +87,38 @@ export default function Settings() {
     });
   };
 
+  const handleResetChartOfAccounts = () => {
+    const standardChart = defaultChartOfAccounts.map(acc => ({
+      ...acc,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    }));
+    saveChartOfAccounts(standardChart);
+    setAccounts(standardChart);
+    toast({
+      title: "Chart of Accounts Reset",
+      description: "Standard chart of accounts has been loaded successfully.",
+    });
+  };
+
   const handleOpeningBalanceChange = (accountId: string, value: string) => {
     setOpeningBalances(prev => ({
       ...prev,
       [accountId]: parseFloat(value) || 0
     }));
+  };
+
+  const getCategoryLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      'current-asset': 'Current Asset',
+      'non-current-asset': 'Non-Current Asset',
+      'current-liability': 'Current Liability',
+      'non-current-liability': 'Non-Current Liability',
+      'equity': 'Equity',
+      'revenue': 'Revenue/Income',
+      'expense': 'Expense',
+    };
+    return labels[type] || type;
   };
 
   return (
@@ -166,7 +204,7 @@ export default function Settings() {
           <CardHeader>
             <CardTitle>Chart of Accounts</CardTitle>
             <CardDescription>
-              Download your chart of accounts and manage opening balances
+              View, download, and manage your chart of accounts and opening balances
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -223,6 +261,44 @@ export default function Settings() {
                   </div>
                 </DialogContent>
               </Dialog>
+              <Button onClick={handleResetChartOfAccounts} variant="outline" className="gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Load Standard Chart
+              </Button>
+            </div>
+
+            {/* Display Chart of Accounts Table */}
+            <div className="mt-6 border rounded-lg">
+              <ScrollArea className="h-[400px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[120px]">Account Code</TableHead>
+                      <TableHead>Account Name</TableHead>
+                      <TableHead className="w-[200px]">Category</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {accounts.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                          No accounts found. Click "Load Standard Chart" to initialize.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      accounts.map((account) => (
+                        <TableRow key={account.id}>
+                          <TableCell className="font-mono">{account.accountNumber}</TableCell>
+                          <TableCell>{account.accountName}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {getCategoryLabel(account.accountType)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
             </div>
           </CardContent>
         </Card>
