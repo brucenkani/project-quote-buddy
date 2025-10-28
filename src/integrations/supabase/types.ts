@@ -1359,6 +1359,7 @@ export type Database = {
           description: string
           entry_number: string
           id: string
+          is_manual: boolean | null
           reference: string | null
           user_id: string
         }
@@ -1369,6 +1370,7 @@ export type Database = {
           description: string
           entry_number: string
           id?: string
+          is_manual?: boolean | null
           reference?: string | null
           user_id: string
         }
@@ -1379,6 +1381,7 @@ export type Database = {
           description?: string
           entry_number?: string
           id?: string
+          is_manual?: boolean | null
           reference?: string | null
           user_id?: string
         }

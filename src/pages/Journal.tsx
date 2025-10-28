@@ -18,11 +18,26 @@ import { useToast } from '@/hooks/use-toast';
 export default function Journal() {
   const { toast } = useToast();
   const { settings } = useSettings();
-  const [entries, setEntries] = useState<JournalEntry[]>(loadJournalEntries());
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [chartAccounts, setChartAccounts] = useState(loadChartOfAccounts());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [showNewAccountDialog, setShowNewAccountDialog] = useState<number | null>(null);
   const [newAccount, setNewAccount] = useState({ accountNumber: '', accountName: '', accountType: 'current-asset' as AccountType });
+
+  // Load only manual journal entries
+  const loadManualEntries = () => {
+    const allEntries = loadJournalEntries();
+    // Filter to only show manually created entries (not automatic from invoices/payments)
+    return allEntries.filter(entry => {
+      // Manual entries don't start with automatic prefixes
+      return !entry.reference.match(/^(INV-|PAY-|EXP-|PUR-)/);
+    });
+  };
+
+  // Load manual entries on component mount
+  useState(() => {
+    setEntries(loadManualEntries());
+  });
   
   const handleAccountTypeChange = (accountType: AccountType) => {
     const nextNumber = generateNextAccountNumber(accountType);
@@ -98,7 +113,7 @@ export default function Journal() {
     };
 
     saveJournalEntry(entry);
-    setEntries(loadJournalEntries());
+    setEntries(loadManualEntries());
     setIsDialogOpen(false);
     
     setFormData({ date: new Date().toISOString().split('T')[0], reference: '', description: '' });
@@ -113,7 +128,7 @@ export default function Journal() {
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this journal entry?')) {
       deleteJournalEntry(id);
-      setEntries(loadJournalEntries());
+      setEntries(loadManualEntries());
       toast({ title: 'Journal entry deleted' });
     }
   };

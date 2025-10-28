@@ -105,7 +105,7 @@ export default function InvoicePayment() {
         updatedAt: new Date().toISOString(),
       };
 
-      saveInvoice(updatedInvoice);
+      await saveInvoice(updatedInvoice);
 
       // Create double-entry journal entry for payment
       recordPaymentReceived(

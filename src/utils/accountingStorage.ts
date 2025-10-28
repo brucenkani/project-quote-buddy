@@ -125,7 +125,8 @@ export const saveJournalEntryToDB = async (entry: JournalEntry): Promise<void> =
         entry_number: entry.reference,
         date: entry.date,
         description: entry.description,
-        reference: entry.reference
+        reference: entry.reference,
+        is_manual: false // Mark automatic entries
       }, { onConflict: 'company_id,reference' })
       .select()
       .single();
