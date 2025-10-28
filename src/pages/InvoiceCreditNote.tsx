@@ -59,6 +59,8 @@ export default function InvoiceCreditNote() {
 
     try {
       const creditNoteId = crypto.randomUUID();
+      const creditSubtotal = Math.abs(creditAmount / (1 + invoice.taxRate));
+      const creditTax = Math.abs(creditSubtotal * invoice.taxRate);
       
       const creditNote: Invoice = {
         ...invoice,
@@ -66,27 +68,27 @@ export default function InvoiceCreditNote() {
         invoiceNumber: `CN-${invoice.invoiceNumber}`,
         type: 'credit-note',
         total: -Math.abs(creditAmount),
-        subtotal: -Math.abs(creditAmount / (1 + invoice.taxRate)),
-        taxAmount: -Math.abs((creditAmount / (1 + invoice.taxRate)) * invoice.taxRate),
+        subtotal: -creditSubtotal,
+        taxAmount: -creditTax,
         notes: `Credit Note for Invoice ${invoice.invoiceNumber}\nReason: ${creditNoteReason}`,
         issueDate: new Date().toISOString().split('T')[0],
+        dueDate: new Date().toISOString().split('T')[0], // Same as issue date for credit notes
         payments: [],
         creditNotes: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         status: 'paid', // Credit notes are always marked as paid
+        lineItems: invoice.lineItems.map(item => ({
+          ...item,
+          id: crypto.randomUUID(),
+          quantity: -Math.abs(item.quantity * (creditAmount / invoice.total)),
+          amount: -Math.abs(item.amount * (creditAmount / invoice.total)),
+          total: -Math.abs(item.total * (creditAmount / invoice.total)),
+        })),
       };
 
-      // Link credit note to original invoice
-      const updatedInvoice = {
-        ...invoice,
-        creditNotes: [...(invoice.creditNotes || []), creditNoteId],
-        updatedAt: new Date().toISOString(),
-      };
-
-      // Save both invoices
+      // Save credit note only - linking happens automatically via invoice number pattern
       await saveInvoice(creditNote);
-      await saveInvoice(updatedInvoice);
       
       toast({ title: 'Credit Note created successfully' });
       navigate('/invoices');
