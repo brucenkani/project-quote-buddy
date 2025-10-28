@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Navigation } from '@/components/Navigation';
 import { FileDown, FileSpreadsheet, Calendar } from 'lucide-react';
 import { loadChartOfAccounts } from '@/utils/chartOfAccountsStorage';
-import { loadJournalEntries, loadExpenses } from '@/utils/accountingStorage';
+import { loadJournalEntriesFromDB, loadExpenses } from '@/utils/accountingStorage';
 import { loadInvoices } from '@/utils/invoiceStorage';
 import { generateTrialBalancePDF, generateTrialBalanceExcel, generateLedgerPDF, generateLedgerExcel } from '@/utils/reportGenerator';
 import { 
@@ -42,6 +42,18 @@ export default function Reports() {
   });
 
   const [selectedAccount, setSelectedAccount] = useState<string>('');
+  const [journalEntries, setJournalEntries] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      const entries = await loadJournalEntriesFromDB();
+      setJournalEntries(entries);
+      setLoading(false);
+    };
+    loadData();
+  }, []);
 
   // Calculate financial year dates based on year-end month
   const calculateFinancialYearDates = () => {
@@ -86,7 +98,7 @@ export default function Reports() {
   };
 
   const getPeriodData = (startDate: string, endDate: string) => {
-    const journalEntries = loadJournalEntries().filter(entry => {
+    const filteredJournalEntries = journalEntries.filter(entry => {
       const entryDate = new Date(entry.date);
       return entryDate >= new Date(startDate) && entryDate <= new Date(endDate);
     });
@@ -96,11 +108,11 @@ export default function Reports() {
       return expenseDate >= new Date(startDate) && expenseDate <= new Date(endDate);
     });
 
-    return { startDate, endDate, journalEntries, expenses };
+    return { startDate, endDate, journalEntries: filteredJournalEntries, expenses };
   };
 
   const handleGenerateTrialBalance = (format: 'pdf' | 'excel') => {
-    const journalEntries = loadJournalEntries().filter(entry => {
+    const filteredJournalEntries = journalEntries.filter(entry => {
       const entryDate = new Date(entry.date);
       return entryDate >= new Date(dateRange.startDate) && entryDate <= new Date(dateRange.endDate);
     });
@@ -111,9 +123,9 @@ export default function Reports() {
     });
 
     if (format === 'pdf') {
-      generateTrialBalancePDF(chartOfAccounts, journalEntries, expenses, dateRange, settings);
+      generateTrialBalancePDF(chartOfAccounts, filteredJournalEntries, expenses, dateRange, settings);
     } else {
-      generateTrialBalanceExcel(chartOfAccounts, journalEntries, expenses, dateRange, settings);
+      generateTrialBalanceExcel(chartOfAccounts, filteredJournalEntries, expenses, dateRange, settings);
     }
 
     toast({ title: `Trial Balance ${format.toUpperCase()} generated successfully` });
@@ -180,7 +192,7 @@ export default function Reports() {
     const account = chartOfAccounts.find(a => a.id === selectedAccount);
     if (!account) return;
 
-    const journalEntries = loadJournalEntries().filter(entry => {
+    const filteredJournalEntries = journalEntries.filter(entry => {
       const entryDate = new Date(entry.date);
       const hasAccount = entry.entries.some(line => line.account === account.accountName);
       return hasAccount && entryDate >= new Date(dateRange.startDate) && entryDate <= new Date(dateRange.endDate);
@@ -194,9 +206,9 @@ export default function Reports() {
     });
 
     if (format === 'pdf') {
-      generateLedgerPDF(account, journalEntries, expenses, dateRange, settings);
+      generateLedgerPDF(account, filteredJournalEntries, expenses, dateRange, settings);
     } else {
-      generateLedgerExcel(account, journalEntries, expenses, dateRange, settings);
+      generateLedgerExcel(account, filteredJournalEntries, expenses, dateRange, settings);
     }
 
     toast({ title: `Ledger Report ${format.toUpperCase()} generated successfully` });
