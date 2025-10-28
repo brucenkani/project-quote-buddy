@@ -51,27 +51,27 @@ const extractAccountNumber = (accountString: string): string => {
 };
 
 // Helper function to get account type from account number
+// NEW MAPPING: 1xxx=Current Asset, 2xxx=Non-Current Asset, 3xxx=Current Liability, 
+// 4xxx=Non-Current Liability, 5xxx=Equity, 6xxx=Revenue, 7xxx=Expense
 export const getAccountTypeFromNumber = (accountNumber: string): AccountType => {
   const firstDigit = accountNumber.charAt(0);
-  const firstTwo = accountNumber.substring(0, 2);
   
   switch (firstDigit) {
     case '1':
-      // 16xx-19xx are non-current assets
-      if (parseInt(firstTwo) >= 16) return 'non-current-asset';
       return 'current-asset';
     case '2':
-      // 26xx-29xx are non-current liabilities
-      if (parseInt(firstTwo) >= 26) return 'non-current-liability';
-      return 'current-liability';
+      return 'non-current-asset';
     case '3':
-      return 'equity';
+      return 'current-liability';
     case '4':
-      return 'revenue';
+      return 'non-current-liability';
     case '5':
+      return 'equity';
     case '6':
+      return 'revenue';
     case '7':
     case '8':
+    case '9':
       return 'expense';
     default:
       return 'expense'; // Default fallback
@@ -269,12 +269,11 @@ export const generateCashFlowStatement = (
     }
   });
 
-  // Financing activities - equity (3xxx) and long-term liabilities (26xx-29xx)
+  // Financing activities - equity (5xxx) and non-current liabilities (4xxx)
   accounts.forEach(account => {
     const accountType = getAccountTypeFromNumber(account.accountNumber);
-    const firstTwo = account.accountNumber.substring(0, 2);
     
-    if (accountType === 'equity' || (accountType === 'non-current-liability' && parseInt(firstTwo) >= 26)) {
+    if (accountType === 'equity' || accountType === 'non-current-liability') {
       const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
       if (balance !== 0) {
         const accountLabel = `${account.accountNumber} - ${account.accountName}`;

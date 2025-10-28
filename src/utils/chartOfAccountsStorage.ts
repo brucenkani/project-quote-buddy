@@ -186,14 +186,16 @@ export const generateNextAccountNumber = (accountType: string): string => {
   const typeAccounts = chartCache.filter(acc => acc.accountType === accountType);
   
   // Define the account number ranges for each category
+  // NEW MAPPING: 1xxx=Current Asset, 2xxx=Non-Current Asset, 3xxx=Current Liability, 
+  // 4xxx=Non-Current Liability, 5xxx=Equity, 6xxx=Revenue, 7xxx=Expense
   const accountRanges: Record<string, { start: number; end: number }> = {
-    'current-asset': { start: 1100, end: 1599 },
-    'non-current-asset': { start: 1600, end: 1999 },
-    'current-liability': { start: 2100, end: 2599 },
-    'non-current-liability': { start: 2600, end: 2999 },
-    equity: { start: 3100, end: 3699 },
-    revenue: { start: 4100, end: 4299 },
-    expense: { start: 5100, end: 8299 },
+    'current-asset': { start: 1100, end: 1999 },
+    'non-current-asset': { start: 2100, end: 2999 },
+    'current-liability': { start: 3100, end: 3999 },
+    'non-current-liability': { start: 4100, end: 4999 },
+    equity: { start: 5100, end: 5999 },
+    revenue: { start: 6100, end: 6999 },
+    expense: { start: 7100, end: 9999 },
   };
   
   const range = accountRanges[accountType];
