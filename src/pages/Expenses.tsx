@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -701,7 +702,9 @@ export default function Expenses() {
                     <TableBody>
                       {bulkExpenses.map((exp, index) => (
                         <TableRow key={index}>
-                          <TableCell className="text-sm">{exp.date}</TableCell>
+                          <TableCell className="text-sm">
+                            {exp.date ? format(new Date(exp.date), 'dd MMM yyyy') : '-'}
+                          </TableCell>
                           <TableCell>
                             <Checkbox 
                               checked={exp.includesVAT || false}
