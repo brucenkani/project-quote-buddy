@@ -66,9 +66,16 @@ export const Navigation = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2 md:gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/accounting')} className="gap-1 md:gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate(location.pathname === '/accounting' ? '/' : '/accounting')} 
+              className="gap-1 md:gap-2"
+            >
               <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Dashboard</span>
+              <span className="hidden sm:inline">
+                {location.pathname === '/accounting' ? 'Home' : 'Dashboard'}
+              </span>
             </Button>
             <h1 className="text-lg md:text-xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
               Accounting
