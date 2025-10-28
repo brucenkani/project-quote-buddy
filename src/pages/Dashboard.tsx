@@ -194,12 +194,55 @@ export default function Dashboard() {
     return { startDate, endDate, journalEntries: filteredJournalEntries, expenses: filteredExpenses };
   };
 
-  const kpis = calculateEnhancedKPIs(
-    chartOfAccounts,
-    getPeriodData(dateRange.startDate, dateRange.endDate),
-    getPeriodData(priorDateRange.startDate, priorDateRange.endDate),
-    settings.companyType
-  );
+  const [kpis, setKpis] = useState<any>({
+    current: {
+      revenue: 0,
+      netIncome: 0,
+      grossMargin: 0,
+      netProfitMargin: 0,
+      accountsReceivable: 0,
+      accountsPayable: 0,
+      currentRatio: 0,
+      quickRatio: 0,
+      workingCapital: 0,
+      debtToEquity: 0,
+      debtRatio: 0,
+      roa: 0,
+      roe: 0,
+      assetTurnover: 0,
+    },
+    prior: {
+      revenue: 0,
+      netIncome: 0,
+      grossMargin: 0,
+      netProfitMargin: 0,
+      accountsReceivable: 0,
+      accountsPayable: 0,
+      currentRatio: 0,
+      quickRatio: 0,
+      workingCapital: 0,
+      debtToEquity: 0,
+      debtRatio: 0,
+      roa: 0,
+      roe: 0,
+      assetTurnover: 0,
+    }
+  });
+
+  useEffect(() => {
+    const loadKPIs = async () => {
+      if (chartOfAccounts.length > 0) {
+        const calculatedKpis = await calculateEnhancedKPIs(
+          chartOfAccounts,
+          getPeriodData(dateRange.startDate, dateRange.endDate),
+          getPeriodData(priorDateRange.startDate, priorDateRange.endDate),
+          settings.companyType
+        );
+        setKpis(calculatedKpis);
+      }
+    };
+    loadKPIs();
+  }, [chartOfAccounts, dateRange, priorDateRange, journalEntries, expenses, settings.companyType]);
 
   const handleExportPDF = () => {
     generateDashboardPDF(kpis, dateRange, priorDateRange, settings);

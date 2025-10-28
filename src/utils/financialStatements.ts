@@ -1,5 +1,6 @@
 import { ChartAccount } from '@/types/chartOfAccounts';
 import { JournalEntry, Expense } from '@/types/accounting';
+import { loadInvoices } from './invoiceStorage';
 
 export interface PeriodData {
   startDate: string;
@@ -319,12 +320,12 @@ export const calculateKPIs = (
 };
 
 // Calculate Enhanced KPIs with additional metrics
-export const calculateEnhancedKPIs = (
+export const calculateEnhancedKPIs = async (
   accounts: ChartAccount[],
   currentPeriod: PeriodData,
   priorPeriod: PeriodData,
   companyType: string
-): EnhancedKPIs => {
+): Promise<EnhancedKPIs> => {
   const currentIncome = generateIncomeStatement(accounts, currentPeriod);
   const priorIncome = generateIncomeStatement(accounts, priorPeriod);
   
@@ -337,9 +338,35 @@ export const calculateEnhancedKPIs = (
     return account ? calculateAccountBalance(account, period.journalEntries, period.expenses) : 0;
   };
 
-  // Balance sheet items
-  const currentAR = getAccountBalance('Accounts Receivable', currentPeriod);
-  const priorAR = getAccountBalance('Accounts Receivable', priorPeriod);
+  // Calculate AR from actual invoices (not journal entries)
+  const calculateARFromInvoices = async (endDate: string) => {
+    const invoices = await loadInvoices();
+    const endDateObj = new Date(endDate);
+    
+    let total = 0;
+    invoices.forEach(invoice => {
+      const invoiceDate = new Date(invoice.issueDate);
+      // Only include invoices issued on or before the period end date
+      if (invoiceDate <= endDateObj && invoice.type === 'invoice') {
+        const amountDue = invoice.total - 
+          (invoice.payments?.reduce((sum, p) => sum + p.amount, 0) || 0) -
+          (invoice.creditNotes?.reduce((sum, cnId) => {
+            const cn = invoices.find(i => i.id === cnId);
+            return sum + (cn ? Math.abs(cn.total) : 0);
+          }, 0) || 0);
+        
+        if (amountDue > 0) {
+          total += amountDue;
+        }
+      }
+    });
+    
+    return total;
+  };
+
+  // Balance sheet items - AR from invoices
+  const currentAR = await calculateARFromInvoices(currentPeriod.endDate);
+  const priorAR = await calculateARFromInvoices(priorPeriod.endDate);
   
   const currentAP = getAccountBalance('Accounts Payable', currentPeriod);
   const priorAP = getAccountBalance('Accounts Payable', priorPeriod);
