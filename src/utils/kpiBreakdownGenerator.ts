@@ -32,12 +32,12 @@ interface BreakdownLine {
   account?: string;
 }
 
-const getKPIBreakdown = (
+const getKPIBreakdown = async (
   kpiType: KPIType,
   accounts: ChartAccount[],
   periodData: PeriodData,
   settings: CompanySettings
-): { title: string; lines: BreakdownLine[]; total: number } => {
+): Promise<{ title: string; lines: BreakdownLine[]; total: number }> => {
   const lines: BreakdownLine[] = [];
   let total = 0;
 
@@ -124,25 +124,34 @@ const getKPIBreakdown = (
     }
 
     case 'accountsReceivable': {
-      const account = accounts.find(a => a.accountName === 'Accounts Receivable');
-      if (account) {
-        periodData.journalEntries.forEach(entry => {
-          entry.entries.forEach(line => {
-            if (line.account === account.accountName) {
-              const amount = line.debit - line.credit;
-              if (amount !== 0) {
-                lines.push({
-                  date: entry.date,
-                  description: entry.description,
-                  reference: entry.reference || '-',
-                  amount: amount,
-                });
-                total += amount;
-              }
-            }
-          });
-        });
-      }
+      // AR should show cumulative balance - all unpaid invoices as of the period end date
+      // This uses the actual invoice data to show what's currently due
+      const invoices = await loadInvoices();
+      const endDate = new Date(periodData.endDate);
+      
+      invoices.forEach(invoice => {
+        const invoiceDate = new Date(invoice.issueDate);
+        // Only include invoices issued on or before the period end date
+        if (invoiceDate <= endDate && invoice.type === 'invoice') {
+          const amountDue = invoice.total - 
+            (invoice.payments?.reduce((sum, p) => sum + p.amount, 0) || 0) -
+            (invoice.creditNotes?.reduce((sum, cnId) => {
+              const cn = invoices.find(i => i.id === cnId);
+              return sum + (cn ? Math.abs(cn.total) : 0);
+            }, 0) || 0);
+          
+          if (amountDue > 0) {
+            lines.push({
+              date: invoice.issueDate,
+              description: `Invoice ${invoice.invoiceNumber} - ${invoice.projectDetails.clientName}`,
+              reference: invoice.invoiceNumber,
+              amount: amountDue,
+            });
+            total += amountDue;
+          }
+        }
+      });
+      
       lines.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       return { title: 'Accounts Receivable Breakdown', lines, total };
     }
@@ -632,14 +641,14 @@ const getKPIBreakdown = (
   }
 };
 
-export const generateKPIBreakdownPDF = (
+export const generateKPIBreakdownPDF = async (
   kpiType: KPIType,
   accounts: ChartAccount[],
   periodData: PeriodData,
   settings: CompanySettings
 ) => {
   const doc = new jsPDF();
-  const breakdown = getKPIBreakdown(kpiType, accounts, periodData, settings);
+  const breakdown = await getKPIBreakdown(kpiType, accounts, periodData, settings);
 
   // Header
   doc.setFontSize(20);
@@ -695,13 +704,13 @@ export const generateKPIBreakdownPDF = (
   doc.save(`${kpiType}-breakdown-${periodData.startDate}-to-${periodData.endDate}.pdf`);
 };
 
-export const generateKPIBreakdownExcel = (
+export const generateKPIBreakdownExcel = async (
   kpiType: KPIType,
   accounts: ChartAccount[],
   periodData: PeriodData,
   settings: CompanySettings
 ) => {
-  const breakdown = getKPIBreakdown(kpiType, accounts, periodData, settings);
+  const breakdown = await getKPIBreakdown(kpiType, accounts, periodData, settings);
 
   const data = breakdown.lines.map(line => ({
     Date: line.date,

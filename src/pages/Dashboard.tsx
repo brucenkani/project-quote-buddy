@@ -211,9 +211,9 @@ export default function Dashboard() {
     setShowKPIDialog(true);
   };
 
-  const handleKPIExportPDF = () => {
+  const handleKPIExportPDF = async () => {
     if (!selectedKPI) return;
-    generateKPIBreakdownPDF(
+    await generateKPIBreakdownPDF(
       selectedKPI as any,
       chartOfAccounts,
       getPeriodData(dateRange.startDate, dateRange.endDate),
@@ -223,9 +223,9 @@ export default function Dashboard() {
     setShowKPIDialog(false);
   };
 
-  const handleKPIExportExcel = () => {
+  const handleKPIExportExcel = async () => {
     if (!selectedKPI) return;
-    generateKPIBreakdownExcel(
+    await generateKPIBreakdownExcel(
       selectedKPI as any,
       chartOfAccounts,
       getPeriodData(dateRange.startDate, dateRange.endDate),
