@@ -90,7 +90,7 @@ export default function AccountingDashboard() {
       title: 'Send Customer Statements',
       description: 'Email (or print) statements to all your customers.',
       icon: Send,
-      path: '/statements',
+      path: '/invoices/statements',
       iconColor: 'text-blue-600',
       iconBg: 'bg-blue-100'
     },
