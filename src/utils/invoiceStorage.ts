@@ -117,13 +117,18 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
 
     const userId = session.session.user.id;
 
+    // Prefer active company in app state; fallback to membership
+    const activeCompanyId = localStorage.getItem('activeCompanyId');
+
     const { data: memberData } = await supabase
       .from('company_members')
       .select('company_id')
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (!memberData?.company_id) {
+    const companyId = activeCompanyId || memberData?.company_id;
+
+    if (!companyId) {
       throw new Error('No active company found');
     }
 
@@ -132,7 +137,7 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
       .upsert({
         id: invoice.id,
         user_id: userId,
-        company_id: memberData.company_id,
+        company_id: companyId,
         invoice_number: invoice.invoiceNumber,
         customer_id: invoice.projectDetails.clientName,
         issue_date: invoice.issueDate,
@@ -189,7 +194,7 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
             id: payment.id,
             invoice_id: invoice.id,
             user_id: userId,
-            company_id: memberData.company_id,
+            company_id: companyId,
             amount: payment.amount,
             date: payment.date,
             method: payment.method,
@@ -208,7 +213,7 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
         .from('journal_entries')
         .select('id')
         .eq('reference', invoice.invoiceNumber)
-        .eq('company_id', memberData.company_id)
+        .eq('company_id', companyId)
         .maybeSingle();
       
       // Only create journal entry if it doesn't exist and invoice is not a credit note

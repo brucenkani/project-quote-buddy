@@ -101,14 +101,20 @@ export const saveJournalEntryToDB = async (entry: JournalEntry): Promise<void> =
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    // Get user's company
-    const { data: memberData } = await supabase
-      .from('company_members')
-      .select('company_id')
-      .eq('user_id', user.id)
-      .maybeSingle();
+    // Prefer the active company from app state, fallback to the first membership
+    const activeCompanyId = localStorage.getItem('activeCompanyId');
 
-    if (!memberData) throw new Error('No company found for user');
+    let companyId = activeCompanyId || null;
+    if (!companyId) {
+      const { data: memberData } = await supabase
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      companyId = memberData?.company_id || null;
+    }
+
+    if (!companyId) throw new Error('No active company found');
 
     // Upsert journal entry
     const { data: journalData, error: journalError } = await supabase
@@ -116,7 +122,7 @@ export const saveJournalEntryToDB = async (entry: JournalEntry): Promise<void> =
       .upsert({
         id: entry.id,
         user_id: user.id,
-        company_id: memberData.company_id,
+        company_id: companyId,
         entry_number: entry.reference,
         date: entry.date,
         description: entry.description,
