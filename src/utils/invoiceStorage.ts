@@ -149,9 +149,21 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
       if (lineItemsError) throw lineItemsError;
     }
 
-    // Create journal entry for the invoice
+
+    // Create journal entry for the invoice only if it's a new invoice
+    // Check if journal entry already exists to prevent duplicates
     try {
-      recordInvoice(invoice);
+      const { data: existingJournalEntry } = await supabase
+        .from('journal_entries')
+        .select('id')
+        .eq('reference', invoice.invoiceNumber)
+        .eq('company_id', memberData.company_id)
+        .maybeSingle();
+      
+      // Only create journal entry if it doesn't exist and invoice is not a credit note
+      if (!existingJournalEntry && invoice.type !== 'credit-note') {
+        recordInvoice(invoice);
+      }
     } catch (journalError) {
       console.error('Failed to create journal entry for invoice:', journalError);
       // Don't throw - invoice is saved, journal entry is supplementary
