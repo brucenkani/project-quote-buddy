@@ -83,17 +83,15 @@ export default function Expenses() {
     setChartAccounts(accounts);
   };
 
-  // Filter expense accounts: 7xxx (Cost of Sales) and 8xxx (Operating Expenses), excluding tax accounts (81xx, 82xx)
+  // Filter expense accounts from Chart of Accounts.
+  // We include typical expense ranges (7000-8999) and exclude clear tax/VAT accounts.
   const expenseAccounts = chartAccounts.filter(acc => {
-    const accountNum = acc.accountNumber || '';
-    const firstDigit = accountNum.charAt(0);
-    const firstTwoDigits = accountNum.substring(0, 2);
-    
-    // Include 7xxx and 8xxx accounts, but exclude 81xx and 82xx (tax accounts)
-    return acc.accountType === 'expense' && 
-           (firstDigit === '7' || firstDigit === '8') &&
-           firstTwoDigits !== '81' && 
-           firstTwoDigits !== '82';
+    if (acc.accountType !== 'expense') return false;
+    const num = parseInt(acc.accountNumber || '0', 10);
+    const name = (acc.accountName || '').toLowerCase();
+    const isTax = name.includes('tax') || name.includes('vat');
+    const inExpenseRange = !isNaN(num) && num >= 7000 && num < 9000; // 7xxx and 8xxx
+    return inExpenseRange && !isTax;
   });
 
   const handleCreateAccount = () => {
