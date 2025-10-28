@@ -57,7 +57,7 @@ export const recordInvoice = (invoice: Invoice): JournalEntry => {
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
-      account: 'Accounts Receivable',
+      account: '1210 - Trade Debtors',
       accountType: 'current-asset',
       debit: invoice.total,
       credit: 0,
@@ -65,7 +65,7 @@ export const recordInvoice = (invoice: Invoice): JournalEntry => {
     },
     {
       id: crypto.randomUUID(),
-      account: 'Sales Revenue',
+      account: '4100 - Revenue',
       accountType: 'revenue',
       debit: 0,
       credit: invoice.subtotal,
@@ -77,7 +77,7 @@ export const recordInvoice = (invoice: Invoice): JournalEntry => {
   if (invoice.discount > 0) {
     entries.push({
       id: crypto.randomUUID(),
-      account: 'Sales Discounts',
+      account: '5100 - Cost of Goods Sold',
       accountType: 'expense',
       debit: invoice.discount,
       credit: 0,
@@ -89,7 +89,7 @@ export const recordInvoice = (invoice: Invoice): JournalEntry => {
   if (invoice.taxAmount > 0) {
     entries.push({
       id: crypto.randomUUID(),
-      account: 'Taxes Payable',
+      account: '2210 - VAT Payable',
       accountType: 'current-liability',
       debit: 0,
       credit: invoice.taxAmount,
@@ -114,8 +114,8 @@ export const recordCreditNote = (creditNote: Invoice): JournalEntry => {
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
-      account: 'Sales Discounts',
-      accountType: 'expense',
+      account: '4100 - Revenue',
+      accountType: 'revenue',
       debit: amountSubtotal,
       credit: 0,
       description: `Credit note for ${creditNote.projectDetails.clientName}`,
@@ -125,7 +125,7 @@ export const recordCreditNote = (creditNote: Invoice): JournalEntry => {
   if (amountTax > 0) {
     entries.push({
       id: crypto.randomUUID(),
-      account: 'Taxes Payable',
+      account: '2210 - VAT Payable',
       accountType: 'current-liability',
       debit: amountTax,
       credit: 0,
@@ -135,7 +135,7 @@ export const recordCreditNote = (creditNote: Invoice): JournalEntry => {
 
   entries.push({
     id: crypto.randomUUID(),
-    account: 'Accounts Receivable',
+    account: '1210 - Trade Debtors',
     accountType: 'current-asset',
     debit: 0,
     credit: amountTotal,
@@ -161,7 +161,7 @@ export const recordPaymentReceived = (
   paymentDate: string,
   paymentReference: string
 ): JournalEntry => {
-  const paymentAccount = paymentMethod === 'cash' ? 'Cash' : 'Bank Account';
+  const paymentAccount = paymentMethod === 'cash' ? '1120 - Cash on Hand' : '1130 - Bank Account – Current';
 
   const entries: JournalEntryLine[] = [
     {
@@ -174,7 +174,7 @@ export const recordPaymentReceived = (
     },
     {
       id: crypto.randomUUID(),
-      account: 'Accounts Receivable',
+      account: '1210 - Trade Debtors',
       accountType: 'current-asset',
       debit: 0,
       credit: invoice.total,
@@ -207,7 +207,7 @@ export const recordExpense = (expense: Expense): JournalEntry => {
     },
     {
       id: crypto.randomUUID(),
-      account: 'Accounts Payable',
+      account: '2110 - Trade Creditors',
       accountType: 'current-liability',
       debit: 0,
       credit: expense.amount,
@@ -235,12 +235,12 @@ export const recordExpensePayment = (
   paymentDate: string,
   paymentReference: string
 ): JournalEntry => {
-  const paymentAccount = paymentMethod === 'cash' ? 'Cash' : 'Bank Account';
+  const paymentAccount = paymentMethod === 'cash' ? '1120 - Cash on Hand' : '1130 - Bank Account – Current';
 
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
-      account: 'Accounts Payable',
+      account: '2110 - Trade Creditors',
       accountType: 'current-liability',
       debit: paymentAmount,
       credit: 0,
@@ -288,7 +288,7 @@ export const recordPurchaseOnCredit = (
     },
     {
       id: crypto.randomUUID(),
-      account: 'Accounts Payable',
+      account: '2110 - Trade Creditors',
       accountType: 'current-liability',
       debit: 0,
       credit: amount,
@@ -316,7 +316,7 @@ export const recordLoanReceived = (
   reference: string,
   receivedIn: 'cash' | 'bank' = 'bank'
 ): JournalEntry => {
-  const assetAccount = receivedIn === 'cash' ? 'Cash' : 'Bank Account';
+  const assetAccount = receivedIn === 'cash' ? '1120 - Cash on Hand' : '1130 - Bank Account – Current';
 
   const entries: JournalEntryLine[] = [
     {
@@ -329,7 +329,7 @@ export const recordLoanReceived = (
     },
     {
       id: crypto.randomUUID(),
-      account: 'Loan Payable',
+      account: '2610 - Bank Loans',
       accountType: 'non-current-liability',
       debit: 0,
       credit: amount,
@@ -359,13 +359,13 @@ export const recordLoanRepayment = (
   reference: string,
   paidFrom: 'cash' | 'bank' = 'bank'
 ): JournalEntry => {
-  const assetAccount = paidFrom === 'cash' ? 'Cash' : 'Bank Account';
+  const assetAccount = paidFrom === 'cash' ? '1120 - Cash on Hand' : '1130 - Bank Account – Current';
   const totalPayment = principal + interest;
 
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
-      account: 'Loan Payable',
+      account: '2610 - Bank Loans',
       accountType: 'non-current-liability',
       debit: principal,
       credit: 0,
@@ -376,7 +376,7 @@ export const recordLoanRepayment = (
   if (interest > 0) {
     entries.push({
       id: crypto.randomUUID(),
-      account: 'Interest Expense',
+      account: '6310 - Interest Expense – Loans',
       accountType: 'expense',
       debit: interest,
       credit: 0,
@@ -413,7 +413,7 @@ export const recordCapitalContribution = (
   reference: string,
   receivedIn: 'cash' | 'bank' = 'bank'
 ): JournalEntry => {
-  const assetAccount = receivedIn === 'cash' ? 'Cash' : 'Bank Account';
+  const assetAccount = receivedIn === 'cash' ? '1120 - Cash on Hand' : '1130 - Bank Account – Current';
 
   const entries: JournalEntryLine[] = [
     {
@@ -426,7 +426,7 @@ export const recordCapitalContribution = (
     },
     {
       id: crypto.randomUUID(),
-      account: "Owner's Capital",
+      account: "3110 - Ordinary Share Capital",
       accountType: 'equity',
       debit: 0,
       credit: amount,
@@ -454,12 +454,12 @@ export const recordOwnerDrawing = (
   reference: string,
   paidFrom: 'cash' | 'bank' = 'bank'
 ): JournalEntry => {
-  const assetAccount = paidFrom === 'cash' ? 'Cash' : 'Bank Account';
+  const assetAccount = paidFrom === 'cash' ? '1120 - Cash on Hand' : '1130 - Bank Account – Current';
 
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
-      account: "Owner's Drawings",
+      account: "3600 - Owner's Drawings",
       accountType: 'equity',
       debit: amount,
       credit: 0,
@@ -495,12 +495,12 @@ export const recordSupplierPayment = (
   reference: string,
   paidFrom: 'cash' | 'bank' = 'bank'
 ): JournalEntry => {
-  const assetAccount = paidFrom === 'cash' ? 'Cash' : 'Bank Account';
+  const assetAccount = paidFrom === 'cash' ? '1120 - Cash on Hand' : '1130 - Bank Account – Current';
 
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
-      account: 'Accounts Payable',
+      account: '2110 - Trade Creditors',
       accountType: 'current-liability',
       debit: amount,
       credit: 0,
@@ -528,12 +528,12 @@ export const recordSupplierPayment = (
 const getPaymentAccount = (paymentMethod: string): string => {
   switch (paymentMethod) {
     case 'cash':
-      return 'Cash';
+      return '1120 - Cash on Hand';
     case 'card':
     case 'bank-transfer':
     case 'check':
-      return 'Bank Account';
+      return '1130 - Bank Account – Current';
     default:
-      return 'Cash';
+      return '1120 - Cash on Hand';
   }
 };
