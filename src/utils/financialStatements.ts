@@ -14,6 +14,19 @@ export interface IncomeStatementLine {
   amount: number;
 }
 
+export interface IncomeStatementData {
+  revenue: IncomeStatementLine[];
+  costOfSales: IncomeStatementLine[];
+  operatingExpenses: IncomeStatementLine[];
+  otherComprehensiveIncome: IncomeStatementLine[];
+  totalRevenue: number;
+  totalCostOfSales: number;
+  grossProfit: number;
+  totalOperatingExpenses: number;
+  totalOtherComprehensiveIncome: number;
+  netIncome: number;
+}
+
 export interface BalanceSheetData {
   assets: { account: string; amount: number }[];
   liabilities: { account: string; amount: number }[];
@@ -149,54 +162,91 @@ export const calculateAccountBalance = (
   }
 };
 
-// Generate Income Statement
+// Generate Income Statement with categorized expenses
 export const generateIncomeStatement = (
   accounts: ChartAccount[],
   periodData: PeriodData
-) => {
+): IncomeStatementData => {
   const revenue: IncomeStatementLine[] = [];
-  const expenses: IncomeStatementLine[] = [];
+  const costOfSales: IncomeStatementLine[] = [];
+  const operatingExpenses: IncomeStatementLine[] = [];
+  const otherComprehensiveIncome: IncomeStatementLine[] = [];
 
   accounts.forEach(account => {
     const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
     
-    // Determine account type from account number for more accurate categorization
-    const accountType = getAccountTypeFromNumber(account.accountNumber);
+    if (balance === 0) return;
     
-    if (accountType === 'revenue' && balance !== 0) {
-      revenue.push({ account: `${account.accountNumber} - ${account.accountName}`, amount: balance });
-    } else if (accountType === 'expense' && balance !== 0) {
-      expenses.push({ account: `${account.accountNumber} - ${account.accountName}`, amount: balance });
+    const accountType = getAccountTypeFromNumber(account.accountNumber);
+    const accountLabel = `${account.accountNumber} - ${account.accountName}`;
+    const firstDigit = account.accountNumber.charAt(0);
+    
+    if (accountType === 'revenue') {
+      revenue.push({ account: accountLabel, amount: balance });
+    } else if (accountType === 'expense') {
+      // Categorize by first digit: 7xxx=Cost of Sales, 8xxx=Operating Expenses, 9xxx=Other Comprehensive Income
+      if (firstDigit === '7') {
+        costOfSales.push({ account: accountLabel, amount: balance });
+      } else if (firstDigit === '8') {
+        operatingExpenses.push({ account: accountLabel, amount: balance });
+      } else if (firstDigit === '9') {
+        otherComprehensiveIncome.push({ account: accountLabel, amount: balance });
+      }
     }
   });
 
-  // Compute totals based on matched chart accounts
-  let totalRevenue = revenue.reduce((sum, item) => sum + item.amount, 0);
-  let totalExpenses = expenses.reduce((sum, item) => sum + item.amount, 0);
+  // Compute totals
+  const totalRevenue = revenue.reduce((sum, item) => sum + item.amount, 0);
+  const totalCostOfSales = costOfSales.reduce((sum, item) => sum + item.amount, 0);
+  const grossProfit = totalRevenue - totalCostOfSales;
+  const totalOperatingExpenses = operatingExpenses.reduce((sum, item) => sum + item.amount, 0);
+  const totalOtherComprehensiveIncome = otherComprehensiveIncome.reduce((sum, item) => sum + item.amount, 0);
+  const netIncome = grossProfit - totalOperatingExpenses - totalOtherComprehensiveIncome;
 
-  // Fallback: derive totals directly from journal lines by classifying each line
-  if (totalRevenue === 0 && totalExpenses === 0) {
-    let fallbackRevenue = 0;
-    let fallbackExpenses = 0;
-
+  // Fallback: derive totals directly from journal lines if no chart accounts matched
+  // This ensures we don't show empty reports if data exists
+  let finalRevenue = totalRevenue;
+  let finalCostOfSales = totalCostOfSales;
+  let finalOperatingExpenses = totalOperatingExpenses;
+  let finalOtherIncome = totalOtherComprehensiveIncome;
+  
+  if (totalRevenue === 0 && totalCostOfSales === 0 && totalOperatingExpenses === 0) {
     periodData.journalEntries.forEach(entry => {
       entry.entries.forEach((line: any) => {
+        const num = extractAccountNumber(line.account);
         const t = classifyLineType({ account: line.account, accountType: line.accountType });
+        const firstDigit = num.charAt(0);
+        
         if (t === 'revenue') {
-          fallbackRevenue += (line.credit - line.debit);
+          finalRevenue += (line.credit - line.debit);
         } else if (t === 'expense') {
-          fallbackExpenses += (line.debit - line.credit);
+          if (firstDigit === '7') {
+            finalCostOfSales += (line.debit - line.credit);
+          } else if (firstDigit === '8') {
+            finalOperatingExpenses += (line.debit - line.credit);
+          } else if (firstDigit === '9') {
+            finalOtherIncome += (line.debit - line.credit);
+          }
         }
       });
     });
-
-    totalRevenue = fallbackRevenue;
-    totalExpenses = fallbackExpenses;
   }
 
-  const netIncome = totalRevenue - totalExpenses;
+  const finalGrossProfit = finalRevenue - finalCostOfSales;
+  const finalNetIncome = finalGrossProfit - finalOperatingExpenses - finalOtherIncome;
 
-  return { revenue, expenses, totalRevenue, totalExpenses, netIncome };
+  return {
+    revenue,
+    costOfSales,
+    operatingExpenses,
+    otherComprehensiveIncome,
+    totalRevenue: finalRevenue,
+    totalCostOfSales: finalCostOfSales,
+    grossProfit: finalGrossProfit,
+    totalOperatingExpenses: finalOperatingExpenses,
+    totalOtherComprehensiveIncome: finalOtherIncome,
+    netIncome: finalNetIncome
+  };
 };
 
 // Generate Balance Sheet

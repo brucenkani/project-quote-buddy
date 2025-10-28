@@ -31,7 +31,7 @@ export const generateIncomeStatementPDF = (
   doc.text(`Current: ${currentPeriod.startDate} to ${currentPeriod.endDate}`, 105, 35, { align: 'center' });
   doc.text(`Prior: ${priorPeriod.startDate} to ${priorPeriod.endDate}`, 105, 42, { align: 'center' });
 
-  // Revenue section with variance
+  // Revenue section
   const revenueData = current.revenue.map(item => {
     const priorAmount = prior.revenue.find(p => p.account === item.account)?.amount || 0;
     const variance = item.amount - priorAmount;
@@ -47,7 +47,7 @@ export const generateIncomeStatementPDF = (
 
   const revenueVariance = current.totalRevenue - prior.totalRevenue;
   const revenueVariancePercent = prior.totalRevenue !== 0 ? ((revenueVariance / prior.totalRevenue) * 100) : 0;
-
+  
   revenueData.push([
     'Total Revenue',
     `${settings.currencySymbol}${current.totalRevenue.toFixed(2)}`,
@@ -56,9 +56,9 @@ export const generateIncomeStatementPDF = (
     `${revenueVariancePercent.toFixed(1)}%`,
   ]);
 
-  // Expenses section with variance
-  const expenseData = current.expenses.map(item => {
-    const priorAmount = prior.expenses.find(p => p.account === item.account)?.amount || 0;
+  // Cost of Sales section
+  const cosData = current.costOfSales.map(item => {
+    const priorAmount = prior.costOfSales.find(p => p.account === item.account)?.amount || 0;
     const variance = item.amount - priorAmount;
     const variancePercent = priorAmount !== 0 ? ((variance / priorAmount) * 100) : 0;
     return [
@@ -70,17 +70,74 @@ export const generateIncomeStatementPDF = (
     ];
   });
 
-  const expenseVariance = current.totalExpenses - prior.totalExpenses;
-  const expenseVariancePercent = prior.totalExpenses !== 0 ? ((expenseVariance / prior.totalExpenses) * 100) : 0;
-
-  expenseData.push([
-    'Total Expenses',
-    `${settings.currencySymbol}${current.totalExpenses.toFixed(2)}`,
-    `${settings.currencySymbol}${prior.totalExpenses.toFixed(2)}`,
-    `${settings.currencySymbol}${expenseVariance.toFixed(2)}`,
-    `${expenseVariancePercent.toFixed(1)}%`,
+  const cosVariance = current.totalCostOfSales - prior.totalCostOfSales;
+  const cosVariancePercent = prior.totalCostOfSales !== 0 ? ((cosVariance / prior.totalCostOfSales) * 100) : 0;
+  
+  cosData.push([
+    'Total Cost of Sales',
+    `${settings.currencySymbol}${current.totalCostOfSales.toFixed(2)}`,
+    `${settings.currencySymbol}${prior.totalCostOfSales.toFixed(2)}`,
+    `${settings.currencySymbol}${cosVariance.toFixed(2)}`,
+    `${cosVariancePercent.toFixed(1)}%`,
   ]);
 
+  // Gross Profit
+  const gpVariance = current.grossProfit - prior.grossProfit;
+  const gpVariancePercent = prior.grossProfit !== 0 ? ((gpVariance / prior.grossProfit) * 100) : 0;
+
+  // Operating Expenses section
+  const opexData = current.operatingExpenses.map(item => {
+    const priorAmount = prior.operatingExpenses.find(p => p.account === item.account)?.amount || 0;
+    const variance = item.amount - priorAmount;
+    const variancePercent = priorAmount !== 0 ? ((variance / priorAmount) * 100) : 0;
+    return [
+      item.account,
+      `${settings.currencySymbol}${item.amount.toFixed(2)}`,
+      `${settings.currencySymbol}${priorAmount.toFixed(2)}`,
+      `${settings.currencySymbol}${variance.toFixed(2)}`,
+      `${variancePercent.toFixed(1)}%`,
+    ];
+  });
+
+  const opexVariance = current.totalOperatingExpenses - prior.totalOperatingExpenses;
+  const opexVariancePercent = prior.totalOperatingExpenses !== 0 ? ((opexVariance / prior.totalOperatingExpenses) * 100) : 0;
+  
+  opexData.push([
+    'Total Operating Expenses',
+    `${settings.currencySymbol}${current.totalOperatingExpenses.toFixed(2)}`,
+    `${settings.currencySymbol}${prior.totalOperatingExpenses.toFixed(2)}`,
+    `${settings.currencySymbol}${opexVariance.toFixed(2)}`,
+    `${opexVariancePercent.toFixed(1)}%`,
+  ]);
+
+  // Other Comprehensive Income section
+  const ociData = current.otherComprehensiveIncome.map(item => {
+    const priorAmount = prior.otherComprehensiveIncome.find(p => p.account === item.account)?.amount || 0;
+    const variance = item.amount - priorAmount;
+    const variancePercent = priorAmount !== 0 ? ((variance / priorAmount) * 100) : 0;
+    return [
+      item.account,
+      `${settings.currencySymbol}${item.amount.toFixed(2)}`,
+      `${settings.currencySymbol}${priorAmount.toFixed(2)}`,
+      `${settings.currencySymbol}${variance.toFixed(2)}`,
+      `${variancePercent.toFixed(1)}%`,
+    ];
+  });
+
+  const ociVariance = current.totalOtherComprehensiveIncome - prior.totalOtherComprehensiveIncome;
+  const ociVariancePercent = prior.totalOtherComprehensiveIncome !== 0 ? ((ociVariance / prior.totalOtherComprehensiveIncome) * 100) : 0;
+  
+  if (current.totalOtherComprehensiveIncome !== 0 || prior.totalOtherComprehensiveIncome !== 0) {
+    ociData.push([
+      'Total Other Comprehensive Income',
+      `${settings.currencySymbol}${current.totalOtherComprehensiveIncome.toFixed(2)}`,
+      `${settings.currencySymbol}${prior.totalOtherComprehensiveIncome.toFixed(2)}`,
+      `${settings.currencySymbol}${ociVariance.toFixed(2)}`,
+      `${ociVariancePercent.toFixed(1)}%`,
+    ]);
+  }
+
+  // Render tables
   autoTable(doc, {
     startY: 50,
     head: [['Revenue', 'Current Year', 'Prior Year', 'Variance', 'Variance %']],
@@ -90,23 +147,66 @@ export const generateIncomeStatementPDF = (
     headStyles: { fillColor: [59, 130, 246] },
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
+  let currentY = (doc as any).lastAutoTable.finalY + 5;
 
   autoTable(doc, {
-    startY: finalY,
-    head: [['Expenses', 'Current Year', 'Prior Year', 'Variance', 'Variance %']],
-    body: expenseData,
+    startY: currentY,
+    head: [['Cost of Sales', 'Current Year', 'Prior Year', 'Variance', 'Variance %']],
+    body: cosData,
     theme: 'grid',
     styles: { fontSize: 8 },
-    headStyles: { fillColor: [59, 130, 246] },
+    headStyles: { fillColor: [239, 68, 68] },
   });
 
-  const netIncomeY = (doc as any).lastAutoTable.finalY + 10;
+  currentY = (doc as any).lastAutoTable.finalY + 5;
+
+  // Gross Profit
+  autoTable(doc, {
+    startY: currentY,
+    body: [[
+      'Gross Profit',
+      `${settings.currencySymbol}${current.grossProfit.toFixed(2)}`,
+      `${settings.currencySymbol}${prior.grossProfit.toFixed(2)}`,
+      `${settings.currencySymbol}${gpVariance.toFixed(2)}`,
+      `${gpVariancePercent.toFixed(1)}%`,
+    ]],
+    theme: 'grid',
+    styles: { fontSize: 9, fontStyle: 'bold' },
+    headStyles: { fillColor: [34, 197, 94] },
+  });
+
+  currentY = (doc as any).lastAutoTable.finalY + 5;
+
+  autoTable(doc, {
+    startY: currentY,
+    head: [['Operating Expenses', 'Current Year', 'Prior Year', 'Variance', 'Variance %']],
+    body: opexData,
+    theme: 'grid',
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [251, 146, 60] },
+  });
+
+  currentY = (doc as any).lastAutoTable.finalY + 5;
+
+  if (ociData.length > 0) {
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Other Comprehensive Income', 'Current Year', 'Prior Year', 'Variance', 'Variance %']],
+      body: ociData,
+      theme: 'grid',
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [168, 85, 247] },
+    });
+    
+    currentY = (doc as any).lastAutoTable.finalY + 5;
+  }
+
+  // Net Income
   const netIncomeVariance = current.netIncome - prior.netIncome;
   const netIncomeVariancePercent = prior.netIncome !== 0 ? ((netIncomeVariance / prior.netIncome) * 100) : 0;
   
   autoTable(doc, {
-    startY: netIncomeY,
+    startY: currentY,
     body: [[
       'Net Income',
       `${settings.currencySymbol}${current.netIncome.toFixed(2)}`,
@@ -160,10 +260,10 @@ export const generateIncomeStatementExcel = (
   });
 
   data.push({ Item: '', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' });
-  data.push({ Item: 'EXPENSES', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' });
+  data.push({ Item: 'COST OF SALES', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' });
 
-  current.expenses.forEach(item => {
-    const priorAmount = prior.expenses.find(p => p.account === item.account)?.amount || 0;
+  current.costOfSales.forEach(item => {
+    const priorAmount = prior.costOfSales.find(p => p.account === item.account)?.amount || 0;
     const variance = item.amount - priorAmount;
     const variancePercent = priorAmount !== 0 ? ((variance / priorAmount) * 100) : 0;
     data.push({
@@ -175,16 +275,85 @@ export const generateIncomeStatementExcel = (
     });
   });
 
-  const expenseVariance = current.totalExpenses - prior.totalExpenses;
-  const expenseVariancePercent = prior.totalExpenses !== 0 ? ((expenseVariance / prior.totalExpenses) * 100) : 0;
+  const cosVariance = current.totalCostOfSales - prior.totalCostOfSales;
+  const cosVariancePercent = prior.totalCostOfSales !== 0 ? ((cosVariance / prior.totalCostOfSales) * 100) : 0;
 
   data.push({
-    Item: 'Total Expenses',
-    'Current Year': current.totalExpenses,
-    'Prior Year': prior.totalExpenses,
-    'Variance': expenseVariance,
-    'Variance %': `${expenseVariancePercent.toFixed(1)}%`,
+    Item: 'Total Cost of Sales',
+    'Current Year': current.totalCostOfSales,
+    'Prior Year': prior.totalCostOfSales,
+    'Variance': cosVariance,
+    'Variance %': `${cosVariancePercent.toFixed(1)}%`,
   });
+
+  // Gross Profit
+  const gpVariance = current.grossProfit - prior.grossProfit;
+  const gpVariancePercent = prior.grossProfit !== 0 ? ((gpVariance / prior.grossProfit) * 100) : 0;
+  data.push({ Item: '', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' });
+  data.push({
+    Item: 'GROSS PROFIT',
+    'Current Year': current.grossProfit,
+    'Prior Year': prior.grossProfit,
+    'Variance': gpVariance,
+    'Variance %': `${gpVariancePercent.toFixed(1)}%`,
+  });
+
+  data.push({ Item: '', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' });
+  data.push({ Item: 'OPERATING EXPENSES', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' });
+
+  current.operatingExpenses.forEach(item => {
+    const priorAmount = prior.operatingExpenses.find(p => p.account === item.account)?.amount || 0;
+    const variance = item.amount - priorAmount;
+    const variancePercent = priorAmount !== 0 ? ((variance / priorAmount) * 100) : 0;
+    data.push({
+      Item: item.account,
+      'Current Year': item.amount,
+      'Prior Year': priorAmount,
+      'Variance': variance,
+      'Variance %': `${variancePercent.toFixed(1)}%`,
+    });
+  });
+
+  const opexVariance = current.totalOperatingExpenses - prior.totalOperatingExpenses;
+  const opexVariancePercent = prior.totalOperatingExpenses !== 0 ? ((opexVariance / prior.totalOperatingExpenses) * 100) : 0;
+
+  data.push({
+    Item: 'Total Operating Expenses',
+    'Current Year': current.totalOperatingExpenses,
+    'Prior Year': prior.totalOperatingExpenses,
+    'Variance': opexVariance,
+    'Variance %': `${opexVariancePercent.toFixed(1)}%`,
+  });
+
+  // Other Comprehensive Income (if any)
+  if (current.totalOtherComprehensiveIncome !== 0 || prior.totalOtherComprehensiveIncome !== 0) {
+    data.push({ Item: '', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' });
+    data.push({ Item: 'OTHER COMPREHENSIVE INCOME', 'Current Year': '', 'Prior Year': '', 'Variance': '', 'Variance %': '' });
+
+    current.otherComprehensiveIncome.forEach(item => {
+      const priorAmount = prior.otherComprehensiveIncome.find(p => p.account === item.account)?.amount || 0;
+      const variance = item.amount - priorAmount;
+      const variancePercent = priorAmount !== 0 ? ((variance / priorAmount) * 100) : 0;
+      data.push({
+        Item: item.account,
+        'Current Year': item.amount,
+        'Prior Year': priorAmount,
+        'Variance': variance,
+        'Variance %': `${variancePercent.toFixed(1)}%`,
+      });
+    });
+
+    const ociVariance = current.totalOtherComprehensiveIncome - prior.totalOtherComprehensiveIncome;
+    const ociVariancePercent = prior.totalOtherComprehensiveIncome !== 0 ? ((ociVariance / prior.totalOtherComprehensiveIncome) * 100) : 0;
+
+    data.push({
+      Item: 'Total Other Comprehensive Income',
+      'Current Year': current.totalOtherComprehensiveIncome,
+      'Prior Year': prior.totalOtherComprehensiveIncome,
+      'Variance': ociVariance,
+      'Variance %': `${ociVariancePercent.toFixed(1)}%`,
+    });
+  }
 
   const netIncomeVariance = current.netIncome - prior.netIncome;
   const netIncomeVariancePercent = prior.netIncome !== 0 ? ((netIncomeVariance / prior.netIncome) * 100) : 0;
