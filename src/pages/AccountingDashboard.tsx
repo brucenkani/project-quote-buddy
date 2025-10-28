@@ -15,14 +15,6 @@ export default function AccountingDashboard() {
 
   const shortcuts = [
     {
-      title: 'Dashboard',
-      description: 'An overview of how your business is performing.',
-      icon: LayoutDashboard,
-      path: '/dashboard',
-      iconColor: 'text-green-600',
-      iconBg: 'bg-green-100'
-    },
-    {
       title: 'Create an Invoice',
       description: 'Sell items or services to your customer.',
       icon: FileText,
