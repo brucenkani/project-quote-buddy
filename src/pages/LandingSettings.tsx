@@ -479,6 +479,7 @@ export default function LandingSettings() {
     const selectedCountry = countries.find(c => c.code === companyFormData.country);
 
     const settings: any = {
+      company_name: companyFormData.companyName,
       country: companyFormData.country,
       company_type: companyFormData.companyType,
       email: companyFormData.email || '',
