@@ -28,7 +28,14 @@ export default function InvoiceCreditNote() {
   }, [id]);
   
   const [creditNoteReason, setCreditNoteReason] = useState('');
-  const [creditAmount, setCreditAmount] = useState(invoice?.total || 0);
+  const [creditAmount, setCreditAmount] = useState(0);
+
+  // Update credit amount when invoice loads
+  useEffect(() => {
+    if (invoice) {
+      setCreditAmount(invoice.total);
+    }
+  }, [invoice]);
 
   if (!invoice) {
     return (
