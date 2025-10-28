@@ -50,4 +50,5 @@ export const defaultChartOfAccounts: Omit<ChartAccount, 'id' | 'createdAt'>[] = 
   { accountNumber: '505', accountName: 'Insurance Expense', accountType: 'expense', isDefault: true },
   { accountNumber: '506', accountName: 'Depreciation Expense', accountType: 'expense', isDefault: true },
   { accountNumber: '507', accountName: 'Interest Expense', accountType: 'expense', isDefault: true },
+  { accountNumber: '508', accountName: 'Sales Discounts', accountType: 'expense', isDefault: true },
 ];
