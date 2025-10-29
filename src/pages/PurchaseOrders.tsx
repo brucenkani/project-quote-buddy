@@ -573,7 +573,7 @@ export default function PurchaseOrders() {
                 <li>Additional notes or references</li>
               </ul>
               <p className="font-medium pt-2">
-                Would you like to convert now or edit the PO first?
+                Would you like to convert now or edit the Purchase first?
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -586,12 +586,59 @@ export default function PurchaseOrders() {
             </AlertDialogCancel>
             <Button
               variant="outline"
-              onClick={() => {
+              onClick={async () => {
+                if (!orderToConvert) return;
+                
+                // Convert PO to Purchase first
+                const purchaseNumber = await generatePurchaseNumber();
+                const purchase: Purchase = {
+                  id: crypto.randomUUID(),
+                  purchaseNumber,
+                  vendor: orderToConvert.vendor,
+                  vendorContact: orderToConvert.vendorContact,
+                  date: new Date().toISOString().split('T')[0],
+                  dueDate: orderToConvert.expectedDelivery,
+                  lineItems: orderToConvert.lineItems.map(item => ({
+                    id: item.id,
+                    description: item.description,
+                    quantity: item.quantity,
+                    receivedQuantity: 0,
+                    unitCost: item.unitCost,
+                    total: item.total,
+                    inventoryType: 'raw-materials' as InventoryType,
+                  })),
+                  subtotal: orderToConvert.subtotal,
+                  taxRate: orderToConvert.taxRate,
+                  taxAmount: orderToConvert.taxAmount,
+                  discount: orderToConvert.discount,
+                  total: orderToConvert.total,
+                  status: 'pending',
+                  paymentMethod: 'credit',
+                  notes: `Converted from PO ${orderToConvert.poNumber}`,
+                  projectId: orderToConvert.projectId,
+                  inventoryMethod: 'perpetual',
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                };
+
+                await savePurchase(purchase);
+
+                // Update PO status to confirmed
+                const updatedOrder = { 
+                  ...orderToConvert, 
+                  status: 'confirmed' as const, 
+                  convertedToPurchaseId: purchase.id, 
+                  updatedAt: new Date().toISOString() 
+                };
+                await savePurchaseOrder(updatedOrder);
+                const updated = await loadPurchaseOrders();
+                setOrders(updated);
+
                 setConvertDialogOpen(false);
-                if (orderToConvert) {
-                  handleEdit(orderToConvert);
-                }
                 setOrderToConvert(null);
+                
+                // Navigate to purchases page with the new purchase for editing
+                navigate('/purchases', { state: { editPurchaseId: purchase.id } });
               }}
             >
               Edit First

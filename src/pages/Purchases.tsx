@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,7 @@ import { getTotalPaid } from '@/utils/purchasePaymentStorage';
 export default function Purchases() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { settings } = useSettings();
   const { inventory } = useInventory();
   const { activeCompany } = useCompany();
@@ -53,9 +54,20 @@ export default function Purchases() {
           .eq('is_active', true);
         if (data) setBankAccounts(data);
       }
+
+      // Check if we should open edit dialog for a specific purchase (from PO conversion)
+      const state = location.state as { editPurchaseId?: string };
+      if (state?.editPurchaseId) {
+        const purchaseToEdit = loaded.find(p => p.id === state.editPurchaseId);
+        if (purchaseToEdit) {
+          handleEdit(purchaseToEdit);
+        }
+        // Clear the state
+        navigate(location.pathname, { replace: true, state: {} });
+      }
     };
     init();
-  }, [activeCompany]);
+  }, [activeCompany, location.state]);
 
   const [formData, setFormData] = useState<Partial<Purchase>>({
     purchaseNumber: '',
