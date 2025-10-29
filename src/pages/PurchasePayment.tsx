@@ -126,7 +126,15 @@ export default function PurchasePayment() {
 
       await savePurchasePayment(payment);
 
-      // Record payment in accounting: Dr Accounts Payable, Cr Bank
+      // Determine credit account for journal based on method
+      let creditAccountName = 'Cash on Hand';
+      let selectedAccount: any | null = null;
+      if (formData.method === 'bank-transfer' && formData.bankAccountId) {
+        selectedAccount = bankAccounts.find(a => a.id === formData.bankAccountId) || null;
+        creditAccountName = selectedAccount?.ledger_account || selectedAccount?.account_name || 'Bank';
+      }
+
+      // Record payment in accounting: Dr Accounts Payable, Cr Bank/Cash
       const journalEntries: JournalEntryLine[] = [
         {
           id: crypto.randomUUID(),
@@ -138,7 +146,7 @@ export default function PurchasePayment() {
         },
         {
           id: crypto.randomUUID(),
-          account: 'Bank',
+          account: creditAccountName,
           accountType: 'current-asset',
           debit: 0,
           credit: formData.amount,
@@ -160,15 +168,35 @@ export default function PurchasePayment() {
 
       await saveJournalEntry(journalEntry);
 
-      // Update bank account balance if bank transfer
-      if (formData.method === 'bank-transfer' && formData.bankAccountId) {
-        const account = bankAccounts.find(a => a.id === formData.bankAccountId);
-        if (account) {
-          const newBalance = Number(account.current_balance) - formData.amount;
-          await supabase
+      // Update bank account balance and insert bank transaction if bank transfer
+      if (formData.method === 'bank-transfer' && formData.bankAccountId && activeCompany) {
+        if (selectedAccount) {
+          const newBalance = Number(selectedAccount.current_balance || 0) - formData.amount;
+          const { error: balErr } = await supabase
             .from('bank_accounts')
             .update({ current_balance: newBalance })
             .eq('id', formData.bankAccountId);
+          if (balErr) console.error('Failed updating bank balance', balErr);
+
+          const { data: session } = await supabase.auth.getSession();
+          const userId = session?.session?.user?.id;
+          if (userId) {
+            const { error: txErr } = await supabase.from('bank_transactions').insert({
+              id: crypto.randomUUID(),
+              user_id: userId,
+              company_id: activeCompany.id,
+              date: formData.date,
+              debit: 0,
+              credit: formData.amount,
+              balance: newBalance,
+              is_reconciled: false,
+              description: `Supplier payment ${purchase.purchaseNumber}`,
+              reference: formData.reference || `PAY-${purchase.purchaseNumber}`,
+              account_id: formData.bankAccountId,
+              category: 'supplier_payment',
+            });
+            if (txErr) console.error('Failed inserting bank transaction', txErr);
+          }
         }
       }
 
@@ -176,16 +204,21 @@ export default function PurchasePayment() {
       const newTotalPaid = totalPaid + formData.amount;
       const isFullyPaid = newTotalPaid >= purchase.total - 0.01; // Account for floating point
 
+      // Always reflect the latest payment method used
+      if (formData.method === 'bank-transfer') {
+        purchase.paymentMethod = 'bank-transfer';
+        purchase.bankAccountId = formData.bankAccountId;
+      } else if (formData.method === 'cash') {
+        purchase.paymentMethod = 'cash';
+        purchase.bankAccountId = undefined;
+      } else {
+        // Map other methods to bank transfer for purchases
+        purchase.paymentMethod = 'bank-transfer';
+        purchase.bankAccountId = formData.bankAccountId || purchase.bankAccountId;
+      }
+
       if (isFullyPaid) {
         purchase.status = 'received';
-        // Update payment method to the actual method used
-        if (formData.method === 'bank-transfer') {
-          purchase.paymentMethod = 'bank-transfer';
-          purchase.bankAccountId = formData.bankAccountId;
-        } else if (formData.method === 'cash') {
-          purchase.paymentMethod = 'cash';
-          purchase.bankAccountId = undefined;
-        }
       }
       
       purchase.updatedAt = new Date().toISOString();
