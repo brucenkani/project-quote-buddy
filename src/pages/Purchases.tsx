@@ -199,13 +199,15 @@ export default function Purchases() {
       }
     }
 
-    // Record double-entry accounting in Supabase
+    // Record double-entry accounting in Supabase - ALWAYS use 'credit' for Accounts Payable
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user && activeCompany && lineItems.length > 0) {
         // Get the primary inventory type from first line item
         const primaryInventoryType = lineItems[0].inventoryType || 'raw-materials';
         
+        // Always record purchase with Accounts Payable (credit method)
+        // Actual payment will be handled separately via payment screen
         await recordPurchaseInvoice(
           purchase.purchaseNumber,
           purchase.vendor,
@@ -214,11 +216,11 @@ export default function Purchases() {
           purchase.total,
           purchase.date,
           settings.companyType,
-          purchase.paymentMethod,
+          'credit', // Always use credit (Accounts Payable) when recording purchase
           primaryInventoryType,
           user.id,
           activeCompany.id,
-          purchase.bankAccountId,
+          undefined, // No bank account ID for unpaid purchases
           purchase.supplierInvoiceNumber
         );
         toast({ title: editingPurchase ? 'Purchase updated and ledger updated' : 'Purchase created and inventory updated' });
