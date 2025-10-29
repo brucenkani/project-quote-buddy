@@ -38,9 +38,10 @@ export const Navigation = () => {
     { path: '/invoices/statements', label: 'Statements', icon: FileText },
   ];
 
-  const supplierMenuItems = [
+  const suppliersInventoryMenuItems = [
     { path: '/purchase-orders', label: 'Purchase Orders', icon: FileText },
     { path: '/purchases', label: 'Purchases', icon: ShoppingCart },
+    { path: '/inventory', label: 'Inventory', icon: Package },
   ];
 
   const bankingMenuItems = [
@@ -49,7 +50,7 @@ export const Navigation = () => {
   ];
 
   const isCustomerMenuActive = customerMenuItems.some(item => location.pathname.startsWith(item.path));
-  const isSupplierMenuActive = supplierMenuItems.some(item => location.pathname.startsWith(item.path));
+  const isSuppliersInventoryMenuActive = suppliersInventoryMenuItems.some(item => location.pathname.startsWith(item.path));
   const isBankingMenuActive = bankingMenuItems.some(item => location.pathname.startsWith(item.path));
 
   const handleSignOut = async () => {
@@ -104,17 +105,17 @@ export const Navigation = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Suppliers Dropdown */}
+            {/* Suppliers & Inventory Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant={isSupplierMenuActive ? 'secondary' : 'ghost'} size="sm" className="gap-2">
-                  <ShoppingCart className="h-4 w-4" />
-                  <span>Suppliers</span>
+                <Button variant={isSuppliersInventoryMenuActive ? 'secondary' : 'ghost'} size="sm" className="gap-2">
+                  <Package className="h-4 w-4" />
+                  <span>Suppliers & Inventory</span>
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                {supplierMenuItems.map((item) => {
+                {suppliersInventoryMenuItems.map((item) => {
                   const Icon = item.icon;
                   return (
                     <DropdownMenuItem key={item.path} asChild>
@@ -157,14 +158,6 @@ export const Navigation = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Inventory Link */}
-            <Button variant={location.pathname === '/inventory' ? 'secondary' : 'ghost'} size="sm" asChild>
-              <Link to="/inventory" className="gap-2">
-                <Package className="h-4 w-4" />
-                <span>Inventory</span>
-              </Link>
-            </Button>
 
             {/* Journal Link */}
             <Button variant={location.pathname === '/journal' ? 'secondary' : 'ghost'} size="sm" asChild>
@@ -231,8 +224,8 @@ export const Navigation = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="px-3 py-2 text-sm font-semibold text-muted-foreground">Suppliers</div>
-                  {supplierMenuItems.map((item) => {
+                  <div className="px-3 py-2 text-sm font-semibold text-muted-foreground">Suppliers & Inventory</div>
+                  {suppliersInventoryMenuItems.map((item) => {
                     const Icon = item.icon;
                     return (
                       <Button
@@ -250,18 +243,6 @@ export const Navigation = () => {
                     );
                   })}
                 </div>
-
-                <Button
-                  variant={location.pathname === '/inventory' ? 'default' : 'ghost'}
-                  asChild
-                  className="justify-start gap-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Link to="/inventory">
-                    <Package className="h-4 w-4" />
-                    Inventory
-                  </Link>
-                </Button>
 
                 <div className="space-y-2">
                   <div className="px-3 py-2 text-sm font-semibold text-muted-foreground">Banking</div>
