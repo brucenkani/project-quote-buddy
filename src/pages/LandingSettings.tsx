@@ -60,7 +60,7 @@ export default function LandingSettings() {
     startDate: '',
     endDate: '',
     entityType: 'all',
-    action: '',
+    action: 'all',
   });
   useEffect(() => {
     setEditedBrackets(taxBrackets.map((b) => ({ ...b })));
@@ -146,7 +146,7 @@ export default function LandingSettings() {
       );
     }
     
-    if (auditFilters.action) {
+    if (auditFilters.action && auditFilters.action !== 'all') {
       filtered = filtered.filter(log => 
         log.action.toLowerCase().includes(auditFilters.action.toLowerCase())
       );
@@ -2056,11 +2056,27 @@ export default function LandingSettings() {
                         </div>
                         <div className="space-y-2">
                           <Label>Action</Label>
-                          <Input
-                            placeholder="Search actions..."
-                            value={auditFilters.action}
-                            onChange={(e) => setAuditFilters({ ...auditFilters, action: e.target.value })}
-                          />
+                          <Select 
+                            value={auditFilters.action} 
+                            onValueChange={(value) => setAuditFilters({ ...auditFilters, action: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="All Actions" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Actions</SelectItem>
+                              <SelectItem value="create">Create</SelectItem>
+                              <SelectItem value="update">Update</SelectItem>
+                              <SelectItem value="delete">Delete</SelectItem>
+                              <SelectItem value="view">View</SelectItem>
+                              <SelectItem value="export">Export</SelectItem>
+                              <SelectItem value="import">Import</SelectItem>
+                              <SelectItem value="approve">Approve</SelectItem>
+                              <SelectItem value="reject">Reject</SelectItem>
+                              <SelectItem value="login">Login</SelectItem>
+                              <SelectItem value="logout">Logout</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
 
@@ -2130,14 +2146,14 @@ export default function LandingSettings() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              setAuditFilters({
-                                startDate: '',
-                                endDate: '',
-                                entityType: 'all',
-                                action: '',
-                              });
-                            }}
+                          onClick={() => {
+                            setAuditFilters({
+                              startDate: '',
+                              endDate: '',
+                              entityType: 'all',
+                              action: 'all',
+                            });
+                          }}
                           >
                             Clear Filters
                           </Button>
