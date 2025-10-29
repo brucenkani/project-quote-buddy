@@ -51,6 +51,11 @@ const accountMatches = (lineAccount: string, account: ChartAccount): boolean => 
   return false;
 };
 
+// Helper function to create unique key for deduplication
+const createUniqueKey = (entry: JournalEntry, line: { debit: number; credit: number }): string => {
+  return `${entry.reference || ''}-${entry.date}-${line.debit}-${line.credit}`;
+};
+
 const getKPIBreakdown = async (
   kpiType: KPIType,
   accounts: ChartAccount[],
@@ -63,10 +68,14 @@ const getKPIBreakdown = async (
   switch (kpiType) {
     case 'revenue': {
       const revenueAccounts = accounts.filter(a => a.accountType === 'revenue');
+      const seenKeys = new Set<string>();
       revenueAccounts.forEach(account => {
         periodData.journalEntries.forEach(entry => {
           entry.entries.forEach(line => {
             if (line.account === account.accountName && line.credit > 0) {
+              const uniqueKey = createUniqueKey(entry, line);
+              if (seenKeys.has(uniqueKey)) return;
+              seenKeys.add(uniqueKey);
               lines.push({
                 date: entry.date,
                 description: entry.description,

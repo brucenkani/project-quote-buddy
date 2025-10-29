@@ -194,21 +194,8 @@ export default function InvoiceBuilder() {
       await saveInvoice(invoice);
       console.log('Invoice saved successfully');
       
-      if (!id && invoice.status === 'unpaid') {
-        try {
-          recordInvoice(invoice);
-          toast({ title: 'Invoice and journal entry created successfully' });
-        } catch (error) {
-          console.error('Journal entry error:', error);
-          toast({ 
-            title: 'Warning: Invoice saved but journal entry failed', 
-            description: error instanceof Error ? error.message : 'Unknown error',
-            variant: 'destructive' 
-          });
-        }
-      } else {
-        toast({ title: 'Invoice saved successfully' });
-      }
+      // Journal entry is automatically created by saveInvoice for new invoices
+      toast({ title: 'Invoice saved successfully' });
       
       navigate('/invoices');
     } catch (error) {

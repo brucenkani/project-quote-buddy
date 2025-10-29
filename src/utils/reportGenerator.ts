@@ -218,12 +218,22 @@ export const generateLedgerPDF = (
 
   // Collect transactions
   const transactions: any[] = [];
+  const seenReferences = new Map<string, boolean>();
 
   journalEntries.forEach(entry => {
     entry.entries.forEach(line => {
       const lineNum = extractAccountNumber(line.account);
       if (lineNum === account.accountNumber || line.account === account.accountName ||
           line.account === `${account.accountNumber} - ${account.accountName}`) {
+        // Create unique key for deduplication: reference + date + amount
+        const uniqueKey = `${entry.reference || ''}-${entry.date}-${line.debit}-${line.credit}`;
+        
+        // Skip if we've already added this exact transaction
+        if (seenReferences.has(uniqueKey)) {
+          return;
+        }
+        
+        seenReferences.set(uniqueKey, true);
         transactions.push({
           date: entry.date,
           description: entry.description,
@@ -242,6 +252,13 @@ export const generateLedgerPDF = (
       const netAmount = expense.includesVAT && expense.vatAmount 
         ? expense.amount - expense.vatAmount 
         : expense.amount;
+      
+      const uniqueKey = `${expense.reference || ''}-${expense.date}-${netAmount}-0`;
+      if (seenReferences.has(uniqueKey)) {
+        return;
+      }
+      
+      seenReferences.set(uniqueKey, true);
       transactions.push({
         date: expense.date,
         description: expense.description,
@@ -289,10 +306,18 @@ export const generateLedgerExcel = (
   settings: CompanySettings
 ) => {
   const transactions: any[] = [];
+  const seenReferences = new Map<string, boolean>();
 
   journalEntries.forEach(entry => {
     entry.entries.forEach(line => {
-      if (line.account === account.accountName) {
+      const lineNum = extractAccountNumber(line.account);
+      if (lineNum === account.accountNumber || line.account === account.accountName ||
+          line.account === `${account.accountNumber} - ${account.accountName}`) {
+        const uniqueKey = `${entry.reference || ''}-${entry.date}-${line.debit}-${line.credit}`;
+        if (seenReferences.has(uniqueKey)) {
+          return;
+        }
+        seenReferences.set(uniqueKey, true);
         transactions.push({
           Date: entry.date,
           Description: entry.description,
@@ -305,10 +330,17 @@ export const generateLedgerExcel = (
   });
 
   expenses.forEach(expense => {
-    if (expense.category === account.accountName) {
+    const expNum = extractAccountNumber(expense.category);
+    if (expNum === account.accountNumber || expense.category === account.accountName ||
+        expense.category === `${account.accountNumber} - ${account.accountName}`) {
       const netAmount = expense.includesVAT && expense.vatAmount 
         ? expense.amount - expense.vatAmount 
         : expense.amount;
+      const uniqueKey = `${expense.reference || ''}-${expense.date}-${netAmount}-0`;
+      if (seenReferences.has(uniqueKey)) {
+        return;
+      }
+      seenReferences.set(uniqueKey, true);
       transactions.push({
         Date: expense.date,
         Description: expense.description,
