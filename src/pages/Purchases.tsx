@@ -177,6 +177,28 @@ export default function Purchases() {
 
     await savePurchase(purchase);
 
+    // Create inventory movements for all line items with inventory links
+    if (activeCompany && !editingPurchase) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        for (const item of lineItems) {
+          if (item.inventoryItemId) {
+            const { createInventoryMovement } = await import('@/utils/inventoryMovementStorage');
+            await createInventoryMovement(
+              item.inventoryItemId,
+              'IN',
+              item.quantity,
+              item.unitCost,
+              purchase.id,
+              'PURCHASE',
+              activeCompany.id,
+              `Purchase ${purchase.purchaseNumber}`
+            );
+          }
+        }
+      }
+    }
+
     // Record double-entry accounting in Supabase
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -199,7 +221,7 @@ export default function Purchases() {
           purchase.bankAccountId,
           purchase.supplierInvoiceNumber
         );
-        toast({ title: editingPurchase ? 'Purchase updated and ledger updated' : 'Purchase created and ledger updated' });
+        toast({ title: editingPurchase ? 'Purchase updated and ledger updated' : 'Purchase created and inventory updated' });
       } else {
         toast({ title: editingPurchase ? 'Purchase updated' : 'Purchase created' });
       }
