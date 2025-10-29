@@ -48,10 +48,6 @@ export const Navigation = () => {
     { path: '/expenses', label: 'Expenses', icon: Receipt },
   ];
 
-  // Business type dependent menu visibility
-  const showInventory = activeCompanySettings?.company_type !== 'professional-services';
-  const showSuppliers = activeCompanySettings?.company_type !== 'professional-services';
-
   const isCustomerMenuActive = customerMenuItems.some(item => location.pathname.startsWith(item.path));
   const isSupplierMenuActive = supplierMenuItems.some(item => location.pathname.startsWith(item.path));
   const isBankingMenuActive = bankingMenuItems.some(item => location.pathname.startsWith(item.path));
@@ -109,30 +105,28 @@ export const Navigation = () => {
             </DropdownMenu>
 
             {/* Suppliers Dropdown */}
-            {showSuppliers && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant={isSupplierMenuActive ? 'secondary' : 'ghost'} size="sm" className="gap-2">
-                    <ShoppingCart className="h-4 w-4" />
-                    <span>Suppliers</span>
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  {supplierMenuItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <DropdownMenuItem key={item.path} asChild>
-                        <Link to={item.path} className="flex items-center gap-2 cursor-pointer">
-                          <Icon className="h-4 w-4" />
-                          {item.label}
-                        </Link>
-                      </DropdownMenuItem>
-                    );
-                  })}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant={isSupplierMenuActive ? 'secondary' : 'ghost'} size="sm" className="gap-2">
+                  <ShoppingCart className="h-4 w-4" />
+                  <span>Suppliers</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {supplierMenuItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <DropdownMenuItem key={item.path} asChild>
+                      <Link to={item.path} className="flex items-center gap-2 cursor-pointer">
+                        <Icon className="h-4 w-4" />
+                        {item.label}
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Banking Dropdown */}
             <DropdownMenu>
@@ -165,14 +159,12 @@ export const Navigation = () => {
             </DropdownMenu>
 
             {/* Inventory Link */}
-            {showInventory && (
-              <Button variant={location.pathname === '/inventory' ? 'secondary' : 'ghost'} size="sm" asChild>
-                <Link to="/inventory" className="gap-2">
-                  <Package className="h-4 w-4" />
-                  <span>Inventory</span>
-                </Link>
-              </Button>
-            )}
+            <Button variant={location.pathname === '/inventory' ? 'secondary' : 'ghost'} size="sm" asChild>
+              <Link to="/inventory" className="gap-2">
+                <Package className="h-4 w-4" />
+                <span>Inventory</span>
+              </Link>
+            </Button>
 
             {/* Journal Link */}
             <Button variant={location.pathname === '/journal' ? 'secondary' : 'ghost'} size="sm" asChild>
@@ -238,42 +230,38 @@ export const Navigation = () => {
                   })}
                 </div>
 
-                {showSuppliers && (
-                  <div className="space-y-2">
-                    <div className="px-3 py-2 text-sm font-semibold text-muted-foreground">Suppliers</div>
-                    {supplierMenuItems.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <Button
-                          key={item.path}
-                          variant={location.pathname.startsWith(item.path) ? 'secondary' : 'ghost'}
-                          asChild
-                          className="justify-start gap-2 w-full"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          <Link to={item.path}>
-                            <Icon className="h-4 w-4" />
-                            {item.label}
-                          </Link>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <div className="px-3 py-2 text-sm font-semibold text-muted-foreground">Suppliers</div>
+                  {supplierMenuItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Button
+                        key={item.path}
+                        variant={location.pathname.startsWith(item.path) ? 'secondary' : 'ghost'}
+                        asChild
+                        className="justify-start gap-2 w-full"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Link to={item.path}>
+                          <Icon className="h-4 w-4" />
+                          {item.label}
+                        </Link>
+                      </Button>
+                    );
+                  })}
+                </div>
 
-                {showInventory && (
-                  <Button
-                    variant={location.pathname === '/inventory' ? 'default' : 'ghost'}
-                    asChild
-                    className="justify-start gap-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Link to="/inventory">
-                      <Package className="h-4 w-4" />
-                      Inventory
-                    </Link>
-                  </Button>
-                )}
+                <Button
+                  variant={location.pathname === '/inventory' ? 'default' : 'ghost'}
+                  asChild
+                  className="justify-start gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Link to="/inventory">
+                    <Package className="h-4 w-4" />
+                    Inventory
+                  </Link>
+                </Button>
 
                 <div className="space-y-2">
                   <div className="px-3 py-2 text-sm font-semibold text-muted-foreground">Banking</div>
