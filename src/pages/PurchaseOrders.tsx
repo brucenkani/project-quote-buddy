@@ -253,6 +253,15 @@ export default function PurchaseOrders() {
     setEditingOrder(order);
     setFormData(order);
     setLineItems(order.lineItems);
+    // Set vendor for ContactSelector
+    if (order.vendor) {
+      setSelectedVendor({ 
+        id: order.vendor, 
+        name: order.vendor, 
+        email: order.vendorContact || '',
+        type: 'supplier' 
+      } as Contact);
+    }
     setIsDialogOpen(true);
   };
 
