@@ -52,6 +52,16 @@ export default function LandingSettings() {
     '65_to_75': { threshold: 0, rebate: 0 },
     over_75: { threshold: 0, rebate: 0 },
   });
+  
+  // Audit Trail State
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [filteredAuditLogs, setFilteredAuditLogs] = useState<any[]>([]);
+  const [auditFilters, setAuditFilters] = useState({
+    startDate: '',
+    endDate: '',
+    entityType: '',
+    action: '',
+  });
   useEffect(() => {
     setEditedBrackets(taxBrackets.map((b) => ({ ...b })));
     // Build a quick lookup map for age thresholds/rebates from fetched brackets
@@ -85,8 +95,65 @@ export default function LandingSettings() {
   useEffect(() => {
     if (activeCompany) {
       loadPayrollSettings();
+      loadAuditLogs();
     }
   }, [activeCompany]);
+  
+  // Load audit logs
+  const loadAuditLogs = async () => {
+    try {
+      if (!activeCompany || !isOwner) return;
+      
+      const { data, error } = await supabase
+        .from('audit_logs')
+        .select(`
+          *,
+          profiles:user_id (
+            full_name,
+            email
+          )
+        `)
+        .eq('company_id', activeCompany.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setAuditLogs(data || []);
+      setFilteredAuditLogs(data || []);
+    } catch (error: any) {
+      console.error('Error loading audit logs:', error);
+    }
+  };
+  
+  // Filter audit logs
+  useEffect(() => {
+    let filtered = [...auditLogs];
+    
+    if (auditFilters.startDate) {
+      filtered = filtered.filter(log => 
+        new Date(log.created_at) >= new Date(auditFilters.startDate)
+      );
+    }
+    
+    if (auditFilters.endDate) {
+      filtered = filtered.filter(log => 
+        new Date(log.created_at) <= new Date(auditFilters.endDate)
+      );
+    }
+    
+    if (auditFilters.entityType) {
+      filtered = filtered.filter(log => 
+        log.entity_type === auditFilters.entityType
+      );
+    }
+    
+    if (auditFilters.action) {
+      filtered = filtered.filter(log => 
+        log.action.toLowerCase().includes(auditFilters.action.toLowerCase())
+      );
+    }
+    
+    setFilteredAuditLogs(filtered);
+  }, [auditFilters, auditLogs]);
 
   const loadPayrollSettings = async () => {
     try {
@@ -759,10 +826,11 @@ export default function LandingSettings() {
         </div>
 
         <Tabs defaultValue="company" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className={`grid w-full ${isOwner ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <TabsTrigger value="company">Company Settings</TabsTrigger>
             <TabsTrigger value="accounting">Accounting Settings</TabsTrigger>
             <TabsTrigger value="payroll">Payroll & HR Settings</TabsTrigger>
+            {isOwner && <TabsTrigger value="audit">Audit Trail</TabsTrigger>}
           </TabsList>
 
           {/* Company Settings Tab */}
@@ -1929,6 +1997,153 @@ export default function LandingSettings() {
                 </>
               )}
             </TabsContent>
+
+            {/* Audit Trail Tab */}
+            {isOwner && (
+              <TabsContent value="audit" className="space-y-6">
+                <Card className="shadow-[var(--shadow-elegant)] border-border/50">
+                  <CardHeader>
+                    <CardTitle>Audit Trail</CardTitle>
+                    <CardDescription>
+                      Complete record of all company activities and changes
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* Filters */}
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
+                        <div className="space-y-2">
+                          <Label>Start Date</Label>
+                          <Input
+                            type="date"
+                            value={auditFilters.startDate}
+                            onChange={(e) => setAuditFilters({ ...auditFilters, startDate: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>End Date</Label>
+                          <Input
+                            type="date"
+                            value={auditFilters.endDate}
+                            onChange={(e) => setAuditFilters({ ...auditFilters, endDate: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>System/Module</Label>
+                          <Select 
+                            value={auditFilters.entityType} 
+                            onValueChange={(value) => setAuditFilters({ ...auditFilters, entityType: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="All Systems" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">All Systems</SelectItem>
+                              <SelectItem value="invoice">Invoices</SelectItem>
+                              <SelectItem value="purchase">Purchases</SelectItem>
+                              <SelectItem value="expense">Expenses</SelectItem>
+                              <SelectItem value="inventory">Inventory</SelectItem>
+                              <SelectItem value="employee">Employees</SelectItem>
+                              <SelectItem value="payroll">Payroll</SelectItem>
+                              <SelectItem value="contact">Contacts</SelectItem>
+                              <SelectItem value="bank_account">Bank Accounts</SelectItem>
+                              <SelectItem value="chart_of_accounts">Chart of Accounts</SelectItem>
+                              <SelectItem value="settings">Settings</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Action</Label>
+                          <Input
+                            placeholder="Search actions..."
+                            value={auditFilters.action}
+                            onChange={(e) => setAuditFilters({ ...auditFilters, action: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Audit Log Table */}
+                      <ScrollArea className="h-[600px]">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Date & Time</TableHead>
+                              <TableHead>User</TableHead>
+                              <TableHead>Action</TableHead>
+                              <TableHead>System</TableHead>
+                              <TableHead>Entity ID</TableHead>
+                              <TableHead>Details</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredAuditLogs.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                                  No audit logs found
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              filteredAuditLogs.map((log) => (
+                                <TableRow key={log.id}>
+                                  <TableCell className="font-mono text-xs">
+                                    {new Date(log.created_at).toLocaleString()}
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">{log.profiles?.full_name || 'Unknown User'}</span>
+                                      <span className="text-xs text-muted-foreground">{log.profiles?.email}</span>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary">
+                                      {log.action}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="capitalize">{log.entity_type.replace('_', ' ')}</TableCell>
+                                  <TableCell className="font-mono text-xs text-muted-foreground">
+                                    {log.entity_id || '-'}
+                                  </TableCell>
+                                  <TableCell className="max-w-xs">
+                                    {log.details && (
+                                      <div className="text-xs text-muted-foreground truncate">
+                                        {typeof log.details === 'object' 
+                                          ? JSON.stringify(log.details)
+                                          : log.details}
+                                      </div>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            )}
+                          </TableBody>
+                        </Table>
+                      </ScrollArea>
+
+                      {/* Summary */}
+                      <div className="flex items-center justify-between pt-4 border-t">
+                        <p className="text-sm text-muted-foreground">
+                          Showing {filteredAuditLogs.length} of {auditLogs.length} total records
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setAuditFilters({
+                              startDate: '',
+                              endDate: '',
+                              entityType: '',
+                              action: '',
+                            });
+                          }}
+                        >
+                          Clear Filters
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
          </Tabs>
        </div>
        
