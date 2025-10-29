@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { logAudit } from './auditLogger';
 
 export const deleteExpense = async (id: string): Promise<void> => {
   try {
@@ -48,6 +49,19 @@ export const deleteExpense = async (id: string): Promise<void> => {
       .eq('id', id);
 
     if (error) throw error;
+
+    // Log audit trail
+    if (expense) {
+      await logAudit({
+        action: 'delete',
+        entityType: 'expense',
+        entityId: id,
+        details: {
+          expense_number: expense.expense_number,
+          deleted_at: new Date().toISOString(),
+        },
+      });
+    }
   } catch (error) {
     console.error('Failed to delete expense:', error);
     throw error;

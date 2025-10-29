@@ -2,6 +2,7 @@ import { Invoice } from '@/types/invoice';
 import { supabase } from '@/integrations/supabase/client';
 import { calculateInvoiceStatus } from './invoiceStatusCalculator';
 import { recordInvoice, recordCreditNote } from './doubleEntryManager';
+import { logAudit } from './auditLogger';
 
 export const loadInvoices = async (): Promise<Invoice[]> => {
   try {
@@ -296,6 +297,19 @@ export const deleteInvoice = async (id: string): Promise<void> => {
       .eq('id', id);
 
     if (error) throw error;
+
+    // Log audit trail
+    if (invoice) {
+      await logAudit({
+        action: 'delete',
+        entityType: 'invoice',
+        entityId: id,
+        details: {
+          invoice_number: invoice.invoice_number,
+          deleted_at: new Date().toISOString(),
+        },
+      });
+    }
   } catch (error) {
     console.error('Failed to delete invoice:', error);
     throw error;

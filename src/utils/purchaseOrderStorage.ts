@@ -1,5 +1,6 @@
 import { PurchaseOrder } from '@/types/purchaseOrder';
 import { supabase } from '@/integrations/supabase/client';
+import { logAudit } from './auditLogger';
 
 export const loadPurchaseOrders = async (): Promise<PurchaseOrder[]> => {
   try {
@@ -175,6 +176,19 @@ export const deletePurchaseOrder = async (id: string): Promise<void> => {
       .eq('id', id);
 
     if (error) throw error;
+
+    // Log audit trail
+    if (purchaseOrder) {
+      await logAudit({
+        action: 'delete',
+        entityType: 'purchase_order',
+        entityId: id,
+        details: {
+          po_number: purchaseOrder.po_number,
+          deleted_at: new Date().toISOString(),
+        },
+      });
+    }
   } catch (error) {
     console.error('Failed to delete purchase order:', error);
     throw error;
