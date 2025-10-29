@@ -387,43 +387,22 @@ export default function Purchases() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Inventory Method</Label>
-                    <Select
-                      value={formData.inventoryMethod}
-                      onValueChange={(value: 'perpetual' | 'periodic') =>
-                        setFormData({ ...formData, inventoryMethod: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="perpetual">Perpetual</SelectItem>
-                        <SelectItem value="periodic">Periodic</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Status</Label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value: Purchase['status']) =>
-                        setFormData({ ...formData, status: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="received">Received</SelectItem>
-                        <SelectItem value="partly-received">Partly Received</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div>
+                  <Label>Inventory Method</Label>
+                  <Select
+                    value={formData.inventoryMethod}
+                    onValueChange={(value: 'perpetual' | 'periodic') =>
+                      setFormData({ ...formData, inventoryMethod: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="perpetual">Perpetual</SelectItem>
+                      <SelectItem value="periodic">Periodic</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {settings.companyType === 'contractor' && (
