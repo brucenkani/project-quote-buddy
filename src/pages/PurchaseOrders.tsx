@@ -324,34 +324,13 @@ export default function PurchaseOrders() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Expected Delivery</Label>
-                    <Input
-                      type="date"
-                      value={formData.expectedDelivery || ''}
-                      onChange={(e) => setFormData({ ...formData, expectedDelivery: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label>Status</Label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value: PurchaseOrder['status']) =>
-                        setFormData({ ...formData, status: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="sent">Sent</SelectItem>
-                        <SelectItem value="approved">Approved</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div>
+                  <Label>Expected Delivery</Label>
+                  <Input
+                    type="date"
+                    value={formData.expectedDelivery || ''}
+                    onChange={(e) => setFormData({ ...formData, expectedDelivery: e.target.value })}
+                  />
                 </div>
 
                 {settings.companyType === 'contractor' && (
