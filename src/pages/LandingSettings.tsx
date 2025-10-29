@@ -59,7 +59,7 @@ export default function LandingSettings() {
   const [auditFilters, setAuditFilters] = useState({
     startDate: '',
     endDate: '',
-    entityType: '',
+    entityType: 'all',
     action: '',
   });
   useEffect(() => {
@@ -140,7 +140,7 @@ export default function LandingSettings() {
       );
     }
     
-    if (auditFilters.entityType) {
+    if (auditFilters.entityType && auditFilters.entityType !== 'all') {
       filtered = filtered.filter(log => 
         log.entity_type === auditFilters.entityType
       );
@@ -2038,7 +2038,7 @@ export default function LandingSettings() {
                               <SelectValue placeholder="All Systems" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">All Systems</SelectItem>
+                              <SelectItem value="all">All Systems</SelectItem>
                               <SelectItem value="invoice">Invoices</SelectItem>
                               <SelectItem value="purchase">Purchases</SelectItem>
                               <SelectItem value="expense">Expenses</SelectItem>
