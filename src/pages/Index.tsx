@@ -126,14 +126,14 @@ export default function Index() {
               </DropdownMenu>
             <Button variant="ghost" size="lg" onClick={() => navigate('/community')}>Business Community</Button>
             <Button variant="ghost" size="lg" onClick={() => navigate('/knowledge')}>Knowledge Centre</Button>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
                 <DialogHeader>
                   <DialogTitle>Contact Our Team</DialogTitle>
                   <DialogDescription>
                     Interested in our professional accounting services? Send us a message and we'll get back to you soon.
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 px-1">
                   <div className="space-y-2">
                     <Label htmlFor="name">Name *</Label>
                     <Input
@@ -278,14 +278,14 @@ export default function Index() {
                     </CardContent>
                   </Card>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
                   <DialogHeader>
                     <DialogTitle>Contact Our Team</DialogTitle>
                     <DialogDescription>
                       Interested in our professional accounting services? Send us a message and we'll get back to you soon.
                     </DialogDescription>
                   </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 px-1">
                     <div className="space-y-2">
                       <Label htmlFor="name">Name *</Label>
                       <Input

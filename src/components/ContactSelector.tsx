@@ -88,11 +88,11 @@ export function ContactSelector({ type, value, onSelect, placeholder }: ContactS
         >
           <Plus className="h-4 w-4" />
         </Button>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Add New {type === 'client' ? 'Client' : 'Supplier'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 mt-4">
+          <div className="space-y-4 mt-4 overflow-y-auto flex-1 px-1">
             <div className="space-y-2">
               <Label htmlFor="contactName">Name *</Label>
               <Input
@@ -144,7 +144,7 @@ export function ContactSelector({ type, value, onSelect, placeholder }: ContactS
               />
             </div>
           </div>
-          <div className="flex justify-end gap-2 mt-4">
+          <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleCreateContact}>Add {type === 'client' ? 'Client' : 'Supplier'}</Button>
           </div>

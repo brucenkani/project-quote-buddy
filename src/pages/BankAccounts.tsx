@@ -258,7 +258,7 @@ export default function BankAccounts() {
                     Add Bank Account
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
                   <DialogHeader>
                     <DialogTitle>
                       {editingAccount ? 'Edit Bank Account' : 'Add New Bank Account'}
@@ -268,8 +268,8 @@ export default function BankAccounts() {
                     </DialogDescription>
                   </DialogHeader>
                   
-                  <form onSubmit={handleSubmit}>
-                    <div className="grid gap-4 py-4">
+                  <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+                    <div className="grid gap-4 py-4 overflow-y-auto flex-1 px-1">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="accountName">Account Name *</Label>

@@ -276,11 +276,11 @@ export default function BusinessCommunity() {
                   Add Business to Directory
                 </Button>
               </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
               <DialogHeader>
                 <DialogTitle>Add Business to Directory</DialogTitle>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
+              <div className="grid gap-4 py-4 overflow-y-auto flex-1 px-1">
                 <div className="grid gap-2">
                   <Label htmlFor="business_name">Business Name *</Label>
                   <Input
@@ -453,7 +453,7 @@ export default function BusinessCommunity() {
 
       {/* Member Details Dialog */}
       <Dialog open={selectedMember !== null} onOpenChange={() => setSelectedMember(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-2xl flex items-center gap-2">
               <Building2 className="h-6 w-6 text-primary" />
@@ -462,7 +462,7 @@ export default function BusinessCommunity() {
           </DialogHeader>
           
           {selectedMember && (
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto flex-1 px-1">
               <div>
                 <Badge className={selectedMember.is_featured ? "bg-yellow-500" : ""}>
                   {selectedMember.business_category}

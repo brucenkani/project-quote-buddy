@@ -61,11 +61,11 @@ export default function DealDialog({ open, onOpenChange, deal, onSave }: DealDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{deal ? 'Edit Deal' : 'Add New Deal'}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 px-1">
           <div className="space-y-2">
             <Label htmlFor="title">Deal Title</Label>
             <Input

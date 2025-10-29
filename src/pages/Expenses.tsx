@@ -412,11 +412,11 @@ export default function Expenses() {
                   Add Expense
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
               <DialogHeader>
                 <DialogTitle>{editingExpense ? 'Edit Expense' : 'Add New Expense'}</DialogTitle>
               </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-2 gap-4 mt-4 overflow-y-auto flex-1 px-1">
                 <div className="space-y-2">
                   <Label htmlFor="date">Date *</Label>
                   <Input
