@@ -16,6 +16,7 @@ import { loadSettings, saveSettings as saveLocalSettings } from '@/utils/setting
 import { loadChartOfAccounts, saveChartOfAccounts, addChartAccount, updateChartAccount, deleteChartAccount, generateNextAccountNumber } from '@/utils/chartOfAccountsStorage';
 import { generateChartOfAccountsPDF, generateChartOfAccountsExcel } from '@/utils/chartOfAccountsReports';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Save, Upload, X, FileDown, FileSpreadsheet, Database, Shield, MoreVertical } from 'lucide-react';
@@ -698,7 +699,13 @@ export default function LandingSettings() {
     }
   };
 
+  const [showResetWarning, setShowResetWarning] = useState(false);
+
   const handleResetChartOfAccounts = () => {
+    setShowResetWarning(true);
+  };
+
+  const confirmResetChartOfAccounts = () => {
     const standardChart = defaultChartOfAccounts.map(acc => ({
       ...acc,
       id: crypto.randomUUID(),
@@ -706,6 +713,7 @@ export default function LandingSettings() {
     }));
     saveChartOfAccounts(standardChart);
     setAccounts(standardChart);
+    setShowResetWarning(false);
     toast({
       title: "Chart of Accounts Reset",
       description: "Standard chart of accounts has been loaded successfully.",
@@ -1192,6 +1200,31 @@ export default function LandingSettings() {
                     <RefreshCw className="h-4 w-4" />
                     Load Standard Chart
                   </Button>
+                  
+                  <AlertDialog open={showResetWarning} onOpenChange={setShowResetWarning}>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Load Standard Chart of Accounts?</AlertDialogTitle>
+                        <AlertDialogDescription className="space-y-3">
+                          <p className="font-semibold text-foreground">⚠️ Warning: This action will have the following implications:</p>
+                          <ul className="list-disc pl-6 space-y-2 text-sm">
+                            <li><strong>All custom accounts will be removed</strong> - Any accounts you've created or modified will be permanently deleted</li>
+                            <li><strong>Opening balances will be reset</strong> - All current account balances will be lost</li>
+                            <li><strong>Journal entries may become invalid</strong> - Existing transactions referencing custom accounts may break</li>
+                            <li><strong>Reports will be affected</strong> - Financial reports based on your current chart will need to be regenerated</li>
+                            <li><strong>This action cannot be undone</strong> - There is no way to recover your current chart after loading the standard one</li>
+                          </ul>
+                          <p className="text-foreground font-medium mt-4">Only proceed if you want to completely reset your chart of accounts to the standard template.</p>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmResetChartOfAccounts} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          Yes, Load Standard Chart
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
 
                 {/* Display Chart of Accounts Table */}
