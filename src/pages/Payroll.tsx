@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Download, Eye, Users, Trash2, FileText } from 'lucide-react';
+import { Plus, Download, Users, Trash2, FileText } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,8 @@ import {
   getStatutoryDeductions
 } from '@/utils/dynamicPAYECalculator';
 import { generatePayslipPDF } from '@/utils/payslipGenerator';
+import { ReportPreviewDialog } from '@/components/reports/ReportPreviewDialog';
+import { PayslipPreview } from '@/components/reports/PayslipPreview';
 import { format } from 'date-fns';
 import { BulkPayrollDialog } from '@/components/payroll/BulkPayrollDialog';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -51,6 +53,8 @@ export default function Payroll() {
   const [customIncome, setCustomIncome] = useState<{ description: string; amount: string }[]>([]);
   const [customDeductions, setCustomDeductions] = useState<{ description: string; amount: string }[]>([]);
   const [showBulkDialog, setShowBulkDialog] = useState(false);
+  const [showPayslipPreview, setShowPayslipPreview] = useState(false);
+  const [selectedPayslipRecord, setSelectedPayslipRecord] = useState<any>(null);
 
   useEffect(() => {
     checkAuth();
@@ -297,13 +301,22 @@ export default function Payroll() {
     }
   };
 
-  const handleDownloadPayslip = async (record: any) => {
+  const handlePreviewPayslip = (record: any) => {
+    setSelectedPayslipRecord(record);
+    setShowPayslipPreview(true);
+  };
+
+  const handleDownloadPayslip = async (record?: any) => {
     try {
+      const payslip = record || selectedPayslipRecord;
+      if (!payslip) return;
+      
       const companySettings = {
         ...activeCompanySettings,
         company_name: activeCompany?.name || '',
       };
-      await generatePayslipPDF(record, companySettings);
+      await generatePayslipPDF(payslip, companySettings);
+      setShowPayslipPreview(false);
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     }
@@ -709,10 +722,10 @@ export default function Payroll() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDownloadPayslip(record)}
+                          onClick={() => handlePreviewPayslip(record)}
                         >
-                          <Download className="h-4 w-4 mr-2" />
-                          Payslip
+                          <FileText className="h-4 w-4 mr-2" />
+                          Preview
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -743,6 +756,25 @@ export default function Payroll() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Payslip Preview Dialog */}
+        {showPayslipPreview && selectedPayslipRecord && (
+          <ReportPreviewDialog
+            open={showPayslipPreview}
+            onOpenChange={setShowPayslipPreview}
+            title="Payslip Preview"
+            description={`${selectedPayslipRecord.employees?.first_name} ${selectedPayslipRecord.employees?.last_name} - ${selectedPayslipRecord.period_start} to ${selectedPayslipRecord.period_end}`}
+            onExportPDF={() => handleDownloadPayslip()}
+          >
+            <PayslipPreview
+              payrollRecord={selectedPayslipRecord}
+              companySettings={{
+                ...activeCompanySettings,
+                company_name: activeCompany?.name || '',
+              }}
+            />
+          </ReportPreviewDialog>
+        )}
       </main>
 
       <BulkPayrollDialog

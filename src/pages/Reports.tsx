@@ -6,12 +6,15 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Navigation } from '@/components/Navigation';
-import { FileDown, FileSpreadsheet, Calendar } from 'lucide-react';
+import { FileDown, FileSpreadsheet, Calendar, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ChartAccount, defaultChartOfAccounts } from '@/types/chartOfAccounts';
 import { loadJournalEntriesFromDB, loadJournalEntries as loadJournalEntriesLocal, loadExpenses } from '@/utils/accountingStorage';
 import { loadInvoices } from '@/utils/invoiceStorage';
 import { generateTrialBalancePDF, generateTrialBalanceExcel, generateLedgerPDF, generateLedgerExcel } from '@/utils/reportGenerator';
+import { ReportPreviewDialog } from '@/components/reports/ReportPreviewDialog';
+import { TrialBalancePreview } from '@/components/reports/TrialBalancePreview';
+import { LedgerPreview } from '@/components/reports/LedgerPreview';
 import { 
   generateIncomeStatementPDF, 
   generateIncomeStatementExcel,
@@ -47,6 +50,10 @@ export default function Reports() {
   const [chartOfAccounts, setChartOfAccounts] = useState<ChartAccount[]>([]);
   const [journalEntries, setJournalEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Preview states
+  const [showTrialBalancePreview, setShowTrialBalancePreview] = useState(false);
+  const [showLedgerPreview, setShowLedgerPreview] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -201,6 +208,7 @@ export default function Reports() {
       generateTrialBalanceExcel(chartOfAccounts, filteredJournalEntries, expenses, dateRange, effectiveSettings);
     }
 
+    setShowTrialBalancePreview(false);
     toast({ title: `Trial Balance ${format.toUpperCase()} generated successfully` });
   };
 
@@ -296,7 +304,44 @@ export default function Reports() {
       generateLedgerExcel(account, filteredJournalEntries, expenses, dateRange, effectiveSettings);
     }
 
+    setShowLedgerPreview(false);
     toast({ title: `Ledger Report ${format.toUpperCase()} generated successfully` });
+  };
+
+  const getFilteredDataForTrialBalance = () => {
+    const filteredJournalEntries = journalEntries.filter(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate >= new Date(dateRange.startDate) && entryDate <= new Date(dateRange.endDate);
+    });
+
+    const expenses = loadExpenses().filter(expense => {
+      const expenseDate = new Date(expense.date);
+      return expenseDate >= new Date(dateRange.startDate) && expenseDate <= new Date(dateRange.endDate);
+    });
+
+    return { filteredJournalEntries, expenses };
+  };
+
+  const getFilteredDataForLedger = () => {
+    const account = chartOfAccounts.find(a => a.id === selectedAccount);
+    if (!account) return null;
+
+    const filteredJournalEntries = journalEntries.filter(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate >= new Date(dateRange.startDate) && entryDate <= new Date(dateRange.endDate);
+    });
+
+    const expenses = loadExpenses().filter(expense => {
+      const expenseDate = new Date(expense.date);
+      const matchesAccount = expense.category === account.accountName || 
+                            expense.category === `${account.accountNumber} - ${account.accountName}` ||
+                            expense.category.startsWith(account.accountNumber + ' -');
+      return matchesAccount && 
+             expenseDate >= new Date(dateRange.startDate) && 
+             expenseDate <= new Date(dateRange.endDate);
+    });
+
+    return { account, filteredJournalEntries, expenses };
   };
 
   const handleGenerateVATReport = async (format: 'pdf' | 'excel') => {

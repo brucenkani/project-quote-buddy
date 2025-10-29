@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Edit, Trash2, Eye, Pencil, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Pencil, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { Label } from '@/components/ui/label';
@@ -15,11 +15,13 @@ import { countries } from '@/types/settings';
 import { loadSettings, saveSettings as saveLocalSettings } from '@/utils/settingsStorage';
 import { loadChartOfAccounts, saveChartOfAccounts, addChartAccount, updateChartAccount, deleteChartAccount, generateNextAccountNumber } from '@/utils/chartOfAccountsStorage';
 import { generateChartOfAccountsPDF, generateChartOfAccountsExcel } from '@/utils/chartOfAccountsReports';
+import { ReportPreviewDialog } from '@/components/reports/ReportPreviewDialog';
+import { ChartOfAccountsPreview } from '@/components/reports/ChartOfAccountsPreview';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Save, Upload, X, FileDown, FileSpreadsheet, Database, Shield, MoreVertical, Download } from 'lucide-react';
+import { Save, Upload, X, FileDown, FileSpreadsheet, Database, Shield, MoreVertical, Download, FileText } from 'lucide-react';
 import { CreateCompanyDialog } from '@/components/CreateCompanyDialog';
 import { defaultChartOfAccounts } from '@/types/chartOfAccounts';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -693,10 +695,13 @@ export default function LandingSettings() {
     }
   };
 
+  const [showChartPreview, setShowChartPreview] = useState(false);
+
   const handleDownloadPDF = () => {
     const latest = loadChartOfAccounts();
     setAccounts(latest);
     generateChartOfAccountsPDF(latest);
+    setShowChartPreview(false);
     toast({
       title: "PDF Downloaded",
       description: "Chart of accounts has been exported to PDF.",
@@ -707,6 +712,7 @@ export default function LandingSettings() {
     const latest = loadChartOfAccounts();
     setAccounts(latest);
     generateChartOfAccountsExcel(latest);
+    setShowChartPreview(false);
     toast({
       title: "Excel Downloaded",
       description: "Chart of accounts has been exported to Excel.",
@@ -1227,6 +1233,10 @@ export default function LandingSettings() {
                       </div>
                     </DialogContent>
                   </Dialog>
+                  <Button onClick={() => setShowChartPreview(true)} variant="outline" className="gap-2">
+                    <FileText className="h-4 w-4" />
+                    Preview
+                  </Button>
                   <Button onClick={handleDownloadPDF} variant="outline" className="gap-2">
                     <FileDown className="h-4 w-4" />
                     Download PDF
@@ -2246,6 +2256,19 @@ export default function LandingSettings() {
        </div>
        
        <CreateCompanyDialog open={showCreateCompanyDialog} onOpenChange={setShowCreateCompanyDialog} />
+
+       {/* Chart of Accounts Preview Dialog */}
+       {showChartPreview && (
+         <ReportPreviewDialog
+           open={showChartPreview}
+           onOpenChange={setShowChartPreview}
+           title="Chart of Accounts Preview"
+           onExportPDF={handleDownloadPDF}
+           onExportExcel={handleDownloadExcel}
+         >
+           <ChartOfAccountsPreview accounts={accounts} />
+         </ReportPreviewDialog>
+       )}
      </div>
    );
  }
