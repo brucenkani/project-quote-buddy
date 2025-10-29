@@ -6,10 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, FileText, Search, Pencil, Trash2, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
+import { Plus, FileText, Search, MoreVertical, Trash2 } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { loadPurchaseOrders, savePurchaseOrder, deletePurchaseOrder, generatePONumber } from '@/utils/purchaseOrderStorage';
 import { savePurchase, generatePurchaseNumber } from '@/utils/purchaseStorage';
@@ -166,7 +167,7 @@ export default function PurchaseOrders() {
   };
 
   const handleConvertToPurchase = async (order: PurchaseOrder) => {
-    if (order.status === 'converted') {
+    if (order.status === 'confirmed') {
       toast({ title: 'This PO has already been converted', variant: 'destructive' });
       return;
     }
@@ -207,8 +208,8 @@ export default function PurchaseOrders() {
       console.error('Failed to record purchase:', error);
     }
 
-    // Update PO status
-    const updatedOrder = { ...order, status: 'converted' as const, convertedToPurchaseId: purchase.id, updatedAt: new Date().toISOString() };
+    // Update PO status to confirmed
+    const updatedOrder = { ...order, status: 'confirmed' as const, convertedToPurchaseId: purchase.id, updatedAt: new Date().toISOString() };
     await savePurchaseOrder(updatedOrder);
     const updated = await loadPurchaseOrders();
     setOrders(updated);
@@ -271,7 +272,7 @@ export default function PurchaseOrders() {
       sent: 'outline',
       approved: 'default',
       rejected: 'destructive',
-      converted: 'default',
+      confirmed: 'default',
     } as const;
     return <Badge variant={variants[status]}>{status.toUpperCase()}</Badge>;
   };
@@ -500,58 +501,31 @@ export default function PurchaseOrders() {
                       <TableCell>{settings.currencySymbol}{order.total.toFixed(2)}</TableCell>
                       <TableCell>{getStatusBadge(order.status)}</TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
-                          {order.status !== 'converted' && (
-                            <>
-                              <Button variant="ghost" size="sm" onClick={() => handleEdit(order)}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              {order.status === 'approved' && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleConvertToPurchase(order)}
-                                  title="Convert to Purchase"
-                                >
-                                  <ArrowRight className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {order.status === 'draft' && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleStatusChange(order, 'sent')}
-                                  title="Mark as Sent"
-                                >
-                                  <CheckCircle className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {order.status === 'sent' && (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleStatusChange(order, 'approved')}
-                                    title="Approve"
-                                  >
-                                    <CheckCircle className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleStatusChange(order, 'rejected')}
-                                    title="Reject"
-                                  >
-                                    <XCircle className="h-4 w-4" />
-                                  </Button>
-                                </>
-                              )}
-                            </>
-                          )}
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(order.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            {order.status !== 'confirmed' && (
+                              <DropdownMenuItem onClick={() => handleEdit(order)}>
+                                Edit
+                              </DropdownMenuItem>
+                            )}
+                            {order.status !== 'confirmed' && (
+                              <DropdownMenuItem onClick={() => handleConvertToPurchase(order)}>
+                                Convert to Purchase
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem 
+                              onClick={() => handleDelete(order.id)}
+                              className="text-destructive"
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
