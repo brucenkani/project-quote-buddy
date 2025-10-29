@@ -59,8 +59,8 @@ export default function Invoices() {
 
   const handleDelete = async (id: string, isCreditNote: boolean = false) => {
     const message = isCreditNote 
-      ? 'Are you sure you want to delete this credit note? This will remove it from the original invoice.'
-      : 'Are you sure you want to delete this invoice?';
+      ? 'Are you sure you want to delete this credit note? This will remove it and all related journal entries from the original invoice.'
+      : 'Are you sure you want to delete this invoice? This will remove all related payments, line items, and journal entries.';
     
     if (confirm(message)) {
       if (isCreditNote) {
@@ -89,7 +89,9 @@ export default function Invoices() {
       const updated = await loadInvoices();
       setInvoices(updated);
       toast({ 
-        title: isCreditNote ? 'Credit note deleted successfully' : 'Invoice deleted successfully' 
+        title: isCreditNote 
+          ? 'Credit note and all related records deleted successfully' 
+          : 'Invoice and all related records deleted successfully' 
       });
     }
   };

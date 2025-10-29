@@ -266,11 +266,19 @@ export default function PurchaseOrders() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this purchase order?')) {
-      await deletePurchaseOrder(id);
-      const updated = await loadPurchaseOrders();
-      setOrders(updated);
-      toast({ title: 'Purchase order deleted' });
+    if (confirm('Are you sure you want to delete this purchase order? This will remove all related line items and journal entries.')) {
+      try {
+        await deletePurchaseOrder(id);
+        const updated = await loadPurchaseOrders();
+        setOrders(updated);
+        toast({ title: 'Purchase order and all related records deleted successfully' });
+      } catch (error) {
+        toast({ 
+          title: 'Error deleting purchase order', 
+          description: 'Failed to delete purchase order and related records',
+          variant: 'destructive' 
+        });
+      }
     }
   };
 

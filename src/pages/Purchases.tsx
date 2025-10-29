@@ -281,10 +281,18 @@ export default function Purchases() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this purchase?')) {
-      await deletePurchase(id);
-      setPurchases(await loadPurchases());
-      toast({ title: 'Purchase deleted' });
+    if (confirm('Are you sure you want to delete this purchase? This will remove all related payments, line items, inventory movements, and journal entries.')) {
+      try {
+        await deletePurchase(id);
+        setPurchases(await loadPurchases());
+        toast({ title: 'Purchase and all related records deleted successfully' });
+      } catch (error) {
+        toast({ 
+          title: 'Error deleting purchase', 
+          description: 'Failed to delete purchase and related records',
+          variant: 'destructive' 
+        });
+      }
     }
   };
 

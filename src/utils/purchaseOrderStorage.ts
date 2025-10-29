@@ -135,6 +135,33 @@ export const savePurchaseOrder = async (order: PurchaseOrder): Promise<void> => 
 
 export const deletePurchaseOrder = async (id: string): Promise<void> => {
   try {
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session?.user?.id) throw new Error('No authenticated user');
+
+    const { data: memberData } = await supabase
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', session.session.user.id)
+      .single();
+
+    if (!memberData?.company_id) throw new Error('No active company');
+
+    // Get purchase order details before deletion
+    const { data: purchaseOrder } = await supabase
+      .from('purchase_orders')
+      .select('po_number')
+      .eq('id', id)
+      .single();
+
+    if (purchaseOrder) {
+      // Delete related journal entries (memo entries)
+      await supabase
+        .from('journal_entries')
+        .delete()
+        .eq('reference', purchaseOrder.po_number)
+        .eq('company_id', memberData.company_id);
+    }
+
     // Delete line items first
     await supabase
       .from('purchase_order_line_items')

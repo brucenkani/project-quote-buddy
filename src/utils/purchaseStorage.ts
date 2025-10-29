@@ -97,6 +97,53 @@ export const savePurchase = async (purchase: Purchase): Promise<void> => {
 
 export const deletePurchase = async (id: string): Promise<void> => {
   try {
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session?.user?.id) throw new Error('No authenticated user');
+
+    const { data: memberData } = await supabase
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', session.session.user.id)
+      .single();
+
+    if (!memberData?.company_id) throw new Error('No active company');
+
+    // Get purchase details before deletion
+    const { data: purchase } = await supabase
+      .from('purchases')
+      .select('purchase_number')
+      .eq('id', id)
+      .single();
+
+    if (purchase) {
+      // Delete related journal entries
+      await supabase
+        .from('journal_entries')
+        .delete()
+        .eq('reference', purchase.purchase_number)
+        .eq('company_id', memberData.company_id);
+
+      // Delete related inventory movements
+      await supabase
+        .from('inventory_movements')
+        .delete()
+        .eq('reference_id', id)
+        .eq('company_id', memberData.company_id);
+    }
+
+    // Delete purchase payments
+    await supabase
+      .from('purchase_payments')
+      .delete()
+      .eq('purchase_id', id);
+
+    // Delete purchase line items
+    await supabase
+      .from('purchase_line_items')
+      .delete()
+      .eq('purchase_id', id);
+
+    // Delete the purchase itself
     const { error } = await supabase
       .from('purchases')
       .delete()

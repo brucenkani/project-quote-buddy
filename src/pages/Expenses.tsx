@@ -14,7 +14,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Receipt, Pencil, Trash2, Upload, Download, Check, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Navigation } from '@/components/Navigation';
-import { loadExpenses, saveExpense, deleteExpense } from '@/utils/accountingStorage';
+import { loadExpenses, saveExpense } from '@/utils/accountingStorage';
+import { deleteExpense } from '@/utils/expenseStorage';
 import { useSettings } from '@/contexts/SettingsContext';
 import { loadChartOfAccounts, addChartAccount, generateNextAccountNumber } from '@/utils/chartOfAccountsStorage';
 import { Expense } from '@/types/accounting';
@@ -191,11 +192,19 @@ export default function Expenses() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this expense?')) {
-      deleteExpense(id);
-      setExpenses(loadExpenses());
-      toast({ title: 'Expense deleted successfully' });
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this expense? This will remove all related payments and journal entries.')) {
+      try {
+        await deleteExpense(id);
+        setExpenses(loadExpenses());
+        toast({ title: 'Expense and all related records deleted successfully' });
+      } catch (error) {
+        toast({ 
+          title: 'Error deleting expense', 
+          description: 'Failed to delete expense and related records',
+          variant: 'destructive' 
+        });
+      }
     }
   };
 

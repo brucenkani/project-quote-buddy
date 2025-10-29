@@ -250,6 +250,46 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
 
 export const deleteInvoice = async (id: string): Promise<void> => {
   try {
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session?.user?.id) throw new Error('No authenticated user');
+
+    const { data: memberData } = await supabase
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', session.session.user.id)
+      .single();
+
+    if (!memberData?.company_id) throw new Error('No active company');
+
+    // Get invoice details before deletion
+    const { data: invoice } = await supabase
+      .from('invoices')
+      .select('invoice_number')
+      .eq('id', id)
+      .single();
+
+    if (invoice) {
+      // Delete related journal entries
+      await supabase
+        .from('journal_entries')
+        .delete()
+        .eq('reference', invoice.invoice_number)
+        .eq('company_id', memberData.company_id);
+    }
+
+    // Delete invoice payments
+    await supabase
+      .from('invoice_payments')
+      .delete()
+      .eq('invoice_id', id);
+
+    // Delete invoice line items
+    await supabase
+      .from('invoice_line_items')
+      .delete()
+      .eq('invoice_id', id);
+
+    // Delete the invoice itself
     const { error } = await supabase
       .from('invoices')
       .delete()
