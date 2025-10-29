@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Package, Search, Pencil, Trash2, TrendingDown, TrendingUp, AlertTriangle, DollarSign, Boxes, BarChart3 } from 'lucide-react';
+import { Plus, Package, Search, Pencil, Trash2, TrendingDown, TrendingUp, AlertTriangle, DollarSign, Boxes, BarChart3, Download, FileText, FileSpreadsheet } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { InventoryItem, getInventoryTypesForCompanyType } from '@/types/inventory';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +15,8 @@ import { ContactSelector } from '@/components/ContactSelector';
 import { Contact } from '@/types/contacts';
 import { useInventory } from '@/contexts/InventoryContext';
 import { useCompany } from '@/contexts/CompanyContext';
+import { exportInventoryToPDF, exportInventoryToExcel } from '@/utils/inventoryExport';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function Inventory() {
   const { toast } = useToast();
@@ -30,7 +32,6 @@ export default function Inventory() {
     name: '',
     type: availableTypes[0],
     sku: '',
-    category: '',
     description: '',
     unit: 'unit',
     quantity: 0,
@@ -51,7 +52,6 @@ export default function Inventory() {
       name: formData.name!,
       type: formData.type!,
       sku: formData.sku || `SKU-${Date.now()}`,
-      category: formData.category || 'General',
       description: formData.description || '',
       unit: formData.unit || 'unit',
       quantity: formData.quantity || 0,
@@ -74,7 +74,6 @@ export default function Inventory() {
         name: '',
         type: availableTypes[0],
         sku: '',
-        category: '',
         description: '',
         unit: 'unit',
         quantity: 0,
@@ -110,7 +109,7 @@ export default function Inventory() {
   const filteredItems = items.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchTerm.toLowerCase())
+    (item.category && item.category.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const getTypeLabel = (type: string) => {
@@ -163,7 +162,7 @@ export default function Inventory() {
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2" onClick={() => { setEditingItem(null); setFormData({ name: '', type: availableTypes[0], sku: '', category: '', description: '', unit: 'unit', quantity: 0, minQuantity: 0, unitCost: 0, supplier: '', location: '' }); }}>
+              <Button className="gap-2" onClick={() => { setEditingItem(null); setFormData({ name: '', type: availableTypes[0], sku: '', description: '', unit: 'unit', quantity: 0, minQuantity: 0, unitCost: 0, supplier: '', location: '' }); }}>
                 <Plus className="h-4 w-4" />
                 Add Item
               </Button>
@@ -194,21 +193,13 @@ export default function Inventory() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 col-span-2">
                   <Label htmlFor="sku">SKU</Label>
                   <Input
                     id="sku"
                     value={formData.sku}
                     onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                     placeholder="Auto-generated if empty"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Input
-                    id="category"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2 col-span-2">
@@ -285,10 +276,29 @@ export default function Inventory() {
 
         {/* Dashboard Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="shadow-[var(--shadow-elegant)]">
+          <Card className="shadow-[var(--shadow-elegant)] cursor-pointer hover:shadow-[var(--shadow-glow)] transition-all">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Value</CardTitle>
-              <DollarSign className="h-4 w-4 text-primary" />
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <Download className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-background">
+                    <DropdownMenuItem onClick={() => exportInventoryToPDF(items, 'All Inventory', activeCompanySettings?.currency_symbol)} className="gap-2">
+                      <FileText className="h-4 w-4" />
+                      Export to PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportInventoryToExcel(items, 'All Inventory', activeCompanySettings?.currency_symbol)} className="gap-2">
+                      <FileSpreadsheet className="h-4 w-4" />
+                      Export to Excel
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <DollarSign className="h-4 w-4 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{activeCompanySettings?.currency_symbol || 'R'}{dashboardMetrics.totalValue.toFixed(2)}</div>
@@ -298,10 +308,29 @@ export default function Inventory() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-[var(--shadow-elegant)]">
+          <Card className="shadow-[var(--shadow-elegant)] cursor-pointer hover:shadow-[var(--shadow-glow)] transition-all">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Items</CardTitle>
-              <Boxes className="h-4 w-4 text-primary" />
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <Download className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-background">
+                    <DropdownMenuItem onClick={() => exportInventoryToPDF(items, 'All Inventory', activeCompanySettings?.currency_symbol)} className="gap-2">
+                      <FileText className="h-4 w-4" />
+                      Export to PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportInventoryToExcel(items, 'All Inventory', activeCompanySettings?.currency_symbol)} className="gap-2">
+                      <FileSpreadsheet className="h-4 w-4" />
+                      Export to Excel
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Boxes className="h-4 w-4 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{dashboardMetrics.totalItems}</div>
@@ -311,10 +340,41 @@ export default function Inventory() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-[var(--shadow-elegant)]">
+          <Card className="shadow-[var(--shadow-elegant)] cursor-pointer hover:shadow-[var(--shadow-glow)] transition-all">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Low Stock Alerts</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-destructive" />
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <Download className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-background">
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        const lowStockItems = items.filter(item => item.quantity <= item.minQuantity);
+                        exportInventoryToPDF(lowStockItems, 'Low Stock Items', activeCompanySettings?.currency_symbol);
+                      }} 
+                      className="gap-2"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Export to PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        const lowStockItems = items.filter(item => item.quantity <= item.minQuantity);
+                        exportInventoryToExcel(lowStockItems, 'Low Stock Items', activeCompanySettings?.currency_symbol);
+                      }} 
+                      className="gap-2"
+                    >
+                      <FileSpreadsheet className="h-4 w-4" />
+                      Export to Excel
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-destructive">{dashboardMetrics.lowStockItems}</div>
@@ -324,10 +384,29 @@ export default function Inventory() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-[var(--shadow-elegant)]">
+          <Card className="shadow-[var(--shadow-elegant)] cursor-pointer hover:shadow-[var(--shadow-glow)] transition-all">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Inventory Types</CardTitle>
-              <BarChart3 className="h-4 w-4 text-primary" />
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <Download className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-background">
+                    <DropdownMenuItem onClick={() => exportInventoryToPDF(items, 'Inventory by Type', activeCompanySettings?.currency_symbol)} className="gap-2">
+                      <FileText className="h-4 w-4" />
+                      Export to PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportInventoryToExcel(items, 'Inventory by Type', activeCompanySettings?.currency_symbol)} className="gap-2">
+                      <FileSpreadsheet className="h-4 w-4" />
+                      Export to Excel
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <BarChart3 className="h-4 w-4 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{Object.keys(dashboardMetrics.byType).length}</div>
@@ -430,7 +509,6 @@ export default function Inventory() {
                       <TableHead>Item Name</TableHead>
                       <TableHead>SKU</TableHead>
                       <TableHead>Type</TableHead>
-                      <TableHead>Category</TableHead>
                       <TableHead className="text-right">Quantity</TableHead>
                       <TableHead className="text-right">Unit Cost</TableHead>
                       <TableHead className="text-right">Total Value</TableHead>
@@ -453,7 +531,6 @@ export default function Inventory() {
                         <TableCell>
                           <Badge variant="outline">{getTypeLabel(item.type)}</Badge>
                         </TableCell>
-                        <TableCell className="text-sm">{item.category}</TableCell>
                         <TableCell className="text-right">
                           <div>
                             <p className="font-medium">{item.quantity}</p>

@@ -5,7 +5,7 @@ export interface InventoryItem {
   name: string;
   type: InventoryType;
   sku: string;
-  category: string;
+  category?: string;
   description: string;
   unit: string;
   quantity: number;
