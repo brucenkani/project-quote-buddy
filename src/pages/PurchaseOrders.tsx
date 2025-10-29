@@ -368,7 +368,7 @@ export default function PurchaseOrders() {
                 <div className="border rounded-lg p-4 space-y-4">
                   <h3 className="font-semibold">Line Items</h3>
                   
-                  <div className="grid grid-cols-6 gap-2">
+                  <div className="grid grid-cols-5 gap-2">
                     <div>
                       <Label>Description</Label>
                       <Input
@@ -408,24 +408,6 @@ export default function PurchaseOrders() {
                         value={currentLineItem.unitCost}
                         onChange={(e) => setCurrentLineItem({ ...currentLineItem, unitCost: parseFloat(e.target.value) })}
                       />
-                    </div>
-                    <div>
-                      <Label>Link to Inventory</Label>
-                      <Select
-                        value={currentLineItem.inventoryItemId || ''}
-                        onValueChange={(value) => setCurrentLineItem({ ...currentLineItem, inventoryItemId: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Optional" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {inventory.map(item => (
-                            <SelectItem key={item.id} value={item.id}>
-                              {item.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                     </div>
                     <div className="flex items-end">
                       <Button onClick={handleAddLineItem} className="w-full">
