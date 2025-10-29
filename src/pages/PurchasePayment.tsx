@@ -126,6 +126,29 @@ export default function PurchasePayment() {
 
       await savePurchasePayment(payment);
 
+      // Create inventory movements for all line items when payment is made
+      if (activeCompany && purchase.lineItems && purchase.lineItems.length > 0) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          for (const item of purchase.lineItems) {
+            if (item.inventoryItemId) {
+              // Import createInventoryMovement
+              const { createInventoryMovement } = await import('@/utils/inventoryMovementStorage');
+              await createInventoryMovement(
+                item.inventoryItemId,
+                'IN',
+                item.quantity,
+                item.unitCost,
+                purchase.id,
+                'PURCHASE',
+                activeCompany.id,
+                `Purchase ${purchase.purchaseNumber} - Payment recorded`
+              );
+            }
+          }
+        }
+      }
+
       // Determine credit account for journal based on method
       let creditAccountName = 'Cash on Hand';
       let selectedAccount: any | null = null;

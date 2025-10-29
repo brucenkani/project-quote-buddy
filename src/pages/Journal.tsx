@@ -30,7 +30,7 @@ export default function Journal() {
     // Filter to only show manually created entries (not automatic from invoices/payments)
     return allEntries.filter(entry => {
       // Manual entries don't start with automatic prefixes
-      return !entry.reference.match(/^(INV-|PAY-|EXP-|PUR-)/);
+      return !entry.reference.match(/^(INV-|PAY-|EXP-|PUR-|PO-)/);
     });
   };
 
