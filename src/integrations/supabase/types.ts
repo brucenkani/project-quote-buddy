@@ -1061,6 +1061,7 @@ export type Database = {
           name: string
           quantity: number
           reorder_level: number | null
+          serial_numbers: Json | null
           sku: string | null
           tax_rate: number
           unit: string
@@ -1082,6 +1083,7 @@ export type Database = {
           name: string
           quantity?: number
           reorder_level?: number | null
+          serial_numbers?: Json | null
           sku?: string | null
           tax_rate?: number
           unit?: string
@@ -1103,6 +1105,7 @@ export type Database = {
           name?: string
           quantity?: number
           reorder_level?: number | null
+          serial_numbers?: Json | null
           sku?: string | null
           tax_rate?: number
           unit?: string
@@ -2493,6 +2496,16 @@ export type Database = {
       }
     }
     Functions: {
+      check_serial_number_exists: {
+        Args: { p_company_id: string; p_serial_number: string }
+        Returns: {
+          item_id: string
+          item_name: string
+          item_sku: string
+          warehouse_id: string
+          warehouse_name: string
+        }[]
+      }
       create_company_full: {
         Args: { _name: string; _settings?: Json }
         Returns: {
@@ -2566,6 +2579,16 @@ export type Database = {
       schedule_data_deletion: {
         Args: { _company_id: string; _user_id: string }
         Returns: string
+      }
+      transfer_serial_numbers: {
+        Args: {
+          p_company_id: string
+          p_destination_warehouse_id: string
+          p_serial_numbers: string[]
+          p_source_warehouse_id: string
+          p_user_id: string
+        }
+        Returns: Json
       }
     }
     Enums: {
