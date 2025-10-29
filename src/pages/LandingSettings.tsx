@@ -2080,65 +2080,8 @@ export default function LandingSettings() {
                         </div>
                       </div>
 
-                      {/* Audit Log Table */}
-                      <ScrollArea className="h-[600px]">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Date & Time</TableHead>
-                              <TableHead>User</TableHead>
-                              <TableHead>Action</TableHead>
-                              <TableHead>System</TableHead>
-                              <TableHead>Entity ID</TableHead>
-                              <TableHead>Details</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {filteredAuditLogs.length === 0 ? (
-                              <TableRow>
-                                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                                  No audit logs found
-                                </TableCell>
-                              </TableRow>
-                            ) : (
-                              filteredAuditLogs.map((log) => (
-                                <TableRow key={log.id}>
-                                  <TableCell className="font-mono text-xs">
-                                    {new Date(log.created_at).toLocaleString()}
-                                  </TableCell>
-                                  <TableCell>
-                                    <div className="flex flex-col">
-                                      <span className="font-medium">{log.profiles?.full_name || 'Unknown User'}</span>
-                                      <span className="text-xs text-muted-foreground">{log.profiles?.email}</span>
-                                    </div>
-                                  </TableCell>
-                                  <TableCell>
-                                    <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary">
-                                      {log.action}
-                                    </span>
-                                  </TableCell>
-                                  <TableCell className="capitalize">{log.entity_type.replace('_', ' ')}</TableCell>
-                                  <TableCell className="font-mono text-xs text-muted-foreground">
-                                    {log.entity_id || '-'}
-                                  </TableCell>
-                                  <TableCell className="max-w-xs">
-                                    {log.details && (
-                                      <div className="text-xs text-muted-foreground truncate">
-                                        {typeof log.details === 'object' 
-                                          ? JSON.stringify(log.details)
-                                          : log.details}
-                                      </div>
-                                    )}
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                            )}
-                          </TableBody>
-                        </Table>
-                      </ScrollArea>
-
-                      {/* Summary */}
-                      <div className="flex items-center justify-between pt-4 border-t">
+                      {/* Summary and Actions */}
+                      <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
                         <p className="text-sm text-muted-foreground">
                           Showing {filteredAuditLogs.length} of {auditLogs.length} total records
                         </p>
@@ -2146,14 +2089,14 @@ export default function LandingSettings() {
                           <Button
                             variant="outline"
                             size="sm"
-                          onClick={() => {
-                            setAuditFilters({
-                              startDate: '',
-                              endDate: '',
-                              entityType: 'all',
-                              action: 'all',
-                            });
-                          }}
+                            onClick={() => {
+                              setAuditFilters({
+                                startDate: '',
+                                endDate: '',
+                                entityType: 'all',
+                                action: 'all',
+                              });
+                            }}
                           >
                             Clear Filters
                           </Button>
@@ -2222,6 +2165,63 @@ export default function LandingSettings() {
                           </Button>
                         </div>
                       </div>
+
+                      {/* Audit Log Table */}
+                      <ScrollArea className="h-[600px]">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Date & Time</TableHead>
+                              <TableHead>User</TableHead>
+                              <TableHead>Action</TableHead>
+                              <TableHead>System</TableHead>
+                              <TableHead>Entity ID</TableHead>
+                              <TableHead>Details</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredAuditLogs.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                                  No audit logs found
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              filteredAuditLogs.map((log) => (
+                                <TableRow key={log.id}>
+                                  <TableCell className="font-mono text-xs">
+                                    {new Date(log.created_at).toLocaleString()}
+                                  </TableCell>
+                                  <TableCell>
+                                    <div className="flex flex-col">
+                                      <span className="font-medium">{log.profiles?.full_name || 'Unknown User'}</span>
+                                      <span className="text-xs text-muted-foreground">{log.profiles?.email}</span>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary">
+                                      {log.action}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="capitalize">{log.entity_type.replace('_', ' ')}</TableCell>
+                                  <TableCell className="font-mono text-xs text-muted-foreground">
+                                    {log.entity_id || '-'}
+                                  </TableCell>
+                                  <TableCell className="max-w-xs">
+                                    {log.details && (
+                                      <div className="text-xs text-muted-foreground truncate">
+                                        {typeof log.details === 'object' 
+                                          ? JSON.stringify(log.details)
+                                          : log.details}
+                                      </div>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            )}
+                          </TableBody>
+                        </Table>
+                      </ScrollArea>
                     </div>
                   </CardContent>
                 </Card>
