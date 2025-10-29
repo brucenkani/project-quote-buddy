@@ -175,6 +175,17 @@ export const addChartAccount = (account: Omit<ChartAccount, 'id' | 'createdAt'>)
   return newAccount;
 };
 
+export const updateChartAccount = (id: string, updates: Partial<Omit<ChartAccount, 'id' | 'createdAt'>>): ChartAccount | null => {
+  const accountIndex = chartCache.findIndex(acc => acc.id === id);
+  if (accountIndex === -1) return null;
+  
+  chartCache[accountIndex] = { ...chartCache[accountIndex], ...updates };
+  saveChartOfAccountsToDb(chartCache).catch(err =>
+    console.error('Failed to update account in database:', err)
+  );
+  return chartCache[accountIndex];
+};
+
 export const deleteChartAccount = (id: string): void => {
   chartCache = chartCache.filter(acc => acc.id !== id);
   saveChartOfAccountsToDb(chartCache).catch(err =>

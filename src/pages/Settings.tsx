@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Save, Shield, FileDown, FileSpreadsheet, Database, RefreshCw, Plus } from 'lucide-react';
+import { ArrowLeft, Save, Shield, FileDown, FileSpreadsheet, Database, RefreshCw, Plus, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { loadSettings, saveSettings } from '@/utils/settingsStorage';
-import { loadChartOfAccounts, saveChartOfAccounts, addChartAccount, generateNextAccountNumber } from '@/utils/chartOfAccountsStorage';
+import { loadChartOfAccounts, saveChartOfAccounts, addChartAccount, updateChartAccount, deleteChartAccount, generateNextAccountNumber } from '@/utils/chartOfAccountsStorage';
 import { generateChartOfAccountsPDF, generateChartOfAccountsExcel } from '@/utils/chartOfAccountsReports';
 import { defaultChartOfAccounts } from '@/types/chartOfAccounts';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -32,6 +32,8 @@ export default function Settings() {
   const [openingBalances, setOpeningBalances] = useState<Record<string, number>>({});
   const [showOpeningBalances, setShowOpeningBalances] = useState(false);
   const [showNewAccountDialog, setShowNewAccountDialog] = useState(false);
+  const [showEditAccountDialog, setShowEditAccountDialog] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<any>(null);
   const [newAccount, setNewAccount] = useState({ accountNumber: '', accountName: '', accountType: 'current-asset' as AccountType });
 
   // Reload accounts when component mounts to ensure we have latest data
@@ -128,6 +130,48 @@ export default function Settings() {
     setShowNewAccountDialog(false);
     setNewAccount({ accountNumber: '', accountName: '', accountType: 'current-asset' });
     toast({ title: 'Account created successfully' });
+  };
+
+  const handleEditAccount = (account: any) => {
+    setEditingAccount({ ...account });
+    setShowEditAccountDialog(true);
+  };
+
+  const handleUpdateAccount = () => {
+    if (!editingAccount?.accountName) {
+      toast({ title: 'Please fill in account name', variant: 'destructive' });
+      return;
+    }
+    
+    updateChartAccount(editingAccount.id, {
+      accountName: editingAccount.accountName,
+      accountType: editingAccount.accountType,
+    });
+    const updatedAccounts = loadChartOfAccounts();
+    setAccounts(updatedAccounts);
+    setShowEditAccountDialog(false);
+    setEditingAccount(null);
+    toast({ title: 'Account updated successfully' });
+  };
+
+  const handleDeleteAccount = (account: any) => {
+    const balance = account.openingBalance || 0;
+    
+    if (balance !== 0) {
+      toast({ 
+        title: 'Cannot delete account', 
+        description: 'Only accounts with zero balance can be deleted.',
+        variant: 'destructive' 
+      });
+      return;
+    }
+
+    if (confirm(`Are you sure you want to delete "${account.accountName}"?`)) {
+      deleteChartAccount(account.id);
+      const updatedAccounts = loadChartOfAccounts();
+      setAccounts(updatedAccounts);
+      toast({ title: 'Account deleted successfully' });
+    }
   };
 
   const getCategoryLabel = (type: string) => {
@@ -359,6 +403,7 @@ export default function Settings() {
                       <TableHead className="w-[120px]">Account Code</TableHead>
                       <TableHead>Account Name</TableHead>
                       <TableHead className="w-[200px]">Category</TableHead>
+                      <TableHead className="w-[100px] text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -376,6 +421,24 @@ export default function Settings() {
                           <TableCell className="text-muted-foreground">
                             {getCategoryLabel(account.accountType)}
                           </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEditAccount(account)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteAccount(account)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ))
                     )}
@@ -383,6 +446,67 @@ export default function Settings() {
                 </Table>
               </ScrollArea>
             </div>
+
+            {/* Edit Account Dialog */}
+            <Dialog open={showEditAccountDialog} onOpenChange={setShowEditAccountDialog}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Account</DialogTitle>
+                  <DialogDescription>
+                    Update account details
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label>Account Number</Label>
+                    <Input
+                      value={editingAccount?.accountNumber || ''}
+                      disabled
+                      className="bg-muted"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Account Type</Label>
+                    <Select
+                      value={editingAccount?.accountType || 'current-asset'}
+                      onValueChange={(value: AccountType) => 
+                        setEditingAccount({ ...editingAccount, accountType: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="current-asset">Current Asset (1xxx)</SelectItem>
+                        <SelectItem value="non-current-asset">Non-Current Asset (2xxx)</SelectItem>
+                        <SelectItem value="current-liability">Current Liability (3xxx)</SelectItem>
+                        <SelectItem value="non-current-liability">Non-Current Liability (4xxx)</SelectItem>
+                        <SelectItem value="equity">Equity (5xxx)</SelectItem>
+                        <SelectItem value="revenue">Revenue (6xxx)</SelectItem>
+                        <SelectItem value="expense">Expense (7xxx-9xxx)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Account Name</Label>
+                    <Input
+                      value={editingAccount?.accountName || ''}
+                      onChange={(e) => 
+                        setEditingAccount({ ...editingAccount, accountName: e.target.value })
+                      }
+                      placeholder="e.g., Marketing Expense"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => {
+                    setShowEditAccountDialog(false);
+                    setEditingAccount(null);
+                  }}>Cancel</Button>
+                  <Button onClick={handleUpdateAccount}>Update</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
 
