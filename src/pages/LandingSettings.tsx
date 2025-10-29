@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Save, Upload, X, FileDown, FileSpreadsheet, Database, Shield, MoreVertical } from 'lucide-react';
+import { Save, Upload, X, FileDown, FileSpreadsheet, Database, Shield, MoreVertical, Download } from 'lucide-react';
 import { CreateCompanyDialog } from '@/components/CreateCompanyDialog';
 import { defaultChartOfAccounts } from '@/types/chartOfAccounts';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -2037,18 +2037,20 @@ export default function LandingSettings() {
                             <SelectTrigger>
                               <SelectValue placeholder="All Systems" />
                             </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Systems</SelectItem>
-                              <SelectItem value="invoice">Invoices</SelectItem>
-                              <SelectItem value="purchase">Purchases</SelectItem>
-                              <SelectItem value="expense">Expenses</SelectItem>
-                              <SelectItem value="inventory">Inventory</SelectItem>
-                              <SelectItem value="employee">Employees</SelectItem>
-                              <SelectItem value="payroll">Payroll</SelectItem>
-                              <SelectItem value="contact">Contacts</SelectItem>
-                              <SelectItem value="bank_account">Bank Accounts</SelectItem>
-                              <SelectItem value="chart_of_accounts">Chart of Accounts</SelectItem>
-                              <SelectItem value="settings">Settings</SelectItem>
+                            <SelectContent className="max-h-[300px]">
+                              <ScrollArea className="h-full">
+                                <SelectItem value="all">All Systems</SelectItem>
+                                <SelectItem value="invoice">Invoices</SelectItem>
+                                <SelectItem value="purchase">Purchases</SelectItem>
+                                <SelectItem value="expense">Expenses</SelectItem>
+                                <SelectItem value="inventory">Inventory</SelectItem>
+                                <SelectItem value="employee">Employees</SelectItem>
+                                <SelectItem value="payroll">Payroll</SelectItem>
+                                <SelectItem value="contact">Contacts</SelectItem>
+                                <SelectItem value="bank_account">Bank Accounts</SelectItem>
+                                <SelectItem value="chart_of_accounts">Chart of Accounts</SelectItem>
+                                <SelectItem value="settings">Settings</SelectItem>
+                              </ScrollArea>
                             </SelectContent>
                           </Select>
                         </div>
@@ -2124,20 +2126,85 @@ export default function LandingSettings() {
                         <p className="text-sm text-muted-foreground">
                           Showing {filteredAuditLogs.length} of {auditLogs.length} total records
                         </p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setAuditFilters({
-                              startDate: '',
-                              endDate: '',
-                              entityType: '',
-                              action: '',
-                            });
-                          }}
-                        >
-                          Clear Filters
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setAuditFilters({
+                                startDate: '',
+                                endDate: '',
+                                entityType: 'all',
+                                action: '',
+                              });
+                            }}
+                          >
+                            Clear Filters
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={async () => {
+                              const { jsPDF } = await import('jspdf');
+                              await import('jspdf-autotable');
+                              
+                              const doc = new jsPDF();
+                              const pageWidth = doc.internal.pageSize.getWidth();
+                              
+                              // Title
+                              doc.setFontSize(16);
+                              doc.text('Audit Trail Report', pageWidth / 2, 15, { align: 'center' });
+                              
+                              // Company info
+                              doc.setFontSize(10);
+                              doc.text(`Company: ${activeCompany?.name || 'N/A'}`, 14, 25);
+                              doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30);
+                              
+                              if (auditFilters.startDate || auditFilters.endDate) {
+                                doc.text(
+                                  `Period: ${auditFilters.startDate || 'Start'} to ${auditFilters.endDate || 'End'}`,
+                                  14,
+                                  35
+                                );
+                              }
+                              
+                              // Table
+                              (doc as any).autoTable({
+                                startY: auditFilters.startDate || auditFilters.endDate ? 40 : 35,
+                                head: [['Date & Time', 'User', 'Action', 'System', 'Entity ID', 'Details']],
+                                body: filteredAuditLogs.map((log) => [
+                                  new Date(log.created_at).toLocaleString(),
+                                  `${log.profiles?.full_name || 'Unknown'}\n${log.profiles?.email || ''}`,
+                                  log.action,
+                                  log.entity_type.replace('_', ' '),
+                                  log.entity_id || '-',
+                                  typeof log.details === 'object' 
+                                    ? JSON.stringify(log.details).substring(0, 50) 
+                                    : (log.details || '').substring(0, 50),
+                                ]),
+                                styles: { fontSize: 8, cellPadding: 2 },
+                                headStyles: { fillColor: [66, 66, 66] },
+                                columnStyles: {
+                                  0: { cellWidth: 35 },
+                                  1: { cellWidth: 30 },
+                                  2: { cellWidth: 25 },
+                                  3: { cellWidth: 25 },
+                                  4: { cellWidth: 25 },
+                                  5: { cellWidth: 'auto' },
+                                },
+                              });
+                              
+                              doc.save(`audit-trail-${new Date().toISOString().split('T')[0]}.pdf`);
+                              toast({
+                                title: 'Export successful',
+                                description: 'Audit trail has been exported to PDF',
+                              });
+                            }}
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Export PDF
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
