@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Save, Shield, FileDown, FileSpreadsheet, Database, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Save, Shield, FileDown, FileSpreadsheet, Database, RefreshCw, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { loadSettings, saveSettings } from '@/utils/settingsStorage';
-import { loadChartOfAccounts, saveChartOfAccounts } from '@/utils/chartOfAccountsStorage';
+import { loadChartOfAccounts, saveChartOfAccounts, addChartAccount, generateNextAccountNumber } from '@/utils/chartOfAccountsStorage';
 import { generateChartOfAccountsPDF, generateChartOfAccountsExcel } from '@/utils/chartOfAccountsReports';
 import { defaultChartOfAccounts } from '@/types/chartOfAccounts';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { AccountType } from '@/types/accounting';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -30,6 +31,8 @@ export default function Settings() {
   const [accounts, setAccounts] = useState(() => loadChartOfAccounts());
   const [openingBalances, setOpeningBalances] = useState<Record<string, number>>({});
   const [showOpeningBalances, setShowOpeningBalances] = useState(false);
+  const [showNewAccountDialog, setShowNewAccountDialog] = useState(false);
+  const [newAccount, setNewAccount] = useState({ accountNumber: '', accountName: '', accountType: 'current-asset' as AccountType });
 
   // Reload accounts when component mounts to ensure we have latest data
   useEffect(() => {
@@ -106,6 +109,25 @@ export default function Settings() {
       ...prev,
       [accountId]: parseFloat(value) || 0
     }));
+  };
+
+  const handleAccountTypeChange = (accountType: AccountType) => {
+    const nextNumber = generateNextAccountNumber(accountType);
+    setNewAccount({ ...newAccount, accountType, accountNumber: nextNumber });
+  };
+
+  const handleCreateAccount = () => {
+    if (!newAccount.accountNumber || !newAccount.accountName) {
+      toast({ title: 'Please fill in account number and name', variant: 'destructive' });
+      return;
+    }
+    
+    addChartAccount({ ...newAccount, isDefault: false });
+    const updatedAccounts = loadChartOfAccounts();
+    setAccounts(updatedAccounts);
+    setShowNewAccountDialog(false);
+    setNewAccount({ accountNumber: '', accountName: '', accountType: 'current-asset' });
+    toast({ title: 'Account created successfully' });
   };
 
   const getCategoryLabel = (type: string) => {
@@ -209,6 +231,67 @@ export default function Settings() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-4">
+              <Dialog open={showNewAccountDialog} onOpenChange={setShowNewAccountDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add Account
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create New Account</DialogTitle>
+                    <DialogDescription>
+                      Add a new account to your chart of accounts
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label>Account Type</Label>
+                      <Select
+                        value={newAccount.accountType}
+                        onValueChange={(value: AccountType) => handleAccountTypeChange(value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="current-asset">Current Asset (1xxx)</SelectItem>
+                          <SelectItem value="non-current-asset">Non-Current Asset (2xxx)</SelectItem>
+                          <SelectItem value="current-liability">Current Liability (3xxx)</SelectItem>
+                          <SelectItem value="non-current-liability">Non-Current Liability (4xxx)</SelectItem>
+                          <SelectItem value="equity">Equity (5xxx)</SelectItem>
+                          <SelectItem value="revenue">Revenue (6xxx)</SelectItem>
+                          <SelectItem value="expense">Expense (7xxx-9xxx)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Account Number</Label>
+                      <Input
+                        value={newAccount.accountNumber}
+                        disabled
+                        className="bg-muted"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Account Name</Label>
+                      <Input
+                        value={newAccount.accountName}
+                        onChange={(e) => setNewAccount({ ...newAccount, accountName: e.target.value })}
+                        placeholder="e.g., Marketing Expense"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => {
+                      setShowNewAccountDialog(false);
+                      setNewAccount({ accountNumber: '', accountName: '', accountType: 'current-asset' });
+                    }}>Cancel</Button>
+                    <Button onClick={handleCreateAccount}>Create</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
               <Button onClick={handleDownloadPDF} variant="outline" className="gap-2">
                 <FileDown className="h-4 w-4" />
                 Download PDF
