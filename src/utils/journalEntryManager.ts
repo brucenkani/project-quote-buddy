@@ -141,14 +141,14 @@ export const recordPurchaseInvoice = async (
 ): Promise<string> => {
   const lines: JournalEntryLine[] = [];
 
-  // All inventory/raw materials go to account 1310
-  let inventoryAccount = '1310';
-  let inventoryName = '1310 - Raw Materials';
+  // All inventory/raw materials go to account 1109 (or 1310 for specific cases)
+  let inventoryAccount = '1109';
+  let inventoryName = '1109 - Raw Materials';
 
   // Professional services expense rather than capitalize
   if (companyType === 'professional-services') {
-    inventoryAccount = '7000';
-    inventoryName = '7000 - Cost of Sales';
+    inventoryAccount = '7100';
+    inventoryName = '7100 - Cost of Goods Sold';
   }
 
   // Debit: Inventory/Expense
@@ -163,8 +163,8 @@ export const recordPurchaseInvoice = async (
   // Debit: VAT Input (if applicable)
   if (taxAmount > 0) {
     lines.push({
-      account_id: '1107',
-      account_name: '1107 - VAT Input',
+      account_id: '1105',
+      account_name: '1105 - VAT Input (Accounts Receivable)',
       debit: taxAmount,
       credit: 0,
       description: 'VAT on purchase',
@@ -243,9 +243,9 @@ export const recordInventorySale = async (
   userId: string,
   companyId: string
 ): Promise<string> => {
-  // All inventory goes to account 1310 - Raw Materials
-  const inventoryAccount = '1310';
-  const inventoryName = '1310 - Raw Materials';
+  // Inventory account based on type
+  const inventoryAccount = companyType === 'trading' ? '1110' : '1109';
+  const inventoryName = companyType === 'trading' ? '1110 - Finished Goods' : '1109 - Raw Materials';
 
   const entry: JournalEntryData = {
     entry_number: `COGS-${invoiceNumber}`,
@@ -288,9 +288,9 @@ export const recordInventoryAdjustment = async (
   userId: string,
   companyId: string
 ): Promise<string> => {
-  // All inventory goes to account 1310 - Raw Materials
-  const inventoryAccount = '1310';
-  const inventoryName = '1310 - Raw Materials';
+  // Inventory account based on type
+  const inventoryAccount = companyType === 'trading' ? '1110' : '1109';
+  const inventoryName = companyType === 'trading' ? '1110 - Finished Goods' : '1109 - Raw Materials';
 
   const isShortage = adjustmentValue < 0;
   const absValue = Math.abs(adjustmentValue);
