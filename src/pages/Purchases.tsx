@@ -18,12 +18,16 @@ import { useToast } from '@/hooks/use-toast';
 import { ContactSelector } from '@/components/ContactSelector';
 import { Contact } from '@/types/contacts';
 import { recordPurchase } from '@/utils/purchaseDoubleEntry';
+import { recordPurchaseInvoice } from '@/utils/journalEntryManager';
+import { supabase } from '@/integrations/supabase/client';
+import { useCompany } from '@/contexts/CompanyContext';
 
 export default function Purchases() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { settings } = useSettings();
   const { inventory } = useInventory();
+  const { activeCompany } = useCompany();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -143,13 +147,29 @@ export default function Purchases() {
 
     await savePurchase(purchase);
 
-    // Record double-entry accounting
+    // Record double-entry accounting in Supabase
     try {
-      recordPurchase(purchase, settings.companyType);
-      toast({ title: editingPurchase ? 'Purchase updated' : 'Purchase created and recorded in journals' });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && activeCompany) {
+        await recordPurchaseInvoice(
+          purchase.purchaseNumber,
+          purchase.vendor,
+          purchase.subtotal,
+          purchase.taxAmount,
+          purchase.total,
+          purchase.date,
+          settings.companyType,
+          user.id,
+          activeCompany.id,
+          purchase.supplierInvoiceNumber
+        );
+        toast({ title: editingPurchase ? 'Purchase updated and ledger updated' : 'Purchase created and ledger updated' });
+      } else {
+        toast({ title: editingPurchase ? 'Purchase updated' : 'Purchase created' });
+      }
     } catch (error) {
       toast({ 
-        title: 'Purchase saved but accounting entry failed', 
+        title: 'Purchase saved but journal entry failed', 
         description: error instanceof Error ? error.message : 'Unknown error',
         variant: 'destructive' 
       });
