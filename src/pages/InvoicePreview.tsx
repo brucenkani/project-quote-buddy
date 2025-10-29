@@ -148,7 +148,7 @@ export default function InvoicePreview() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tax ({(invoice.taxRate * 100).toFixed(1)}%):</span>
+                  <span className="text-muted-foreground">Tax ({invoice.taxRate}%):</span>
                   <span>{settings.currencySymbol}{invoice.taxAmount.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg border-t pt-2">

@@ -173,7 +173,7 @@ export default function InvoicePrint() {
                 <span>{settings.currency_symbol || 'R'}{invoice.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span>Total VAT ({(invoice.taxRate * 100).toFixed(0)}%):</span>
+                <span>Total VAT ({invoice.taxRate}%):</span>
                 <span>{settings.currency_symbol || 'R'}{invoice.taxAmount.toFixed(2)}</span>
               </div>
               {invoice.discount > 0 && (

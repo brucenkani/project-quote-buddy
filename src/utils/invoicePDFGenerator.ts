@@ -272,7 +272,7 @@ export const generateInvoicePDF = async (invoice: Invoice, companySettings: any)
   
   // VAT/Tax line with country-specific label
   const taxLabel = country === 'ZA' ? 'VAT' : country === 'ZW' ? 'VAT' : 'VAT';
-  summaryItems.push([`${taxLabel} (${(invoice.taxRate * 100).toFixed(1)}%):`, `${settings.currencySymbol}${invoice.taxAmount.toFixed(2)}`]);
+  summaryItems.push([`${taxLabel} (${invoice.taxRate}%):`, `${settings.currencySymbol}${invoice.taxAmount.toFixed(2)}`]);
   summaryItems.push(['Total Amount Due:', `${settings.currencySymbol}${invoice.total.toFixed(2)}`]);
   
   doc.setFontSize(10);

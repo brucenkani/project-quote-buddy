@@ -80,7 +80,7 @@ export default function LandingSettings() {
   // Load company settings when active company changes
   useEffect(() => {
     if (activeCompanySettings) {
-      setTaxRate(activeCompanySettings.tax_rate || 0.15);
+      setTaxRate((activeCompanySettings.tax_rate || 0.15) * 100); // Convert to percentage
       const yearEnd = activeCompanySettings.financial_year_end?.split('-')[0] || '02';
       setFinancialYearEnd(parseInt(yearEnd));
       setInvoicePrefix(activeCompanySettings.invoice_prefix || 'INV');
@@ -268,7 +268,7 @@ export default function LandingSettings() {
   });
   
   // Accounting-specific state
-  const [taxRate, setTaxRate] = useState(contextSettings.taxRate || 0.15);
+  const [taxRate, setTaxRate] = useState(contextSettings.taxRate || 15);
   const [financialYearEnd, setFinancialYearEnd] = useState(12);
   const [invoicePrefix, setInvoicePrefix] = useState(contextSettings.invoicePrefix || 'INV-');
   const [invoiceStartNumber, setInvoiceStartNumber] = useState(contextSettings.invoiceStartNumber || 1);
@@ -668,7 +668,7 @@ export default function LandingSettings() {
     }
 
     const success = await updateCompanySettings(activeCompany.id, {
-      tax_rate: taxRate,
+      tax_rate: taxRate / 100, // Convert to decimal for storage
       financial_year_end: `${financialYearEnd.toString().padStart(2, '0')}-28`,
       invoice_prefix: invoicePrefix,
       invoice_start_number: invoiceStartNumber,
@@ -1129,8 +1129,8 @@ export default function LandingSettings() {
                       step="0.01"
                       min="0"
                       max="100"
-                      value={taxRate * 100}
-                      onChange={(e) => setTaxRate(parseFloat(e.target.value) / 100)}
+                      value={taxRate}
+                      onChange={(e) => setTaxRate(parseFloat(e.target.value))}
                       placeholder="15.0"
                     />
                   </div>

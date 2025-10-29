@@ -56,7 +56,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         address: data.address,
         website: '',
         country: data.country as CompanySettings['country'],
-        taxRate: Number(data.tax_rate),
+        taxRate: Number(data.tax_rate) * 100, // Convert from decimal to percentage
         currency: data.currency,
         currencySymbol: data.currency_symbol,
         logoUrl: data.logo_url,
@@ -109,7 +109,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           country: newSettings.country,
           tax_number: newSettings.vatNumber || '',
           registration_number: newSettings.companyRegistrationNumber || '',
-          tax_rate: newSettings.taxRate,
+          tax_rate: newSettings.taxRate / 100, // Convert from percentage to decimal for storage
           currency: newSettings.currency,
           currency_symbol: newSettings.currencySymbol,
           logo_url: newSettings.logoUrl,

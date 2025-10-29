@@ -71,12 +71,12 @@ export const loadInvoices = async (): Promise<Invoice[]> => {
           quantity: Number(item.quantity),
           unit: 'unit',
           unitPrice: Number(item.unit_price),
-          taxRate: Number(item.tax_rate),
+          taxRate: Number(item.tax_rate) * 100, // Convert from decimal to percentage
           amount: Number(item.amount),
           total: Number(item.amount),
         })),
         subtotal: Number(invoice.subtotal),
-        taxRate: Number((invoice.invoice_line_items?.[0]?.tax_rate) ?? 0.15),
+        taxRate: Number((invoice.invoice_line_items?.[0]?.tax_rate) ?? 0.15) * 100, // Convert from decimal to percentage
         taxAmount: Number(invoice.tax_amount),
         discount: 0,
         total: Number(invoice.total_amount),
@@ -185,7 +185,7 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
             description: item.description,
             quantity: item.quantity,
             unit_price: item.unitPrice,
-            tax_rate: item.taxRate,
+            tax_rate: item.taxRate / 100, // Convert from percentage to decimal for storage
             amount: item.amount,
           }))
         );
