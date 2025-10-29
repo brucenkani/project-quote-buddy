@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { FileText, DollarSign, Package, BookOpen, Receipt, Settings, BarChart3, LayoutDashboard, ArrowLeft, Users, ShoppingCart, Building2, ChevronDown, Menu, X, UserPlus } from 'lucide-react';
+import { FileText, DollarSign, Package, BookOpen, Receipt, Settings, BarChart3, LayoutDashboard, ArrowLeft, Users, ShoppingCart, Building2, ChevronDown, Menu, X, UserPlus, ArrowLeftRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 
@@ -44,14 +44,16 @@ export const Navigation = () => {
     { path: '/inventory', label: 'Inventory', icon: Package },
   ];
 
-  const bankingMenuItems = [
+  const transactionsMenuItems = [
     { path: '/bank-accounts', label: 'Bank Accounts', icon: Building2 },
     { path: '/expenses', label: 'Expenses', icon: Receipt },
+    { path: '/bank-feeds', label: 'Bank Feeds', icon: Building2 },
+    { path: '/journal', label: 'Journals', icon: BookOpen },
   ];
 
   const isCustomerMenuActive = customerMenuItems.some(item => location.pathname.startsWith(item.path));
   const isSuppliersInventoryMenuActive = suppliersInventoryMenuItems.some(item => location.pathname.startsWith(item.path));
-  const isBankingMenuActive = bankingMenuItems.some(item => location.pathname.startsWith(item.path));
+  const isTransactionsMenuActive = transactionsMenuItems.some(item => location.pathname.startsWith(item.path));
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -129,17 +131,17 @@ export const Navigation = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Banking Dropdown */}
+            {/* Transactions Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant={isBankingMenuActive ? 'secondary' : 'ghost'} size="sm" className="gap-2">
-                  <Building2 className="h-4 w-4" />
-                  <span>Banking</span>
+                <Button variant={isTransactionsMenuActive ? 'secondary' : 'ghost'} size="sm" className="gap-2">
+                  <ArrowLeftRight className="h-4 w-4" />
+                  <span>Transactions</span>
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                {bankingMenuItems.map((item) => {
+                {transactionsMenuItems.map((item) => {
                   const Icon = item.icon;
                   return (
                     <DropdownMenuItem key={item.path} asChild>
@@ -150,22 +152,8 @@ export const Navigation = () => {
                     </DropdownMenuItem>
                   );
                 })}
-                <DropdownMenuItem asChild>
-                  <Link to="/bank-feeds" className="flex items-center gap-2 cursor-pointer">
-                    <Building2 className="h-4 w-4" />
-                    Bank Feeds
-                  </Link>
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Journal Link */}
-            <Button variant={location.pathname === '/journal' ? 'secondary' : 'ghost'} size="sm" asChild>
-              <Link to="/journal" className="gap-2">
-                <BookOpen className="h-4 w-4" />
-                <span>Journals</span>
-              </Link>
-            </Button>
 
             {/* Reports Link */}
             <Button variant={location.pathname === '/reports' ? 'secondary' : 'ghost'} size="sm" asChild>
@@ -245,8 +233,8 @@ export const Navigation = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="px-3 py-2 text-sm font-semibold text-muted-foreground">Banking</div>
-                  {bankingMenuItems.map((item) => {
+                  <div className="px-3 py-2 text-sm font-semibold text-muted-foreground">Transactions</div>
+                  {transactionsMenuItems.map((item) => {
                     const Icon = item.icon;
                     return (
                       <Button
@@ -263,30 +251,7 @@ export const Navigation = () => {
                       </Button>
                     );
                   })}
-                  <Button
-                    variant={location.pathname === '/bank-feeds' ? 'secondary' : 'ghost'}
-                    asChild
-                    className="justify-start gap-2 w-full"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Link to="/bank-feeds">
-                      <Building2 className="h-4 w-4" />
-                      Bank Feeds
-                    </Link>
-                  </Button>
                 </div>
-
-                <Button
-                  variant={location.pathname === '/journal' ? 'default' : 'ghost'}
-                  asChild
-                  className="justify-start gap-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Link to="/journal">
-                    <BookOpen className="h-4 w-4" />
-                    Journals
-                  </Link>
-                </Button>
 
                 <Button
                   variant={location.pathname === '/reports' ? 'default' : 'ghost'}
