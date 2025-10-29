@@ -474,7 +474,7 @@ export default function InvoiceBuilder() {
                   </div>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Tax ({settings.taxRate.toFixed(1)}%):</span>
+                  <span>Tax ({settings.taxRate}%):</span>
                   <span className="font-semibold">{settings.currencySymbol}{taxAmount.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2">
