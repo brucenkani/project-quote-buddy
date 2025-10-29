@@ -44,6 +44,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Parse financial year end from format "MM-DD" to get the month
+      const financialYearEnd = data.financial_year_end || '12-31';
+      const financialYearEndMonth = parseInt(financialYearEnd.split('-')[0]);
+
       setSettings({
         companyName: data.company_name,
         companyType: data.company_type as CompanySettings['companyType'],
@@ -57,7 +61,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         currencySymbol: data.currency_symbol,
         logoUrl: data.logo_url,
         primaryColor: '#3b82f6',
-        financialYearEndMonth: 12,
+        financialYearEndMonth: financialYearEndMonth,
         vatNumber: data.tax_number,
         companyRegistrationNumber: data.registration_number,
         invoicePrefix: data.invoice_prefix,
@@ -83,6 +87,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !activeCompany) throw new Error('User not authenticated or no active company');
+
+      // Format financial year end as MM-DD (e.g., "02-28" for February)
+      const month = (newSettings.financialYearEndMonth || 12).toString().padStart(2, '0');
+      const day = new Date(2024, newSettings.financialYearEndMonth || 12, 0).getDate(); // Get last day of month
+      const financialYearEnd = `${month}-${day.toString().padStart(2, '0')}`;
 
       const { error } = await supabase
         .from('company_settings')
@@ -110,7 +119,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           quote_start_number: newSettings.quoteStartNumber || 1,
           purchase_prefix: newSettings.purchasePrefix || 'PO',
           purchase_start_number: newSettings.purchaseStartNumber || 1,
-          financial_year_end: '12-31',
+          financial_year_end: financialYearEnd,
         }, {
           onConflict: 'user_id,company_id'
         });
