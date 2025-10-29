@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -36,6 +37,8 @@ export default function PurchaseOrders() {
   const [selectedVendor, setSelectedVendor] = useState<Contact | null>(null);
   const [nextPONumber, setNextPONumber] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+  const [orderToConvert, setOrderToConvert] = useState<PurchaseOrder | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -166,34 +169,41 @@ export default function PurchaseOrders() {
     }
   };
 
-  const handleConvertToPurchase = async (order: PurchaseOrder) => {
+  const handleConvertToPurchase = (order: PurchaseOrder) => {
     if (order.status === 'confirmed') {
       toast({ title: 'This PO has already been converted', variant: 'destructive' });
       return;
     }
+    
+    setOrderToConvert(order);
+    setConvertDialogOpen(true);
+  };
+
+  const confirmConversion = async () => {
+    if (!orderToConvert) return;
 
     const purchaseNum = await generatePurchaseNumber();
     const purchase: Purchase = {
       id: crypto.randomUUID(),
       purchaseNumber: purchaseNum,
-      vendor: order.vendor,
-      vendorContact: order.vendorContact,
+      vendor: orderToConvert.vendor,
+      vendorContact: orderToConvert.vendorContact,
       date: new Date().toISOString().split('T')[0],
-      dueDate: order.expectedDelivery,
-      lineItems: order.lineItems.map(item => ({
+      dueDate: orderToConvert.expectedDelivery,
+      lineItems: orderToConvert.lineItems.map(item => ({
         ...item,
         receivedQuantity: 0,
         inventoryType: 'raw-materials',
       } as PurchaseLineItem)),
-      subtotal: order.subtotal,
-      taxRate: order.taxRate,
-      taxAmount: order.taxAmount,
-      discount: order.discount,
-      total: order.total,
+      subtotal: orderToConvert.subtotal,
+      taxRate: orderToConvert.taxRate,
+      taxAmount: orderToConvert.taxAmount,
+      discount: orderToConvert.discount,
+      total: orderToConvert.total,
       status: 'pending',
       paymentMethod: 'credit',
-      notes: `Converted from PO ${order.poNumber}`,
-      projectId: order.projectId,
+      notes: `Converted from PO ${orderToConvert.poNumber}`,
+      projectId: orderToConvert.projectId,
       inventoryMethod: 'perpetual',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -209,11 +219,13 @@ export default function PurchaseOrders() {
     }
 
     // Update PO status to confirmed
-    const updatedOrder = { ...order, status: 'confirmed' as const, convertedToPurchaseId: purchase.id, updatedAt: new Date().toISOString() };
+    const updatedOrder = { ...orderToConvert, status: 'confirmed' as const, convertedToPurchaseId: purchase.id, updatedAt: new Date().toISOString() };
     await savePurchaseOrder(updatedOrder);
     const updated = await loadPurchaseOrders();
     setOrders(updated);
 
+    setConvertDialogOpen(false);
+    setOrderToConvert(null);
     toast({ title: 'Converted to purchase', description: `Purchase ${purchase.purchaseNumber} created` });
     navigate('/purchases');
   };
@@ -535,6 +547,52 @@ export default function PurchaseOrders() {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={convertDialogOpen} onOpenChange={setConvertDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Convert to Purchase?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Before converting this Purchase Order to a Purchase, you may want to edit it first to add:
+              </p>
+              <ul className="list-disc pl-6 space-y-1">
+                <li>Warehouse/location details</li>
+                <li>Inventory item linking</li>
+                <li>Payment method and bank account</li>
+                <li>Supplier invoice number</li>
+                <li>Additional notes or references</li>
+              </ul>
+              <p className="font-medium pt-2">
+                Would you like to convert now or edit the PO first?
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setConvertDialogOpen(false);
+              setOrderToConvert(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConvertDialogOpen(false);
+                if (orderToConvert) {
+                  handleEdit(orderToConvert);
+                }
+                setOrderToConvert(null);
+              }}
+            >
+              Edit First
+            </Button>
+            <AlertDialogAction onClick={confirmConversion}>
+              Convert Now
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
