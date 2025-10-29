@@ -24,7 +24,6 @@ import LeaveManagement from "./pages/LeaveManagement";
 import EMP201 from "./pages/tax-declarations/EMP201";
 import EMP501 from "./pages/tax-declarations/EMP501";
 
-import Settings from "./pages/Settings";
 import TaxComplianceSettings from "./pages/TaxComplianceSettings";
 import Purchases from "./pages/Purchases";
 import PurchaseOrders from "./pages/PurchaseOrders";
@@ -125,7 +124,7 @@ const App = () => (
           <Route path="/tax-declarations/emp501" element={<ProtectedRoute><EMP501 /></ProtectedRoute>} />
           
           
-          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><LandingSettings /></ProtectedRoute>} />
           <Route path="/tax-compliance" element={<ProtectedRoute><TaxComplianceSettings /></ProtectedRoute>} />
           <Route path="/purchases" element={<ProtectedRoute><Purchases /></ProtectedRoute>} />
           <Route path="/purchase-orders" element={<ProtectedRoute><PurchaseOrders /></ProtectedRoute>} />

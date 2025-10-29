@@ -98,7 +98,7 @@ export default function AccountingDashboard() {
       title: 'Accounting Settings',
       description: 'Manage branding, financial years, VAT and so on.',
       icon: Settings,
-      path: '/settings',
+      path: '/landing-settings',
       iconColor: 'text-purple-600',
       iconBg: 'bg-purple-100'
     }
