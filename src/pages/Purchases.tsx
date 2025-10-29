@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, ShoppingCart, Search, Pencil, Trash2, Package, Eye, DollarSign, History } from 'lucide-react';
+import { Plus, ShoppingCart, Search, Pencil, Trash2, Package, Eye, DollarSign, History, MoreVertical } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Navigation } from '@/components/Navigation';
 import { loadPurchases, savePurchase, deletePurchase, generatePurchaseNumber } from '@/utils/purchaseStorage';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -584,7 +585,7 @@ export default function Purchases() {
                     <TableHead>Status</TableHead>
                     <TableHead>Payment Method</TableHead>
                     <TableHead>Payment Status</TableHead>
-                    <TableHead></TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -601,40 +602,40 @@ export default function Purchases() {
                       </TableCell>
                       <TableCell>{getPaymentStatusBadge(purchase.paymentMethod)}</TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => navigate(`/purchase-preview/${purchase.id}`)}
-                            title="Preview"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {purchase.paymentMethod === 'credit' && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => navigate(`/purchase-payment/${purchase.id}`)}
-                              title="Make Payment"
-                            >
-                              <DollarSign className="h-4 w-4" />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="h-4 w-4" />
                             </Button>
-                          )}
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => navigate(`/purchase-history/${purchase.id}`)}
-                            title="History"
-                          >
-                            <History className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(purchase)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(purchase.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem onClick={() => navigate(`/purchase-preview/${purchase.id}`)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              Preview
+                            </DropdownMenuItem>
+                            {purchase.paymentMethod === 'credit' && (
+                              <DropdownMenuItem onClick={() => navigate(`/purchase-payment/${purchase.id}`)}>
+                                <DollarSign className="mr-2 h-4 w-4" />
+                                Make Payment
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem onClick={() => navigate(`/purchase-history/${purchase.id}`)}>
+                              <History className="mr-2 h-4 w-4" />
+                              History
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEdit(purchase)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleDelete(purchase.id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
