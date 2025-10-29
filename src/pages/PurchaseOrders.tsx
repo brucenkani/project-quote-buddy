@@ -34,6 +34,7 @@ export default function PurchaseOrders() {
   const [editingOrder, setEditingOrder] = useState<PurchaseOrder | null>(null);
   const [selectedVendor, setSelectedVendor] = useState<Contact | null>(null);
   const [nextPONumber, setNextPONumber] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -119,39 +120,49 @@ export default function PurchaseOrders() {
   };
 
   const handleSubmit = async () => {
+    if (isSaving) return; // Prevent duplicate submissions
+    
     if (!formData.vendor || lineItems.length === 0) {
       toast({ title: 'Please fill in vendor and at least one line item', variant: 'destructive' });
       return;
     }
 
-    const order: PurchaseOrder = {
-      id: editingOrder?.id || crypto.randomUUID(),
-      poNumber: formData.poNumber!,
-      vendor: formData.vendor!,
-      vendorContact: selectedVendor?.email,
-      date: formData.date!,
-      expectedDelivery: formData.expectedDelivery,
-      lineItems,
-      subtotal: formData.subtotal!,
-      taxRate: formData.taxRate!,
-      taxAmount: formData.taxAmount!,
-      discount: formData.discount || 0,
-      total: formData.total!,
-      status: formData.status!,
-      notes: formData.notes,
-      projectId: formData.projectId,
-      terms: formData.terms,
-      deliveryAddress: formData.deliveryAddress,
-      createdAt: editingOrder?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    setIsSaving(true);
+    try {
+      const order: PurchaseOrder = {
+        id: editingOrder?.id || crypto.randomUUID(),
+        poNumber: formData.poNumber!,
+        vendor: formData.vendor!,
+        vendorContact: selectedVendor?.email,
+        date: formData.date!,
+        expectedDelivery: formData.expectedDelivery,
+        lineItems,
+        subtotal: formData.subtotal!,
+        taxRate: formData.taxRate!,
+        taxAmount: formData.taxAmount!,
+        discount: formData.discount || 0,
+        total: formData.total!,
+        status: formData.status!,
+        notes: formData.notes,
+        projectId: formData.projectId,
+        terms: formData.terms,
+        deliveryAddress: formData.deliveryAddress,
+        createdAt: editingOrder?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
-    await savePurchaseOrder(order);
-    const updated = await loadPurchaseOrders();
-    setOrders(updated);
-    toast({ title: editingOrder ? 'Purchase order updated' : 'Purchase order created' });
-    setIsDialogOpen(false);
-    resetForm();
+      await savePurchaseOrder(order);
+      const updated = await loadPurchaseOrders();
+      setOrders(updated);
+      toast({ title: editingOrder ? 'Purchase order updated' : 'Purchase order created' });
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (error) {
+      console.error('Failed to save purchase order:', error);
+      toast({ title: 'Failed to save purchase order', variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleConvertToPurchase = async (order: PurchaseOrder) => {
@@ -440,8 +451,8 @@ export default function PurchaseOrders() {
                   />
                 </div>
 
-                <Button onClick={handleSubmit} className="w-full">
-                  {editingOrder ? 'Update Purchase Order' : 'Create Purchase Order'}
+                <Button onClick={handleSubmit} className="w-full" disabled={isSaving}>
+                  {isSaving ? 'Saving...' : editingOrder ? 'Update Purchase Order' : 'Create Purchase Order'}
                 </Button>
               </div>
             </DialogContent>
