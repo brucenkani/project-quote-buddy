@@ -24,23 +24,47 @@ export const loadPurchaseOrders = async (): Promise<PurchaseOrder[]> => {
 
     if (error) throw error;
 
-    return (orders || []).map(o => ({
-      id: o.id,
-      poNumber: o.po_number,
-      vendor: o.supplier_id,
-      date: o.issue_date,
-      expectedDelivery: o.delivery_date || undefined,
-      lineItems: [],
-      subtotal: Number(o.subtotal),
-      taxRate: 15,
-      taxAmount: Number(o.tax_amount),
-      discount: 0,
-      total: Number(o.total_amount),
-      status: o.status as any,
-      notes: o.notes || undefined,
-      createdAt: o.created_at,
-      updatedAt: o.updated_at,
+    // Load line items for all orders
+    const ordersWithLineItems = await Promise.all((orders || []).map(async (o) => {
+      const { data: lineItems } = await supabase
+        .from('purchase_order_line_items')
+        .select('*')
+        .eq('purchase_order_id', o.id);
+
+      return {
+        id: o.id,
+        poNumber: o.po_number,
+        vendor: o.supplier_id,
+        vendorContact: undefined,
+        date: o.issue_date,
+        expectedDelivery: o.delivery_date || undefined,
+        lineItems: (lineItems || []).map((li: any) => ({
+          id: li.id,
+          description: li.description,
+          quantity: Number(li.quantity),
+          unitCost: Number(li.unit_price),
+          total: Number(li.amount),
+          inventoryItemId: li.inventory_item_id || undefined,
+          inventoryType: li.inventory_type as any,
+          projectId: li.project_id || undefined,
+        })),
+        subtotal: Number(o.subtotal),
+        taxRate: 15,
+        taxAmount: Number(o.tax_amount),
+        discount: 0,
+        total: Number(o.total_amount),
+        status: o.status as any,
+        notes: o.notes || undefined,
+        terms: undefined,
+        deliveryAddress: undefined,
+        projectId: undefined,
+        createdAt: o.created_at,
+        updatedAt: o.updated_at,
+        convertedToPurchaseId: o.invoice_number || undefined,
+      };
     }));
+
+    return ordersWithLineItems;
   } catch (error) {
     console.error('Failed to load purchase orders:', error);
     return [];
@@ -62,6 +86,7 @@ export const savePurchaseOrder = async (order: PurchaseOrder): Promise<void> => 
 
     if (!memberData?.company_id) throw new Error('No active company');
 
+    // Save purchase order
     const { error } = await supabase
       .from('purchase_orders')
       .upsert({
@@ -77,10 +102,37 @@ export const savePurchaseOrder = async (order: PurchaseOrder): Promise<void> => 
         total_amount: order.total,
         status: order.status,
         notes: order.notes || null,
+        invoice_number: order.convertedToPurchaseId || null,
         updated_at: new Date().toISOString(),
       });
 
     if (error) throw error;
+
+    // Delete existing line items
+    await supabase
+      .from('purchase_order_line_items')
+      .delete()
+      .eq('purchase_order_id', order.id);
+
+    // Insert new line items
+    if (order.lineItems && order.lineItems.length > 0) {
+      const { error: lineItemsError } = await supabase
+        .from('purchase_order_line_items')
+        .insert(
+          order.lineItems.map(item => ({
+            purchase_order_id: order.id,
+            description: item.description,
+            quantity: item.quantity,
+            unit_price: item.unitCost,
+            amount: item.total,
+            inventory_item_id: item.inventoryItemId || null,
+            inventory_type: item.inventoryType || null,
+            project_id: item.projectId || null,
+          }))
+        );
+
+      if (lineItemsError) throw lineItemsError;
+    }
   } catch (error) {
     console.error('Failed to save purchase order:', error);
     throw error;
@@ -89,6 +141,13 @@ export const savePurchaseOrder = async (order: PurchaseOrder): Promise<void> => 
 
 export const deletePurchaseOrder = async (id: string): Promise<void> => {
   try {
+    // Delete line items first
+    await supabase
+      .from('purchase_order_line_items')
+      .delete()
+      .eq('purchase_order_id', id);
+
+    // Delete purchase order
     const { error } = await supabase
       .from('purchase_orders')
       .delete()
