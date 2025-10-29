@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Package, Search, Pencil, Trash2 } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plus, Package, Search, Pencil, Trash2, TrendingDown, TrendingUp, AlertTriangle, DollarSign, Boxes, BarChart3 } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { InventoryItem, getInventoryTypesForCompanyType } from '@/types/inventory';
 import { useToast } from '@/hooks/use-toast';
@@ -116,16 +117,49 @@ export default function Inventory() {
     return type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
 
+  // Calculate dashboard metrics
+  const dashboardMetrics = useMemo(() => {
+    const totalValue = items.reduce((sum, item) => sum + item.totalValue, 0);
+    const totalItems = items.length;
+    const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+    const lowStockItems = items.filter(item => item.quantity <= item.minQuantity).length;
+    
+    // Group by type
+    const byType = items.reduce((acc, item) => {
+      const type = getTypeLabel(item.type);
+      if (!acc[type]) {
+        acc[type] = { count: 0, value: 0 };
+      }
+      acc[type].count += 1;
+      acc[type].value += item.totalValue;
+      return acc;
+    }, {} as Record<string, { count: number; value: number }>);
+
+    // Top items by value
+    const topItems = [...items]
+      .sort((a, b) => b.totalValue - a.totalValue)
+      .slice(0, 5);
+
+    return {
+      totalValue,
+      totalItems,
+      totalQuantity,
+      lowStockItems,
+      byType,
+      topItems,
+    };
+  }, [items]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
+    <div className="min-h-screen bg-background">
       <Navigation />
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="flex items-center justify-between mb-6">
+      <div className="container mx-auto px-4 py-6 space-y-6 max-w-7xl">
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
-              Inventory
+              Inventory Management
             </h1>
-            <p className="text-muted-foreground">Manage your {getTypeLabel(activeCompanySettings?.company_type || '')} inventory</p>
+            <p className="text-muted-foreground mt-1">Track and manage your {getTypeLabel(activeCompanySettings?.company_type || '')} inventory</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -249,81 +283,229 @@ export default function Inventory() {
           </Dialog>
         </div>
 
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, SKU, or category..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        {filteredItems.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Package className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No inventory items</h3>
-              <p className="text-muted-foreground mb-4">Add your first item to start tracking inventory</p>
+        {/* Dashboard Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="shadow-[var(--shadow-elegant)]">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Value</CardTitle>
+              <DollarSign className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{activeCompanySettings?.currency_symbol || 'R'}{dashboardMetrics.totalValue.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Across {dashboardMetrics.totalItems} items
+              </p>
             </CardContent>
           </Card>
-        ) : (
-          <div className="grid gap-4">
-            {filteredItems.map((item) => (
-              <Card key={item.id} className="shadow-[var(--shadow-elegant)] border-border/50">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CardTitle className="text-lg">{item.name}</CardTitle>
-                        <Badge>{getTypeLabel(item.type)}</Badge>
-                        {item.quantity <= item.minQuantity && (
-                          <Badge variant="destructive">Low Stock</Badge>
-                        )}
+
+          <Card className="shadow-[var(--shadow-elegant)]">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Items</CardTitle>
+              <Boxes className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{dashboardMetrics.totalItems}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {dashboardMetrics.totalQuantity} units total
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-[var(--shadow-elegant)]">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Low Stock Alerts</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-destructive">{dashboardMetrics.lowStockItems}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Items need restocking
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-[var(--shadow-elegant)]">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Inventory Types</CardTitle>
+              <BarChart3 className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{Object.keys(dashboardMetrics.byType).length}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Active categories
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Inventory by Type & Top Items */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card className="shadow-[var(--shadow-elegant)]">
+            <CardHeader>
+              <CardTitle className="text-base">Inventory by Type</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {Object.keys(dashboardMetrics.byType).length > 0 ? (
+                <div className="space-y-3">
+                  {Object.entries(dashboardMetrics.byType).map(([type, data]) => (
+                    <div key={type} className="flex items-center justify-between pb-2 border-b border-border/50 last:border-0">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-primary" />
+                        <span className="font-medium">{type}</span>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-muted-foreground">
-                        <p><strong>SKU:</strong> {item.sku}</p>
-                        <p><strong>Category:</strong> {item.category}</p>
-                        <p><strong>Quantity:</strong> {item.quantity} {item.unit}</p>
-                        <p><strong>Unit Cost:</strong> {activeCompanySettings?.currency_symbol || 'R'}{item.unitCost.toFixed(2)}</p>
-                        {item.supplier && <p><strong>Supplier:</strong> {item.supplier}</p>}
-                        {item.location && <p><strong>Location:</strong> {item.location}</p>}
+                      <div className="text-right">
+                        <p className="font-semibold">{data.count} items</p>
+                        <p className="text-xs text-muted-foreground">
+                          {activeCompanySettings?.currency_symbol || 'R'}{data.value.toFixed(2)}
+                        </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xl font-bold text-primary">
-                        {activeCompanySettings?.currency_symbol || 'R'}{item.totalValue.toFixed(2)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Total Value</p>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">No inventory data</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-[var(--shadow-elegant)]">
+            <CardHeader>
+              <CardTitle className="text-base">Top 5 Items by Value</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {dashboardMetrics.topItems.length > 0 ? (
+                <div className="space-y-3">
+                  {dashboardMetrics.topItems.map((item, index) => (
+                    <div key={item.id} className="flex items-center justify-between pb-2 border-b border-border/50 last:border-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-muted-foreground w-4">#{index + 1}</span>
+                        <div>
+                          <p className="font-medium text-sm">{item.name}</p>
+                          <p className="text-xs text-muted-foreground">{item.quantity} {item.unit}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-sm">{activeCompanySettings?.currency_symbol || 'R'}{item.totalValue.toFixed(2)}</p>
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex gap-2 border-t pt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(item)}
-                    className="gap-2"
-                  >
-                    <Pencil className="h-4 w-4" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(item.id)}
-                    className="gap-2 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">No items to display</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, SKU, or category..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {/* Inventory Items Table */}
+        <Card className="shadow-[var(--shadow-elegant)]">
+          <CardHeader>
+            <CardTitle>Inventory Items</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {filteredItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Package className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No inventory items found</h3>
+                <p className="text-muted-foreground mb-4">
+                  {searchTerm ? 'Try adjusting your search' : 'Add your first item to start tracking inventory'}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Item Name</TableHead>
+                      <TableHead>SKU</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead className="text-right">Quantity</TableHead>
+                      <TableHead className="text-right">Unit Cost</TableHead>
+                      <TableHead className="text-right">Total Value</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">
+                          <div>
+                            <p>{item.name}</p>
+                            {item.description && (
+                              <p className="text-xs text-muted-foreground">{item.description}</p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">{item.sku}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{getTypeLabel(item.type)}</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">{item.category}</TableCell>
+                        <TableCell className="text-right">
+                          <div>
+                            <p className="font-medium">{item.quantity}</p>
+                            <p className="text-xs text-muted-foreground">{item.unit}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right text-sm">
+                          {activeCompanySettings?.currency_symbol || 'R'}{item.unitCost.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {activeCompanySettings?.currency_symbol || 'R'}{item.totalValue.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          {item.quantity <= item.minQuantity ? (
+                            <Badge variant="destructive" className="gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              Low Stock
+                            </Badge>
+                          ) : (
+                            <Badge variant="default" className="gap-1">
+                              <TrendingUp className="h-3 w-3" />
+                              In Stock
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-2 justify-end">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(item)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(item.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
