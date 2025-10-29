@@ -44,9 +44,6 @@ export const loadPurchaseOrders = async (): Promise<PurchaseOrder[]> => {
           quantity: Number(li.quantity),
           unitCost: Number(li.unit_price),
           total: Number(li.amount),
-          inventoryItemId: li.inventory_item_id || undefined,
-          inventoryType: li.inventory_type as any,
-          projectId: li.project_id || undefined,
         })),
         subtotal: Number(o.subtotal),
         taxRate: 15,
@@ -125,9 +122,6 @@ export const savePurchaseOrder = async (order: PurchaseOrder): Promise<void> => 
             quantity: item.quantity,
             unit_price: item.unitCost,
             amount: item.total,
-            inventory_item_id: item.inventoryItemId || null,
-            inventory_type: item.inventoryType || null,
-            project_id: item.projectId || null,
           }))
         );
 

@@ -17,11 +17,20 @@ export const receiveGoodsFromPO = async (
     // Get the PO
     const { data: po, error: poError } = await supabase
       .from('purchase_orders')
-      .select('*, purchase_order_line_items(*)')
+      .select('*')
       .eq('id', poId)
       .single();
 
     if (poError) throw poError;
+    
+    // Get line items separately
+    const { data: lineItems, error: lineItemsError } = await supabase
+      .from('purchase_order_line_items')
+      .select('*')
+      .eq('purchase_order_id', poId);
+      
+    if (lineItemsError) throw lineItemsError;
+    
     if (po.status === 'received') {
       toast.error('This purchase order has already been fully received');
       return;
@@ -29,7 +38,7 @@ export const receiveGoodsFromPO = async (
 
     // Process each received item
     for (const received of receivedItems) {
-      const lineItem = po.purchase_order_line_items.find(
+      const lineItem = (lineItems || []).find(
         (li: any) => li.id === received.lineItemId
       );
 
@@ -253,11 +262,19 @@ export const convertPOToPurchase = async (
   try {
     const { data: po, error: poError } = await supabase
       .from('purchase_orders')
-      .select('*, purchase_order_line_items(*)')
+      .select('*')
       .eq('id', poId)
       .single();
 
     if (poError) throw poError;
+
+    // Get line items separately
+    const { data: lineItems, error: lineItemsError } = await supabase
+      .from('purchase_order_line_items')
+      .select('*')
+      .eq('purchase_order_id', poId);
+      
+    if (lineItemsError) throw lineItemsError;
 
     // Create purchase from PO
     const purchase: Purchase = {
@@ -266,13 +283,14 @@ export const convertPOToPurchase = async (
       vendor: po.supplier_id,
       date: new Date().toISOString().split('T')[0],
       dueDate: po.delivery_date,
-      lineItems: po.purchase_order_line_items.map((item: any) => ({
+      lineItems: (lineItems || []).map((item: any) => ({
         id: item.id,
         description: item.description,
         quantity: item.quantity,
-        receivedQuantity: item.received_quantity || 0,
+        receivedQuantity: 0,
         unitCost: Number(item.unit_price),
         total: Number(item.amount),
+        inventoryType: 'raw-materials',
       })),
       subtotal: Number(po.subtotal),
       taxRate: 15,

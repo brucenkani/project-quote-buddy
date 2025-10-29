@@ -1932,15 +1932,7 @@ export type Database = {
           quantity?: number
           unit_price?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "purchase_order_line_items_purchase_order_id_fkey"
-            columns: ["purchase_order_id"]
-            isOneToOne: false
-            referencedRelation: "purchase_orders"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       purchase_orders: {
         Row: {

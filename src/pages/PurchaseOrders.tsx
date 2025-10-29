@@ -70,7 +70,6 @@ export default function PurchaseOrders() {
     quantity: 1,
     unitCost: 0,
     total: 0,
-    inventoryType: 'raw-materials',
   });
 
   const handleAddLineItem = () => {
@@ -85,9 +84,6 @@ export default function PurchaseOrders() {
       quantity: currentLineItem.quantity!,
       unitCost: currentLineItem.unitCost!,
       total: currentLineItem.quantity! * currentLineItem.unitCost!,
-      inventoryItemId: currentLineItem.inventoryItemId,
-      inventoryType: currentLineItem.inventoryType,
-      projectId: currentLineItem.projectId,
     };
 
     const updatedItems = [...lineItems, item];
@@ -99,7 +95,6 @@ export default function PurchaseOrders() {
       quantity: 1,
       unitCost: 0,
       total: 0,
-      inventoryType: 'raw-materials',
     });
   };
 
@@ -176,7 +171,7 @@ export default function PurchaseOrders() {
       lineItems: order.lineItems.map(item => ({
         ...item,
         receivedQuantity: 0,
-        inventoryType: item.inventoryType || 'raw-materials',
+        inventoryType: 'raw-materials',
       } as PurchaseLineItem)),
       subtotal: order.subtotal,
       taxRate: order.taxRate,
@@ -347,30 +342,13 @@ export default function PurchaseOrders() {
                 <div className="border rounded-lg p-4 space-y-4">
                   <h3 className="font-semibold">Line Items</h3>
                   
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     <div>
                       <Label>Description</Label>
                       <Input
                         value={currentLineItem.description}
                         onChange={(e) => setCurrentLineItem({ ...currentLineItem, description: e.target.value })}
                       />
-                    </div>
-                    <div>
-                      <Label>Type *</Label>
-                      <Select
-                        value={currentLineItem.inventoryType}
-                        onValueChange={(value: InventoryType) => setCurrentLineItem({ ...currentLineItem, inventoryType: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="raw-materials">Raw Materials</SelectItem>
-                          <SelectItem value="work-in-progress">Work in Progress</SelectItem>
-                          <SelectItem value="consumables">Consumables</SelectItem>
-                          <SelectItem value="finished-products">Finished Products</SelectItem>
-                        </SelectContent>
-                      </Select>
                     </div>
                     <div>
                       <Label>Quantity</Label>

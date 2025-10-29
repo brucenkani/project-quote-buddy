@@ -6,9 +6,6 @@ export interface PurchaseOrderLineItem {
   quantity: number;
   unitCost: number;
   total: number;
-  inventoryItemId?: string;
-  inventoryType?: 'raw-materials' | 'work-in-progress' | 'consumables' | 'finished-products';
-  projectId?: string;
 }
 
 export interface PurchaseOrder {
