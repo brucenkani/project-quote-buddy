@@ -106,21 +106,36 @@ export default function LandingSettings() {
       
       const { data, error } = await supabase
         .from('audit_logs')
-        .select(`
-          *,
-          profiles:user_id (
-            full_name,
-            email
-          )
-        `)
+        .select('*')
         .eq('company_id', activeCompany.id)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      setAuditLogs(data || []);
-      setFilteredAuditLogs(data || []);
+
+      // Fetch user profiles separately
+      if (data && data.length > 0) {
+        const userIds = [...new Set(data.map(log => log.user_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', userIds);
+
+        // Map profiles to logs
+        const logsWithProfiles = data.map(log => ({
+          ...log,
+          profiles: profiles?.find(p => p.id === log.user_id) || null
+        }));
+
+        setAuditLogs(logsWithProfiles);
+        setFilteredAuditLogs(logsWithProfiles);
+      } else {
+        setAuditLogs([]);
+        setFilteredAuditLogs([]);
+      }
     } catch (error: any) {
       console.error('Error loading audit logs:', error);
+      setAuditLogs([]);
+      setFilteredAuditLogs([]);
     }
   };
   
