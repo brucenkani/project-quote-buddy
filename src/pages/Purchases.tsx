@@ -265,6 +265,22 @@ export default function Purchases() {
     return <Badge variant={variants[status]}>{status.replace('-', ' ').toUpperCase()}</Badge>;
   };
 
+  const getPaymentStatusBadge = (paymentMethod: PurchasePaymentMethod) => {
+    if (paymentMethod === 'credit') {
+      return <Badge variant="destructive">Unpaid</Badge>;
+    }
+    return <Badge variant="default">Paid</Badge>;
+  };
+
+  const getPaymentMethodLabel = (paymentMethod: PurchasePaymentMethod) => {
+    const labels = {
+      credit: 'Credit',
+      cash: 'Cash',
+      'bank-transfer': 'Bank Transfer',
+    };
+    return labels[paymentMethod];
+  };
+
   const getBusinessTypeLabel = () => {
     switch (settings.companyType) {
       case 'trading': return 'Trading Business - Purchases to Inventory';
@@ -587,7 +603,8 @@ export default function Purchases() {
                     <TableHead>Items</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Method</TableHead>
+                    <TableHead>Payment Method</TableHead>
+                    <TableHead>Payment Status</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -601,8 +618,9 @@ export default function Purchases() {
                       <TableCell>{settings.currencySymbol}{purchase.total.toFixed(2)}</TableCell>
                       <TableCell>{getStatusBadge(purchase.status)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{purchase.inventoryMethod}</Badge>
+                        <Badge variant="outline">{getPaymentMethodLabel(purchase.paymentMethod)}</Badge>
                       </TableCell>
+                      <TableCell>{getPaymentStatusBadge(purchase.paymentMethod)}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
                           <Button 
@@ -613,14 +631,16 @@ export default function Purchases() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => navigate(`/purchase-payment/${purchase.id}`)}
-                            title="Payment"
-                          >
-                            <DollarSign className="h-4 w-4" />
-                          </Button>
+                          {purchase.paymentMethod === 'credit' && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => navigate(`/purchase-payment/${purchase.id}`)}
+                              title="Make Payment"
+                            >
+                              <DollarSign className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button 
                             variant="ghost" 
                             size="sm" 
