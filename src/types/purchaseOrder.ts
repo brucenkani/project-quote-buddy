@@ -7,7 +7,7 @@ export interface PurchaseOrderLineItem {
   unitCost: number;
   total: number;
   inventoryItemId?: string;
-  category?: string;
+  inventoryType?: 'raw-materials' | 'work-in-progress' | 'consumables' | 'finished-products';
   projectId?: string;
 }
 
