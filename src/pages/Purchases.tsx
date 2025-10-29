@@ -23,6 +23,7 @@ import { recordPurchase } from '@/utils/purchaseDoubleEntry';
 import { recordPurchaseInvoice } from '@/utils/journalEntryManager';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
+import { getTotalPaid } from '@/utils/purchasePaymentStorage';
 
 export default function Purchases() {
   const { toast } = useToast();
@@ -266,11 +267,27 @@ export default function Purchases() {
     return <Badge variant={variants[status]}>{status.replace('-', ' ').toUpperCase()}</Badge>;
   };
 
-  const getPaymentStatusBadge = (paymentMethod: PurchasePaymentMethod) => {
-    if (paymentMethod === 'credit') {
-      return <Badge variant="destructive">Unpaid</Badge>;
+  // Component for payment status badge with async loading
+  const PaymentStatusBadge = ({ purchase }: { purchase: Purchase }) => {
+    const [statusInfo, setStatusInfo] = useState({ isPaid: false, isPartiallyPaid: false });
+    
+    useEffect(() => {
+      const checkStatus = async () => {
+        const totalPaid = await getTotalPaid(purchase.id);
+        const isPaid = totalPaid >= purchase.total - 0.01;
+        const isPartiallyPaid = totalPaid > 0 && !isPaid;
+        setStatusInfo({ isPaid, isPartiallyPaid });
+      };
+      checkStatus();
+    }, [purchase.id, purchase.total]);
+
+    if (statusInfo.isPaid) {
+      return <Badge variant="default">Paid</Badge>;
     }
-    return <Badge variant="default">Paid</Badge>;
+    if (statusInfo.isPartiallyPaid) {
+      return <Badge variant="outline">Partially Paid</Badge>;
+    }
+    return <Badge variant="destructive">Unpaid</Badge>;
   };
 
   const getPaymentMethodLabel = (paymentMethod: PurchasePaymentMethod) => {
@@ -600,7 +617,7 @@ export default function Purchases() {
                       <TableCell>
                         <Badge variant="outline">{getPaymentMethodLabel(purchase.paymentMethod)}</Badge>
                       </TableCell>
-                      <TableCell>{getPaymentStatusBadge(purchase.paymentMethod)}</TableCell>
+                      <TableCell><PaymentStatusBadge purchase={purchase} /></TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

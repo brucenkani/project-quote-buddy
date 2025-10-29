@@ -93,7 +93,7 @@ export default function PurchasePayment() {
 
   const remainingBalance = purchase.total - totalPaid;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (formData.amount <= 0) {
@@ -111,64 +111,96 @@ export default function PurchasePayment() {
       return;
     }
 
-    const payment: PurchasePayment = {
-      id: crypto.randomUUID(),
-      purchaseId: purchase.id,
-      amount: formData.amount,
-      date: formData.date,
-      method: formData.method,
-      reference: formData.reference,
-      notes: formData.notes,
-      bankAccountId: formData.bankAccountId,
-      createdAt: new Date().toISOString(),
-    };
-
-    savePurchasePayment(payment);
-
-    // Record payment in accounting: Dr Accounts Payable, Cr Bank
-    const journalEntries: JournalEntryLine[] = [
-      {
+    try {
+      const payment: PurchasePayment = {
         id: crypto.randomUUID(),
-        account: 'Accounts Payable',
-        accountType: 'current-liability',
-        debit: formData.amount,
-        credit: 0,
-        description: `Payment for ${purchase.purchaseNumber}`,
-      },
-      {
+        purchaseId: purchase.id,
+        amount: formData.amount,
+        date: formData.date,
+        method: formData.method,
+        reference: formData.reference,
+        notes: formData.notes,
+        bankAccountId: formData.bankAccountId,
+        createdAt: new Date().toISOString(),
+      };
+
+      await savePurchasePayment(payment);
+
+      // Record payment in accounting: Dr Accounts Payable, Cr Bank
+      const journalEntries: JournalEntryLine[] = [
+        {
+          id: crypto.randomUUID(),
+          account: 'Accounts Payable',
+          accountType: 'current-liability',
+          debit: formData.amount,
+          credit: 0,
+          description: `Payment for ${purchase.purchaseNumber}`,
+        },
+        {
+          id: crypto.randomUUID(),
+          account: 'Bank',
+          accountType: 'current-asset',
+          debit: 0,
+          credit: formData.amount,
+          description: `Payment via ${formData.method}`,
+        },
+      ];
+
+      const journalEntry: JournalEntry = {
         id: crypto.randomUUID(),
-        account: 'Bank',
-        accountType: 'current-asset',
-        debit: 0,
-        credit: formData.amount,
-        description: `Payment via ${formData.method}`,
-      },
-    ];
+        date: formData.date,
+        reference: `PAY-${purchase.purchaseNumber}`,
+        description: `Payment for purchase ${purchase.purchaseNumber}`,
+        entries: journalEntries,
+        totalDebit: formData.amount,
+        totalCredit: formData.amount,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
-    const journalEntry: JournalEntry = {
-      id: crypto.randomUUID(),
-      date: formData.date,
-      reference: `PAY-${purchase.purchaseNumber}`,
-      description: `Payment for purchase ${purchase.purchaseNumber}`,
-      entries: journalEntries,
-      totalDebit: formData.amount,
-      totalCredit: formData.amount,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+      await saveJournalEntry(journalEntry);
 
-    saveJournalEntry(journalEntry);
+      // Update bank account balance if bank transfer
+      if (formData.method === 'bank-transfer' && formData.bankAccountId) {
+        const account = bankAccounts.find(a => a.id === formData.bankAccountId);
+        if (account) {
+          const newBalance = Number(account.current_balance) - formData.amount;
+          await supabase
+            .from('bank_accounts')
+            .update({ current_balance: newBalance })
+            .eq('id', formData.bankAccountId);
+        }
+      }
 
-    // Update purchase status if fully paid
-    const newTotalPaid = totalPaid + formData.amount;
-    if (newTotalPaid >= purchase.total && purchase.status !== 'received') {
-      purchase.status = 'received';
+      // Update purchase status and payment method
+      const newTotalPaid = totalPaid + formData.amount;
+      const isFullyPaid = newTotalPaid >= purchase.total - 0.01; // Account for floating point
+
+      if (isFullyPaid) {
+        purchase.status = 'received';
+        // Update payment method to the actual method used
+        if (formData.method === 'bank-transfer') {
+          purchase.paymentMethod = 'bank-transfer';
+          purchase.bankAccountId = formData.bankAccountId;
+        } else if (formData.method === 'cash') {
+          purchase.paymentMethod = 'cash';
+          purchase.bankAccountId = undefined;
+        }
+      }
+      
       purchase.updatedAt = new Date().toISOString();
-      savePurchase(purchase);
-    }
+      await savePurchase(purchase);
 
-    toast({ title: 'Payment recorded successfully' });
-    navigate('/purchases');
+      toast({ title: 'Payment recorded successfully' });
+      navigate('/purchases');
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast({ 
+        title: 'Failed to record payment', 
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive' 
+      });
+    }
   };
 
   return (
