@@ -141,28 +141,14 @@ export const recordPurchaseInvoice = async (
 ): Promise<string> => {
   const lines: JournalEntryLine[] = [];
 
-  // Determine which inventory account based on company type
-  let inventoryAccount = '1108';
-  let inventoryName = '1108 - Inventory';
+  // All inventory/raw materials go to account 1310
+  let inventoryAccount = '1310';
+  let inventoryName = '1310 - Raw Materials';
 
-  switch (companyType) {
-    case 'trading':
-      inventoryAccount = '1110';
-      inventoryName = '1110 - Finished Goods';
-      break;
-    case 'manufacturer':
-      inventoryAccount = '1109';
-      inventoryName = '1109 - Raw Materials';
-      break;
-    case 'contractor':
-      inventoryAccount = '1310';
-      inventoryName = '1310 - Raw Materials';
-      break;
-    case 'professional-services':
-      // Professional services typically expense rather than capitalize
-      inventoryAccount = '7000';
-      inventoryName = '7000 - Operating Expenses';
-      break;
+  // Professional services expense rather than capitalize
+  if (companyType === 'professional-services') {
+    inventoryAccount = '7000';
+    inventoryName = '7000 - Cost of Sales';
   }
 
   // Debit: Inventory/Expense
@@ -257,23 +243,9 @@ export const recordInventorySale = async (
   userId: string,
   companyId: string
 ): Promise<string> => {
-  let inventoryAccount = '1108';
-  let inventoryName = '1108 - Inventory';
-
-  switch (companyType) {
-    case 'trading':
-      inventoryAccount = '1110';
-      inventoryName = '1110 - Finished Goods';
-      break;
-    case 'manufacturer':
-      inventoryAccount = '1110';
-      inventoryName = '1110 - Finished Goods';
-      break;
-    case 'contractor':
-      inventoryAccount = '1310';
-      inventoryName = '1310 - Raw Materials';
-      break;
-  }
+  // All inventory goes to account 1310 - Raw Materials
+  const inventoryAccount = '1310';
+  const inventoryName = '1310 - Raw Materials';
 
   const entry: JournalEntryData = {
     entry_number: `COGS-${invoiceNumber}`,
@@ -316,23 +288,9 @@ export const recordInventoryAdjustment = async (
   userId: string,
   companyId: string
 ): Promise<string> => {
-  let inventoryAccount = '1108';
-  let inventoryName = '1108 - Inventory';
-
-  switch (companyType) {
-    case 'trading':
-      inventoryAccount = '1110';
-      inventoryName = '1110 - Finished Goods';
-      break;
-    case 'manufacturer':
-      inventoryAccount = '1109';
-      inventoryName = '1109 - Raw Materials';
-      break;
-    case 'contractor':
-      inventoryAccount = '1310';
-      inventoryName = '1310 - Raw Materials';
-      break;
-  }
+  // All inventory goes to account 1310 - Raw Materials
+  const inventoryAccount = '1310';
+  const inventoryName = '1310 - Raw Materials';
 
   const isShortage = adjustmentValue < 0;
   const absValue = Math.abs(adjustmentValue);
