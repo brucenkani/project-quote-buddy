@@ -1067,6 +1067,7 @@ export type Database = {
           unit_price: number
           updated_at: string | null
           user_id: string
+          warehouse_id: string | null
         }
         Insert: {
           category?: string | null
@@ -1087,6 +1088,7 @@ export type Database = {
           unit_price: number
           updated_at?: string | null
           user_id: string
+          warehouse_id?: string | null
         }
         Update: {
           category?: string | null
@@ -1107,6 +1109,7 @@ export type Database = {
           unit_price?: number
           updated_at?: string | null
           user_id?: string
+          warehouse_id?: string | null
         }
         Relationships: [
           {
@@ -1122,6 +1125,7 @@ export type Database = {
         Row: {
           company_id: string | null
           created_at: string | null
+          destination_warehouse_id: string | null
           id: string
           item_id: string
           movement_type: string
@@ -1129,12 +1133,14 @@ export type Database = {
           quantity: number
           reference_id: string
           reference_type: string
+          source_warehouse_id: string | null
           unit_cost: number
           user_id: string
         }
         Insert: {
           company_id?: string | null
           created_at?: string | null
+          destination_warehouse_id?: string | null
           id?: string
           item_id: string
           movement_type: string
@@ -1142,12 +1148,14 @@ export type Database = {
           quantity: number
           reference_id: string
           reference_type: string
+          source_warehouse_id?: string | null
           unit_cost: number
           user_id: string
         }
         Update: {
           company_id?: string | null
           created_at?: string | null
+          destination_warehouse_id?: string | null
           id?: string
           item_id?: string
           movement_type?: string
@@ -1155,6 +1163,7 @@ export type Database = {
           quantity?: number
           reference_id?: string
           reference_type?: string
+          source_warehouse_id?: string | null
           unit_cost?: number
           user_id?: string
         }
@@ -2374,6 +2383,42 @@ export type Database = {
           created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      warehouses: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          location: string | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          location?: string | null
+          name?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

@@ -26,15 +26,23 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const { data, error } = await supabase
+      const { data: inventoryData, error: inventoryError } = await supabase
         .from('inventory_items')
         .select('*')
         .eq('company_id', activeCompany.id)
         .order('name');
 
-      if (error) throw error;
+      if (inventoryError) throw inventoryError;
 
-      const mappedInventory = (data || []).map(row => ({
+      // Fetch warehouses separately for lookup
+      const { data: warehousesData } = await supabase
+        .from('warehouses')
+        .select('id, name')
+        .eq('company_id', activeCompany.id);
+
+      const warehouseMap = new Map(warehousesData?.map(w => [w.id, w.name]) || []);
+
+      const mappedInventory = (inventoryData || []).map(row => ({
         id: row.id,
         name: row.name,
         description: row.description || '',
@@ -47,6 +55,8 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         totalValue: Number(row.quantity) * Number(row.cost_price || row.unit_price),
         supplier: '',
         location: '',
+        warehouse_id: row.warehouse_id || '',
+        warehouse_name: row.warehouse_id ? warehouseMap.get(row.warehouse_id) || '' : '',
         createdAt: row.created_at || new Date().toISOString(),
         updatedAt: row.updated_at || new Date().toISOString(),
       }) as InventoryItem);
@@ -83,6 +93,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
           cost_price: item.unitCost,
           quantity: item.quantity,
           reorder_level: item.minQuantity,
+          warehouse_id: item.warehouse_id || null,
           tax_rate: 15,
           is_taxable: true,
         });

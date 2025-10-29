@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Package, Search, Pencil, Trash2, TrendingDown, TrendingUp, AlertTriangle, DollarSign, Boxes, BarChart3, Download, FileText, FileSpreadsheet } from 'lucide-react';
+import { Plus, Package, Search, Pencil, Trash2, TrendingDown, TrendingUp, AlertTriangle, DollarSign, Boxes, BarChart3, Download, FileText, FileSpreadsheet, Warehouse as WarehouseIcon, ArrowRightLeft } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { InventoryItem, getInventoryTypesForCompanyType } from '@/types/inventory';
 import { useToast } from '@/hooks/use-toast';
@@ -15,14 +15,22 @@ import { ContactSelector } from '@/components/ContactSelector';
 import { Contact } from '@/types/contacts';
 import { useInventory } from '@/contexts/InventoryContext';
 import { useCompany } from '@/contexts/CompanyContext';
+import { useWarehouse } from '@/contexts/WarehouseContext';
 import { exportInventoryToPDF, exportInventoryToExcel } from '@/utils/inventoryExport';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { WarehouseDialog } from '@/components/inventory/WarehouseDialog';
+import { WarehouseTransferDialog } from '@/components/inventory/WarehouseTransferDialog';
+import { WarehouseSelector } from '@/components/inventory/WarehouseSelector';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Inventory() {
   const { toast } = useToast();
   const { activeCompanySettings } = useCompany();
   const { inventory: items, saveItem, deleteItem, refreshInventory } = useInventory();
+  const { warehouses } = useWarehouse();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isWarehouseDialogOpen, setIsWarehouseDialogOpen] = useState(false);
+  const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
 
@@ -39,11 +47,12 @@ export default function Inventory() {
     unitCost: 0,
     supplier: '',
     location: '',
+    warehouse_id: '',
   });
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.type) {
-      toast({ title: 'Please fill in all required fields', variant: 'destructive' });
+    if (!formData.name || !formData.type || !formData.warehouse_id) {
+      toast({ title: 'Please fill in all required fields including warehouse', variant: 'destructive' });
       return;
     }
 
@@ -60,6 +69,7 @@ export default function Inventory() {
       totalValue: (formData.quantity || 0) * (formData.unitCost || 0),
       supplier: formData.supplier,
       location: formData.location,
+      warehouse_id: formData.warehouse_id,
       lastRestocked: new Date().toISOString(),
       createdAt: editingItem?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -81,6 +91,7 @@ export default function Inventory() {
         unitCost: 0,
         supplier: '',
         location: '',
+        warehouse_id: '',
       });
       toast({ title: editingItem ? 'Item updated' : 'Item added successfully' });
     } catch (error) {
@@ -134,6 +145,20 @@ export default function Inventory() {
       return acc;
     }, {} as Record<string, { count: number; value: number }>);
 
+    // Group by warehouse
+    const byWarehouse = items.reduce((acc, item) => {
+      const warehouseName = item.warehouse_name || 'Unassigned';
+      if (!acc[warehouseName]) {
+        acc[warehouseName] = { count: 0, value: 0, lowStock: 0 };
+      }
+      acc[warehouseName].count += 1;
+      acc[warehouseName].value += item.totalValue;
+      if (item.quantity <= item.minQuantity) {
+        acc[warehouseName].lowStock += 1;
+      }
+      return acc;
+    }, {} as Record<string, { count: number; value: number; lowStock: number }>);
+
     // Top items by value
     const topItems = [...items]
       .sort((a, b) => b.totalValue - a.totalValue)
@@ -145,9 +170,11 @@ export default function Inventory() {
       totalQuantity,
       lowStockItems,
       byType,
+      byWarehouse,
       topItems,
+      totalWarehouses: warehouses.filter(w => w.is_active).length,
     };
-  }, [items]);
+  }, [items, warehouses]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -160,13 +187,22 @@ export default function Inventory() {
             </h1>
             <p className="text-muted-foreground mt-1">Track and manage your {getTypeLabel(activeCompanySettings?.company_type || '')} inventory</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2" onClick={() => { setEditingItem(null); setFormData({ name: '', type: availableTypes[0], sku: '', description: '', unit: 'unit', quantity: 0, minQuantity: 0, unitCost: 0, supplier: '', location: '' }); }}>
-                <Plus className="h-4 w-4" />
-                Add Item
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => setIsWarehouseDialogOpen(true)}>
+              <WarehouseIcon className="h-4 w-4" />
+              Manage Warehouses
+            </Button>
+            <Button variant="outline" className="gap-2" onClick={() => setIsTransferDialogOpen(true)}>
+              <ArrowRightLeft className="h-4 w-4" />
+              Transfer Stock
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2" onClick={() => { setEditingItem(null); setFormData({ name: '', type: availableTypes[0], sku: '', description: '', unit: 'unit', quantity: 0, minQuantity: 0, unitCost: 0, supplier: '', location: '', warehouse_id: '' }); }}>
+                  <Plus className="h-4 w-4" />
+                  Add Item
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingItem ? 'Edit Item' : 'Add New Item'}</DialogTitle>
@@ -258,6 +294,14 @@ export default function Inventory() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="warehouse">Warehouse *</Label>
+                  <WarehouseSelector
+                    value={formData.warehouse_id || ''}
+                    onSelect={(warehouseId) => setFormData({ ...formData, warehouse_id: warehouseId })}
+                    placeholder="Select warehouse"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="location">Location</Label>
                   <Input
                     id="location"
@@ -272,7 +316,11 @@ export default function Inventory() {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
+
+        <WarehouseDialog open={isWarehouseDialogOpen} onOpenChange={setIsWarehouseDialogOpen} />
+        <WarehouseTransferDialog open={isTransferDialogOpen} onOpenChange={setIsTransferDialogOpen} />
 
         {/* Dashboard Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -417,7 +465,21 @@ export default function Inventory() {
           </Card>
         </div>
 
-        {/* Inventory by Type & Top Items */}
+        {/* Warehouse KPI Card */}
+        <Card className="shadow-[var(--shadow-elegant)] cursor-pointer hover:shadow-[var(--shadow-glow)] transition-all">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active Warehouses</CardTitle>
+            <WarehouseIcon className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dashboardMetrics.totalWarehouses}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Managing inventory across locations
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Inventory by Type & Warehouse Distribution */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="shadow-[var(--shadow-elegant)]">
             <CardHeader>
@@ -474,6 +536,39 @@ export default function Inventory() {
               )}
             </CardContent>
           </Card>
+
+          <Card className="shadow-[var(--shadow-elegant)]">
+            <CardHeader>
+              <CardTitle className="text-base">Inventory by Warehouse</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {Object.keys(dashboardMetrics.byWarehouse).length > 0 ? (
+                <div className="space-y-3">
+                  {Object.entries(dashboardMetrics.byWarehouse).map(([warehouse, data]) => (
+                    <div key={warehouse} className="flex items-center justify-between pb-2 border-b border-border/50 last:border-0">
+                      <div className="flex items-center gap-2">
+                        <WarehouseIcon className="h-4 w-4 text-primary" />
+                        <div>
+                          <span className="font-medium">{warehouse}</span>
+                          {data.lowStock > 0 && (
+                            <p className="text-xs text-destructive">{data.lowStock} low stock items</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{data.count} items</p>
+                        <p className="text-xs text-muted-foreground">
+                          {activeCompanySettings?.currency_symbol || 'R'}{data.value.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">No warehouse data</p>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Search Bar */}
@@ -509,6 +604,7 @@ export default function Inventory() {
                       <TableHead>Item Name</TableHead>
                       <TableHead>SKU</TableHead>
                       <TableHead>Type</TableHead>
+                      <TableHead>Warehouse</TableHead>
                       <TableHead className="text-right">Quantity</TableHead>
                       <TableHead className="text-right">Unit Cost</TableHead>
                       <TableHead className="text-right">Total Value</TableHead>
@@ -530,6 +626,9 @@ export default function Inventory() {
                         <TableCell className="text-sm">{item.sku}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{getTypeLabel(item.type)}</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {item.warehouse_name || 'Unassigned'}
                         </TableCell>
                         <TableCell className="text-right">
                           <div>

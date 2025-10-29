@@ -14,6 +14,8 @@ export interface InventoryItem {
   totalValue: number;
   supplier?: string;
   location?: string;
+  warehouse_id?: string;
+  warehouse_name?: string;
   lastRestocked?: string;
   createdAt: string;
   updatedAt: string;
