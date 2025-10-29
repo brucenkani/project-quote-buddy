@@ -1,4 +1,5 @@
 export type PurchaseStatus = 'pending' | 'received' | 'partly-received' | 'cancelled';
+export type PurchasePaymentMethod = 'credit' | 'cash' | 'bank-transfer';
 
 export interface PurchaseLineItem {
   id: string;
@@ -8,6 +9,7 @@ export interface PurchaseLineItem {
   unitCost: number;
   total: number;
   inventoryItemId?: string; // Link to inventory item
+  inventoryType?: 'raw-materials' | 'work-in-progress' | 'consumables' | 'finished-products';
   category?: string;
   projectId?: string; // For contractor businesses
 }
@@ -26,6 +28,8 @@ export interface Purchase {
   discount: number;
   total: number;
   status: PurchaseStatus;
+  paymentMethod: PurchasePaymentMethod;
+  bankAccountId?: string; // Required when paymentMethod is 'bank-transfer'
   notes?: string;
   projectId?: string;
   inventoryMethod: 'perpetual' | 'periodic';

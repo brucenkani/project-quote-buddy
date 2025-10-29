@@ -280,6 +280,7 @@ export const convertPOToPurchase = async (
       discount: 0,
       total: Number(po.total_amount),
       status: 'received',
+      paymentMethod: 'credit',
       notes: po.notes,
       inventoryMethod: 'perpetual',
       supplierInvoiceNumber,

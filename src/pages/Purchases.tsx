@@ -13,7 +13,8 @@ import { Navigation } from '@/components/Navigation';
 import { loadPurchases, savePurchase, deletePurchase, generatePurchaseNumber } from '@/utils/purchaseStorage';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useInventory } from '@/contexts/InventoryContext';
-import { Purchase, PurchaseLineItem } from '@/types/purchase';
+import { Purchase, PurchaseLineItem, PurchasePaymentMethod } from '@/types/purchase';
+import { InventoryType } from '@/types/inventory';
 import { useToast } from '@/hooks/use-toast';
 import { ContactSelector } from '@/components/ContactSelector';
 import { Contact } from '@/types/contacts';
@@ -40,9 +41,19 @@ export default function Purchases() {
       setPurchases(loaded);
       const num = await generatePurchaseNumber();
       setFormData(prev => ({ ...prev, purchaseNumber: num }));
+      
+      // Load bank accounts
+      if (activeCompany) {
+        const { data } = await supabase
+          .from('bank_accounts')
+          .select('*')
+          .eq('company_id', activeCompany.id)
+          .eq('is_active', true);
+        if (data) setBankAccounts(data);
+      }
     };
     init();
-  }, []);
+  }, [activeCompany]);
 
   const [formData, setFormData] = useState<Partial<Purchase>>({
     purchaseNumber: '',
@@ -56,6 +67,7 @@ export default function Purchases() {
     total: 0,
     status: 'pending',
     inventoryMethod: 'perpetual',
+    paymentMethod: 'credit',
   });
 
   const [lineItems, setLineItems] = useState<PurchaseLineItem[]>([]);
@@ -65,7 +77,9 @@ export default function Purchases() {
     receivedQuantity: 0,
     unitCost: 0,
     total: 0,
+    inventoryType: 'raw-materials',
   });
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
 
   const handleAddLineItem = () => {
     if (!currentLineItem.description || !currentLineItem.quantity || !currentLineItem.unitCost) {
@@ -81,6 +95,7 @@ export default function Purchases() {
       unitCost: currentLineItem.unitCost!,
       total: currentLineItem.quantity! * currentLineItem.unitCost!,
       inventoryItemId: currentLineItem.inventoryItemId,
+      inventoryType: currentLineItem.inventoryType,
       category: currentLineItem.category,
       projectId: currentLineItem.projectId,
     };
@@ -95,6 +110,7 @@ export default function Purchases() {
       receivedQuantity: 0,
       unitCost: 0,
       total: 0,
+      inventoryType: 'raw-materials',
     });
   };
 
@@ -124,6 +140,16 @@ export default function Purchases() {
       return;
     }
 
+    if (!formData.paymentMethod) {
+      toast({ title: 'Please select a payment method', variant: 'destructive' });
+      return;
+    }
+
+    if (formData.paymentMethod === 'bank-transfer' && !formData.bankAccountId) {
+      toast({ title: 'Please select a bank account for bank transfer', variant: 'destructive' });
+      return;
+    }
+
     const purchase: Purchase = {
       id: editingPurchase?.id || crypto.randomUUID(),
       purchaseNumber: formData.purchaseNumber!,
@@ -138,6 +164,8 @@ export default function Purchases() {
       discount: formData.discount || 0,
       total: formData.total!,
       status: formData.status!,
+      paymentMethod: formData.paymentMethod!,
+      bankAccountId: formData.bankAccountId,
       notes: formData.notes,
       projectId: formData.projectId,
       inventoryMethod: formData.inventoryMethod!,
@@ -150,7 +178,10 @@ export default function Purchases() {
     // Record double-entry accounting in Supabase
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && activeCompany) {
+      if (user && activeCompany && lineItems.length > 0) {
+        // Get the primary inventory type from first line item
+        const primaryInventoryType = lineItems[0].inventoryType || 'raw-materials';
+        
         await recordPurchaseInvoice(
           purchase.purchaseNumber,
           purchase.vendor,
@@ -159,8 +190,11 @@ export default function Purchases() {
           purchase.total,
           purchase.date,
           settings.companyType,
+          purchase.paymentMethod,
+          primaryInventoryType,
           user.id,
           activeCompany.id,
+          purchase.bankAccountId,
           purchase.supplierInvoiceNumber
         );
         toast({ title: editingPurchase ? 'Purchase updated and ledger updated' : 'Purchase created and ledger updated' });
@@ -194,6 +228,7 @@ export default function Purchases() {
       total: 0,
       status: 'pending',
       inventoryMethod: 'perpetual',
+      paymentMethod: 'credit',
     });
     setLineItems([]);
     setEditingPurchase(null);
@@ -295,6 +330,49 @@ export default function Purchases() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
+                    <Label>Payment Method</Label>
+                    <Select
+                      value={formData.paymentMethod}
+                      onValueChange={(value: PurchasePaymentMethod) =>
+                        setFormData({ ...formData, paymentMethod: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="credit">Credit (Accounts Payable)</SelectItem>
+                        <SelectItem value="cash">Cash</SelectItem>
+                        <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {formData.paymentMethod === 'bank-transfer' && (
+                    <div>
+                      <Label>Bank Account</Label>
+                      <Select
+                        value={formData.bankAccountId || ''}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, bankAccountId: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select bank account" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {bankAccounts.map(account => (
+                            <SelectItem key={account.id} value={account.ledger_account}>
+                              {account.account_name} - {account.bank_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
                     <Label>Inventory Method</Label>
                     <Select
                       value={formData.inventoryMethod}
@@ -346,13 +424,30 @@ export default function Purchases() {
                 <div className="border rounded-lg p-4 space-y-4">
                   <h3 className="font-semibold">Line Items</h3>
                   
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-6 gap-2">
                     <div>
                       <Label>Description</Label>
                       <Input
                         value={currentLineItem.description}
                         onChange={(e) => setCurrentLineItem({ ...currentLineItem, description: e.target.value })}
                       />
+                    </div>
+                    <div>
+                      <Label>Inventory Type</Label>
+                      <Select
+                        value={currentLineItem.inventoryType}
+                        onValueChange={(value: InventoryType) => setCurrentLineItem({ ...currentLineItem, inventoryType: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="raw-materials">Raw Materials</SelectItem>
+                          <SelectItem value="work-in-progress">Work in Progress</SelectItem>
+                          <SelectItem value="consumables">Consumables</SelectItem>
+                          <SelectItem value="finished-products">Finished Products</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label>Quantity</Label>

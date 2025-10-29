@@ -125,7 +125,7 @@ export const recordPurchaseOrder = async (
 
 /**
  * Record Purchase (Supplier Invoice) with Inventory Update
- * Dr Inventory (or Expense) / Cr Accounts Payable
+ * Dr Inventory (based on type) / Cr Accounts Payable OR Cash OR Bank
  */
 export const recordPurchaseInvoice = async (
   purchaseNumber: string,
@@ -135,15 +135,37 @@ export const recordPurchaseInvoice = async (
   total: number,
   date: string,
   companyType: CompanyType,
+  paymentMethod: 'credit' | 'cash' | 'bank-transfer',
+  inventoryType: 'raw-materials' | 'work-in-progress' | 'consumables' | 'finished-products',
   userId: string,
   companyId: string,
+  bankAccountId?: string,
   supplierInvoiceNumber?: string
 ): Promise<string> => {
   const lines: JournalEntryLine[] = [];
 
-  // All inventory/raw materials go to account 1109 (or 1310 for specific cases)
+  // Determine inventory account based on inventory type
   let inventoryAccount = '1109';
   let inventoryName = '1109 - Raw Materials';
+
+  switch (inventoryType) {
+    case 'raw-materials':
+      inventoryAccount = '1109';
+      inventoryName = '1109 - Raw Materials';
+      break;
+    case 'work-in-progress':
+      inventoryAccount = '1310';
+      inventoryName = '1310 - Work in Progress';
+      break;
+    case 'consumables':
+      inventoryAccount = '1111';
+      inventoryName = '1111 - Consumables';
+      break;
+    case 'finished-products':
+      inventoryAccount = '1110';
+      inventoryName = '1110 - Finished Goods';
+      break;
+  }
 
   // Professional services expense rather than capitalize
   if (companyType === 'professional-services') {
@@ -171,19 +193,44 @@ export const recordPurchaseInvoice = async (
     });
   }
 
-  // Credit: Accounts Payable
-  lines.push({
-    account_id: '3100',
-    account_name: '3100 - Trade and Other Payables',
-    debit: 0,
-    credit: total,
-    description: `Payable to ${supplier}`,
-  });
+  // Credit: Based on payment method
+  switch (paymentMethod) {
+    case 'credit':
+      lines.push({
+        account_id: '3100',
+        account_name: '3100 - Trade and Other Payables',
+        debit: 0,
+        credit: total,
+        description: `Payable to ${supplier}`,
+      });
+      break;
+    case 'cash':
+      lines.push({
+        account_id: '1100',
+        account_name: '1100 - Cash on Hand',
+        debit: 0,
+        credit: total,
+        description: `Cash payment to ${supplier}`,
+      });
+      break;
+    case 'bank-transfer':
+      if (!bankAccountId) {
+        throw new Error('Bank account ID is required for bank transfer payment method');
+      }
+      lines.push({
+        account_id: bankAccountId,
+        account_name: 'Bank Account',
+        debit: 0,
+        credit: total,
+        description: `Bank payment to ${supplier}`,
+      });
+      break;
+  }
 
   const entry: JournalEntryData = {
     entry_number: `PUR-${purchaseNumber}`,
     date,
-    description: `Purchase from ${supplier}`,
+    description: `Purchase from ${supplier} (${paymentMethod})`,
     reference: supplierInvoiceNumber || purchaseNumber,
     lines,
   };

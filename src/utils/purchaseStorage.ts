@@ -37,6 +37,7 @@ export const loadPurchases = async (): Promise<Purchase[]> => {
       discount: 0,
       total: Number(p.total_amount),
       status: p.status as any,
+      paymentMethod: 'credit' as const,
       notes: p.notes || undefined,
       inventoryMethod: 'perpetual' as const,
       supplierInvoiceNumber: p.supplier_invoice_number || undefined,

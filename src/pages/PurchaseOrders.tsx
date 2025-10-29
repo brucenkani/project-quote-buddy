@@ -180,6 +180,7 @@ export default function PurchaseOrders() {
       discount: order.discount,
       total: order.total,
       status: 'pending',
+      paymentMethod: 'credit',
       notes: `Converted from PO ${order.poNumber}`,
       projectId: order.projectId,
       inventoryMethod: 'perpetual',
