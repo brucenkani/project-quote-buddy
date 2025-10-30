@@ -178,8 +178,8 @@ export const Navigation = () => {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] sm:w-[350px]">
-              <nav className="flex flex-col gap-4 mt-8">
+            <SheetContent side="right" className="w-[280px] sm:w-[350px] overflow-y-auto">
+              <nav className="flex flex-col gap-4 mt-8 pb-20">
                 <Button
                   variant={location.pathname === '/accounting' ? 'default' : 'ghost'}
                   asChild
