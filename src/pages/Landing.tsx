@@ -200,36 +200,36 @@ export default function Landing() {
         {/* Need an Accountant Section */}
         <div className="max-w-4xl mx-auto">
           <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-            <CardContent className="p-8">
-              <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-                <div className="flex items-center gap-6">
-                  <div className="bg-primary text-primary-foreground rounded-2xl px-8 py-6 text-center">
-                    <h3 className="text-2xl font-bold">Need an Accountant?</h3>
-                    <ArrowRight className="h-6 w-6 mx-auto mt-2" />
+            <CardContent className="p-4 sm:p-8">
+              <div className="flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-8">
+                <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full lg:w-auto">
+                  <div className="bg-primary text-primary-foreground rounded-2xl px-6 sm:px-8 py-4 sm:py-6 text-center w-full sm:w-auto">
+                    <h3 className="text-xl sm:text-2xl font-bold">Need an Accountant?</h3>
+                    <ArrowRight className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mt-2" />
                   </div>
                   
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      <Button variant="outline" className="gap-2" asChild>
+                  <div className="space-y-3 sm:space-y-4 w-full sm:w-auto">
+                    <div className="flex items-center justify-center sm:justify-start gap-3 sm:gap-4">
+                      <Button variant="outline" className="gap-2 flex-1 sm:flex-none" asChild>
                         <a href="tel:+27659672215">
                           <Phone className="h-4 w-4" />
                           Call
                         </a>
                       </Button>
-                      <Button variant="outline" className="gap-2" asChild>
+                      <Button variant="outline" className="gap-2 flex-1 sm:flex-none" asChild>
                         <a href="https://wa.me/27659672215" target="_blank" rel="noopener noreferrer">
                           <MessageCircle className="h-4 w-4" />
                           WhatsApp
                         </a>
                       </Button>
                     </div>
-                    <p className="text-sm text-muted-foreground">+27 65 967 2215</p>
+                    <p className="text-sm text-muted-foreground text-center sm:text-left">+27 65 967 2215</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6">
-                  <div className="text-center">
-                    <Button className="gap-2 mb-2" asChild>
+                <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full lg:w-auto">
+                  <div className="text-center w-full sm:w-auto">
+                    <Button className="gap-2 mb-2 w-full sm:w-auto" asChild>
                       <a href="mailto:bruce@nkani.co.za">
                         <Mail className="h-4 w-4" />
                         Email Us
@@ -241,7 +241,7 @@ export default function Landing() {
                   <img 
                     src={bruceProfile} 
                     alt="Bruce - Professional Accountant" 
-                    className="w-24 h-24 rounded-full object-cover border-4 border-background shadow-lg"
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-background shadow-lg"
                   />
                 </div>
               </div>
