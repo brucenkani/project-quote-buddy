@@ -36,12 +36,14 @@ export const Navigation = () => {
     { path: '/invoices', label: 'Invoices', icon: DollarSign },
     { path: '/invoices/recurring', label: 'Recurring Invoices', icon: FileText },
     { path: '/invoices/statements', label: 'Statements', icon: FileText },
+    { path: '/reports/ar-aging', label: 'AR Age Analysis', icon: BarChart3 },
   ];
 
   const suppliersInventoryMenuItems = [
     { path: '/purchase-orders', label: 'Purchase Orders', icon: FileText },
     { path: '/purchases', label: 'Purchases', icon: ShoppingCart },
     { path: '/inventory', label: 'Inventory', icon: Package },
+    { path: '/reports/ap-aging', label: 'AP Age Analysis', icon: BarChart3 },
   ];
 
   const transactionsMenuItems = [

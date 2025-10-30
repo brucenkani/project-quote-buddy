@@ -6,7 +6,7 @@ import { useCompany } from '@/contexts/CompanyContext';
 import { 
   LayoutDashboard, FileText, Receipt, CreditCard, ShoppingCart, 
   DollarSign, Upload, Wallet, Send, TrendingUp, Scale, 
-  FileCheck, Settings, Landmark
+  FileCheck, Settings, Landmark, Clock
 } from 'lucide-react';
 
 export default function AccountingDashboard() {
@@ -101,6 +101,22 @@ export default function AccountingDashboard() {
       path: '/landing-settings',
       iconColor: 'text-purple-600',
       iconBg: 'bg-purple-100'
+    },
+    {
+      title: 'AR Age Analysis',
+      description: 'View accounts receivable aging by customer.',
+      icon: Clock,
+      path: '/reports/ar-aging',
+      iconColor: 'text-teal-600',
+      iconBg: 'bg-teal-100'
+    },
+    {
+      title: 'AP Age Analysis',
+      description: 'View accounts payable aging by supplier.',
+      icon: Clock,
+      path: '/reports/ap-aging',
+      iconColor: 'text-rose-600',
+      iconBg: 'bg-rose-100'
     }
   ];
 

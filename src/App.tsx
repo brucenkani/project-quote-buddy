@@ -73,6 +73,8 @@ import VarianceAnalysis from "./pages/analytics/VarianceAnalysis";
 import StrategicPlanning from "./pages/analytics/StrategicPlanning";
 import CustomReports from "./pages/analytics/CustomReports";
 import DashboardBuilder from "./pages/analytics/DashboardBuilder";
+import ARAgingReport from "./pages/reports/ARAgingReport";
+import APAgingReport from "./pages/reports/APAgingReport";
 
 const queryClient = new QueryClient();
 
@@ -158,6 +160,8 @@ const App = () => (
           <Route path="/expenses/:id/history" element={<ProtectedRoute><ExpenseHistory /></ProtectedRoute>} />
           <Route path="/expenses/:id" element={<ProtectedRoute><Expenses /></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+          <Route path="/reports/ar-aging" element={<ProtectedRoute><ARAgingReport /></ProtectedRoute>} />
+          <Route path="/reports/ap-aging" element={<ProtectedRoute><APAgingReport /></ProtectedRoute>} />
           <Route path="/invite" element={<ProtectedRoute><InviteUsers /></ProtectedRoute>} />
           <Route path="/permissions" element={<ProtectedRoute><PermissionsManager /></ProtectedRoute>} />
           
