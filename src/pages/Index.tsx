@@ -361,13 +361,11 @@ export default function Index() {
       </section>
 
       {/* Features Grid */}
-      <section className="container mx-auto px-4 py-8">
-        <h3 className="text-3xl font-bold text-center mb-10">Everything You Need to Run Your Business</h3>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto mb-12">
-          <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer" onClick={() => navigate('/accounting')}>
+      <section className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto mb-8">
+          <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer bg-gradient-to-br from-blue-50/50 to-blue-100/30 dark:from-blue-950/20 dark:to-blue-900/10" onClick={() => navigate('/accounting')}>
             <CardHeader>
-              <Calculator className="h-12 w-12 mb-4 text-primary" />
+              <Calculator className="h-12 w-12 mb-4 text-blue-600 dark:text-blue-400" />
               <CardTitle>Accounting System</CardTitle>
               <CardDescription>Complete financial management at your fingertips</CardDescription>
             </CardHeader>
@@ -397,9 +395,9 @@ export default function Index() {
             </CardContent>
           </Card>
 
-          <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer" onClick={() => navigate('/payroll')}>
+          <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer bg-gradient-to-br from-green-50/50 to-green-100/30 dark:from-green-950/20 dark:to-green-900/10" onClick={() => navigate('/payroll')}>
             <CardHeader>
-              <Users className="h-12 w-12 mb-4 text-primary" />
+              <Users className="h-12 w-12 mb-4 text-green-600 dark:text-green-400" />
               <CardTitle>Payroll & HR System</CardTitle>
               <CardDescription>Simplify employee management and payroll</CardDescription>
             </CardHeader>
@@ -430,9 +428,9 @@ export default function Index() {
           </Card>
 
 
-          <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer" onClick={() => navigate('/crm-customer-support')}>
+          <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer bg-gradient-to-br from-purple-50/50 to-purple-100/30 dark:from-purple-950/20 dark:to-purple-900/10" onClick={() => navigate('/crm-customer-support')}>
             <CardHeader>
-              <UserCircle className="h-12 w-12 mb-4 text-primary" />
+              <UserCircle className="h-12 w-12 mb-4 text-purple-600 dark:text-purple-400" />
               <CardTitle>CRM & Customer Support</CardTitle>
               <CardDescription>Complete customer management & support system</CardDescription>
             </CardHeader>
