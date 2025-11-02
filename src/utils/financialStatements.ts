@@ -294,7 +294,7 @@ export const generateBalanceSheet = (
   return { assets, liabilities, equity, totalAssets, totalLiabilities, totalEquity };
 };
 
-// Generate Cash Flow Statement
+// Generate Cash Flow Statement (Indirect Method)
 export const generateCashFlowStatement = (
   accounts: ChartAccount[],
   periodData: PeriodData
@@ -303,43 +303,123 @@ export const generateCashFlowStatement = (
   const investing: { description: string; amount: number }[] = [];
   const financing: { description: string; amount: number }[] = [];
 
-  // Operating activities - revenue and expense accounts
+  // Step 1: Start with Net Income (from Income Statement)
+  const incomeStatement = generateIncomeStatement(accounts, periodData);
+  const netIncome = incomeStatement.netIncome;
+  
+  operating.push({ description: 'Net Income', amount: netIncome });
+
+  // Step 2: Add back non-cash expenses
   accounts.forEach(account => {
-    const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
+    const accountType = getAccountTypeFromNumber(account.accountNumber);
+    const accountName = account.accountName.toLowerCase();
     
-    if (balance === 0) return;
-
-    const accountType = getAccountTypeFromNumber(account.accountNumber);
-    const accountLabel = `${account.accountNumber} - ${account.accountName}`;
-
-    if (accountType === 'revenue') {
-      operating.push({ description: accountLabel, amount: balance });
-    } else if (accountType === 'expense') {
-      operating.push({ description: accountLabel, amount: -balance });
-    }
-  });
-
-  // Investing activities - non-current assets (16xx-19xx)
-  accounts.forEach(account => {
-    const accountType = getAccountTypeFromNumber(account.accountNumber);
-    if (accountType === 'non-current-asset') {
+    // Identify non-cash expense accounts (depreciation, amortization, etc.)
+    if (accountType === 'expense' && 
+        (accountName.includes('depreciation') || 
+         accountName.includes('amortization') ||
+         accountName.includes('impairment'))) {
       const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
       if (balance !== 0) {
         const accountLabel = `${account.accountNumber} - ${account.accountName}`;
-        investing.push({ description: accountLabel, amount: -balance });
+        operating.push({ description: `Add: ${accountLabel}`, amount: Math.abs(balance) });
       }
     }
   });
 
-  // Financing activities - equity (5xxx) and non-current liabilities (4xxx)
+  // Step 3: Adjust for changes in working capital (Current Assets and Current Liabilities)
+  // For this to work properly, we need to compare with prior period balances
+  // Since we don't have prior period data here, we'll use the current period movements
+  
+  // Changes in Current Assets (excluding cash)
   accounts.forEach(account => {
     const accountType = getAccountTypeFromNumber(account.accountNumber);
+    const accountName = account.accountName.toLowerCase();
     
-    if (accountType === 'equity' || accountType === 'non-current-liability') {
+    if (accountType === 'current-asset' && 
+        !accountName.includes('cash') && 
+        !accountName.includes('bank')) {
       const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
       if (balance !== 0) {
         const accountLabel = `${account.accountNumber} - ${account.accountName}`;
-        financing.push({ description: accountLabel, amount: balance });
+        // Increase in current assets = cash outflow (negative)
+        // Decrease in current assets = cash inflow (positive)
+        operating.push({ 
+          description: balance > 0 ? `Increase in ${accountLabel}` : `Decrease in ${accountLabel}`, 
+          amount: -balance 
+        });
+      }
+    }
+  });
+
+  // Changes in Current Liabilities
+  accounts.forEach(account => {
+    const accountType = getAccountTypeFromNumber(account.accountNumber);
+    
+    if (accountType === 'current-liability') {
+      const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
+      if (balance !== 0) {
+        const accountLabel = `${account.accountNumber} - ${account.accountName}`;
+        // Increase in current liabilities = cash inflow (positive)
+        // Decrease in current liabilities = cash outflow (negative)
+        operating.push({ 
+          description: balance > 0 ? `Increase in ${accountLabel}` : `Decrease in ${accountLabel}`, 
+          amount: balance 
+        });
+      }
+    }
+  });
+
+  // Investing activities - changes in non-current assets
+  accounts.forEach(account => {
+    const accountType = getAccountTypeFromNumber(account.accountNumber);
+    if (accountType === 'non-current-asset') {
+      const accountName = account.accountName.toLowerCase();
+      // Exclude accumulated depreciation as it's already handled in operating activities
+      if (!accountName.includes('accumulated depreciation') && 
+          !accountName.includes('depreciation')) {
+        const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
+        if (balance !== 0) {
+          const accountLabel = `${account.accountNumber} - ${account.accountName}`;
+          // Purchase of assets = cash outflow (negative)
+          // Sale of assets = cash inflow (positive)
+          investing.push({ 
+            description: balance > 0 ? `Purchase of ${accountLabel}` : `Sale of ${accountLabel}`, 
+            amount: -balance 
+          });
+        }
+      }
+    }
+  });
+
+  // Financing activities - equity and non-current liabilities (excluding retained earnings)
+  accounts.forEach(account => {
+    const accountType = getAccountTypeFromNumber(account.accountNumber);
+    const accountName = account.accountName.toLowerCase();
+    
+    if ((accountType === 'equity' || accountType === 'non-current-liability') &&
+        !accountName.includes('retained earnings')) {
+      const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
+      if (balance !== 0) {
+        const accountLabel = `${account.accountNumber} - ${account.accountName}`;
+        
+        if (accountType === 'equity') {
+          // Equity contributions = cash inflow (positive)
+          // Drawings/Dividends = cash outflow (negative)
+          if (accountName.includes('drawing') || accountName.includes('dividend')) {
+            financing.push({ description: `${accountLabel}`, amount: -Math.abs(balance) });
+          } else {
+            financing.push({ description: `${accountLabel}`, amount: balance });
+          }
+        } else {
+          // Non-current liabilities
+          // Loan received = cash inflow (positive)
+          // Loan repayment = cash outflow (negative)
+          financing.push({ 
+            description: balance > 0 ? `Proceeds from ${accountLabel}` : `Repayment of ${accountLabel}`, 
+            amount: balance 
+          });
+        }
       }
     }
   });
