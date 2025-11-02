@@ -23,7 +23,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Save, Upload, X, FileDown, FileSpreadsheet, Database, Shield, MoreVertical, Download, FileText } from 'lucide-react';
 import { CreateCompanyDialog } from '@/components/CreateCompanyDialog';
-import { defaultChartOfAccounts } from '@/types/chartOfAccounts';
+import { defaultChartOfAccounts, accountSubCategories, AccountSubCategory } from '@/types/chartOfAccounts';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AccountType } from '@/types/accounting';
 
@@ -284,7 +284,7 @@ export default function LandingSettings() {
   const [showNewAccountDialog, setShowNewAccountDialog] = useState(false);
   const [showEditAccountDialog, setShowEditAccountDialog] = useState(false);
   const [editingAccount, setEditingAccount] = useState<any>(null);
-  const [newAccount, setNewAccount] = useState({ accountNumber: '', accountName: '', accountType: 'current-asset' as AccountType });
+  const [newAccount, setNewAccount] = useState({ accountNumber: '', accountName: '', accountType: 'current-asset' as AccountType, subCategory: undefined as AccountSubCategory | undefined });
 
   const selectedCountry = countries.find(c => c.code === localSettings.country);
   const formSelectedCountry = countries.find(c => c.code === companyFormData.country);
@@ -728,7 +728,7 @@ export default function LandingSettings() {
 
   const handleAccountTypeChange = (accountType: AccountType) => {
     const nextNumber = generateNextAccountNumber(accountType);
-    setNewAccount({ ...newAccount, accountType, accountNumber: nextNumber });
+    setNewAccount({ ...newAccount, accountType, accountNumber: nextNumber, subCategory: undefined });
   };
 
   const handleCreateAccount = () => {
@@ -737,11 +737,16 @@ export default function LandingSettings() {
       return;
     }
     
+    if (!newAccount.subCategory) {
+      toast({ title: 'Please select a sub-category', variant: 'destructive' });
+      return;
+    }
+    
     addChartAccount({ ...newAccount, isDefault: false });
     const updatedAccounts = loadChartOfAccounts();
     setAccounts(updatedAccounts);
     setShowNewAccountDialog(false);
-    setNewAccount({ accountNumber: '', accountName: '', accountType: 'current-asset' });
+    setNewAccount({ accountNumber: '', accountName: '', accountType: 'current-asset', subCategory: undefined });
     toast({ title: 'Account created successfully' });
   };
 
@@ -1211,6 +1216,24 @@ export default function LandingSettings() {
                           </Select>
                         </div>
                         <div className="space-y-2">
+                          <Label>Sub-Category</Label>
+                          <Select
+                            value={newAccount.subCategory}
+                            onValueChange={(value: AccountSubCategory) => setNewAccount({ ...newAccount, subCategory: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select sub-category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {accountSubCategories[newAccount.accountType].map((subCat) => (
+                                <SelectItem key={subCat.value} value={subCat.value}>
+                                  {subCat.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
                           <Label>Account Number</Label>
                           <Input
                             value={newAccount.accountNumber}
@@ -1230,7 +1253,7 @@ export default function LandingSettings() {
                       <div className="flex justify-end gap-2">
                         <Button variant="outline" onClick={() => {
                           setShowNewAccountDialog(false);
-                          setNewAccount({ accountNumber: '', accountName: '', accountType: 'current-asset' });
+                          setNewAccount({ accountNumber: '', accountName: '', accountType: 'current-asset', subCategory: undefined });
                         }}>Cancel</Button>
                         <Button onClick={handleCreateAccount}>Create</Button>
                       </div>

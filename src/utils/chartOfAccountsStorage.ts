@@ -69,6 +69,7 @@ const initializeCache = async () => {
         accountNumber: row.account_number,
         accountName: row.account_name,
         accountType: row.account_type as any,
+        subCategory: row.sub_category as any,
         isDefault: false,
         openingBalance: Number(row.opening_balance),
         createdAt: row.created_at || new Date().toISOString(),
@@ -125,6 +126,7 @@ const saveChartOfAccountsToDb = async (accounts: ChartAccount[]): Promise<void> 
           account_number: acc.accountNumber,
           account_name: acc.accountName,
           account_type: acc.accountType,
+          sub_category: acc.subCategory,
           is_active: true,
           opening_balance: acc.openingBalance || 0,
         }))
