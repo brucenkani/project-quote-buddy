@@ -826,6 +826,19 @@ export default function LandingSettings() {
     return labels[type] || type;
   };
 
+  const getSubCategoryLabel = (subCategory?: AccountSubCategory) => {
+    if (!subCategory) return '-';
+    
+    for (const categories of Object.values(accountSubCategories)) {
+      const found = categories.find(cat => cat.value === subCategory);
+      if (found) return found.label;
+    }
+    
+    return subCategory.split('-').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -1346,56 +1359,81 @@ export default function LandingSettings() {
                   </AlertDialog>
                 </div>
 
-                {/* Display Chart of Accounts Table */}
+                {/* Display Chart of Accounts Table - Grouped by Sub-Categories */}
                 <div className="mt-6 border rounded-lg">
                   <ScrollArea className="h-[400px]">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[120px]">Account Code</TableHead>
-                          <TableHead>Account Name</TableHead>
-                          <TableHead className="w-[200px]">Category</TableHead>
-                          <TableHead className="w-[100px] text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {accounts.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                              No accounts found. Click "Load Standard Chart" to initialize.
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          accounts.map((account) => (
-                            <TableRow key={account.id}>
-                              <TableCell className="font-mono">{account.accountNumber}</TableCell>
-                              <TableCell>{account.accountName}</TableCell>
-                              <TableCell className="text-muted-foreground">
-                                {getCategoryLabel(account.accountType)}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleEditAccount(account)}
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleDeleteAccount(account)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
+                    {accounts.length === 0 ? (
+                      <div className="text-center text-muted-foreground py-8">
+                        No accounts found. Click "Load Standard Chart" to initialize.
+                      </div>
+                    ) : (
+                      <div className="space-y-6 p-4">
+                        {/* Group accounts by type and sub-category */}
+                        {(['current-asset', 'non-current-asset', 'current-liability', 'non-current-liability', 'equity', 'revenue', 'expense'] as AccountType[]).map((accountType) => {
+                          const typeAccounts = accounts.filter(acc => acc.accountType === accountType);
+                          if (typeAccounts.length === 0) return null;
+
+                          // Group by sub-category
+                          const subCategoryGroups = typeAccounts.reduce((acc, account) => {
+                            const subCat = account.subCategory || 'other';
+                            if (!acc[subCat]) acc[subCat] = [];
+                            acc[subCat].push(account);
+                            return acc;
+                          }, {} as Record<string, typeof accounts>);
+
+                          return (
+                            <div key={accountType} className="space-y-3">
+                              <h3 className="text-base font-semibold text-primary border-b pb-2">
+                                {getCategoryLabel(accountType)}
+                              </h3>
+                              
+                              {Object.entries(subCategoryGroups).map(([subCat, subAccounts]) => (
+                                <div key={subCat} className="ml-4">
+                                  <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                                    {getSubCategoryLabel(subCat as AccountSubCategory)}
+                                  </h4>
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead className="w-[120px]">Account Code</TableHead>
+                                        <TableHead>Account Name</TableHead>
+                                        <TableHead className="w-[100px] text-right">Actions</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {subAccounts.sort((a, b) => a.accountNumber.localeCompare(b.accountNumber)).map((account) => (
+                                        <TableRow key={account.id}>
+                                          <TableCell className="font-mono">{account.accountNumber}</TableCell>
+                                          <TableCell>{account.accountName}</TableCell>
+                                          <TableCell className="text-right">
+                                            <div className="flex justify-end gap-2">
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleEditAccount(account)}
+                                              >
+                                                <Pencil className="h-4 w-4" />
+                                              </Button>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleDeleteAccount(account)}
+                                              >
+                                                <Trash2 className="h-4 w-4" />
+                                              </Button>
+                                            </div>
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
                                 </div>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </ScrollArea>
                 </div>
 
