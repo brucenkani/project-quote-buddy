@@ -58,6 +58,8 @@ export default function Reports() {
   const [showIncomeStatementPreview, setShowIncomeStatementPreview] = useState(false);
   const [showBalanceSheetPreview, setShowBalanceSheetPreview] = useState(false);
   const [showCashFlowPreview, setShowCashFlowPreview] = useState(false);
+  const [showEquityStatementPreview, setShowEquityStatementPreview] = useState(false);
+  const [showVATReportPreview, setShowVATReportPreview] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -453,7 +455,7 @@ export default function Reports() {
                 <div className="flex gap-2">
                   <Button onClick={() => setShowIncomeStatementPreview(true)} variant="secondary" className="gap-2">
                     <Eye className="h-4 w-4" />
-                    View on Screen
+                    View Report
                   </Button>
                   <Button onClick={() => handleGenerateIncomeStatement('pdf')} className="gap-2">
                     <FileDown className="h-4 w-4" />
@@ -478,6 +480,10 @@ export default function Reports() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
+                  <Button onClick={() => setShowBalanceSheetPreview(true)} variant="secondary" className="gap-2">
+                    <Eye className="h-4 w-4" />
+                    View Report
+                  </Button>
                   <Button onClick={() => handleGenerateBalanceSheet('pdf')} className="gap-2">
                     <FileDown className="h-4 w-4" />
                     Export to PDF
@@ -501,6 +507,10 @@ export default function Reports() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
+                  <Button onClick={() => setShowCashFlowPreview(true)} variant="secondary" className="gap-2">
+                    <Eye className="h-4 w-4" />
+                    View Report
+                  </Button>
                   <Button onClick={() => handleGenerateCashFlow('pdf')} className="gap-2">
                     <FileDown className="h-4 w-4" />
                     Export to PDF
@@ -524,6 +534,10 @@ export default function Reports() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
+                  <Button onClick={() => setShowEquityStatementPreview(true)} variant="secondary" className="gap-2">
+                    <Eye className="h-4 w-4" />
+                    View Report
+                  </Button>
                   <Button onClick={() => handleGenerateEquityStatement('pdf')} className="gap-2">
                     <FileDown className="h-4 w-4" />
                     Export to PDF
@@ -547,6 +561,10 @@ export default function Reports() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
+                  <Button onClick={() => setShowVATReportPreview(true)} variant="secondary" className="gap-2">
+                    <Eye className="h-4 w-4" />
+                    View Report
+                  </Button>
                   <Button onClick={() => handleGenerateVATReport('pdf')} className="gap-2">
                     <FileDown className="h-4 w-4" />
                     Export to PDF
@@ -570,6 +588,10 @@ export default function Reports() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
+                  <Button onClick={() => setShowTrialBalancePreview(true)} variant="secondary" className="gap-2">
+                    <Eye className="h-4 w-4" />
+                    View Report
+                  </Button>
                   <Button onClick={() => handleGenerateTrialBalance('pdf')} className="gap-2">
                     <FileDown className="h-4 w-4" />
                     Export to PDF
@@ -608,6 +630,10 @@ export default function Reports() {
                   </Select>
                 </div>
                 <div className="flex gap-2">
+                  <Button onClick={() => setShowLedgerPreview(true)} variant="secondary" className="gap-2" disabled={!selectedAccount}>
+                    <Eye className="h-4 w-4" />
+                    View Report
+                  </Button>
                   <Button onClick={() => handleGenerateLedger('pdf')} className="gap-2">
                     <FileDown className="h-4 w-4" />
                     Export to PDF
