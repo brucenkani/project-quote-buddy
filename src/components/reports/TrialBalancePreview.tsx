@@ -59,7 +59,7 @@ export function TrialBalancePreview({
       type: account.accountType,
       balance: netBalance,
     };
-  }); // REMOVED .filter(b => b.balance !== 0); to show ALL accounts
+  }).filter(b => b.balance !== 0);
 
   const totalBalance = balances.reduce((sum, b) => sum + b.balance, 0);
 

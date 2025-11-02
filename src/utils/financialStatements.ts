@@ -176,8 +176,8 @@ export const generateIncomeStatement = (
   accounts.forEach(account => {
     const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
     
-    // CHANGED: Include ALL accounts, even with zero balance
-    // if (balance === 0) return; // REMOVED THIS LINE
+    // Skip accounts with zero balance
+    if (balance === 0) return;
     
     const accountType = getAccountTypeFromNumber(account.accountNumber);
     const accountLabel = `${account.accountNumber} - ${account.accountName}`;
@@ -263,8 +263,8 @@ export const generateBalanceSheet = (
   accounts.forEach(account => {
     const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
     
-    // CHANGED: Include ALL accounts, even with zero balance
-    // if (balance === 0) return; // REMOVED THIS LINE
+    // Skip accounts with zero balance
+    if (balance === 0) return;
 
     // Determine account type from account number for accurate categorization
     const accountType = getAccountTypeFromNumber(account.accountNumber);
