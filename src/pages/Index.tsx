@@ -331,8 +331,6 @@ export default function Index() {
 
       {/* Features Grid */}
       <section className="container mx-auto px-4 py-8">
-        <h3 className="text-3xl font-bold text-center mb-10">Everything You Need to Run Your Business</h3>
-        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto mb-12">
           <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer" onClick={() => navigate('/accounting')}>
             <CardHeader>
