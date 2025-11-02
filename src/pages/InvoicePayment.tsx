@@ -250,10 +250,17 @@ export default function InvoicePayment() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="bank">Bank Transfer</SelectItem>
+                    {bankAccounts.length > 0 && (
+                      <SelectItem value="bank">Bank Transfer</SelectItem>
+                    )}
                     <SelectItem value="cash">Cash</SelectItem>
                   </SelectContent>
                 </Select>
+                {bankAccounts.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Set up a bank account to enable Bank Transfer payments
+                  </p>
+                )}
               </div>
 
               {paymentData.paymentMethod === 'bank' && (

@@ -304,12 +304,21 @@ export default function PurchasePayment() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="cash">Cash</SelectItem>
-                        <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
-                        <SelectItem value="cheque">Cheque</SelectItem>
-                        <SelectItem value="credit-card">Credit Card</SelectItem>
+                        {bankAccounts.length > 0 && (
+                          <>
+                            <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
+                            <SelectItem value="cheque">Cheque</SelectItem>
+                            <SelectItem value="credit-card">Credit Card</SelectItem>
+                          </>
+                        )}
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
+                    {bankAccounts.length === 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Set up a bank account to enable Bank Transfer payments
+                      </p>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="reference">Reference Number</Label>
