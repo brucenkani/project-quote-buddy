@@ -335,6 +335,24 @@ export default function Index() {
                       </form>
                     </DialogContent>
                   </Dialog>
+
+                  {/* Profile Picture below buttons */}
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <img 
+                        src={bruceProfile} 
+                        alt="Bruce - Professional Accountant" 
+                        className="w-32 h-32 rounded-full object-cover border-4 border-primary/30 shadow-xl cursor-pointer hover:scale-105 transition-transform mx-auto mt-2"
+                      />
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-2xl">
+                      <img 
+                        src={bruceProfile} 
+                        alt="Bruce - Professional Accountant" 
+                        className="w-full h-auto rounded-lg"
+                      />
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
 
@@ -385,25 +403,6 @@ export default function Index() {
                 </Card>
               </div>
 
-              {/* Profile Picture - Hidden on mobile */}
-              <div className="flex-shrink-0 hidden xl:block">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <img 
-                      src={bruceProfile} 
-                      alt="Bruce - Professional Accountant" 
-                      className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 border-primary/30 shadow-xl cursor-pointer hover:scale-105 transition-transform"
-                    />
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-2xl">
-                    <img 
-                      src={bruceProfile} 
-                      alt="Bruce - Professional Accountant" 
-                      className="w-full h-auto rounded-lg"
-                    />
-                  </DialogContent>
-                </Dialog>
-              </div>
             </div>
           </div>
         </div>
@@ -513,54 +512,6 @@ export default function Index() {
 
         </div>
 
-        {/* Additional Services */}
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {/* Websites & Excel Templates Shop */}
-          <div className="flex items-center gap-6 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
-            <div className="flex-shrink-0 hidden sm:block">
-              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
-                <Binary className="h-10 w-10 text-primary" />
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-xl font-bold mb-2">Websites & Excel Templates</h3>
-              <p className="text-muted-foreground mb-4">
-                Professional websites and custom Excel tools to streamline your business operations
-              </p>
-              <Button 
-                variant="outline" 
-                asChild
-              >
-                <a href="https://premwebs.com" target="_blank" rel="noopener noreferrer">
-                  Visit Premwebs
-                </a>
-              </Button>
-            </div>
-          </div>
-
-          {/* Report & Document Builders */}
-          <div className="flex items-center gap-6 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
-            <div className="flex-shrink-0 hidden sm:block">
-              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
-                <FileText className="h-10 w-10 text-primary" />
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-xl font-bold mb-2">Report & Document Builders</h3>
-              <p className="text-muted-foreground mb-4">
-                Custom reports, presentations, and professional documents tailored to your needs
-              </p>
-              <Button 
-                variant="outline" 
-                asChild
-              >
-                <a href="https://smebox.co.za" target="_blank" rel="noopener noreferrer">
-                  Visit SMEBox
-                </a>
-              </Button>
-            </div>
-          </div>
-        </div>
       </section>
 
 
