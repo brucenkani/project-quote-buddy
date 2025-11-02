@@ -40,15 +40,13 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Check if user is owner
-    const { data: roleData, error: roleError } = await supabaseClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .single();
+    // Check if user is super admin
+    const { data: isSuperAdmin } = await supabaseClient.rpc('is_super_admin', {
+      _user_id: user.id
+    });
 
-    if (roleError || roleData?.role !== "owner") {
-      return new Response(JSON.stringify({ error: "Unauthorized - Only owners can delete users" }), {
+    if (!isSuperAdmin) {
+      return new Response(JSON.stringify({ error: "Unauthorized - Only super admins can delete users" }), {
         status: 403,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
