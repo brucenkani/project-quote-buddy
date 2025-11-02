@@ -102,6 +102,8 @@ export default function Index() {
             <h1 className="text-2xl font-bold">BizManager</h1>
           </div>
           <div className="flex gap-3">
+            <Button variant="ghost" size="lg" onClick={() => navigate('/community')}>Business Community</Button>
+            <Button variant="ghost" size="lg" onClick={() => navigate('/knowledge')}>Knowledge Centre</Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -124,8 +126,6 @@ export default function Index() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            <Button variant="ghost" size="lg" onClick={() => navigate('/community')}>Business Community</Button>
-            <Button variant="ghost" size="lg" onClick={() => navigate('/knowledge')}>Knowledge Centre</Button>
               <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
                 <DialogHeader>
                   <DialogTitle>Contact Our Team</DialogTitle>
