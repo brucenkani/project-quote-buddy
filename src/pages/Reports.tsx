@@ -9,9 +9,10 @@ import { Navigation } from '@/components/Navigation';
 import { FileDown, FileSpreadsheet, Calendar, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ChartAccount, defaultChartOfAccounts } from '@/types/chartOfAccounts';
-import { loadJournalEntriesFromDB, loadJournalEntries as loadJournalEntriesLocal, loadExpenses } from '@/utils/accountingStorage';
+import { loadJournalEntriesFromDB, loadJournalEntries as loadJournalEntriesLocal, loadExpenses, saveJournalEntry } from '@/utils/accountingStorage';
 import { loadInvoices } from '@/utils/invoiceStorage';
 import { generateTrialBalancePDF, generateTrialBalanceExcel, generateLedgerPDF, generateLedgerExcel } from '@/utils/reportGenerator';
+import { JournalEntry } from '@/types/accounting';
 import { ReportPreviewDialog } from '@/components/reports/ReportPreviewDialog';
 import { TrialBalancePreview } from '@/components/reports/TrialBalancePreview';
 import { LedgerPreview } from '@/components/reports/LedgerPreview';
@@ -132,12 +133,66 @@ export default function Reports() {
 
         // Load journal entries with local fallback
         const entriesFromDb = await loadJournalEntriesFromDB();
-        if (entriesFromDb && entriesFromDb.length > 0) {
-          setJournalEntries(entriesFromDb);
-        } else {
-          const local = loadJournalEntriesLocal();
-          setJournalEntries(local);
+        let currentEntries = (entriesFromDb && entriesFromDb.length > 0)
+          ? entriesFromDb
+          : loadJournalEntriesLocal();
+
+        // Ensure opening balances for bank accounts are recorded as journal entries
+        if (activeCompany) {
+          const { data: bankRows, error: bankErr } = await supabase
+            .from('bank_accounts')
+            .select('id, account_name, ledger_account, opening_balance, created_at, is_active')
+            .eq('company_id', activeCompany.id);
+
+          if (!bankErr && bankRows) {
+            for (const b of bankRows) {
+              const ob = Number(b.opening_balance) || 0;
+              if (ob <= 0 || b.is_active === false) continue;
+
+              const obRef = `OB-BANK-${String(b.id).slice(0, 8)}`;
+              const exists = currentEntries.some(e => e.reference === obRef);
+              if (!exists) {
+                const ledgerNumber = String(b.ledger_account).match(/^\d+/)?.[0] || String(b.ledger_account);
+                const capitalAccount = "3500 - Owner's Capital";
+                const entry: JournalEntry = {
+                  id: crypto.randomUUID(),
+                  date: (b.created_at || new Date().toISOString()).slice(0, 10),
+                  reference: obRef,
+                  description: `Opening balance for ${b.account_name}`,
+                  entries: [
+                    {
+                      id: crypto.randomUUID(),
+                      account: `${ledgerNumber} - ${b.account_name}`,
+                      accountType: 'current-asset',
+                      debit: ob,
+                      credit: 0,
+                      description: 'Bank opening balance',
+                    },
+                    {
+                      id: crypto.randomUUID(),
+                      account: capitalAccount,
+                      accountType: 'equity',
+                      debit: 0,
+                      credit: ob,
+                      description: 'Capital introduced via bank',
+                    }
+                  ],
+                  totalDebit: ob,
+                  totalCredit: ob,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                };
+                // Persist so it reflects across all reports
+                saveJournalEntry(entry);
+              }
+            }
+            // Reload entries after potential inserts
+            const refreshed = await loadJournalEntriesFromDB();
+            currentEntries = (refreshed && refreshed.length > 0) ? refreshed : loadJournalEntriesLocal();
+          }
         }
+
+        setJournalEntries(currentEntries);
       } catch (error) {
         console.error('Failed to load data:', error);
       } finally {

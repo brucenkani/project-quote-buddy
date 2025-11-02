@@ -278,11 +278,18 @@ export const generateBalanceSheet = (
 
   const totalAssets = assets.reduce((sum, item) => sum + item.amount, 0);
   const totalLiabilities = liabilities.reduce((sum, item) => sum + item.amount, 0);
-  const totalEquity = equity.reduce((sum, item) => sum + item.amount, 0);
+  let totalEquity = equity.reduce((sum, item) => sum + item.amount, 0);
 
-  // The accounting equation: Assets = Liabilities + Equity
-  // Equity already includes all equity accounts from the chart of accounts
-  // Net income flows through retained earnings via journal entries, so no need to add it separately
+  // CRITICAL: Add net income to equity (Revenue - Expenses flow to Retained Earnings)
+  // This maintains the accounting equation: Assets = Liabilities + Equity
+  const incomeStatement = generateIncomeStatement(accounts, periodData);
+  const netIncome = incomeStatement.netIncome;
+  
+  // Add net income as Retained Earnings to equity
+  if (netIncome !== 0) {
+    equity.push({ account: '5104 - Retained Earnings (Current Period)', amount: netIncome });
+    totalEquity += netIncome;
+  }
 
   return { assets, liabilities, equity, totalAssets, totalLiabilities, totalEquity };
 };
