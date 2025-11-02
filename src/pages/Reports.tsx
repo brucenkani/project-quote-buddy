@@ -15,6 +15,7 @@ import { generateTrialBalancePDF, generateTrialBalanceExcel, generateLedgerPDF, 
 import { ReportPreviewDialog } from '@/components/reports/ReportPreviewDialog';
 import { TrialBalancePreview } from '@/components/reports/TrialBalancePreview';
 import { LedgerPreview } from '@/components/reports/LedgerPreview';
+import { IncomeStatementPreview } from '@/components/reports/IncomeStatementPreview';
 import { 
   generateIncomeStatementPDF, 
   generateIncomeStatementExcel,
@@ -54,6 +55,9 @@ export default function Reports() {
   // Preview states
   const [showTrialBalancePreview, setShowTrialBalancePreview] = useState(false);
   const [showLedgerPreview, setShowLedgerPreview] = useState(false);
+  const [showIncomeStatementPreview, setShowIncomeStatementPreview] = useState(false);
+  const [showBalanceSheetPreview, setShowBalanceSheetPreview] = useState(false);
+  const [showCashFlowPreview, setShowCashFlowPreview] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -447,6 +451,10 @@ export default function Reports() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
+                  <Button onClick={() => setShowIncomeStatementPreview(true)} variant="secondary" className="gap-2">
+                    <Eye className="h-4 w-4" />
+                    View on Screen
+                  </Button>
                   <Button onClick={() => handleGenerateIncomeStatement('pdf')} className="gap-2">
                     <FileDown className="h-4 w-4" />
                     Export to PDF
@@ -613,6 +621,23 @@ export default function Reports() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Income Statement Preview Dialog */}
+        <ReportPreviewDialog
+          open={showIncomeStatementPreview}
+          onOpenChange={setShowIncomeStatementPreview}
+          title="Income Statement"
+          description={`For the period ending ${dateRange.endDate}`}
+          onExportPDF={() => handleGenerateIncomeStatement('pdf')}
+          onExportExcel={() => handleGenerateIncomeStatement('excel')}
+        >
+          <IncomeStatementPreview
+            accounts={chartOfAccounts}
+            currentPeriod={getPeriodData(dateRange.startDate, dateRange.endDate)}
+            priorPeriod={getPeriodData(priorDateRange.startDate, priorDateRange.endDate)}
+            settings={{ ...settings, companyName: activeCompany?.name || settings.companyName } as any}
+          />
+        </ReportPreviewDialog>
       </div>
     </div>
   );
