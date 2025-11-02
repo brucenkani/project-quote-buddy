@@ -64,15 +64,17 @@ export default function InvoiceCreditNote() {
 
     try {
       const creditNoteId = crypto.randomUUID();
-      const creditSubtotal = Math.abs(creditAmount / (1 + invoice.taxRate));
-      const creditTax = Math.abs(creditSubtotal * invoice.taxRate);
+      // Credit amount is VAT exclusive
+      const creditSubtotal = Math.abs(creditAmount);
+      const creditTax = Math.abs(creditSubtotal * (invoice.taxRate / 100));
+      const creditTotal = creditSubtotal + creditTax;
       
       const creditNote: Invoice = {
         ...invoice,
         id: creditNoteId,
         invoiceNumber: `CN-${invoice.invoiceNumber}`,
         type: 'credit-note',
-        total: -Math.abs(creditAmount),
+        total: -creditTotal,
         subtotal: -creditSubtotal,
         taxAmount: -creditTax,
         notes: `Credit Note for Invoice ${invoice.invoiceNumber}\nReason: ${creditNoteReason}`,
@@ -86,9 +88,9 @@ export default function InvoiceCreditNote() {
         lineItems: invoice.lineItems.map(item => ({
           ...item,
           id: crypto.randomUUID(),
-          quantity: -Math.abs(item.quantity * (creditAmount / invoice.total)),
-          amount: -Math.abs(item.amount * (creditAmount / invoice.total)),
-          total: -Math.abs(item.total * (creditAmount / invoice.total)),
+          quantity: -Math.abs(item.quantity * (creditSubtotal / invoice.subtotal)),
+          amount: -Math.abs(item.amount * (creditSubtotal / invoice.subtotal)),
+          total: -Math.abs(item.total * (creditSubtotal / invoice.subtotal)),
         })),
       };
 
