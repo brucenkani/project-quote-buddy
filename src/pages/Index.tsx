@@ -203,20 +203,9 @@ export default function Index() {
         </div>
       </header>
 
-      {/* Hero Section - Combined with Professional Services */}
+      {/* Professional Services Banner */}
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-6xl mx-auto">
-          {/* Main Heading */}
-          <div className="text-center mb-8">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Professional Business Management Software
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Complete accounting, payroll, and CRM platform - <span className="font-bold text-primary">Completely Free!</span>
-            </p>
-          </div>
-
-          {/* Professional Services Banner */}
           <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-2xl border-2 border-primary/30 p-6 md:p-8">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
               {/* Left: Message */}
@@ -233,7 +222,7 @@ export default function Index() {
                 </p>
               </div>
 
-              {/* Middle: Contact Buttons */}
+              {/* Right: Contact Buttons */}
               <div className="flex flex-wrap justify-center gap-3">
                 <Button 
                   size="lg" 
@@ -332,26 +321,6 @@ export default function Index() {
                         </Button>
                       </div>
                     </form>
-                  </DialogContent>
-                </Dialog>
-              </div>
-
-              {/* Right: Profile Picture */}
-              <div className="flex-shrink-0">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <img 
-                      src={bruceProfile} 
-                      alt="Bruce - Professional Accountant" 
-                      className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 border-primary/30 shadow-xl cursor-pointer hover:scale-105 transition-transform"
-                    />
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-2xl">
-                    <img 
-                      src={bruceProfile} 
-                      alt="Bruce - Professional Accountant" 
-                      className="w-full h-auto rounded-lg"
-                    />
                   </DialogContent>
                 </Dialog>
               </div>
