@@ -151,6 +151,50 @@ export const getSalesRevenueAccount = async (): Promise<string> => {
 };
 
 /**
+ * Get Bank Loans account
+ */
+export const getBankLoansAccount = async (): Promise<string> => {
+  const accounts = await getChartOfAccounts();
+  const account = findAccountByName(accounts, 'bank loans') ||
+                  findAccountByName(accounts, 'loans payable') ||
+                  findAccountByNumber(accounts, '2610');
+  return account ? getAccountString(account) : '2610 - Bank Loans';
+};
+
+/**
+ * Get Interest Expense account
+ */
+export const getInterestExpenseAccount = async (): Promise<string> => {
+  const accounts = await getChartOfAccounts();
+  const account = findAccountByName(accounts, 'interest expense') ||
+                  findAccountByNumber(accounts, '6310') ||
+                  findAccountByNumber(accounts, '8310');
+  return account ? getAccountString(account) : '6310 - Interest Expense – Loans';
+};
+
+/**
+ * Get Owner's Capital account
+ */
+export const getOwnersCapitalAccount = async (): Promise<string> => {
+  const accounts = await getChartOfAccounts();
+  const account = findAccountByName(accounts, "owner's capital") ||
+                  findAccountByName(accounts, 'capital') ||
+                  findAccountByNumber(accounts, '3500');
+  return account ? getAccountString(account) : "3500 - Owner's Capital";
+};
+
+/**
+ * Get Owner's Drawings account
+ */
+export const getOwnersDrawingsAccount = async (): Promise<string> => {
+  const accounts = await getChartOfAccounts();
+  const account = findAccountByName(accounts, "owner's drawings") ||
+                  findAccountByName(accounts, 'drawings') ||
+                  findAccountByNumber(accounts, '3600');
+  return account ? getAccountString(account) : "3600 - Owner's Drawings";
+};
+
+/**
  * Get account for specific bank by ledger account number
  */
 export const getBankAccountByLedger = async (ledgerAccount: string): Promise<string> => {

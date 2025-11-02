@@ -7,6 +7,10 @@ import {
   getVATPayableAccount,
   getTradeCreditorsAccount,
   getDynamicPaymentAccount,
+  getBankLoansAccount,
+  getInterestExpenseAccount,
+  getOwnersCapitalAccount,
+  getOwnersDrawingsAccount,
 } from './accountMapping';
 
 /**
@@ -283,14 +287,16 @@ export const recordExpensePayment = async (
  * Debit: Expense/Asset (depending on purchase type)
  * Credit: Accounts Payable (Liability ↑)
  */
-export const recordPurchaseOnCredit = (
+export const recordPurchaseOnCredit = async (
   date: string,
   vendor: string,
   account: string,
   accountType: 'expense' | 'current-asset' | 'non-current-asset',
   amount: number,
   reference: string
-): JournalEntry => {
+): Promise<JournalEntry> => {
+  const tradeCreditorsAccount = await getTradeCreditorsAccount();
+
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
@@ -302,7 +308,7 @@ export const recordPurchaseOnCredit = (
     },
     {
       id: crypto.randomUUID(),
-      account: '2110 - Trade Creditors',
+      account: tradeCreditorsAccount,
       accountType: 'current-liability',
       debit: 0,
       credit: amount,
@@ -323,14 +329,16 @@ export const recordPurchaseOnCredit = (
  * Debit: Cash/Bank (Asset ↑)
  * Credit: Loan Payable (Liability ↑)
  */
-export const recordLoanReceived = (
+export const recordLoanReceived = async (
   date: string,
   lender: string,
   amount: number,
   reference: string,
-  receivedIn: 'cash' | 'bank' = 'bank'
-): JournalEntry => {
-  const assetAccount = receivedIn === 'cash' ? '1120 - Cash on Hand' : '1130 - Bank Account – Current';
+  receivedIn: 'cash' | 'bank' = 'bank',
+  bankLedgerAccount?: string
+): Promise<JournalEntry> => {
+  const assetAccount = await getDynamicPaymentAccount(receivedIn, bankLedgerAccount);
+  const bankLoansAccount = await getBankLoansAccount();
 
   const entries: JournalEntryLine[] = [
     {
@@ -343,7 +351,7 @@ export const recordLoanReceived = (
     },
     {
       id: crypto.randomUUID(),
-      account: '2610 - Bank Loans',
+      account: bankLoansAccount,
       accountType: 'non-current-liability',
       debit: 0,
       credit: amount,
@@ -365,21 +373,24 @@ export const recordLoanReceived = (
  * Debit: Interest Expense (Expense ↑) - for interest
  * Credit: Cash/Bank (Asset ↓)
  */
-export const recordLoanRepayment = (
+export const recordLoanRepayment = async (
   date: string,
   lender: string,
   principal: number,
   interest: number,
   reference: string,
-  paidFrom: 'cash' | 'bank' = 'bank'
-): JournalEntry => {
-  const assetAccount = paidFrom === 'cash' ? '1120 - Cash on Hand' : '1130 - Bank Account – Current';
+  paidFrom: 'cash' | 'bank' = 'bank',
+  bankLedgerAccount?: string
+): Promise<JournalEntry> => {
+  const assetAccount = await getDynamicPaymentAccount(paidFrom, bankLedgerAccount);
+  const bankLoansAccount = await getBankLoansAccount();
+  const interestExpenseAccount = await getInterestExpenseAccount();
   const totalPayment = principal + interest;
 
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
-      account: '2610 - Bank Loans',
+      account: bankLoansAccount,
       accountType: 'non-current-liability',
       debit: principal,
       credit: 0,
@@ -390,7 +401,7 @@ export const recordLoanRepayment = (
   if (interest > 0) {
     entries.push({
       id: crypto.randomUUID(),
-      account: '6310 - Interest Expense – Loans',
+      account: interestExpenseAccount,
       accountType: 'expense',
       debit: interest,
       credit: 0,
@@ -420,14 +431,16 @@ export const recordLoanRepayment = (
  * Debit: Cash/Bank (Asset ↑)
  * Credit: Owner's Capital (Equity ↑)
  */
-export const recordCapitalContribution = (
+export const recordCapitalContribution = async (
   date: string,
   ownerName: string,
   amount: number,
   reference: string,
-  receivedIn: 'cash' | 'bank' = 'bank'
-): JournalEntry => {
-  const assetAccount = receivedIn === 'cash' ? '1120 - Cash on Hand' : '1130 - Bank Account – Current';
+  receivedIn: 'cash' | 'bank' = 'bank',
+  bankLedgerAccount?: string
+): Promise<JournalEntry> => {
+  const assetAccount = await getDynamicPaymentAccount(receivedIn, bankLedgerAccount);
+  const ownersCapitalAccount = await getOwnersCapitalAccount();
 
   const entries: JournalEntryLine[] = [
     {
@@ -440,7 +453,7 @@ export const recordCapitalContribution = (
     },
     {
       id: crypto.randomUUID(),
-      account: "3110 - Ordinary Share Capital",
+      account: ownersCapitalAccount,
       accountType: 'equity',
       debit: 0,
       credit: amount,
@@ -461,23 +474,25 @@ export const recordCapitalContribution = (
  * Debit: Owner's Drawings (Equity ↓)
  * Credit: Cash/Bank (Asset ↓)
  */
-export const recordOwnerDrawing = (
+export const recordOwnerDrawing = async (
   date: string,
   ownerName: string,
   amount: number,
   reference: string,
-  paidFrom: 'cash' | 'bank' = 'bank'
-): JournalEntry => {
-  const assetAccount = paidFrom === 'cash' ? '1120 - Cash on Hand' : '1130 - Bank Account – Current';
+  paidFrom: 'cash' | 'bank' = 'bank',
+  bankLedgerAccount?: string
+): Promise<JournalEntry> => {
+  const assetAccount = await getDynamicPaymentAccount(paidFrom, bankLedgerAccount);
+  const ownersDrawingsAccount = await getOwnersDrawingsAccount();
 
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
-      account: "3600 - Owner's Drawings",
+      account: ownersDrawingsAccount,
       accountType: 'equity',
       debit: amount,
       credit: 0,
-      description: `Drawing by ${ownerName}`,
+      description: `Withdrawal by ${ownerName}`,
     },
     {
       id: crypto.randomUUID(),
@@ -485,7 +500,7 @@ export const recordOwnerDrawing = (
       accountType: 'current-asset',
       debit: 0,
       credit: amount,
-      description: `Withdrawal by ${ownerName}`,
+      description: `Payment to ${ownerName}`,
     },
   ];
 
@@ -502,19 +517,21 @@ export const recordOwnerDrawing = (
  * Debit: Accounts Payable (Liability ↓)
  * Credit: Cash/Bank (Asset ↓)
  */
-export const recordSupplierPayment = (
+export const recordSupplierPayment = async (
   date: string,
   vendor: string,
   amount: number,
   reference: string,
-  paidFrom: 'cash' | 'bank' = 'bank'
-): JournalEntry => {
-  const assetAccount = paidFrom === 'cash' ? '1120 - Cash on Hand' : '1130 - Bank Account – Current';
+  paidFrom: 'cash' | 'bank' = 'bank',
+  bankLedgerAccount?: string
+): Promise<JournalEntry> => {
+  const assetAccount = await getDynamicPaymentAccount(paidFrom, bankLedgerAccount);
+  const tradeCreditorsAccount = await getTradeCreditorsAccount();
 
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
-      account: '2110 - Trade Creditors',
+      account: tradeCreditorsAccount,
       accountType: 'current-liability',
       debit: amount,
       credit: 0,
@@ -536,18 +553,4 @@ export const recordSupplierPayment = (
     `Supplier Payment: ${vendor}`,
     entries
   );
-};
-
-// Helper function to map payment methods to accounts
-const getPaymentAccount = (paymentMethod: string): string => {
-  switch (paymentMethod) {
-    case 'cash':
-      return '1120 - Cash on Hand';
-    case 'card':
-    case 'bank-transfer':
-    case 'check':
-      return '1130 - Bank Account – Current';
-    default:
-      return '1120 - Cash on Hand';
-  }
 };
