@@ -161,10 +161,23 @@ export default function BankAccounts() {
 
         // Create opening balance journal entry if opening balance > 0
         if (formData.openingBalance > 0 && newAccount) {
+          // Get Owner's Capital account from chart of accounts
+          const { data: chartAccounts } = await supabase
+            .from('chart_of_accounts')
+            .select('*')
+            .eq('company_id', activeCompany.id)
+            .or('account_number.eq.3500,account_name.ilike.%capital%')
+            .limit(1)
+            .single();
+
+          const capitalAccount = chartAccounts 
+            ? `${chartAccounts.account_number} - ${chartAccounts.account_name}`
+            : "3500 - Owner's Capital";
+
           const journalEntry: JournalEntry = {
             id: crypto.randomUUID(),
             date: new Date().toISOString().split('T')[0],
-            reference: `OB-${formData.ledgerAccount}`,
+            reference: `OB-BANK-${newAccount.id.slice(0, 8)}`,
             description: `Opening balance for ${formData.accountName}`,
             entries: [
               {
@@ -173,15 +186,15 @@ export default function BankAccounts() {
                 accountType: 'current-asset',
                 debit: formData.openingBalance,
                 credit: 0,
-                description: 'Opening balance',
+                description: 'Bank opening balance',
               },
               {
                 id: crypto.randomUUID(),
-                account: '3500 - Owner\'s Capital',
+                account: capitalAccount,
                 accountType: 'equity',
                 debit: 0,
                 credit: formData.openingBalance,
-                description: 'Capital introduced via bank account',
+                description: 'Capital introduced via bank',
               },
             ],
             totalDebit: formData.openingBalance,

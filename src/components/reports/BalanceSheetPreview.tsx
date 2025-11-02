@@ -32,9 +32,9 @@ export function BalanceSheetPreview({
       <Table>
         <TableHeader>
           <TableRow className="bg-primary text-primary-foreground hover:bg-primary">
-            <TableHead className="text-primary-foreground">Assets</TableHead>
-            <TableHead className="text-right text-primary-foreground">Current Year</TableHead>
-            <TableHead className="text-right text-primary-foreground">Prior Year</TableHead>
+            <TableHead className="text-primary-foreground w-1/2">Assets</TableHead>
+            <TableHead className="text-right text-primary-foreground w-1/4">Current Year</TableHead>
+            <TableHead className="text-right text-primary-foreground w-1/4">Prior Year</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -42,16 +42,16 @@ export function BalanceSheetPreview({
             const priorItem = prior.assets.find(p => p.account === item.account) || { amount: 0 };
             return (
               <TableRow key={item.account}>
-                <TableCell>{item.account}</TableCell>
-                <TableCell className="text-right">{settings.currencySymbol}{item.amount.toFixed(2)}</TableCell>
-                <TableCell className="text-right">{settings.currencySymbol}{priorItem.amount.toFixed(2)}</TableCell>
+                <TableCell className="w-1/2">{item.account}</TableCell>
+                <TableCell className="text-right w-1/4 tabular-nums">{settings.currencySymbol}{item.amount.toFixed(2)}</TableCell>
+                <TableCell className="text-right w-1/4 tabular-nums">{settings.currencySymbol}{priorItem.amount.toFixed(2)}</TableCell>
               </TableRow>
             );
           })}
           <TableRow className="font-bold bg-muted">
-            <TableCell>Total Assets</TableCell>
-            <TableCell className="text-right">{settings.currencySymbol}{current.totalAssets.toFixed(2)}</TableCell>
-            <TableCell className="text-right">{settings.currencySymbol}{prior.totalAssets.toFixed(2)}</TableCell>
+            <TableCell className="w-1/2">Total Assets</TableCell>
+            <TableCell className="text-right w-1/4 tabular-nums">{settings.currencySymbol}{current.totalAssets.toFixed(2)}</TableCell>
+            <TableCell className="text-right w-1/4 tabular-nums">{settings.currencySymbol}{prior.totalAssets.toFixed(2)}</TableCell>
           </TableRow>
         </TableBody>
       </Table>
@@ -59,9 +59,9 @@ export function BalanceSheetPreview({
       <Table>
         <TableHeader>
           <TableRow className="bg-destructive text-destructive-foreground hover:bg-destructive">
-            <TableHead className="text-destructive-foreground">Liabilities</TableHead>
-            <TableHead className="text-right text-destructive-foreground">Current Year</TableHead>
-            <TableHead className="text-right text-destructive-foreground">Prior Year</TableHead>
+            <TableHead className="text-destructive-foreground w-1/2">Liabilities</TableHead>
+            <TableHead className="text-right text-destructive-foreground w-1/4">Current Year</TableHead>
+            <TableHead className="text-right text-destructive-foreground w-1/4">Prior Year</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -69,16 +69,16 @@ export function BalanceSheetPreview({
             const priorItem = prior.liabilities.find(p => p.account === item.account) || { amount: 0 };
             return (
               <TableRow key={item.account}>
-                <TableCell>{item.account}</TableCell>
-                <TableCell className="text-right">{settings.currencySymbol}{item.amount.toFixed(2)}</TableCell>
-                <TableCell className="text-right">{settings.currencySymbol}{priorItem.amount.toFixed(2)}</TableCell>
+                <TableCell className="w-1/2">{item.account}</TableCell>
+                <TableCell className="text-right w-1/4 tabular-nums">{settings.currencySymbol}{item.amount.toFixed(2)}</TableCell>
+                <TableCell className="text-right w-1/4 tabular-nums">{settings.currencySymbol}{priorItem.amount.toFixed(2)}</TableCell>
               </TableRow>
             );
           })}
           <TableRow className="font-bold bg-muted">
-            <TableCell>Total Liabilities</TableCell>
-            <TableCell className="text-right">{settings.currencySymbol}{current.totalLiabilities.toFixed(2)}</TableCell>
-            <TableCell className="text-right">{settings.currencySymbol}{prior.totalLiabilities.toFixed(2)}</TableCell>
+            <TableCell className="w-1/2">Total Liabilities</TableCell>
+            <TableCell className="text-right w-1/4 tabular-nums">{settings.currencySymbol}{current.totalLiabilities.toFixed(2)}</TableCell>
+            <TableCell className="text-right w-1/4 tabular-nums">{settings.currencySymbol}{prior.totalLiabilities.toFixed(2)}</TableCell>
           </TableRow>
         </TableBody>
       </Table>
@@ -86,9 +86,9 @@ export function BalanceSheetPreview({
       <Table>
         <TableHeader>
           <TableRow className="bg-green-600 text-white hover:bg-green-600">
-            <TableHead className="text-white">Equity</TableHead>
-            <TableHead className="text-right text-white">Current Year</TableHead>
-            <TableHead className="text-right text-white">Prior Year</TableHead>
+            <TableHead className="text-white w-1/2">Equity</TableHead>
+            <TableHead className="text-right text-white w-1/4">Current Year</TableHead>
+            <TableHead className="text-right text-white w-1/4">Prior Year</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -96,16 +96,16 @@ export function BalanceSheetPreview({
             const priorItem = prior.equity.find(p => p.account === item.account) || { amount: 0 };
             return (
               <TableRow key={item.account}>
-                <TableCell>{item.account}</TableCell>
-                <TableCell className="text-right">{settings.currencySymbol}{item.amount.toFixed(2)}</TableCell>
-                <TableCell className="text-right">{settings.currencySymbol}{priorItem.amount.toFixed(2)}</TableCell>
+                <TableCell className="w-1/2">{item.account}</TableCell>
+                <TableCell className="text-right w-1/4 tabular-nums">{settings.currencySymbol}{item.amount.toFixed(2)}</TableCell>
+                <TableCell className="text-right w-1/4 tabular-nums">{settings.currencySymbol}{priorItem.amount.toFixed(2)}</TableCell>
               </TableRow>
             );
           })}
           <TableRow className="font-bold bg-muted">
-            <TableCell>Total Equity</TableCell>
-            <TableCell className="text-right">{settings.currencySymbol}{current.totalEquity.toFixed(2)}</TableCell>
-            <TableCell className="text-right">{settings.currencySymbol}{prior.totalEquity.toFixed(2)}</TableCell>
+            <TableCell className="w-1/2">Total Equity</TableCell>
+            <TableCell className="text-right w-1/4 tabular-nums">{settings.currencySymbol}{current.totalEquity.toFixed(2)}</TableCell>
+            <TableCell className="text-right w-1/4 tabular-nums">{settings.currencySymbol}{prior.totalEquity.toFixed(2)}</TableCell>
           </TableRow>
         </TableBody>
       </Table>
@@ -113,16 +113,21 @@ export function BalanceSheetPreview({
       <Table>
         <TableHeader>
           <TableRow className="bg-primary text-primary-foreground hover:bg-primary">
-            <TableHead className="text-primary-foreground">Total Liabilities & Equity</TableHead>
-            <TableHead className="text-right text-primary-foreground">Current Year</TableHead>
-            <TableHead className="text-right text-primary-foreground">Prior Year</TableHead>
+            <TableHead className="text-primary-foreground w-1/2 font-bold">Total Liabilities & Equity</TableHead>
+            <TableHead className="text-right text-primary-foreground w-1/4">Current Year</TableHead>
+            <TableHead className="text-right text-primary-foreground w-1/4">Prior Year</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow className="font-bold text-lg">
-            <TableCell>Total Liabilities & Equity</TableCell>
-            <TableCell className="text-right">{settings.currencySymbol}{(current.totalLiabilities + current.totalEquity).toFixed(2)}</TableCell>
-            <TableCell className="text-right">{settings.currencySymbol}{(prior.totalLiabilities + prior.totalEquity).toFixed(2)}</TableCell>
+            <TableCell className="w-1/2">Total Liabilities & Equity</TableCell>
+            <TableCell className="text-right w-1/4 tabular-nums">{settings.currencySymbol}{(current.totalLiabilities + current.totalEquity).toFixed(2)}</TableCell>
+            <TableCell className="text-right w-1/4 tabular-nums">{settings.currencySymbol}{(prior.totalLiabilities + prior.totalEquity).toFixed(2)}</TableCell>
+          </TableRow>
+          <TableRow className={`font-bold text-lg ${Math.abs(current.totalAssets - (current.totalLiabilities + current.totalEquity)) > 0.01 ? 'bg-red-100 text-red-900' : 'bg-green-100 text-green-900'}`}>
+            <TableCell className="w-1/2">Balance Check (Assets - (Liabilities + Equity))</TableCell>
+            <TableCell className="text-right w-1/4 tabular-nums">{settings.currencySymbol}{(current.totalAssets - (current.totalLiabilities + current.totalEquity)).toFixed(2)}</TableCell>
+            <TableCell className="text-right w-1/4 tabular-nums">{settings.currencySymbol}{(prior.totalAssets - (prior.totalLiabilities + prior.totalEquity)).toFixed(2)}</TableCell>
           </TableRow>
         </TableBody>
       </Table>
