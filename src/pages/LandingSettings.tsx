@@ -1193,7 +1193,14 @@ export default function LandingSettings() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-wrap gap-4">
-                  <Dialog open={showNewAccountDialog} onOpenChange={setShowNewAccountDialog}>
+                  <Dialog open={showNewAccountDialog} onOpenChange={(open) => {
+                    setShowNewAccountDialog(open);
+                    // Auto-generate account number when dialog opens
+                    if (open && !newAccount.accountNumber) {
+                      const nextNumber = generateNextAccountNumber('current-asset');
+                      setNewAccount({ ...newAccount, accountNumber: nextNumber });
+                    }
+                  }}>
                     <DialogTrigger asChild>
                       <Button variant="outline" className="gap-2">
                         <Plus className="h-4 w-4" />
