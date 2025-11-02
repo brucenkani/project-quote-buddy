@@ -203,53 +203,171 @@ export default function Index() {
         </div>
       </header>
 
-      {/* Professional Services Banner */}
-      <section className="container mx-auto px-4 py-12">
-        <div className="max-w-6xl mx-auto">
-          <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-2xl border-2 border-primary/30 p-6 md:p-8">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-              {/* Left: Message Section */}
-              <div className="flex-1 text-center lg:text-left">
-                <h3 className="text-2xl font-bold mb-3 flex items-center justify-center lg:justify-start gap-2">
-                  <CheckCircle className="h-6 w-6 text-primary" />
-                  Systems 100% Free to Use
-                </h3>
-                <p className="text-lg text-muted-foreground mb-4">
-                  Need professional help with <span className="font-semibold text-foreground">Financial Statements</span>, <span className="font-semibold text-foreground">Tax Returns</span>, or <span className="font-semibold text-foreground">Compliance Matters</span>?
-                </p>
-                <p className="text-base font-medium">
-                  Contact me for expert assistance:
-                </p>
-              </div>
+      {/* Hero Section */}
+      <section className="container mx-auto px-4 py-12 text-center">
+        <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+          Professional Business Management Software
+        </h2>
+        <p className="text-xl text-muted-foreground mb-2 max-w-3xl mx-auto">
+          Complete accounting, payroll, and CRM platform for growing businesses - <span className="font-bold">Completely Free for Entrepreneurs!</span>
+        </p>
+      </section>
 
-              {/* Right: Service Links */}
-              <div className="flex flex-col gap-3 min-w-[240px]">
-                {/* Premwebs */}
-                <Button 
-                  variant="default"
-                  size="lg"
-                  className="gap-2 justify-start shadow-lg hover:shadow-xl"
-                  asChild
-                >
-                  <a href="https://premwebs.com" target="_blank" rel="noopener noreferrer">
-                    <Binary className="h-5 w-5" />
-                    Visit Premwebs
-                  </a>
-                </Button>
 
-                {/* SMEBox */}
-                <Button 
-                  variant="default"
-                  size="lg"
-                  className="gap-2 justify-start shadow-lg hover:shadow-xl"
-                  asChild
-                >
-                  <a href="https://smebox.co.za" target="_blank" rel="noopener noreferrer">
-                    <FileText className="h-5 w-5" />
-                    Visit SMEBox
-                  </a>
+      {/* Need More Help Section */}
+      <section className="container mx-auto px-4 py-8">
+        <div className="max-w-5xl mx-auto">
+          {/* Hire Us Section with Contact Options */}
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
+            {/* Left: Static Hire Me Button and Arrow */}
+            <div className="flex items-center gap-6">
+              <div className="flex-shrink-0">
+                <Button size="lg" variant="default" className="text-lg px-8 py-6 h-auto shadow-lg hover:shadow-xl transition-all">
+                  Need an Accountant?
                 </Button>
               </div>
+
+              {/* Animated Arrow */}
+              <div className="flex-shrink-0 hidden lg:block">
+                <ArrowRight className="h-8 w-8 text-primary animate-pulse" />
+              </div>
+            </div>
+
+            {/* Middle: Contact Options */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* Phone/WhatsApp Button */}
+              <Card className="group hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer border-2">
+                <CardContent className="p-6">
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={handlePhoneCall}
+                      className="gap-2 hover:bg-primary hover:text-primary-foreground"
+                    >
+                      <Phone className="h-4 w-4" />
+                      Call
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={handleWhatsAppContact}
+                      className="gap-2 hover:bg-green-600 hover:text-white hover:border-green-600"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      WhatsApp
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">+27 65 967 2215</p>
+                </CardContent>
+              </Card>
+
+              {/* Email Button */}
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Card className="group hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer border-2">
+                    <CardContent className="p-6">
+                      <Button
+                        size="sm" 
+                        className="w-full gap-2"
+                      >
+                        <Mail className="h-4 w-4" />
+                        Email Us
+                      </Button>
+                      <p className="text-sm text-muted-foreground mt-2">bruce@nkani.co.za</p>
+                    </CardContent>
+                  </Card>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
+                  <DialogHeader>
+                    <DialogTitle>Contact Our Team</DialogTitle>
+                    <DialogDescription>
+                      Interested in our professional accounting services? Send us a message and we'll get back to you soon.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 px-1">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Name *</Label>
+                      <Input
+                        id="name"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="Your full name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="your@email.com"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="company">Company</Label>
+                      <Input
+                        id="company"
+                        value={formData.company}
+                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                        placeholder="Your company name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        placeholder="Your phone number"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="message">Message *</Label>
+                      <Textarea
+                        id="message"
+                        required
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                        placeholder="Tell us about your accounting needs..."
+                        rows={4}
+                      />
+                    </div>
+                    <div className="flex gap-3 justify-end">
+                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? 'Sending...' : 'Send Message'}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {/* Right: Bruce's Profile Picture */}
+            <div className="flex-shrink-0">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <img 
+                    src={bruceProfile} 
+                    alt="Bruce - Professional Accountant" 
+                    className="w-32 h-32 rounded-full object-cover border-4 border-primary/20 shadow-lg cursor-pointer hover:scale-105 transition-transform"
+                  />
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-2xl">
+                  <img 
+                    src={bruceProfile} 
+                    alt="Bruce - Professional Accountant" 
+                    className="w-full h-auto rounded-lg"
+                  />
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>
@@ -257,6 +375,8 @@ export default function Index() {
 
       {/* Features Grid */}
       <section className="container mx-auto px-4 py-8">
+        <h3 className="text-3xl font-bold text-center mb-10">Everything You Need to Run Your Business</h3>
+        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto mb-12">
           <Card className="group border-2 hover:border-primary/50 transition-all cursor-pointer" onClick={() => navigate('/accounting')}>
             <CardHeader>
@@ -357,6 +477,54 @@ export default function Index() {
 
         </div>
 
+        {/* Additional Services */}
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* Websites & Excel Templates Shop */}
+          <div className="flex items-center gap-6 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
+            <div className="flex-shrink-0 hidden sm:block">
+              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+                <Binary className="h-10 w-10 text-primary" />
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold mb-2">Websites & Excel Templates</h3>
+              <p className="text-muted-foreground mb-4">
+                Professional websites and custom Excel tools to streamline your business operations
+              </p>
+              <Button 
+                variant="outline" 
+                asChild
+              >
+                <a href="https://premwebs.com" target="_blank" rel="noopener noreferrer">
+                  Visit Premwebs
+                </a>
+              </Button>
+            </div>
+          </div>
+
+          {/* Report & Document Builders */}
+          <div className="flex items-center gap-6 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
+            <div className="flex-shrink-0 hidden sm:block">
+              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+                <FileText className="h-10 w-10 text-primary" />
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold mb-2">Report & Document Builders</h3>
+              <p className="text-muted-foreground mb-4">
+                Custom reports, presentations, and professional documents tailored to your needs
+              </p>
+              <Button 
+                variant="outline" 
+                asChild
+              >
+                <a href="https://smebox.co.za" target="_blank" rel="noopener noreferrer">
+                  Visit SMEBox
+                </a>
+              </Button>
+            </div>
+          </div>
+        </div>
       </section>
 
 
