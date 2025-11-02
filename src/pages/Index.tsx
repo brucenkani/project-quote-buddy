@@ -218,11 +218,11 @@ export default function Index() {
 
           {/* Professional Services Banner */}
           <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-2xl border-2 border-primary/30 p-6 md:p-8">
-            <div className="flex flex-col lg:flex-row items-start justify-between gap-6">
+            <div className="flex flex-col xl:flex-row items-start gap-6">
               {/* Left: Message & Contact Buttons */}
-              <div className="flex-1 flex flex-col lg:flex-row items-center lg:items-start gap-6">
-                <div className="flex-1 text-center lg:text-left">
-                  <h3 className="text-2xl font-bold mb-3 flex items-center justify-center lg:justify-start gap-2">
+              <div className="flex-1 flex flex-col md:flex-row items-center md:items-start gap-6 w-full xl:w-auto">
+                <div className="flex-1 text-center md:text-left w-full md:w-auto">
+                  <h3 className="text-2xl font-bold mb-3 flex items-center justify-center md:justify-start gap-2">
                     <CheckCircle className="h-6 w-6 text-primary" />
                     Systems 100% Free to Use
                   </h3>
@@ -339,9 +339,9 @@ export default function Index() {
               </div>
 
               {/* Right: Two Service Cards Side by Side */}
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto justify-center xl:justify-start">
                 {/* Premwebs Card */}
-                <Card className="w-64 flex flex-col justify-between hover:shadow-lg transition-shadow">
+                <Card className="w-full sm:w-64 flex flex-col justify-between hover:shadow-lg transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-3 mx-auto">
                       <span className="text-2xl font-bold text-primary">01</span>
@@ -363,7 +363,7 @@ export default function Index() {
                 </Card>
 
                 {/* SMEBox Card */}
-                <Card className="w-64 flex flex-col justify-between hover:shadow-lg transition-shadow">
+                <Card className="w-full sm:w-64 flex flex-col justify-between hover:shadow-lg transition-shadow">
                   <CardHeader className="pb-3">
                     <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-3 mx-auto">
                       <FileText className="h-8 w-8 text-primary" />
@@ -385,8 +385,8 @@ export default function Index() {
                 </Card>
               </div>
 
-              {/* Profile Picture */}
-              <div className="flex-shrink-0">
+              {/* Profile Picture - Hidden on mobile */}
+              <div className="flex-shrink-0 hidden xl:block">
                 <Dialog>
                   <DialogTrigger asChild>
                     <img 
