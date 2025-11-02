@@ -1,11 +1,19 @@
 import { JournalEntry, JournalEntryLine, Expense } from '@/types/accounting';
 import { Invoice } from '@/types/invoice';
 import { saveJournalEntry } from './accountingStorage';
+import {
+  getTradeDebtorsAccount,
+  getSalesRevenueAccount,
+  getVATPayableAccount,
+  getTradeCreditorsAccount,
+  getDynamicPaymentAccount,
+} from './accountMapping';
 
 /**
  * Centralized Double-Entry Bookkeeping Manager
  * Ensures all transactions follow strict double-entry accounting principles
  * Every transaction must have balanced debits and credits
+ * All accounts are dynamically loaded from the chart of accounts
  */
 
 // Validate that debits equal credits
@@ -155,17 +163,15 @@ export const recordCreditNote = (creditNote: Invoice): JournalEntry => {
  * Debit: Cash/Bank (Asset ↑)
  * Credit: Accounts Receivable (Asset ↓)
  */
-export const recordPaymentReceived = (
+export const recordPaymentReceived = async (
   invoice: Invoice,
   paymentMethod: 'cash' | 'bank',
   paymentDate: string,
   paymentReference: string,
   bankLedgerAccount?: string
-): JournalEntry => {
-  // Use the specific bank's ledger account if provided, otherwise use default
-  const paymentAccount = paymentMethod === 'cash' 
-    ? '1120 - Cash on Hand' 
-    : (bankLedgerAccount || '1130 - Bank Account – Current');
+): Promise<JournalEntry> => {
+  const paymentAccount = await getDynamicPaymentAccount(paymentMethod, bankLedgerAccount);
+  const tradeDebtorsAccount = await getTradeDebtorsAccount();
 
   const entries: JournalEntryLine[] = [
     {
@@ -178,7 +184,7 @@ export const recordPaymentReceived = (
     },
     {
       id: crypto.randomUUID(),
-      account: '1106 - Trade Debtors',
+      account: tradeDebtorsAccount,
       accountType: 'current-asset',
       debit: 0,
       credit: invoice.total,
@@ -199,7 +205,9 @@ export const recordPaymentReceived = (
  * Debit: Expense Account (Expense ↑)
  * Credit: Accounts Payable (Liability ↑)
  */
-export const recordExpense = (expense: Expense): JournalEntry => {
+export const recordExpense = async (expense: Expense): Promise<JournalEntry> => {
+  const tradeCreditorsAccount = await getTradeCreditorsAccount();
+
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
@@ -211,7 +219,7 @@ export const recordExpense = (expense: Expense): JournalEntry => {
     },
     {
       id: crypto.randomUUID(),
-      account: '2110 - Trade Creditors',
+      account: tradeCreditorsAccount,
       accountType: 'current-liability',
       debit: 0,
       credit: expense.amount,
@@ -232,23 +240,21 @@ export const recordExpense = (expense: Expense): JournalEntry => {
  * Debit: Accounts Payable (Liability ↓)
  * Credit: Bank/Cash (Asset ↓)
  */
-export const recordExpensePayment = (
+export const recordExpensePayment = async (
   expense: Expense,
   paymentAmount: number,
   paymentMethod: 'cash' | 'bank',
   paymentDate: string,
   paymentReference: string,
   bankLedgerAccount?: string
-): JournalEntry => {
-  // Use the specific bank's ledger account if provided, otherwise use default
-  const paymentAccount = paymentMethod === 'cash' 
-    ? '1120 - Cash on Hand' 
-    : (bankLedgerAccount || '1130 - Bank Account – Current');
+): Promise<JournalEntry> => {
+  const paymentAccount = await getDynamicPaymentAccount(paymentMethod, bankLedgerAccount);
+  const tradeCreditorsAccount = await getTradeCreditorsAccount();
 
   const entries: JournalEntryLine[] = [
     {
       id: crypto.randomUUID(),
-      account: '2110 - Trade Creditors',
+      account: tradeCreditorsAccount,
       accountType: 'current-liability',
       debit: paymentAmount,
       credit: 0,
