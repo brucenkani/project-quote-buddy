@@ -14,6 +14,7 @@ import Subscription from "./pages/Subscription";
 import KnowledgeCentre from "./pages/KnowledgeCentre";
 import KnowledgeArticle from "./pages/KnowledgeArticle";
 import KnowledgeAdmin from "./pages/admin/KnowledgeAdmin";
+import SMTPSettings from "./pages/admin/SMTPSettings";
 import Landing from "./pages/Landing";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import AccountingDashboard from "./pages/AccountingDashboard";
@@ -112,6 +113,7 @@ const App = () => (
           <Route path="/analytics/dashboard-builder/:id" element={<ProtectedRoute><DashboardBuilder /></ProtectedRoute>} />
           
           <Route path="/super-admin" element={<ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/smtp-settings" element={<ProtectedRoute><SMTPSettings /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
           <Route path="/landing" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
           <Route path="/landing-settings" element={<ProtectedRoute><LandingSettings /></ProtectedRoute>} />

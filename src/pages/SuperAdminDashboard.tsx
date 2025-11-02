@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Building2, Users, Activity, TrendingUp, LogOut, Shield, BookOpen, Network, UserPlus, Home } from 'lucide-react';
+import { Building2, Users, Activity, TrendingUp, LogOut, Shield, BookOpen, Network, UserPlus, Home, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import CompanyManagementTable from '@/components/superadmin/CompanyManagementTable';
 import UserManagementTable from '@/components/superadmin/UserManagementTable';
@@ -161,6 +161,10 @@ export default function SuperAdminDashboard() {
               <Button onClick={() => navigate('/')} variant="outline" className="gap-2">
                 <Home className="h-4 w-4" />
                 Home
+              </Button>
+              <Button onClick={() => navigate('/admin/smtp-settings')} variant="outline" className="gap-2">
+                <Mail className="h-4 w-4" />
+                SMTP Settings
               </Button>
               <Dialog open={createAdminOpen} onOpenChange={setCreateAdminOpen}>
                 <DialogTrigger asChild>

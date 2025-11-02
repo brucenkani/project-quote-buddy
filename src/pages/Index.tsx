@@ -56,11 +56,19 @@ export default function Index() {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
+      // Send email via edge function
+      const { error: emailError } = await supabase.functions.invoke('send-contact-email', {
+        body: formData
+      });
+
+      if (emailError) throw emailError;
+
+      // Also save to database for records
+      const { error: dbError } = await supabase
         .from('contact_inquiries')
         .insert([formData]);
 
-      if (error) throw error;
+      if (dbError) console.error('Error saving to database:', dbError);
 
       toast.success('Thank you for your inquiry! We will get back to you soon.');
       setFormData({ name: '', email: '', company: '', phone: '', message: '' });
