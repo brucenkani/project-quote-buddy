@@ -11,6 +11,8 @@ import { Building2, Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
+import { saveJournalEntry } from '@/utils/accountingStorage';
+import { JournalEntry, JournalEntryLine } from '@/types/accounting';
 
 interface BankAccount {
   id: string;
@@ -137,7 +139,7 @@ export default function BankAccounts() {
         if (error) throw error;
         toast.success('Bank account updated successfully');
       } else {
-        const { error } = await supabase
+        const { data: newAccount, error } = await supabase
           .from('bank_accounts')
           .insert({
             user_id: session.session.user.id,
@@ -151,9 +153,46 @@ export default function BankAccounts() {
             ledger_account: formData.ledgerAccount,
             opening_balance: formData.openingBalance,
             current_balance: formData.openingBalance,
-          });
+          })
+          .select()
+          .single();
 
         if (error) throw error;
+
+        // Create opening balance journal entry if opening balance > 0
+        if (formData.openingBalance > 0 && newAccount) {
+          const journalEntry: JournalEntry = {
+            id: crypto.randomUUID(),
+            date: new Date().toISOString().split('T')[0],
+            reference: `OB-${formData.ledgerAccount}`,
+            description: `Opening balance for ${formData.accountName}`,
+            entries: [
+              {
+                id: crypto.randomUUID(),
+                account: `${formData.ledgerAccount} - ${formData.accountName}`,
+                accountType: 'current-asset',
+                debit: formData.openingBalance,
+                credit: 0,
+                description: 'Opening balance',
+              },
+              {
+                id: crypto.randomUUID(),
+                account: '3500 - Owner\'s Capital',
+                accountType: 'equity',
+                debit: 0,
+                credit: formData.openingBalance,
+                description: 'Capital introduced via bank account',
+              },
+            ],
+            totalDebit: formData.openingBalance,
+            totalCredit: formData.openingBalance,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+
+          await saveJournalEntry(journalEntry);
+        }
+
         toast.success('Bank account added successfully');
       }
 
