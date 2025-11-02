@@ -16,6 +16,10 @@ import { ReportPreviewDialog } from '@/components/reports/ReportPreviewDialog';
 import { TrialBalancePreview } from '@/components/reports/TrialBalancePreview';
 import { LedgerPreview } from '@/components/reports/LedgerPreview';
 import { IncomeStatementPreview } from '@/components/reports/IncomeStatementPreview';
+import { BalanceSheetPreview } from '@/components/reports/BalanceSheetPreview';
+import { CashFlowPreview } from '@/components/reports/CashFlowPreview';
+import { EquityStatementPreview } from '@/components/reports/EquityStatementPreview';
+import { VATReportPreview } from '@/components/reports/VATReportPreview';
 import { 
   generateIncomeStatementPDF, 
   generateIncomeStatementExcel,
@@ -60,6 +64,10 @@ export default function Reports() {
   const [showCashFlowPreview, setShowCashFlowPreview] = useState(false);
   const [showEquityStatementPreview, setShowEquityStatementPreview] = useState(false);
   const [showVATReportPreview, setShowVATReportPreview] = useState(false);
+  
+  // VAT Report Data
+  const [vatInvoices, setVatInvoices] = useState<any[]>([]);
+  const [vatExpenses, setVatExpenses] = useState<any[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -369,7 +377,22 @@ export default function Reports() {
       generateVATReportExcel(invoices, expenses, dateRange, effectiveSettings);
     }
 
+    setShowVATReportPreview(false);
     toast({ title: `VAT Report ${format.toUpperCase()} generated successfully` });
+  };
+
+  const getVATReportData = async () => {
+    const invoices = (await loadInvoices()).filter(inv => {
+      const invDate = new Date(inv.issueDate);
+      return invDate >= new Date(dateRange.startDate) && invDate <= new Date(dateRange.endDate);
+    });
+
+    const expenses = loadExpenses().filter(expense => {
+      const expenseDate = new Date(expense.date);
+      return expenseDate >= new Date(dateRange.startDate) && expenseDate <= new Date(dateRange.endDate);
+    });
+
+    return { invoices, expenses };
   };
 
   return (
@@ -561,7 +584,16 @@ export default function Reports() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
-                  <Button onClick={() => setShowVATReportPreview(true)} variant="secondary" className="gap-2">
+                  <Button 
+                    onClick={async () => {
+                      const data = await getVATReportData();
+                      setVatInvoices(data.invoices);
+                      setVatExpenses(data.expenses);
+                      setShowVATReportPreview(true);
+                    }} 
+                    variant="secondary" 
+                    className="gap-2"
+                  >
                     <Eye className="h-4 w-4" />
                     View Report
                   </Button>
@@ -663,6 +695,120 @@ export default function Reports() {
             priorPeriod={getPeriodData(priorDateRange.startDate, priorDateRange.endDate)}
             settings={{ ...settings, companyName: activeCompany?.name || settings.companyName } as any}
           />
+        </ReportPreviewDialog>
+
+        {/* Balance Sheet Preview Dialog */}
+        <ReportPreviewDialog
+          open={showBalanceSheetPreview}
+          onOpenChange={setShowBalanceSheetPreview}
+          title="Balance Sheet"
+          description={`As of ${dateRange.endDate}`}
+          onExportPDF={() => handleGenerateBalanceSheet('pdf')}
+          onExportExcel={() => handleGenerateBalanceSheet('excel')}
+        >
+          <BalanceSheetPreview
+            accounts={chartOfAccounts}
+            currentPeriod={getPeriodData(dateRange.startDate, dateRange.endDate)}
+            priorPeriod={getPeriodData(priorDateRange.startDate, priorDateRange.endDate)}
+            settings={{ ...settings, companyName: activeCompany?.name || settings.companyName } as any}
+          />
+        </ReportPreviewDialog>
+
+        {/* Cash Flow Preview Dialog */}
+        <ReportPreviewDialog
+          open={showCashFlowPreview}
+          onOpenChange={setShowCashFlowPreview}
+          title="Cash Flow Statement"
+          description={`For the period ending ${dateRange.endDate}`}
+          onExportPDF={() => handleGenerateCashFlow('pdf')}
+          onExportExcel={() => handleGenerateCashFlow('excel')}
+        >
+          <CashFlowPreview
+            accounts={chartOfAccounts}
+            currentPeriod={getPeriodData(dateRange.startDate, dateRange.endDate)}
+            priorPeriod={getPeriodData(priorDateRange.startDate, priorDateRange.endDate)}
+            settings={{ ...settings, companyName: activeCompany?.name || settings.companyName } as any}
+          />
+        </ReportPreviewDialog>
+
+        {/* Equity Statement Preview Dialog */}
+        <ReportPreviewDialog
+          open={showEquityStatementPreview}
+          onOpenChange={setShowEquityStatementPreview}
+          title="Statement of Changes in Equity"
+          description={`For the period ending ${dateRange.endDate}`}
+          onExportPDF={() => handleGenerateEquityStatement('pdf')}
+          onExportExcel={() => handleGenerateEquityStatement('excel')}
+        >
+          <EquityStatementPreview
+            accounts={chartOfAccounts}
+            currentPeriod={getPeriodData(dateRange.startDate, dateRange.endDate)}
+            priorPeriod={getPeriodData(priorDateRange.startDate, priorDateRange.endDate)}
+            settings={{ ...settings, companyName: activeCompany?.name || settings.companyName } as any}
+          />
+        </ReportPreviewDialog>
+
+        {/* VAT Report Preview Dialog */}
+        <ReportPreviewDialog
+          open={showVATReportPreview}
+          onOpenChange={setShowVATReportPreview}
+          title="VAT Report"
+          description={`For the period ${dateRange.startDate} to ${dateRange.endDate}`}
+          onExportPDF={() => handleGenerateVATReport('pdf')}
+          onExportExcel={() => handleGenerateVATReport('excel')}
+        >
+          <VATReportPreview
+            invoices={vatInvoices}
+            expenses={vatExpenses}
+            dateRange={dateRange}
+            settings={{ ...settings, companyName: activeCompany?.name || settings.companyName } as any}
+          />
+        </ReportPreviewDialog>
+
+        {/* Trial Balance Preview Dialog */}
+        <ReportPreviewDialog
+          open={showTrialBalancePreview}
+          onOpenChange={setShowTrialBalancePreview}
+          title="Trial Balance"
+          description={`For the period ${dateRange.startDate} to ${dateRange.endDate}`}
+          onExportPDF={() => handleGenerateTrialBalance('pdf')}
+          onExportExcel={() => handleGenerateTrialBalance('excel')}
+        >
+          {(() => {
+            const data = getFilteredDataForTrialBalance();
+            return (
+              <TrialBalancePreview
+                accounts={chartOfAccounts}
+                journalEntries={data.filteredJournalEntries}
+                expenses={data.expenses}
+                dateRange={dateRange}
+                settings={{ ...settings, companyName: activeCompany?.name || settings.companyName } as any}
+              />
+            );
+          })()}
+        </ReportPreviewDialog>
+
+        {/* Ledger Preview Dialog */}
+        <ReportPreviewDialog
+          open={showLedgerPreview}
+          onOpenChange={setShowLedgerPreview}
+          title="Account Ledger"
+          description={selectedAccount ? `${chartOfAccounts.find(a => a.id === selectedAccount)?.accountNumber} - ${chartOfAccounts.find(a => a.id === selectedAccount)?.accountName}` : ''}
+          onExportPDF={() => handleGenerateLedger('pdf')}
+          onExportExcel={() => handleGenerateLedger('excel')}
+        >
+          {(() => {
+            const data = getFilteredDataForLedger();
+            return data ? (
+              <LedgerPreview
+                account={data.account}
+                journalEntries={data.filteredJournalEntries}
+                expenses={data.expenses}
+                dateRange={dateRange}
+                settings={{ ...settings, companyName: activeCompany?.name || settings.companyName } as any}
+              />
+            ) : <div>Please select an account</div>;
+          })()}
         </ReportPreviewDialog>
       </div>
     </div>
