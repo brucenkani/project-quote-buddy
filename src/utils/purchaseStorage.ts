@@ -33,7 +33,7 @@ export const loadPurchases = async (): Promise<Purchase[]> => {
       dueDate: p.due_date || undefined,
       lineItems: [],
       subtotal: Number(p.subtotal),
-      taxRate: 15,
+      taxRate: Number(p.tax_amount) / Number(p.subtotal) * 100 || 15, // Calculate from tax amount, fallback to 15%
       taxAmount: Number(p.tax_amount),
       discount: 0,
       total: Number(p.total_amount),

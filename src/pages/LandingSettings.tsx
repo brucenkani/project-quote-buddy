@@ -1139,6 +1139,9 @@ export default function LandingSettings() {
                       onChange={(e) => setTaxRate(parseFloat(e.target.value))}
                       placeholder="15.0"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Enter the percentage rate (e.g., <strong>15</strong> for 15% VAT, <strong>16</strong> for 16% VAT). This will be applied to all invoices, quotes, and purchases.
+                    </p>
                   </div>
 
                   <div className="space-y-2">

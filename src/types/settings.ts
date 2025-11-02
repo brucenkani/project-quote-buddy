@@ -38,7 +38,7 @@ export const defaultSettings: CompanySettings = {
   address: '',
   website: '',
   primaryColor: '#3b82f6',
-  taxRate: 0.15,
+  taxRate: 15, // Default 15% VAT
   currency: 'ZAR',
   currencySymbol: 'R',
   financialYearEndMonth: 12, // December

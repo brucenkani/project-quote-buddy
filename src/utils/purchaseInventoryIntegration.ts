@@ -293,7 +293,7 @@ export const convertPOToPurchase = async (
         inventoryType: 'raw-materials',
       })),
       subtotal: Number(po.subtotal),
-      taxRate: 15,
+      taxRate: Number(po.tax_amount) / Number(po.subtotal) * 100 || 15, // Calculate from tax amount, fallback to 15%
       taxAmount: Number(po.tax_amount),
       discount: 0,
       total: Number(po.total_amount),

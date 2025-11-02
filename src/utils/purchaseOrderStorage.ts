@@ -47,7 +47,7 @@ export const loadPurchaseOrders = async (): Promise<PurchaseOrder[]> => {
           total: Number(li.amount),
         })),
         subtotal: Number(o.subtotal),
-        taxRate: 15,
+        taxRate: Number(o.tax_amount) / Number(o.subtotal) * 100 || 15, // Calculate from tax amount, fallback to 15%
         taxAmount: Number(o.tax_amount),
         discount: 0,
         total: Number(o.total_amount),

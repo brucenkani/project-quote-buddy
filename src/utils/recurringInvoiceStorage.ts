@@ -38,7 +38,7 @@ export const loadRecurringInvoices = async (): Promise<RecurringInvoice[]> => {
         },
         lineItems: [],
         subtotal: r.subtotal,
-        taxRate: 0.15,
+        taxRate: r.tax_amount / r.subtotal || 0.15, // Calculate from stored tax amount, fallback to 15%
         taxAmount: r.tax_amount,
         discount: 0,
         total: r.total_amount,
