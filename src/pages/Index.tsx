@@ -203,171 +203,158 @@ export default function Index() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-12 text-center">
-        <h2 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-          Professional Business Management Software
-        </h2>
-        <p className="text-xl text-muted-foreground mb-2 max-w-3xl mx-auto">
-          Complete accounting, payroll, and CRM platform for growing businesses - <span className="font-bold">Completely Free for Entrepreneurs!</span>
-        </p>
-      </section>
+      {/* Hero Section - Combined with Professional Services */}
+      <section className="container mx-auto px-4 py-12">
+        <div className="max-w-6xl mx-auto">
+          {/* Main Heading */}
+          <div className="text-center mb-8">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Professional Business Management Software
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Complete accounting, payroll, and CRM platform - <span className="font-bold text-primary">Completely Free!</span>
+            </p>
+          </div>
 
+          {/* Professional Services Banner */}
+          <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-2xl border-2 border-primary/30 p-6 md:p-8">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+              {/* Left: Message */}
+              <div className="flex-1 text-center lg:text-left">
+                <h3 className="text-2xl font-bold mb-3 flex items-center justify-center lg:justify-start gap-2">
+                  <CheckCircle className="h-6 w-6 text-primary" />
+                  Systems 100% Free to Use
+                </h3>
+                <p className="text-lg text-muted-foreground mb-4">
+                  Need professional help with <span className="font-semibold text-foreground">Financial Statements</span>, <span className="font-semibold text-foreground">Tax Returns</span>, or <span className="font-semibold text-foreground">Compliance Matters</span>?
+                </p>
+                <p className="text-base font-medium">
+                  Contact me for expert assistance:
+                </p>
+              </div>
 
-      {/* Need More Help Section */}
-      <section className="container mx-auto px-4 py-8">
-        <div className="max-w-5xl mx-auto">
-          {/* Hire Us Section with Contact Options */}
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
-            {/* Left: Static Hire Me Button and Arrow */}
-            <div className="flex items-center gap-6">
-              <div className="flex-shrink-0">
-                <Button size="lg" variant="default" className="text-lg px-8 py-6 h-auto shadow-lg hover:shadow-xl transition-all">
-                  Need an Accountant?
+              {/* Middle: Contact Buttons */}
+              <div className="flex flex-wrap justify-center gap-3">
+                <Button 
+                  size="lg" 
+                  variant="default"
+                  onClick={handleWhatsAppContact}
+                  className="gap-2 shadow-lg hover:shadow-xl"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  WhatsApp
                 </Button>
+                <Button 
+                  size="lg" 
+                  variant="default"
+                  onClick={handlePhoneCall}
+                  className="gap-2 shadow-lg hover:shadow-xl"
+                >
+                  <Phone className="h-5 w-5" />
+                  Call Now
+                </Button>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      size="lg" 
+                      variant="default"
+                      className="gap-2 shadow-lg hover:shadow-xl"
+                    >
+                      <Mail className="h-5 w-5" />
+                      Email
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
+                    <DialogHeader>
+                      <DialogTitle>Contact Our Team</DialogTitle>
+                      <DialogDescription>
+                        Interested in our professional accounting services? Send us a message and we'll get back to you soon.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 px-1">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Name *</Label>
+                        <Input
+                          id="name"
+                          required
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          placeholder="Your full name"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email *</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          required
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="your@email.com"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="company">Company</Label>
+                        <Input
+                          id="company"
+                          value={formData.company}
+                          onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                          placeholder="Your company name"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Phone</Label>
+                        <Input
+                          id="phone"
+                          type="tel"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          placeholder="Your phone number"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="message">Message *</Label>
+                        <Textarea
+                          id="message"
+                          required
+                          value={formData.message}
+                          onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                          placeholder="Tell us about your accounting needs..."
+                          rows={4}
+                        />
+                      </div>
+                      <div className="flex gap-3 justify-end">
+                        <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button type="submit" disabled={isSubmitting}>
+                          {isSubmitting ? 'Sending...' : 'Send Message'}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
               </div>
 
-              {/* Animated Arrow */}
-              <div className="flex-shrink-0 hidden lg:block">
-                <ArrowRight className="h-8 w-8 text-primary animate-pulse" />
+              {/* Right: Profile Picture */}
+              <div className="flex-shrink-0">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <img 
+                      src={bruceProfile} 
+                      alt="Bruce - Professional Accountant" 
+                      className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 border-primary/30 shadow-xl cursor-pointer hover:scale-105 transition-transform"
+                    />
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-2xl">
+                    <img 
+                      src={bruceProfile} 
+                      alt="Bruce - Professional Accountant" 
+                      className="w-full h-auto rounded-lg"
+                    />
+                  </DialogContent>
+                </Dialog>
               </div>
-            </div>
-
-            {/* Middle: Contact Options */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              {/* Phone/WhatsApp Button */}
-              <Card className="group hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer border-2">
-                <CardContent className="p-6">
-                  <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={handlePhoneCall}
-                      className="gap-2 hover:bg-primary hover:text-primary-foreground"
-                    >
-                      <Phone className="h-4 w-4" />
-                      Call
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={handleWhatsAppContact}
-                      className="gap-2 hover:bg-green-600 hover:text-white hover:border-green-600"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      WhatsApp
-                    </Button>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">+27 65 967 2215</p>
-                </CardContent>
-              </Card>
-
-              {/* Email Button */}
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Card className="group hover:border-primary/50 transition-all hover:shadow-lg cursor-pointer border-2">
-                    <CardContent className="p-6">
-                      <Button
-                        size="sm" 
-                        className="w-full gap-2"
-                      >
-                        <Mail className="h-4 w-4" />
-                        Email Us
-                      </Button>
-                      <p className="text-sm text-muted-foreground mt-2">bruce@nkani.co.za</p>
-                    </CardContent>
-                  </Card>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
-                  <DialogHeader>
-                    <DialogTitle>Contact Our Team</DialogTitle>
-                    <DialogDescription>
-                      Interested in our professional accounting services? Send us a message and we'll get back to you soon.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 px-1">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name *</Label>
-                      <Input
-                        id="name"
-                        required
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Your full name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        required
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="your@email.com"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="company">Company</Label>
-                      <Input
-                        id="company"
-                        value={formData.company}
-                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                        placeholder="Your company name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="Your phone number"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="message">Message *</Label>
-                      <Textarea
-                        id="message"
-                        required
-                        value={formData.message}
-                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        placeholder="Tell us about your accounting needs..."
-                        rows={4}
-                      />
-                    </div>
-                    <div className="flex gap-3 justify-end">
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? 'Sending...' : 'Send Message'}
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            {/* Right: Bruce's Profile Picture */}
-            <div className="flex-shrink-0">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <img 
-                    src={bruceProfile} 
-                    alt="Bruce - Professional Accountant" 
-                    className="w-32 h-32 rounded-full object-cover border-4 border-primary/20 shadow-lg cursor-pointer hover:scale-105 transition-transform"
-                  />
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-2xl">
-                  <img 
-                    src={bruceProfile} 
-                    alt="Bruce - Professional Accountant" 
-                    className="w-full h-auto rounded-lg"
-                  />
-                </DialogContent>
-              </Dialog>
             </div>
           </div>
         </div>
