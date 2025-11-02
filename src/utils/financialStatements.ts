@@ -12,6 +12,7 @@ export interface PeriodData {
 export interface IncomeStatementLine {
   account: string;
   amount: number;
+  subCategory?: string;
 }
 
 export interface IncomeStatementData {
@@ -28,9 +29,9 @@ export interface IncomeStatementData {
 }
 
 export interface BalanceSheetData {
-  assets: { account: string; amount: number }[];
-  liabilities: { account: string; amount: number }[];
-  equity: { account: string; amount: number }[];
+  assets: { account: string; amount: number; subCategory?: string }[];
+  liabilities: { account: string; amount: number; subCategory?: string }[];
+  equity: { account: string; amount: number; subCategory?: string }[];
   totalAssets: number;
   totalLiabilities: number;
   totalEquity: number;
@@ -175,22 +176,23 @@ export const generateIncomeStatement = (
   accounts.forEach(account => {
     const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
     
-    if (balance === 0) return;
+    // CHANGED: Include ALL accounts, even with zero balance
+    // if (balance === 0) return; // REMOVED THIS LINE
     
     const accountType = getAccountTypeFromNumber(account.accountNumber);
     const accountLabel = `${account.accountNumber} - ${account.accountName}`;
     const firstDigit = account.accountNumber.charAt(0);
     
     if (accountType === 'revenue') {
-      revenue.push({ account: accountLabel, amount: balance });
+      revenue.push({ account: accountLabel, amount: balance, subCategory: account.subCategory });
     } else if (accountType === 'expense') {
       // Categorize by first digit: 7xxx=Cost of Sales, 8xxx=Operating Expenses, 9xxx=Other Comprehensive Income
       if (firstDigit === '7') {
-        costOfSales.push({ account: accountLabel, amount: balance });
+        costOfSales.push({ account: accountLabel, amount: balance, subCategory: account.subCategory });
       } else if (firstDigit === '8') {
-        operatingExpenses.push({ account: accountLabel, amount: balance });
+        operatingExpenses.push({ account: accountLabel, amount: balance, subCategory: account.subCategory });
       } else if (firstDigit === '9') {
-        otherComprehensiveIncome.push({ account: accountLabel, amount: balance });
+        otherComprehensiveIncome.push({ account: accountLabel, amount: balance, subCategory: account.subCategory });
       }
     }
   });
@@ -254,25 +256,26 @@ export const generateBalanceSheet = (
   accounts: ChartAccount[],
   periodData: PeriodData
 ): BalanceSheetData => {
-  const assets: { account: string; amount: number }[] = [];
-  const liabilities: { account: string; amount: number }[] = [];
-  const equity: { account: string; amount: number }[] = [];
+  const assets: { account: string; amount: number; subCategory?: string }[] = [];
+  const liabilities: { account: string; amount: number; subCategory?: string }[] = [];
+  const equity: { account: string; amount: number; subCategory?: string }[] = [];
 
   accounts.forEach(account => {
     const balance = calculateAccountBalance(account, periodData.journalEntries, periodData.expenses);
     
-    if (balance === 0) return;
+    // CHANGED: Include ALL accounts, even with zero balance
+    // if (balance === 0) return; // REMOVED THIS LINE
 
     // Determine account type from account number for accurate categorization
     const accountType = getAccountTypeFromNumber(account.accountNumber);
     const accountLabel = `${account.accountNumber} - ${account.accountName}`;
 
     if (accountType === 'current-asset' || accountType === 'non-current-asset') {
-      assets.push({ account: accountLabel, amount: balance });
+      assets.push({ account: accountLabel, amount: balance, subCategory: account.subCategory });
     } else if (accountType === 'current-liability' || accountType === 'non-current-liability') {
-      liabilities.push({ account: accountLabel, amount: balance });
+      liabilities.push({ account: accountLabel, amount: balance, subCategory: account.subCategory });
     } else if (accountType === 'equity') {
-      equity.push({ account: accountLabel, amount: balance });
+      equity.push({ account: accountLabel, amount: balance, subCategory: account.subCategory });
     }
   });
 
@@ -287,7 +290,7 @@ export const generateBalanceSheet = (
   
   // Add net income as Retained Earnings to equity
   if (netIncome !== 0) {
-    equity.push({ account: '5104 - Retained Earnings (Current Period)', amount: netIncome });
+    equity.push({ account: '5104 - Retained Earnings (Current Period)', amount: netIncome, subCategory: 'retained-earnings' });
     totalEquity += netIncome;
   }
 
