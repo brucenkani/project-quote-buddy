@@ -207,67 +207,48 @@ export default function Index() {
       <section className="container mx-auto px-4 py-12">
         <div className="max-w-6xl mx-auto">
           <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-2xl border-2 border-primary/30 p-6 md:p-8">
-            <div className="flex flex-col items-center text-center gap-6">
-              {/* Message Section */}
-              <div>
-                <h3 className="text-2xl font-bold mb-3 flex items-center justify-center gap-2">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+              {/* Left: Message Section */}
+              <div className="flex-1 text-center lg:text-left">
+                <h3 className="text-2xl font-bold mb-3 flex items-center justify-center lg:justify-start gap-2">
                   <CheckCircle className="h-6 w-6 text-primary" />
                   Systems 100% Free to Use
                 </h3>
-                <p className="text-lg text-muted-foreground">
-                  Need professional help with <span className="font-semibold text-foreground">Financial Statements</span>, <span className="font-semibold text-foreground">Tax Returns</span>, or <span className="font-semibold text-foreground">Compliance Matters</span>? Use the contact details in the navigation bar above.
+                <p className="text-lg text-muted-foreground mb-4">
+                  Need professional help with <span className="font-semibold text-foreground">Financial Statements</span>, <span className="font-semibold text-foreground">Tax Returns</span>, or <span className="font-semibold text-foreground">Compliance Matters</span>?
+                </p>
+                <p className="text-base font-medium">
+                  Contact me for expert assistance:
                 </p>
               </div>
 
-              {/* Additional Services - Merged */}
-              <div className="grid md:grid-cols-2 gap-6 w-full max-w-4xl">
-                {/* Websites & Excel Templates Shop */}
-                <div className="flex items-center gap-4 p-6 bg-background/50 rounded-xl border border-primary/20">
-                  <div className="flex-shrink-0 hidden sm:block">
-                    <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Binary className="h-8 w-8 text-primary" />
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-lg font-bold mb-1">Websites & Excel Templates</h4>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Professional websites and custom Excel tools to streamline your business operations
-                    </p>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      asChild
-                    >
-                      <a href="https://premwebs.com" target="_blank" rel="noopener noreferrer">
-                        Visit Premwebs
-                      </a>
-                    </Button>
-                  </div>
-                </div>
+              {/* Right: Service Links */}
+              <div className="flex flex-col gap-3 min-w-[240px]">
+                {/* Premwebs */}
+                <Button 
+                  variant="default"
+                  size="lg"
+                  className="gap-2 justify-start shadow-lg hover:shadow-xl"
+                  asChild
+                >
+                  <a href="https://premwebs.com" target="_blank" rel="noopener noreferrer">
+                    <Binary className="h-5 w-5" />
+                    Visit Premwebs
+                  </a>
+                </Button>
 
-                {/* Report & Document Builders */}
-                <div className="flex items-center gap-4 p-6 bg-background/50 rounded-xl border border-primary/20">
-                  <div className="flex-shrink-0 hidden sm:block">
-                    <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                      <FileText className="h-8 w-8 text-primary" />
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-lg font-bold mb-1">Report & Document Builders</h4>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Custom reports, presentations, and professional documents tailored to your needs
-                    </p>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      asChild
-                    >
-                      <a href="https://smebox.co.za" target="_blank" rel="noopener noreferrer">
-                        Visit SMEBox
-                      </a>
-                    </Button>
-                  </div>
-                </div>
+                {/* SMEBox */}
+                <Button 
+                  variant="default"
+                  size="lg"
+                  className="gap-2 justify-start shadow-lg hover:shadow-xl"
+                  asChild
+                >
+                  <a href="https://smebox.co.za" target="_blank" rel="noopener noreferrer">
+                    <FileText className="h-5 w-5" />
+                    Visit SMEBox
+                  </a>
+                </Button>
               </div>
             </div>
           </div>
