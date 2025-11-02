@@ -136,7 +136,7 @@ export default function Purchases() {
 
   const calculateTotals = (items: PurchaseLineItem[]) => {
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);
-    const taxAmount = subtotal * (formData.taxRate || 0);
+    const taxAmount = subtotal * ((formData.taxRate || 0) / 100); // taxRate is in percentage (e.g., 16)
     const total = subtotal + taxAmount - (formData.discount || 0);
 
     setFormData(prev => ({
@@ -587,7 +587,7 @@ export default function Purchases() {
                     <span>{settings.currencySymbol}{formData.subtotal?.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Tax ({(formData.taxRate! * 100).toFixed(0)}%):</span>
+                    <span>Tax ({formData.taxRate?.toFixed(0)}%):</span>
                     <span>{settings.currencySymbol}{formData.taxAmount?.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg">

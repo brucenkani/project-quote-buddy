@@ -136,7 +136,7 @@ export default function PurchasePreview() {
                 <span>{settings.currencySymbol}{purchase.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Tax ({(purchase.taxRate * 100).toFixed(0)}%):</span>
+                <span>Tax ({purchase.taxRate.toFixed(0)}%):</span>
                 <span>{settings.currencySymbol}{purchase.taxAmount.toFixed(2)}</span>
               </div>
               {purchase.discount > 0 && (
