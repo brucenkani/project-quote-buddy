@@ -118,6 +118,16 @@ export default function ExpensePayment() {
 
     saveExpense(updatedExpense);
 
+    // Get bank ledger account if payment method is bank
+    let bankLedgerAccount: string | undefined;
+    let selectedBank: any = null;
+    if (paymentData.paymentMethod === 'bank' && paymentData.bankAccountId) {
+      selectedBank = bankAccounts.find(b => b.id === paymentData.bankAccountId);
+      if (selectedBank) {
+        bankLedgerAccount = selectedBank.ledger_account;
+      }
+    }
+
     // Create journal entry for payment (double-entry bookkeeping)
     try {
       recordExpensePayment(
@@ -125,13 +135,48 @@ export default function ExpensePayment() {
         paymentData.amount,
         paymentData.paymentMethod,
         paymentData.paymentDate,
-        paymentData.paymentReference
+        paymentData.paymentReference,
+        bankLedgerAccount
       );
     } catch (error) {
       console.error('Failed to create journal entry:', error);
     }
 
-    toast({ 
+    // Update bank account balance if bank transfer
+    if (paymentData.paymentMethod === 'bank' && selectedBank && activeCompany) {
+      const updateBankBalance = async () => {
+        const newBalance = Number(selectedBank.current_balance || 0) - paymentData.amount;
+        const { error: balErr } = await supabase
+          .from('bank_accounts')
+          .update({ current_balance: newBalance })
+          .eq('id', paymentData.bankAccountId);
+        if (balErr) console.error('Failed updating bank balance', balErr);
+
+        // Insert bank transaction record
+        const { data: session } = await supabase.auth.getSession();
+        const userId = session?.session?.user?.id;
+        if (userId) {
+          const { error: txErr } = await supabase.from('bank_transactions').insert({
+            id: crypto.randomUUID(),
+            user_id: userId,
+            company_id: activeCompany.id,
+            date: paymentData.paymentDate,
+            debit: 0,
+            credit: paymentData.amount,
+            balance: newBalance,
+            is_reconciled: false,
+            description: `Expense payment to ${expense.vendor}`,
+            reference: paymentData.paymentReference,
+            account_id: paymentData.bankAccountId,
+            category: 'expense_payment',
+          });
+          if (txErr) console.error('Failed inserting bank transaction', txErr);
+        }
+      };
+      updateBankBalance();
+    }
+
+    toast({
       title: 'Payment recorded successfully',
       description: newAmountDue > 0 
         ? `Remaining balance: ${settings.currencySymbol}${newAmountDue.toFixed(2)}`

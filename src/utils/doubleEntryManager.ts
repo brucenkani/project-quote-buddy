@@ -159,9 +159,13 @@ export const recordPaymentReceived = (
   invoice: Invoice,
   paymentMethod: 'cash' | 'bank',
   paymentDate: string,
-  paymentReference: string
+  paymentReference: string,
+  bankLedgerAccount?: string
 ): JournalEntry => {
-  const paymentAccount = paymentMethod === 'cash' ? '1120 - Cash on Hand' : '1130 - Bank Account – Current';
+  // Use the specific bank's ledger account if provided, otherwise use default
+  const paymentAccount = paymentMethod === 'cash' 
+    ? '1120 - Cash on Hand' 
+    : (bankLedgerAccount || '1130 - Bank Account – Current');
 
   const entries: JournalEntryLine[] = [
     {
@@ -233,9 +237,13 @@ export const recordExpensePayment = (
   paymentAmount: number,
   paymentMethod: 'cash' | 'bank',
   paymentDate: string,
-  paymentReference: string
+  paymentReference: string,
+  bankLedgerAccount?: string
 ): JournalEntry => {
-  const paymentAccount = paymentMethod === 'cash' ? '1120 - Cash on Hand' : '1130 - Bank Account – Current';
+  // Use the specific bank's ledger account if provided, otherwise use default
+  const paymentAccount = paymentMethod === 'cash' 
+    ? '1120 - Cash on Hand' 
+    : (bankLedgerAccount || '1130 - Bank Account – Current');
 
   const entries: JournalEntryLine[] = [
     {
