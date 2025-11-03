@@ -410,7 +410,7 @@ export default function Index() {
                 </Card>
               </div>
 
-              {/* Message */}
+              {/* Message and Contact Section */}
               <div className="text-center w-full">
                 <h3 className="text-2xl md:text-3xl font-bold mb-3 flex items-center justify-center gap-2">
                   <CheckCircle className="h-6 w-6 text-primary" />
@@ -420,64 +420,64 @@ export default function Index() {
                   Need professional help with <span className="font-semibold text-foreground">Financial Statements</span>, <span className="font-semibold text-foreground">Tax Returns</span>, or <span className="font-semibold text-foreground">Compliance Matters</span>?
                 </p>
                 
-                {/* Contact Info */}
-                <div className="text-base text-muted-foreground space-y-1 mb-16 md:mb-20">
-                  <p className="font-medium">Contact me for expert assistance:</p>
-                  <p className="font-semibold text-lg text-foreground mt-2">+27 65 967 2215</p>
-                  <p className="text-foreground">bruce@nkani.co.za</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Corner Cards */}
-            <div className="absolute bottom-4 left-4 right-4 hidden md:flex justify-between items-end gap-4">
-              {/* Left Card - Websites & Excel Templates */}
-              <div className="max-w-[280px] flex items-center gap-3 p-4 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 backdrop-blur rounded-xl border border-orange-200 dark:border-orange-800 shadow-lg">
-                <div className="flex-shrink-0">
-                  <div className="h-12 w-12 rounded-full bg-orange-500/10 dark:bg-orange-500/20 flex items-center justify-center">
-                    <Binary className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                {/* Cards and Contact Info Section */}
+                <div className="flex flex-col lg:flex-row items-center justify-center gap-6 mb-16 md:mb-20">
+                  {/* Left Card - Websites & Excel Templates */}
+                  <div className="w-full max-w-[280px] flex items-center gap-3 p-4 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 backdrop-blur rounded-xl border border-orange-200 dark:border-orange-800 shadow-lg">
+                    <div className="flex-shrink-0">
+                      <div className="h-12 w-12 rounded-full bg-orange-500/10 dark:bg-orange-500/20 flex items-center justify-center">
+                        <Binary className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-bold mb-1 truncate">Websites & Excel Templates</h4>
+                      <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                        Professional websites and custom Excel tools
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        asChild
+                        className="h-7 text-xs border-orange-300 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/30"
+                      >
+                        <a href="https://premwebs.com" target="_blank" rel="noopener noreferrer">
+                          Visit Premwebs
+                        </a>
+                      </Button>
+                    </div>
                   </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-bold mb-1 truncate">Websites & Excel Templates</h4>
-                  <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                    Professional websites and custom Excel tools
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    asChild
-                    className="h-7 text-xs border-orange-300 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/30"
-                  >
-                    <a href="https://premwebs.com" target="_blank" rel="noopener noreferrer">
-                      Visit Premwebs
-                    </a>
-                  </Button>
-                </div>
-              </div>
 
-              {/* Right Card - Report & Document Builders */}
-              <div className="max-w-[280px] flex items-center gap-3 p-4 bg-gradient-to-br from-teal-50 to-teal-100/50 dark:from-teal-950/30 dark:to-teal-900/20 backdrop-blur rounded-xl border border-teal-200 dark:border-teal-800 shadow-lg">
-                <div className="flex-shrink-0">
-                  <div className="h-12 w-12 rounded-full bg-teal-500/10 dark:bg-teal-500/20 flex items-center justify-center">
-                    <FileText className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+                  {/* Contact Info - Center */}
+                  <div className="text-base text-muted-foreground space-y-1 lg:mx-8">
+                    <p className="font-medium">Contact me for expert assistance:</p>
+                    <p className="font-semibold text-lg text-foreground mt-2">+27 65 967 2215</p>
+                    <p className="text-foreground">bruce@nkani.co.za</p>
                   </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-bold mb-1 truncate">Report & Document Builders</h4>
-                  <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                    Custom reports and professional documents
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    asChild
-                    className="h-7 text-xs border-teal-300 dark:border-teal-700 hover:bg-teal-100 dark:hover:bg-teal-900/30"
-                  >
-                    <a href="https://smebox.co.za" target="_blank" rel="noopener noreferrer">
-                      Visit SMEBox
-                    </a>
-                  </Button>
+
+                  {/* Right Card - Report & Document Builders */}
+                  <div className="w-full max-w-[280px] flex items-center gap-3 p-4 bg-gradient-to-br from-teal-50 to-teal-100/50 dark:from-teal-950/30 dark:to-teal-900/20 backdrop-blur rounded-xl border border-teal-200 dark:border-teal-800 shadow-lg">
+                    <div className="flex-shrink-0">
+                      <div className="h-12 w-12 rounded-full bg-teal-500/10 dark:bg-teal-500/20 flex items-center justify-center">
+                        <FileText className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-bold mb-1 truncate">Report & Document Builders</h4>
+                      <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                        Custom reports and professional documents
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        asChild
+                        className="h-7 text-xs border-teal-300 dark:border-teal-700 hover:bg-teal-100 dark:hover:bg-teal-900/30"
+                      >
+                        <a href="https://smebox.co.za" target="_blank" rel="noopener noreferrer">
+                          Visit SMEBox
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
