@@ -202,14 +202,41 @@ export default function Landing() {
           <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
             <CardContent className="p-6 sm:p-10">
               <div className="flex flex-col items-center gap-8">
-                {/* Profile and Contact Info */}
-                <div className="flex flex-col items-center gap-4">
-                  <img 
-                    src={bruceProfile} 
-                    alt="Bruce - Professional Accountant" 
-                    className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-background shadow-lg"
-                  />
-                  
+                {/* System Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+                  <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-background" onClick={() => navigate('/accounting')}>
+                    <CardHeader className="pb-3">
+                      <Calculator className="h-8 w-8 mb-2 text-primary" />
+                      <CardTitle className="text-lg">Accounting System</CardTitle>
+                      <CardDescription className="text-xs">
+                        Complete financial management at your fingertips
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+
+                  <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-background" onClick={() => navigate('/payroll')}>
+                    <CardHeader className="pb-3">
+                      <Users className="h-8 w-8 mb-2 text-primary" />
+                      <CardTitle className="text-lg">Payroll & HR System</CardTitle>
+                      <CardDescription className="text-xs">
+                        Simplify employee management and payroll
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+
+                  <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-background" onClick={() => navigate('/crm-customer-support')}>
+                    <CardHeader className="pb-3">
+                      <Users className="h-8 w-8 mb-2 text-primary" />
+                      <CardTitle className="text-lg">CRM & Customer Support</CardTitle>
+                      <CardDescription className="text-xs">
+                        Complete customer management & support system
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                </div>
+
+                {/* Contact Info */}
+                <div className="flex flex-col items-center gap-4 w-full">
                   <div className="text-center space-y-2">
                     <h3 className="text-2xl sm:text-3xl font-bold flex items-center justify-center gap-2">
                       <span className="text-primary">✓</span> Systems 100% Free to Use
@@ -246,39 +273,6 @@ export default function Landing() {
                       <p>bruce@nkani.co.za</p>
                     </div>
                   </div>
-                </div>
-
-                {/* System Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mt-4">
-                  <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-background" onClick={() => navigate('/accounting')}>
-                    <CardHeader className="pb-3">
-                      <Calculator className="h-8 w-8 mb-2 text-primary" />
-                      <CardTitle className="text-lg">Accounting System</CardTitle>
-                      <CardDescription className="text-xs">
-                        Complete financial management at your fingertips
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
-
-                  <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-background" onClick={() => navigate('/payroll')}>
-                    <CardHeader className="pb-3">
-                      <Users className="h-8 w-8 mb-2 text-primary" />
-                      <CardTitle className="text-lg">Payroll & HR System</CardTitle>
-                      <CardDescription className="text-xs">
-                        Simplify employee management and payroll
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
-
-                  <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-background" onClick={() => navigate('/crm-customer-support')}>
-                    <CardHeader className="pb-3">
-                      <Users className="h-8 w-8 mb-2 text-primary" />
-                      <CardTitle className="text-lg">CRM & Customer Support</CardTitle>
-                      <CardDescription className="text-xs">
-                        Complete customer management & support system
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
                 </div>
               </div>
             </CardContent>
