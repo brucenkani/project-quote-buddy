@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle, Phone, ArrowRight, Binary, UserCircle, Headset, LineChart, BookOpen, GraduationCap, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import bruceProfile from '@/assets/bruce-profile.png';
+
 
 export default function Index() {
   const navigate = useNavigate();
@@ -227,24 +227,37 @@ export default function Index() {
           {/* Professional Services Banner */}
           <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-2xl border-2 border-primary/30 p-6 md:p-8">
             <div className="flex flex-col items-center gap-8">
-              {/* Profile Picture - Top on mobile */}
-              <div className="flex-shrink-0 order-first">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <img 
-                      src={bruceProfile} 
-                      alt="Bruce - Professional Accountant" 
-                      className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-primary/30 shadow-xl cursor-pointer hover:scale-105 transition-transform"
-                    />
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-2xl">
-                    <img 
-                      src={bruceProfile} 
-                      alt="Bruce - Professional Accountant" 
-                      className="w-full h-auto rounded-lg"
-                    />
-                  </DialogContent>
-                </Dialog>
+              {/* System Cards inside banner */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full order-first">
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-background" onClick={() => navigate('/accounting')}>
+                  <CardHeader className="pb-3">
+                    <Calculator className="h-8 w-8 mb-2 text-primary" />
+                    <CardTitle className="text-lg">Accounting System</CardTitle>
+                    <CardDescription className="text-xs">
+                      Complete financial management at your fingertips
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-background" onClick={() => navigate('/payroll')}>
+                  <CardHeader className="pb-3">
+                    <Users className="h-8 w-8 mb-2 text-primary" />
+                    <CardTitle className="text-lg">Payroll & HR System</CardTitle>
+                    <CardDescription className="text-xs">
+                      Simplify employee management and payroll
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-background" onClick={() => navigate('/crm-customer-support')}>
+                  <CardHeader className="pb-3">
+                    <Users className="h-8 w-8 mb-2 text-primary" />
+                    <CardTitle className="text-lg">CRM & Customer Support</CardTitle>
+                    <CardDescription className="text-xs">
+                      Complete customer management & support system
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
               </div>
 
               {/* Message */}
