@@ -421,7 +421,7 @@ export default function Index() {
                 </p>
                 
                 {/* Cards and Contact Info Section */}
-                <div className="flex flex-col lg:flex-row items-center justify-center gap-6 mb-16 md:mb-20">
+                <div className="flex flex-col lg:flex-row items-center justify-center gap-6 mb-8">
                   {/* Left Card - Websites & Excel Templates */}
                   <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 border-orange-200 dark:border-orange-800 w-full max-w-[300px]">
                     <CardHeader className="pb-3">
