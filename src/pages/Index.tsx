@@ -423,29 +423,27 @@ export default function Index() {
                 {/* Cards and Contact Info Section */}
                 <div className="flex flex-col lg:flex-row items-center justify-center gap-6 mb-16 md:mb-20">
                   {/* Left Card - Websites & Excel Templates */}
-                  <div className="w-full max-w-[280px] flex items-center gap-3 p-4 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 backdrop-blur rounded-xl border border-orange-200 dark:border-orange-800 shadow-lg">
-                    <div className="flex-shrink-0">
-                      <div className="h-12 w-12 rounded-full bg-orange-500/10 dark:bg-orange-500/20 flex items-center justify-center">
+                  <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 border-orange-200 dark:border-orange-800 w-full max-w-[300px]">
+                    <CardHeader className="pb-3">
+                      <div className="h-12 w-12 rounded-lg bg-orange-500/10 dark:bg-orange-500/20 flex items-center justify-center mb-3">
                         <Binary className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                       </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-bold mb-1 truncate">Websites & Excel Templates</h4>
-                      <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                      <CardTitle className="text-lg">Websites & Excel Templates</CardTitle>
+                      <CardDescription className="text-xs">
                         Professional websites and custom Excel tools
-                      </p>
+                      </CardDescription>
                       <Button 
                         variant="outline" 
                         size="sm"
                         asChild
-                        className="h-7 text-xs border-orange-300 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/30"
+                        className="mt-3 border-orange-300 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/30"
                       >
                         <a href="https://premwebs.com" target="_blank" rel="noopener noreferrer">
                           Visit Premwebs
                         </a>
                       </Button>
-                    </div>
-                  </div>
+                    </CardHeader>
+                  </Card>
 
                   {/* Contact Info - Center */}
                   <div className="text-base text-muted-foreground space-y-1 lg:mx-8">
@@ -455,29 +453,27 @@ export default function Index() {
                   </div>
 
                   {/* Right Card - Report & Document Builders */}
-                  <div className="w-full max-w-[280px] flex items-center gap-3 p-4 bg-gradient-to-br from-teal-50 to-teal-100/50 dark:from-teal-950/30 dark:to-teal-900/20 backdrop-blur rounded-xl border border-teal-200 dark:border-teal-800 shadow-lg">
-                    <div className="flex-shrink-0">
-                      <div className="h-12 w-12 rounded-full bg-teal-500/10 dark:bg-teal-500/20 flex items-center justify-center">
+                  <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-br from-teal-50 to-teal-100/50 dark:from-teal-950/30 dark:to-teal-900/20 border-teal-200 dark:border-teal-800 w-full max-w-[300px]">
+                    <CardHeader className="pb-3">
+                      <div className="h-12 w-12 rounded-lg bg-teal-500/10 dark:bg-teal-500/20 flex items-center justify-center mb-3">
                         <FileText className="h-6 w-6 text-teal-600 dark:text-teal-400" />
                       </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-bold mb-1 truncate">Report & Document Builders</h4>
-                      <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                      <CardTitle className="text-lg">Report & Document Builders</CardTitle>
+                      <CardDescription className="text-xs">
                         Custom reports and professional documents
-                      </p>
+                      </CardDescription>
                       <Button 
                         variant="outline" 
                         size="sm"
                         asChild
-                        className="h-7 text-xs border-teal-300 dark:border-teal-700 hover:bg-teal-100 dark:hover:bg-teal-900/30"
+                        className="mt-3 border-teal-300 dark:border-teal-700 hover:bg-teal-100 dark:hover:bg-teal-900/30"
                       >
                         <a href="https://smebox.co.za" target="_blank" rel="noopener noreferrer">
                           Visit SMEBox
                         </a>
                       </Button>
-                    </div>
-                  </div>
+                    </CardHeader>
+                  </Card>
                 </div>
               </div>
             </div>
