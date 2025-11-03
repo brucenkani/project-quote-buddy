@@ -225,7 +225,7 @@ export default function Index() {
           </div>
 
           {/* Professional Services Banner */}
-          <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-2xl border-2 border-primary/30 p-6 md:p-8">
+          <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-2xl border-2 border-primary/30 p-6 md:p-8 relative">
             <div className="flex flex-col items-center gap-8">
               {/* System Cards inside banner */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full order-first">
@@ -377,9 +377,62 @@ export default function Index() {
                 </div>
 
                 {/* Contact Info */}
-                <div className="text-sm text-muted-foreground space-y-1">
+                <div className="text-sm text-muted-foreground space-y-1 mb-16 md:mb-20">
                   <p className="font-medium">+27 65 967 2215</p>
                   <p>bruce@nkani.co.za</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Corner Cards */}
+            <div className="absolute bottom-4 left-4 right-4 hidden md:flex justify-between items-end gap-4">
+              {/* Left Card - Websites & Excel Templates */}
+              <div className="max-w-[280px] flex items-center gap-3 p-4 bg-background/95 backdrop-blur rounded-xl border border-primary/20 shadow-lg">
+                <div className="flex-shrink-0">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Binary className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-bold mb-1 truncate">Websites & Excel Templates</h4>
+                  <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                    Professional websites and custom Excel tools
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    asChild
+                    className="h-7 text-xs"
+                  >
+                    <a href="https://premwebs.com" target="_blank" rel="noopener noreferrer">
+                      Visit Premwebs
+                    </a>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Right Card - Report & Document Builders */}
+              <div className="max-w-[280px] flex items-center gap-3 p-4 bg-background/95 backdrop-blur rounded-xl border border-primary/20 shadow-lg">
+                <div className="flex-shrink-0">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <FileText className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-bold mb-1 truncate">Report & Document Builders</h4>
+                  <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                    Custom reports and professional documents
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    asChild
+                    className="h-7 text-xs"
+                  >
+                    <a href="https://smebox.co.za" target="_blank" rel="noopener noreferrer">
+                      Visit SMEBox
+                    </a>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -387,58 +440,6 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Additional Services */}
-      <section className="container mx-auto px-4 py-6">
-
-        {/* Additional Services */}
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {/* Websites & Excel Templates Shop */}
-          <div className="flex items-center gap-6 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
-            <div className="flex-shrink-0 hidden sm:block">
-              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
-                <Binary className="h-10 w-10 text-primary" />
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-xl font-bold mb-2">Websites & Excel Templates</h3>
-              <p className="text-muted-foreground mb-4">
-                Professional websites and custom Excel tools to streamline your business operations
-              </p>
-              <Button 
-                variant="outline" 
-                asChild
-              >
-                <a href="https://premwebs.com" target="_blank" rel="noopener noreferrer">
-                  Visit Premwebs
-                </a>
-              </Button>
-            </div>
-          </div>
-
-          {/* Report & Document Builders */}
-          <div className="flex items-center gap-6 p-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 rounded-2xl border border-primary/20">
-            <div className="flex-shrink-0 hidden sm:block">
-              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
-                <FileText className="h-10 w-10 text-primary" />
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-xl font-bold mb-2">Report & Document Builders</h3>
-              <p className="text-muted-foreground mb-4">
-                Custom reports, presentations, and professional documents tailored to your needs
-              </p>
-              <Button 
-                variant="outline" 
-                asChild
-              >
-                <a href="https://smebox.co.za" target="_blank" rel="noopener noreferrer">
-                  Visit SMEBox
-                </a>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
 
 
       {/* Footer */}
