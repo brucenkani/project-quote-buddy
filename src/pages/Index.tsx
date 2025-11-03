@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle, Phone, ArrowRight, Binary, UserCircle, Headset, LineChart, BookOpen, GraduationCap, ChevronDown } from 'lucide-react';
+import { Calculator, Users, FileText, TrendingUp, Clock, Shield, CheckCircle, Mail, MessageCircle, Phone, ArrowRight, Binary, UserCircle, Headset, LineChart, BookOpen, GraduationCap, ChevronDown, Menu } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -103,13 +104,15 @@ export default function Index() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Calculator className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold">BizManager</h1>
           </div>
-          <div className="flex gap-3">
+          
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex gap-3 items-center">
             <Button variant="ghost" size="lg" onClick={() => navigate('/community')}>Business Community</Button>
             <Button variant="ghost" size="lg" onClick={() => navigate('/knowledge')}>Knowledge Centre</Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -208,6 +211,143 @@ export default function Index() {
               {isAuthenticated ? 'Dashboard' : 'Sign In / Sign Up'}
             </Button>
           </div>
+
+          {/* Mobile Navigation */}
+          <Sheet>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="outline" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[280px] sm:w-[350px]">
+              <nav className="flex flex-col gap-4 mt-8">
+                <Button 
+                  variant="ghost" 
+                  className="justify-start" 
+                  onClick={() => {
+                    navigate('/community');
+                  }}
+                >
+                  Business Community
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="justify-start" 
+                  onClick={() => {
+                    navigate('/knowledge');
+                  }}
+                >
+                  Knowledge Centre
+                </Button>
+                
+                <div className="border-t pt-4 mt-2">
+                  <p className="text-sm font-medium mb-3 px-2">Contact Us</p>
+                  <Button 
+                    variant="ghost" 
+                    className="justify-start w-full" 
+                    onClick={handleWhatsAppContact}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    WhatsApp
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="justify-start w-full" 
+                    onClick={handlePhoneCall}
+                  >
+                    <Phone className="h-4 w-4 mr-2" />
+                    Call Now
+                  </Button>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" className="justify-start w-full">
+                        <Mail className="h-4 w-4 mr-2" />
+                        Email
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
+                      <DialogHeader>
+                        <DialogTitle>Contact Our Team</DialogTitle>
+                        <DialogDescription>
+                          Interested in our professional accounting services? Send us a message and we'll get back to you soon.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 px-1">
+                        <div className="space-y-2">
+                          <Label htmlFor="mobile-name">Name *</Label>
+                          <Input
+                            id="mobile-name"
+                            required
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            placeholder="Your full name"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="mobile-email">Email *</Label>
+                          <Input
+                            id="mobile-email"
+                            type="email"
+                            required
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            placeholder="your@email.com"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="mobile-company">Company</Label>
+                          <Input
+                            id="mobile-company"
+                            value={formData.company}
+                            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                            placeholder="Your company name"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="mobile-phone">Phone</Label>
+                          <Input
+                            id="mobile-phone"
+                            type="tel"
+                            value={formData.phone}
+                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            placeholder="Your phone number"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="mobile-message">Message *</Label>
+                          <Textarea
+                            id="mobile-message"
+                            required
+                            value={formData.message}
+                            onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                            placeholder="Tell us about your accounting needs..."
+                            rows={4}
+                          />
+                        </div>
+                        <div className="flex gap-3 justify-end">
+                          <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                            Cancel
+                          </Button>
+                          <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting ? 'Sending...' : 'Send Message'}
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                <div className="border-t pt-4 mt-2">
+                  <Button 
+                    className="w-full" 
+                    onClick={() => navigate(isAuthenticated ? '/dashboard' : '/auth')}
+                  >
+                    {isAuthenticated ? 'Dashboard' : 'Sign In / Sign Up'}
+                  </Button>
+                </div>
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </header>
 
