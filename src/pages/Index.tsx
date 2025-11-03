@@ -108,11 +108,11 @@ export default function Index() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Calculator className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">BizManager</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">BizManager</h1>
           </div>
           
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex gap-3 items-center">
+          {/* Desktop Navigation - hidden on tablets and below */}
+          <div className="hidden lg:flex gap-3 items-center">
             <Button variant="ghost" size="lg" onClick={() => navigate('/community')}>Business Community</Button>
             <Button variant="ghost" size="lg" onClick={() => navigate('/knowledge')}>Knowledge Centre</Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -212,9 +212,9 @@ export default function Index() {
             </Button>
           </div>
 
-          {/* Mobile Navigation */}
+          {/* Mobile/Tablet Navigation - visible on lg screens and below */}
           <Sheet>
-            <SheetTrigger asChild className="md:hidden">
+            <SheetTrigger asChild className="lg:hidden">
               <Button variant="outline" size="icon">
                 <Menu className="h-5 w-5" />
               </Button>
