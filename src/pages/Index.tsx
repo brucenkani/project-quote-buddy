@@ -369,9 +369,11 @@ export default function Index() {
             <div className="flex flex-col items-center gap-8">
               {/* System Cards inside banner */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full order-first">
-                <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-background" onClick={() => navigate('/accounting')}>
+                <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 border-blue-200 dark:border-blue-800" onClick={() => navigate('/accounting')}>
                   <CardHeader className="pb-3">
-                    <Calculator className="h-8 w-8 mb-2 text-primary" />
+                    <div className="h-12 w-12 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center mb-3">
+                      <Calculator className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    </div>
                     <CardTitle className="text-lg">Accounting System</CardTitle>
                     <CardDescription className="text-xs">
                       Complete financial management at your fingertips
@@ -379,9 +381,11 @@ export default function Index() {
                   </CardHeader>
                 </Card>
 
-                <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-background" onClick={() => navigate('/payroll')}>
+                <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 border-green-200 dark:border-green-800" onClick={() => navigate('/payroll')}>
                   <CardHeader className="pb-3">
-                    <Users className="h-8 w-8 mb-2 text-primary" />
+                    <div className="h-12 w-12 rounded-lg bg-green-500/10 dark:bg-green-500/20 flex items-center justify-center mb-3">
+                      <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
+                    </div>
                     <CardTitle className="text-lg">Payroll & HR System</CardTitle>
                     <CardDescription className="text-xs">
                       Simplify employee management and payroll
@@ -389,9 +393,11 @@ export default function Index() {
                   </CardHeader>
                 </Card>
 
-                <Card className="cursor-pointer hover:shadow-lg transition-shadow bg-background" onClick={() => navigate('/crm-customer-support')}>
+                <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20 border-purple-200 dark:border-purple-800" onClick={() => navigate('/crm-customer-support')}>
                   <CardHeader className="pb-3">
-                    <Users className="h-8 w-8 mb-2 text-primary" />
+                    <div className="h-12 w-12 rounded-lg bg-purple-500/10 dark:bg-purple-500/20 flex items-center justify-center mb-3">
+                      <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                    </div>
                     <CardTitle className="text-lg">CRM & Customer Support</CardTitle>
                     <CardDescription className="text-xs">
                       Complete customer management & support system
@@ -527,10 +533,10 @@ export default function Index() {
             {/* Bottom Corner Cards */}
             <div className="absolute bottom-4 left-4 right-4 hidden md:flex justify-between items-end gap-4">
               {/* Left Card - Websites & Excel Templates */}
-              <div className="max-w-[280px] flex items-center gap-3 p-4 bg-background/95 backdrop-blur rounded-xl border border-primary/20 shadow-lg">
+              <div className="max-w-[280px] flex items-center gap-3 p-4 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 backdrop-blur rounded-xl border border-orange-200 dark:border-orange-800 shadow-lg">
                 <div className="flex-shrink-0">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Binary className="h-6 w-6 text-primary" />
+                  <div className="h-12 w-12 rounded-full bg-orange-500/10 dark:bg-orange-500/20 flex items-center justify-center">
+                    <Binary className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -542,7 +548,7 @@ export default function Index() {
                     variant="outline" 
                     size="sm"
                     asChild
-                    className="h-7 text-xs"
+                    className="h-7 text-xs border-orange-300 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/30"
                   >
                     <a href="https://premwebs.com" target="_blank" rel="noopener noreferrer">
                       Visit Premwebs
@@ -552,10 +558,10 @@ export default function Index() {
               </div>
 
               {/* Right Card - Report & Document Builders */}
-              <div className="max-w-[280px] flex items-center gap-3 p-4 bg-background/95 backdrop-blur rounded-xl border border-primary/20 shadow-lg">
+              <div className="max-w-[280px] flex items-center gap-3 p-4 bg-gradient-to-br from-teal-50 to-teal-100/50 dark:from-teal-950/30 dark:to-teal-900/20 backdrop-blur rounded-xl border border-teal-200 dark:border-teal-800 shadow-lg">
                 <div className="flex-shrink-0">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <FileText className="h-6 w-6 text-primary" />
+                  <div className="h-12 w-12 rounded-full bg-teal-500/10 dark:bg-teal-500/20 flex items-center justify-center">
+                    <FileText className="h-6 w-6 text-teal-600 dark:text-teal-400" />
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -567,7 +573,7 @@ export default function Index() {
                     variant="outline" 
                     size="sm"
                     asChild
-                    className="h-7 text-xs"
+                    className="h-7 text-xs border-teal-300 dark:border-teal-700 hover:bg-teal-100 dark:hover:bg-teal-900/30"
                   >
                     <a href="https://smebox.co.za" target="_blank" rel="noopener noreferrer">
                       Visit SMEBox
