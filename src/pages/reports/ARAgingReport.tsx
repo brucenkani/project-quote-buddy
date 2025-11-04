@@ -74,6 +74,7 @@ export default function ARAgingReport() {
       const { data: contacts } = await supabase
         .from('contacts')
         .select('name, contact_group')
+        .eq('company_id', activeCompany.id)
         .eq('type', 'client');
 
       const contactGroupMap = new Map(contacts?.map(c => [c.name, c.contact_group]) || []);
