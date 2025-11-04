@@ -2169,6 +2169,47 @@ export type Database = {
           },
         ]
       }
+      recurring_invoice_line_items: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          quantity: number
+          recurring_invoice_id: string
+          tax_rate: number
+          unit_price: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          id?: string
+          quantity: number
+          recurring_invoice_id: string
+          tax_rate?: number
+          unit_price: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          quantity?: number
+          recurring_invoice_id?: string
+          tax_rate?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_invoice_line_items_recurring_invoice_id_fkey"
+            columns: ["recurring_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recurring_invoices: {
         Row: {
           company_id: string | null
@@ -2224,6 +2265,89 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      recurring_journal_lines: {
+        Row: {
+          account_id: string
+          account_name: string
+          created_at: string
+          credit: number
+          debit: number
+          id: string
+          recurring_journal_id: string
+        }
+        Insert: {
+          account_id: string
+          account_name: string
+          created_at?: string
+          credit?: number
+          debit?: number
+          id?: string
+          recurring_journal_id: string
+        }
+        Update: {
+          account_id?: string
+          account_name?: string
+          created_at?: string
+          credit?: number
+          debit?: number
+          id?: string
+          recurring_journal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_journal_lines_recurring_journal_id_fkey"
+            columns: ["recurring_journal_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_journals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_journals: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string
+          end_date: string | null
+          frequency: string
+          id: string
+          next_generation_date: string
+          reference: string | null
+          start_date: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description: string
+          end_date?: string | null
+          frequency: string
+          id?: string
+          next_generation_date: string
+          reference?: string | null
+          start_date: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          next_generation_date?: string
+          reference?: string | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       role_permissions: {
         Row: {
