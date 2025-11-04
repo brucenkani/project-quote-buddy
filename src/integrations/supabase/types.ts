@@ -1102,6 +1102,7 @@ export type Database = {
           gl_account_id: string | null
           id: string
           is_taxable: boolean | null
+          item_type: string | null
           last_cost: number | null
           name: string
           quantity: number
@@ -1124,6 +1125,7 @@ export type Database = {
           gl_account_id?: string | null
           id?: string
           is_taxable?: boolean | null
+          item_type?: string | null
           last_cost?: number | null
           name: string
           quantity?: number
@@ -1146,6 +1148,7 @@ export type Database = {
           gl_account_id?: string | null
           id?: string
           is_taxable?: boolean | null
+          item_type?: string | null
           last_cost?: number | null
           name?: string
           quantity?: number

@@ -48,7 +48,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         description: row.description || '',
         sku: row.sku || '',
         unit: row.unit,
-        type: 'consumables' as InventoryType,
+        type: (row.item_type || 'consumables') as InventoryType,
         quantity: Number(row.quantity),
         minQuantity: Number(row.reorder_level || 0),
         unitCost: Number(row.cost_price || row.unit_price),
@@ -96,6 +96,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
           warehouse_id: item.warehouse_id || null,
           tax_rate: 15,
           is_taxable: true,
+          item_type: item.type,
         });
 
       if (error) throw error;
