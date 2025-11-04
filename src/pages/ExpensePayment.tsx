@@ -36,7 +36,7 @@ export default function ExpensePayment() {
   useEffect(() => {
     const loadData = async () => {
       if (id) {
-        const expenses = loadExpenses();
+        const expenses = await loadExpenses();
         const found = expenses.find(exp => exp.id === id);
         if (found) {
           setExpense(found);

@@ -75,7 +75,7 @@ export default function Dashboard() {
         setJournalEntries(entries && entries.length > 0 ? entries : loadJournalEntries());
 
         // Expenses fallback to local only when no company
-        setExpenses(loadExpenses());
+        loadExpenses().then(setExpenses);
         setLoading(false);
         return;
       }
@@ -136,7 +136,7 @@ export default function Dashboard() {
           updatedAt: exp.updated_at,
         })));
       } else {
-        setExpenses(loadExpenses());
+        loadExpenses().then(setExpenses);
       }
 
       setLoading(false);

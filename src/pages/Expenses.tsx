@@ -31,7 +31,11 @@ export default function Expenses() {
   const { toast } = useToast();
   const { settings } = useSettings();
   const { activeCompany } = useCompany();
-  const [expenses, setExpenses] = useState<Expense[]>(loadExpenses());
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+
+  useEffect(() => {
+    loadExpenses().then(setExpenses);
+  }, []);
   const [chartAccounts, setChartAccounts] = useState<any[]>([]);
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -165,7 +169,7 @@ export default function Expenses() {
       }
     }
     
-    setExpenses(loadExpenses());
+    loadExpenses().then(setExpenses);
     setIsDialogOpen(false);
     setEditingExpense(null);
     setFormData({
@@ -196,7 +200,7 @@ export default function Expenses() {
     if (confirm('Are you sure you want to delete this expense? This will remove all related payments and journal entries.')) {
       try {
         await deleteExpense(id);
-        setExpenses(loadExpenses());
+        loadExpenses().then(setExpenses);
         toast({ title: 'Expense and all related records deleted successfully' });
       } catch (error) {
         toast({ 
@@ -353,7 +357,7 @@ export default function Expenses() {
       }
     });
     
-    setExpenses(loadExpenses());
+    loadExpenses().then(setExpenses);
     setBulkExpenses([]);
     setBulkPaymentMethod('cash');
     setBulkBankAccountId('');

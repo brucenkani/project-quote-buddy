@@ -55,6 +55,7 @@ export default function Reports() {
   const [selectedAccount, setSelectedAccount] = useState<string>('');
   const [chartOfAccounts, setChartOfAccounts] = useState<ChartAccount[]>([]);
   const [journalEntries, setJournalEntries] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Preview states
@@ -193,6 +194,10 @@ export default function Reports() {
         }
 
         setJournalEntries(currentEntries);
+
+        // Load expenses
+        const expensesData = await loadExpenses();
+        setExpenses(expensesData);
       } catch (error) {
         console.error('Failed to load data:', error);
       } finally {
@@ -250,12 +255,12 @@ export default function Reports() {
       return entryDate >= new Date(startDate) && entryDate <= new Date(endDate);
     });
 
-    const expenses = loadExpenses().filter(expense => {
+    const filteredExpenses = expenses.filter(expense => {
       const expenseDate = new Date(expense.date);
       return expenseDate >= new Date(startDate) && expenseDate <= new Date(endDate);
     });
 
-    return { startDate, endDate, journalEntries: filteredJournalEntries, expenses };
+    return { startDate, endDate, journalEntries: filteredJournalEntries, expenses: filteredExpenses };
   };
 
   const handleGenerateTrialBalance = (format: 'pdf' | 'excel') => {
@@ -264,7 +269,7 @@ export default function Reports() {
       return entryDate >= new Date(dateRange.startDate) && entryDate <= new Date(dateRange.endDate);
     });
 
-    const expenses = loadExpenses().filter(expense => {
+    const filteredExpenses = expenses.filter(expense => {
       const expenseDate = new Date(expense.date);
       return expenseDate >= new Date(dateRange.startDate) && expenseDate <= new Date(dateRange.endDate);
     });
@@ -272,9 +277,9 @@ export default function Reports() {
     const effectiveSettings = { ...settings, companyName: activeCompany?.name || settings.companyName } as any;
 
     if (format === 'pdf') {
-      generateTrialBalancePDF(chartOfAccounts, filteredJournalEntries, expenses, dateRange, effectiveSettings);
+      generateTrialBalancePDF(chartOfAccounts, filteredJournalEntries, filteredExpenses, dateRange, effectiveSettings);
     } else {
-      generateTrialBalanceExcel(chartOfAccounts, filteredJournalEntries, expenses, dateRange, effectiveSettings);
+      generateTrialBalanceExcel(chartOfAccounts, filteredJournalEntries, filteredExpenses, dateRange, effectiveSettings);
     }
 
     setShowTrialBalancePreview(false);
@@ -355,7 +360,7 @@ export default function Reports() {
       return entryDate >= new Date(dateRange.startDate) && entryDate <= new Date(dateRange.endDate);
     });
 
-    const expenses = loadExpenses().filter(expense => {
+    const filteredExpenses = expenses.filter(expense => {
       const expenseDate = new Date(expense.date);
       const matchesAccount = expense.category === account.accountName || 
                             expense.category === `${account.accountNumber} - ${account.accountName}` ||
@@ -368,9 +373,9 @@ export default function Reports() {
     const effectiveSettings = { ...settings, companyName: activeCompany?.name || settings.companyName } as any;
 
     if (format === 'pdf') {
-      generateLedgerPDF(account, filteredJournalEntries, expenses, dateRange, effectiveSettings);
+      generateLedgerPDF(account, filteredJournalEntries, filteredExpenses, dateRange, effectiveSettings);
     } else {
-      generateLedgerExcel(account, filteredJournalEntries, expenses, dateRange, effectiveSettings);
+      generateLedgerExcel(account, filteredJournalEntries, filteredExpenses, dateRange, effectiveSettings);
     }
 
     setShowLedgerPreview(false);
@@ -383,12 +388,12 @@ export default function Reports() {
       return entryDate >= new Date(dateRange.startDate) && entryDate <= new Date(dateRange.endDate);
     });
 
-    const expenses = loadExpenses().filter(expense => {
+    const filteredExpenses = expenses.filter(expense => {
       const expenseDate = new Date(expense.date);
       return expenseDate >= new Date(dateRange.startDate) && expenseDate <= new Date(dateRange.endDate);
     });
 
-    return { filteredJournalEntries, expenses };
+    return { filteredJournalEntries, expenses: filteredExpenses };
   };
 
   const getFilteredDataForLedger = () => {
@@ -400,7 +405,7 @@ export default function Reports() {
       return entryDate >= new Date(dateRange.startDate) && entryDate <= new Date(dateRange.endDate);
     });
 
-    const expenses = loadExpenses().filter(expense => {
+    const filteredExpenses = expenses.filter(expense => {
       const expenseDate = new Date(expense.date);
       const matchesAccount = expense.category === account.accountName || 
                             expense.category === `${account.accountNumber} - ${account.accountName}` ||
@@ -410,7 +415,7 @@ export default function Reports() {
              expenseDate <= new Date(dateRange.endDate);
     });
 
-    return { account, filteredJournalEntries, expenses };
+    return { account, filteredJournalEntries, expenses: filteredExpenses };
   };
 
   const handleGenerateVATReport = async (format: 'pdf' | 'excel') => {
@@ -419,7 +424,7 @@ export default function Reports() {
       return invDate >= new Date(dateRange.startDate) && invDate <= new Date(dateRange.endDate);
     });
 
-    const expenses = loadExpenses().filter(expense => {
+    const filteredExpenses = expenses.filter(expense => {
       const expenseDate = new Date(expense.date);
       return expenseDate >= new Date(dateRange.startDate) && expenseDate <= new Date(dateRange.endDate);
     });
@@ -427,9 +432,9 @@ export default function Reports() {
     const effectiveSettings = { ...settings, companyName: activeCompany?.name || settings.companyName } as any;
 
     if (format === 'pdf') {
-      generateVATReportPDF(invoices, expenses, dateRange, effectiveSettings);
+      generateVATReportPDF(invoices, filteredExpenses, dateRange, effectiveSettings);
     } else {
-      generateVATReportExcel(invoices, expenses, dateRange, effectiveSettings);
+      generateVATReportExcel(invoices, filteredExpenses, dateRange, effectiveSettings);
     }
 
     setShowVATReportPreview(false);
@@ -442,12 +447,12 @@ export default function Reports() {
       return invDate >= new Date(dateRange.startDate) && invDate <= new Date(dateRange.endDate);
     });
 
-    const expenses = loadExpenses().filter(expense => {
+    const filteredExpenses = expenses.filter(expense => {
       const expenseDate = new Date(expense.date);
       return expenseDate >= new Date(dateRange.startDate) && expenseDate <= new Date(dateRange.endDate);
     });
 
-    return { invoices, expenses };
+    return { invoices, expenses: filteredExpenses };
   };
 
   return (

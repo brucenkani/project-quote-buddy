@@ -72,7 +72,7 @@ export default function APAgingReport() {
       return;
     }
     try {
-      const expenses = loadExpenses();
+      const expenses = await loadExpenses();
       const outstandingExpenses = expenses.filter(
         (exp) => exp.status === 'pending' || exp.status === 'approved' || exp.status === 'partly-paid' || exp.status === 'overdue'
       );

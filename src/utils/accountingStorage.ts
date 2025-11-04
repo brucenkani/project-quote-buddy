@@ -183,45 +183,15 @@ export const deleteJournalEntryFromDB = async (id: string): Promise<void> => {
   }
 };
 
-// Expenses
-export const loadExpenses = (): Expense[] => {
-  try {
-    const stored = localStorage.getItem(EXPENSE_KEY);
-    if (stored) {
-      const expenses = JSON.parse(stored);
-      // Recalculate status dynamically for each expense and ensure all fields exist
-      return expenses.map((exp: Expense) => ({
-        ...exp,
-        payments: exp.payments || [],
-        status: calculateExpenseStatus(exp),
-      }));
-    }
-  } catch (error) {
-    console.error('Failed to load expenses:', error);
-  }
-  return [];
-};
+// Expenses - Now using database functions
+// Import actual database functions
+import { loadExpensesFromDB, saveExpenseToDB, deleteExpense as deleteExpenseFromDB } from './expenseStorage';
 
+export const loadExpenses = loadExpensesFromDB;
+export const saveExpense = saveExpenseToDB;
+export const deleteExpense = deleteExpenseFromDB;
+
+// Legacy localStorage function - deprecated
 export const saveExpenses = (expenses: Expense[]): void => {
-  try {
-    localStorage.setItem(EXPENSE_KEY, JSON.stringify(expenses));
-  } catch (error) {
-    console.error('Failed to save expenses:', error);
-  }
-};
-
-export const saveExpense = (expense: Expense): void => {
-  const expenses = loadExpenses();
-  const index = expenses.findIndex(e => e.id === expense.id);
-  if (index >= 0) {
-    expenses[index] = expense;
-  } else {
-    expenses.push(expense);
-  }
-  saveExpenses(expenses);
-};
-
-export const deleteExpense = (id: string): void => {
-  const expenses = loadExpenses().filter(e => e.id !== id);
-  saveExpenses(expenses);
+  console.warn('saveExpenses() to localStorage is deprecated. Data is now stored in the database.');
 };

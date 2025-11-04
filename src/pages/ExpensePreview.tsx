@@ -17,11 +17,12 @@ export default function ExpensePreview() {
 
   useEffect(() => {
     if (id) {
-      const expenses = loadExpenses();
-      const found = expenses.find(exp => exp.id === id);
-      if (found) {
-        setExpense(found);
-      }
+      loadExpenses().then(expenses => {
+        const found = expenses.find(exp => exp.id === id);
+        if (found) {
+          setExpense(found);
+        }
+      });
     }
   }, [id]);
 
