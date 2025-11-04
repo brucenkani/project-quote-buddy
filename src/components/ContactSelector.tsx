@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Plus } from 'lucide-react';
 import { Contact, ContactType } from '@/types/contacts';
 import { useContacts } from '@/contexts/ContactsContext';
+import { GroupSelector } from '@/components/GroupSelector';
 
 interface ContactSelectorProps {
   type: ContactType;
@@ -101,15 +102,17 @@ export function ContactSelector({ type, value, onSelect, placeholder }: ContactS
                 id="contactName"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="contactEmail">Email</Label>
+              <Label htmlFor="contactEmail">Email *</Label>
               <Input
                 id="contactEmail"
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
               />
             </div>
             <div className="space-y-2">
@@ -121,19 +124,28 @@ export function ContactSelector({ type, value, onSelect, placeholder }: ContactS
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="contactAddress">Address</Label>
-              <Input
-                id="contactAddress"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="contactTaxId">Tax ID</Label>
               <Input
                 id="contactTaxId"
                 value={formData.taxId}
                 onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contactGroup">Group</Label>
+              <GroupSelector
+                value={formData.contactGroup}
+                onChange={(value) => setFormData({ ...formData, contactGroup: value })}
+                type={type}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contactAddress">Address</Label>
+              <Textarea
+                id="contactAddress"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                rows={2}
               />
             </div>
             <div className="space-y-2">
