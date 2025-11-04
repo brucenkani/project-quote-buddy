@@ -29,6 +29,8 @@ interface AgingBucket {
   days90: number;
   days120Plus: number;
   total: number;
+  isGroupHeader?: boolean;
+  groupMembers?: AgingBucket[];
 }
 
 export default function ARAgingReport() {
@@ -154,36 +156,48 @@ export default function ARAgingReport() {
 
     // Group by contact group if enabled
     if (showByGroup) {
-      const groupMap = new Map<string, AgingBucket>();
+      const groupMap = new Map<string, { header: AgingBucket, members: AgingBucket[] }>();
       
       filteredData.forEach((item) => {
         const groupKey = item.contactGroup || 'Ungrouped';
         
         if (!groupMap.has(groupKey)) {
           groupMap.set(groupKey, {
-            contactName: groupKey,
-            contactGroup: groupKey,
-            current: 0,
-            days30: 0,
-            days60: 0,
-            days90: 0,
-            days120Plus: 0,
-            total: 0,
+            header: {
+              contactName: groupKey,
+              contactGroup: groupKey,
+              current: 0,
+              days30: 0,
+              days60: 0,
+              days90: 0,
+              days120Plus: 0,
+              total: 0,
+              isGroupHeader: true,
+              groupMembers: [],
+            },
+            members: [],
           });
         }
 
         const group = groupMap.get(groupKey)!;
-        group.current += item.current;
-        group.days30 += item.days30;
-        group.days60 += item.days60;
-        group.days90 += item.days90;
-        group.days120Plus += item.days120Plus;
-        group.total += item.total;
+        group.header.current += item.current;
+        group.header.days30 += item.days30;
+        group.header.days60 += item.days60;
+        group.header.days90 += item.days90;
+        group.header.days120Plus += item.days120Plus;
+        group.header.total += item.total;
+        group.members.push(item);
       });
 
-      filteredData = Array.from(groupMap.values()).sort((a, b) => 
-        a.contactName.localeCompare(b.contactName)
-      );
+      // Flatten to array with group headers followed by members
+      filteredData = [];
+      Array.from(groupMap.values())
+        .sort((a, b) => a.header.contactName.localeCompare(b.header.contactName))
+        .forEach(({ header, members }) => {
+          filteredData.push(header);
+          members.sort((a, b) => a.contactName.localeCompare(b.contactName))
+            .forEach(member => filteredData.push(member));
+        });
     }
 
     setAgingData(filteredData);
@@ -463,8 +477,17 @@ export default function ARAgingReport() {
                   </thead>
                   <tbody>
                     {agingData.map((row, idx) => (
-                      <tr key={idx} className="border-b hover:bg-muted/50">
-                        <td className="p-2">
+                      <tr 
+                        key={idx} 
+                        className={cn(
+                          "border-b",
+                          row.isGroupHeader 
+                            ? "bg-muted/30 font-semibold" 
+                            : "hover:bg-muted/50",
+                          !row.isGroupHeader && showByGroup && "pl-4"
+                        )}
+                      >
+                        <td className={cn("p-2", !row.isGroupHeader && showByGroup && "pl-8")}>
                           {!showByGroup && row.contactGroup && (
                             <span className="text-muted-foreground text-sm mr-2">[{row.contactGroup}]</span>
                           )}
