@@ -53,8 +53,9 @@ export default function ARAgingReport() {
   });
 
   useEffect(() => {
+    if (!activeCompany) return;
     loadAgingData();
-  }, [asAtDate]);
+  }, [activeCompany?.id, asAtDate]);
 
   useEffect(() => {
     filterAndDisplayData();
@@ -62,6 +63,12 @@ export default function ARAgingReport() {
 
   const loadAgingData = async () => {
     setLoading(true);
+    if (!activeCompany) {
+      setAllAgingData([]);
+      setAvailableCustomers([]);
+      setLoading(false);
+      return;
+    }
     try {
       const invoices = await loadInvoices();
       const outstandingInvoices = invoices.filter(
@@ -75,7 +82,7 @@ export default function ARAgingReport() {
         .from('contacts')
         .select('name, contact_group')
         .eq('company_id', activeCompany.id)
-        .eq('type', 'client');
+        .in('type', ['customer', 'both']);
 
       const contactGroupMap = new Map(contacts?.map(c => [c.name, c.contact_group]) || []);
 
