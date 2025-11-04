@@ -42,6 +42,7 @@ export function ContactsProvider({ children }: { children: ReactNode }) {
         address: row.address || '',
         type: (row.type === 'both' ? 'client' : row.type === 'customer' ? 'client' : row.type) as ContactType,
         taxId: row.tax_number || '',
+        contactGroup: row.contact_group || '',
         notes: row.notes || '',
         createdAt: row.created_at || new Date().toISOString(),
         updatedAt: row.updated_at || new Date().toISOString(),
@@ -81,6 +82,7 @@ export function ContactsProvider({ children }: { children: ReactNode }) {
           country: 'ZA',
           type: contact.type === 'client' ? 'customer' : contact.type,
           tax_number: contact.taxId,
+          contact_group: contact.contactGroup,
           notes: contact.notes,
         });
 
