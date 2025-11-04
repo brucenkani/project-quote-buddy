@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,12 +7,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, BookOpen, X, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Plus, BookOpen, X, Eye, Pencil, Trash2, Repeat, Calendar } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { loadJournalEntries, saveJournalEntry, deleteJournalEntry } from '@/utils/accountingStorage';
 import { useSettings } from '@/contexts/SettingsContext';
 import { loadChartOfAccounts, addChartAccount, generateNextAccountNumber } from '@/utils/chartOfAccountsStorage';
 import { JournalEntry, JournalEntryLine, AccountType } from '@/types/accounting';
+import { RecurringJournal } from '@/types/recurringJournal';
+import { loadRecurringJournals, saveRecurringJournal, deleteRecurringJournal, calculateNextGenerationDate } from '@/utils/recurringJournalStorage';
+import { RecurringJournalDialog } from '@/components/RecurringJournalDialog';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Journal() {
@@ -21,8 +24,11 @@ export default function Journal() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [chartAccounts, setChartAccounts] = useState(loadChartOfAccounts());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isRecurringDialogOpen, setIsRecurringDialogOpen] = useState(false);
   const [showNewAccountDialog, setShowNewAccountDialog] = useState<number | null>(null);
   const [newAccount, setNewAccount] = useState({ accountNumber: '', accountName: '', accountType: 'current-asset' as AccountType });
+  const [recurringJournals, setRecurringJournals] = useState<RecurringJournal[]>([]);
+  const [editingRecurring, setEditingRecurring] = useState<RecurringJournal | null>(null);
 
   // Load only manual journal entries
   const loadManualEntries = () => {
@@ -34,10 +40,11 @@ export default function Journal() {
     });
   };
 
-  // Load manual entries on component mount
-  useState(() => {
+  // Load manual entries and recurring journals on component mount
+  useEffect(() => {
     setEntries(loadManualEntries());
-  });
+    loadRecurringJournals().then(setRecurringJournals);
+  }, []);
   
   const handleAccountTypeChange = (accountType: AccountType) => {
     const nextNumber = generateNextAccountNumber(accountType);
@@ -133,6 +140,32 @@ export default function Journal() {
     }
   };
 
+  const handleSaveRecurring = async (recurring: RecurringJournal) => {
+    try {
+      await saveRecurringJournal(recurring);
+      const updated = await loadRecurringJournals();
+      setRecurringJournals(updated);
+      setIsRecurringDialogOpen(false);
+      setEditingRecurring(null);
+      toast({ title: 'Recurring journal saved successfully' });
+    } catch (error) {
+      toast({ title: 'Failed to save recurring journal', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteRecurring = async (id: string) => {
+    if (confirm('Are you sure you want to delete this recurring journal?')) {
+      try {
+        await deleteRecurringJournal(id);
+        const updated = await loadRecurringJournals();
+        setRecurringJournals(updated);
+        toast({ title: 'Recurring journal deleted' });
+      } catch (error) {
+        toast({ title: 'Failed to delete recurring journal', variant: 'destructive' });
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
       <Navigation />
@@ -144,14 +177,19 @@ export default function Journal() {
             </h1>
             <p className="text-muted-foreground">Record double-entry accounting transactions</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                New Entry
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsRecurringDialogOpen(true)} className="gap-2">
+              <Repeat className="h-4 w-4" />
+              Recurring Journals
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  New Entry
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>New Journal Entry</DialogTitle>
               </DialogHeader>
@@ -352,6 +390,7 @@ export default function Journal() {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {entries.length === 0 ? (
@@ -417,6 +456,14 @@ export default function Journal() {
             </Table>
           </Card>
         )}
+
+        <RecurringJournalDialog
+          open={isRecurringDialogOpen}
+          onOpenChange={setIsRecurringDialogOpen}
+          recurringJournals={recurringJournals}
+          onSave={handleSaveRecurring}
+          onDelete={handleDeleteRecurring}
+        />
       </div>
     </div>
   );
