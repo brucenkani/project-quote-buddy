@@ -29,6 +29,7 @@ export default function Journal() {
   const [newAccount, setNewAccount] = useState({ accountNumber: '', accountName: '', accountType: 'current-asset' as AccountType });
   const [recurringJournals, setRecurringJournals] = useState<RecurringJournal[]>([]);
   const [editingRecurring, setEditingRecurring] = useState<RecurringJournal | null>(null);
+  const [viewingEntry, setViewingEntry] = useState<JournalEntry | null>(null);
 
   // Load only manual journal entries from database
   const loadManualEntries = async () => {
@@ -435,7 +436,7 @@ export default function Journal() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setViewingEntry(entry)}>
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
@@ -456,6 +457,81 @@ export default function Journal() {
             </Table>
           </Card>
         )}
+
+        {/* View Details Dialog */}
+        <Dialog open={!!viewingEntry} onOpenChange={(open) => !open && setViewingEntry(null)}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Journal Entry Details</DialogTitle>
+            </DialogHeader>
+            {viewingEntry && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Date</Label>
+                    <p className="font-medium">{new Date(viewingEntry.date).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Reference</Label>
+                    <p className="font-medium">{viewingEntry.reference}</p>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm text-muted-foreground">Description</Label>
+                  <p className="font-medium">{viewingEntry.description}</p>
+                </div>
+
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead>Account</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead className="text-right">Debit</TableHead>
+                        <TableHead className="text-right">Credit</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {viewingEntry.entries.map((line) => (
+                        <TableRow key={line.id}>
+                          <TableCell className="font-medium">{line.account}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {line.description || '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {line.debit > 0 ? `${settings.currencySymbol}${line.debit.toFixed(2)}` : '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {line.credit > 0 ? `${settings.currencySymbol}${line.credit.toFixed(2)}` : '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                <div className="flex justify-between pt-4 border-t">
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Total Debit</p>
+                    <p className="font-semibold text-lg">
+                      {settings.currencySymbol}{viewingEntry.totalDebit.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Total Credit</p>
+                    <p className="font-semibold text-lg">
+                      {settings.currencySymbol}{viewingEntry.totalCredit.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button variant="outline" onClick={() => setViewingEntry(null)}>Close</Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         <RecurringJournalDialog
           open={isRecurringDialogOpen}
