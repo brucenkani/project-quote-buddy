@@ -9,10 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Navigation } from '@/components/Navigation';
-import { Plus, X, Save, FileText } from 'lucide-react';
+import { Plus, X, Save, FileText, Package } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useInventory } from '@/contexts/InventoryContext';
 import { saveInvoice } from '@/utils/invoiceStorage';
 import { Invoice } from '@/types/invoice';
 import { useToast } from '@/hooks/use-toast';
@@ -37,6 +39,7 @@ export default function InvoiceBuilder() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { settings } = useSettings();
+  const { inventory } = useInventory();
   const { id } = useParams();
   const [invoiceNumber, setInvoiceNumber] = useState('');
 
@@ -65,8 +68,19 @@ export default function InvoiceBuilder() {
     }
   }, [id, form]);
 
-  const [lineItems, setLineItems] = useState([
-    { description: '', quantity: 1, unit: 'item', unitPrice: 0, total: 0 },
+  type LineItemForm = {
+    description: string;
+    quantity: number;
+    unit: string;
+    unitPrice: number;
+    total: number;
+    lineItemType: 'account' | 'inventory';
+    inventoryItemId?: string;
+    accountId?: string;
+  };
+  
+  const [lineItems, setLineItems] = useState<LineItemForm[]>([
+    { description: '', quantity: 1, unit: 'item', unitPrice: 0, total: 0, lineItemType: 'account' },
   ]);
   const [lineItemErrors, setLineItemErrors] = useState<string[]>([]);
 
@@ -100,6 +114,9 @@ export default function InvoiceBuilder() {
           unit: item.unit,
           unitPrice: item.unitPrice,
           total: item.total,
+          lineItemType: item.lineItemType || 'account',
+          inventoryItemId: item.inventoryItemId,
+          accountId: item.accountId,
         })));
         
         setDiscount(invoice.discount);
@@ -116,7 +133,7 @@ export default function InvoiceBuilder() {
   }, [id, navigate, toast, form]);
 
   const addLineItem = () => {
-    setLineItems([...lineItems, { description: '', quantity: 1, unit: 'item', unitPrice: 0, total: 0 }]);
+    setLineItems([...lineItems, { description: '', quantity: 1, unit: 'item', unitPrice: 0, total: 0, lineItemType: 'account' }]);
   };
 
   const removeLineItem = (index: number) => {
@@ -172,6 +189,9 @@ export default function InvoiceBuilder() {
         taxRate: settings.taxRate,
         amount: item.total / (1 + settings.taxRate / 100),
         total: item.total,
+        lineItemType: item.lineItemType,
+        inventoryItemId: item.inventoryItemId,
+        accountId: item.accountId,
       })),
       subtotal,
       taxRate: settings.taxRate,
@@ -378,67 +398,127 @@ export default function InvoiceBuilder() {
             </CardHeader>
             <CardContent className="space-y-4">
               {lineItems.map((item, index) => (
-                <div key={index} className="grid grid-cols-12 gap-2 items-end">
-                  <div className="col-span-4">
-                    <Label className="text-xs">Description *</Label>
-                    <Input
-                      value={item.description}
-                      onChange={(e) => {
-                        updateLineItem(index, 'description', e.target.value);
-                        setLineItemErrors(prev => {
-                          const newErrors = [...prev];
-                          newErrors[index] = '';
-                          return newErrors;
-                        });
-                      }}
-                      placeholder="Item description"
-                      className={lineItemErrors[index] ? 'border-destructive' : ''}
-                    />
-                    {lineItemErrors[index] && (
-                      <p className="text-sm text-destructive mt-1">{lineItemErrors[index]}</p>
+                <div key={index} className="space-y-2">
+                  <div className="grid grid-cols-12 gap-2 items-end">
+                    <div className="col-span-2">
+                      <Label className="text-xs">Type *</Label>
+                      <Select
+                        value={item.lineItemType}
+                        onValueChange={(value: 'inventory' | 'account') => {
+                          updateLineItem(index, 'lineItemType', value);
+                          if (value === 'account') {
+                            updateLineItem(index, 'inventoryItemId', undefined);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="account">Account</SelectItem>
+                          <SelectItem value="inventory">Inventory</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {item.lineItemType === 'inventory' ? (
+                      <div className="col-span-3">
+                        <Label className="text-xs">Inventory Item *</Label>
+                        <Select
+                          value={item.inventoryItemId}
+                          onValueChange={(value) => {
+                            const selectedItem = inventory.find(inv => inv.id === value);
+                            if (selectedItem) {
+                              updateLineItem(index, 'inventoryItemId', value);
+                              updateLineItem(index, 'description', selectedItem.name);
+                              updateLineItem(index, 'unit', selectedItem.unit);
+                              updateLineItem(index, 'unitPrice', selectedItem.unitCost);
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Select item" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {inventory.filter(inv => inv.quantity > 0).map(inv => (
+                              <SelectItem key={inv.id} value={inv.id}>
+                                <div className="flex items-center justify-between gap-2">
+                                  <span>{inv.name}</span>
+                                  <Badge variant="outline" className="text-xs">
+                                    <Package className="h-3 w-3 mr-1" />
+                                    {inv.quantity} {inv.unit}
+                                  </Badge>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <div className="col-span-3">
+                        <Label className="text-xs">Description *</Label>
+                        <Input
+                          value={item.description}
+                          onChange={(e) => {
+                            updateLineItem(index, 'description', e.target.value);
+                            setLineItemErrors(prev => {
+                              const newErrors = [...prev];
+                              newErrors[index] = '';
+                              return newErrors;
+                            });
+                          }}
+                          placeholder="Item description"
+                          className={lineItemErrors[index] ? 'border-destructive' : ''}
+                        />
+                        {lineItemErrors[index] && (
+                          <p className="text-sm text-destructive mt-1">{lineItemErrors[index]}</p>
+                        )}
+                      </div>
                     )}
-                  </div>
-                  <div className="col-span-2">
-                    <Label className="text-xs">Quantity</Label>
-                    <Input
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <Label className="text-xs">Unit</Label>
-                    <Input
-                      value={item.unit}
-                      onChange={(e) => updateLineItem(index, 'unit', e.target.value)}
-                      placeholder="item"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Label className="text-xs">Unit Price</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={item.unitPrice}
-                      onChange={(e) => updateLineItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Label className="text-xs">Total</Label>
-                    <Input
-                      value={settings.currencySymbol + item.total.toFixed(2)}
-                      disabled
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeLineItem(index)}
-                      disabled={lineItems.length === 1}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+
+                    <div className="col-span-2">
+                      <Label className="text-xs">Quantity</Label>
+                      <Input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <Label className="text-xs">Unit</Label>
+                      <Input
+                        value={item.unit}
+                        onChange={(e) => updateLineItem(index, 'unit', e.target.value)}
+                        placeholder="item"
+                        disabled={item.lineItemType === 'inventory'}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Label className="text-xs">Unit Price</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={item.unitPrice}
+                        onChange={(e) => updateLineItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <Label className="text-xs">Total</Label>
+                      <Input
+                        value={settings.currencySymbol + item.total.toFixed(2)}
+                        disabled
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeLineItem(index)}
+                        disabled={lineItems.length === 1}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}

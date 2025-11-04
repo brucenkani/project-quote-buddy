@@ -220,3 +220,17 @@ export const getDynamicPaymentAccount = async (
   
   return getDefaultBankAccount();
 };
+
+export const getInventoryAccount = async (): Promise<string> => {
+  const accounts = await getChartOfAccounts();
+  const account = findAccountByName(accounts, 'Inventory') ||
+                  findAccountByTypeRange(accounts, 'current-asset');
+  return account ? getAccountString(account) : '1200 - Inventory';
+};
+
+export const getCOGSAccount = async (): Promise<string> => {
+  const accounts = await getChartOfAccounts();
+  const account = findAccountByName(accounts, 'Cost of Goods Sold') ||
+                  findAccountByName(accounts, 'COGS');
+  return account ? getAccountString(account) : '5000 - Cost of Goods Sold';
+};

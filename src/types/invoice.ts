@@ -16,6 +16,9 @@ export interface LineItem {
   taxRate: number;
   amount: number;
   total: number;
+  lineItemType?: 'inventory' | 'account'; // Type of line item
+  inventoryItemId?: string; // Link to inventory item if type is 'inventory'
+  accountId?: string; // GL account if type is 'account'
 }
 
 export interface Invoice {

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { calculateInvoiceStatus } from './invoiceStatusCalculator';
 import { recordInvoice, recordCreditNote } from './doubleEntryManager';
 import { logAudit } from './auditLogger';
+import { processInvoiceInventory } from './invoiceInventoryIntegration';
 
 export const loadInvoices = async (): Promise<Invoice[]> => {
   try {
@@ -238,6 +239,9 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
         } else {
           recordInvoice(invoice);
         }
+        
+        // Process inventory movements and COGS for inventory line items
+        await processInvoiceInventory(invoice);
       }
     } catch (journalError) {
       console.error('Failed to create journal entry for invoice:', journalError);
