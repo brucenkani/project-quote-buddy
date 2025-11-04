@@ -47,12 +47,11 @@ export function GroupSelector({ value, onChange, type }: GroupSelectorProps) {
   return (
     <>
       <div className="flex gap-2">
-        <Select value={value} onValueChange={onChange}>
+        <Select value={value || undefined} onValueChange={onChange}>
           <SelectTrigger>
-            <SelectValue placeholder={`Select ${type} group`} />
+            <SelectValue placeholder={`Select ${type} group (optional)`} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">None</SelectItem>
             {groups.map((group) => (
               <SelectItem key={group} value={group}>
                 {group}
