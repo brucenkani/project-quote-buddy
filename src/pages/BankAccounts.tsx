@@ -31,6 +31,7 @@ interface BankAccount {
 export default function BankAccounts() {
   const { activeCompany } = useCompany();
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
+  const [chartAccounts, setChartAccounts] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,6 +44,7 @@ export default function BankAccounts() {
     currency: string;
     ledgerAccount: string;
     openingBalance: number;
+    contraAccount: string;
   }>({
     accountName: '',
     bankName: '',
@@ -52,13 +54,33 @@ export default function BankAccounts() {
     currency: 'ZAR',
     ledgerAccount: '',
     openingBalance: 0,
+    contraAccount: '',
   });
 
   useEffect(() => {
     if (activeCompany) {
       loadBankAccounts();
+      loadChartOfAccounts();
     }
   }, [activeCompany]);
+
+  const loadChartOfAccounts = async () => {
+    if (!activeCompany) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('chart_of_accounts')
+        .select('*')
+        .eq('company_id', activeCompany.id)
+        .eq('is_active', true)
+        .order('account_number');
+
+      if (error) throw error;
+      setChartAccounts(data || []);
+    } catch (error: any) {
+      console.error('Failed to load chart of accounts:', error.message);
+    }
+  };
 
   const loadBankAccounts = async () => {
     if (!activeCompany) return;
@@ -114,6 +136,11 @@ export default function BankAccounts() {
       return;
     }
 
+    if (formData.openingBalance !== 0 && !formData.contraAccount) {
+      toast.error('Please select a contra account for the opening balance');
+      return;
+    }
+
     try {
       const { data: session } = await supabase.auth.getSession();
       if (!session.session?.user) {
@@ -159,27 +186,18 @@ export default function BankAccounts() {
 
         if (error) throw error;
 
-        // Create opening balance journal entry if opening balance > 0
-        if (formData.openingBalance > 0 && newAccount) {
-          // Get Owner's Capital account from chart of accounts
-          const { data: chartAccounts } = await supabase
-            .from('chart_of_accounts')
-            .select('*')
-            .eq('company_id', activeCompany.id)
-            .or('account_number.eq.3500,account_name.ilike.%capital%')
-            .limit(1)
-            .single();
-
-          const capitalAccount = chartAccounts 
-            ? `${chartAccounts.account_number} - ${chartAccounts.account_name}`
-            : "3500 - Owner's Capital";
+        // Create opening balance journal entry if opening balance is not zero
+        if (formData.openingBalance !== 0 && newAccount && formData.contraAccount) {
+          const contraAccountData = chartAccounts.find(
+            acc => `${acc.account_number} - ${acc.account_name}` === formData.contraAccount
+          );
 
           const journalEntry: JournalEntry = {
             id: crypto.randomUUID(),
             date: new Date().toISOString().split('T')[0],
             reference: `OB-BANK-${newAccount.id.slice(0, 8)}`,
             description: `Opening balance for ${formData.accountName}`,
-            entries: [
+            entries: formData.openingBalance > 0 ? [
               {
                 id: crypto.randomUUID(),
                 account: `${formData.ledgerAccount} - ${formData.accountName}`,
@@ -190,15 +208,32 @@ export default function BankAccounts() {
               },
               {
                 id: crypto.randomUUID(),
-                account: capitalAccount,
-                accountType: 'equity',
+                account: formData.contraAccount,
+                accountType: contraAccountData?.account_type || 'equity',
                 debit: 0,
                 credit: formData.openingBalance,
-                description: 'Capital introduced via bank',
+                description: 'Contra account for opening balance',
+              },
+            ] : [
+              {
+                id: crypto.randomUUID(),
+                account: `${formData.ledgerAccount} - ${formData.accountName}`,
+                accountType: 'current-asset',
+                debit: 0,
+                credit: Math.abs(formData.openingBalance),
+                description: 'Bank opening balance (overdraft)',
+              },
+              {
+                id: crypto.randomUUID(),
+                account: formData.contraAccount,
+                accountType: contraAccountData?.account_type || 'equity',
+                debit: Math.abs(formData.openingBalance),
+                credit: 0,
+                description: 'Contra account for opening balance',
               },
             ],
-            totalDebit: formData.openingBalance,
-            totalCredit: formData.openingBalance,
+            totalDebit: Math.abs(formData.openingBalance),
+            totalCredit: Math.abs(formData.openingBalance),
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           };
@@ -227,6 +262,7 @@ export default function BankAccounts() {
       currency: 'ZAR',
       ledgerAccount: '',
       openingBalance: 0,
+      contraAccount: '',
     });
     setEditingAccount(null);
   };
@@ -242,6 +278,7 @@ export default function BankAccounts() {
       currency: account.currency,
       ledgerAccount: account.ledgerAccount,
       openingBalance: account.openingBalance,
+      contraAccount: '',
     });
     setIsDialogOpen(true);
   };
@@ -425,6 +462,33 @@ export default function BankAccounts() {
                           />
                         </div>
                       </div>
+
+                      {formData.openingBalance !== 0 && (
+                        <div className="space-y-2">
+                          <Label htmlFor="contraAccount">Contra Account *</Label>
+                          <Select 
+                            value={formData.contraAccount} 
+                            onValueChange={(value) => setFormData({ ...formData, contraAccount: value })}
+                          >
+                            <SelectTrigger id="contraAccount">
+                              <SelectValue placeholder="Select account for double-entry" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {chartAccounts.map((account) => (
+                                <SelectItem 
+                                  key={account.id} 
+                                  value={`${account.account_number} - ${account.account_name}`}
+                                >
+                                  {account.account_number} - {account.account_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">
+                            Select the account to balance this {formData.openingBalance > 0 ? 'asset' : 'liability'} (e.g., Owner's Capital, Loan, etc.)
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <DialogFooter>
