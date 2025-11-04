@@ -13,7 +13,7 @@ import { toast } from '@/hooks/use-toast';
 import { Contact } from '@/types/contacts';
 import { GroupSelector } from '@/components/GroupSelector';
 
-export default function CustomerDatabase() {
+export default function SupplierDatabase() {
   const navigate = useNavigate();
   const { contacts, loading, saveContact, deleteContact } = useContacts();
   const [showDialog, setShowDialog] = useState(false);
@@ -27,11 +27,11 @@ export default function CustomerDatabase() {
     taxId: '',
     contactGroup: '',
     notes: '',
-    type: 'client' as const,
+    type: 'supplier' as const,
   });
 
-  const customers = contacts.filter(c => c.type === 'client');
-  const filteredCustomers = customers.filter(c =>
+  const suppliers = contacts.filter(c => c.type === 'supplier');
+  const filteredSuppliers = suppliers.filter(c =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -49,7 +49,7 @@ export default function CustomerDatabase() {
           };
 
       await saveContact(contactData);
-      toast({ title: 'Success', description: `Customer ${editingContact ? 'updated' : 'added'} successfully` });
+      toast({ title: 'Success', description: `Supplier ${editingContact ? 'updated' : 'added'} successfully` });
       setShowDialog(false);
       resetForm();
     } catch (error: any) {
@@ -67,16 +67,16 @@ export default function CustomerDatabase() {
       taxId: contact.taxId || '',
       contactGroup: contact.contactGroup || '',
       notes: contact.notes || '',
-      type: 'client',
+      type: 'supplier',
     });
     setShowDialog(true);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this customer?')) return;
+    if (!confirm('Are you sure you want to delete this supplier?')) return;
     try {
       await deleteContact(id);
-      toast({ title: 'Success', description: 'Customer deleted successfully' });
+      toast({ title: 'Success', description: 'Supplier deleted successfully' });
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     }
@@ -91,7 +91,7 @@ export default function CustomerDatabase() {
       taxId: '',
       contactGroup: '',
       notes: '',
-      type: 'client',
+      type: 'supplier',
     });
     setEditingContact(null);
   };
@@ -101,11 +101,11 @@ export default function CustomerDatabase() {
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-            <h1 className="text-2xl font-bold">Customer Database</h1>
+            <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <h1 className="text-2xl font-bold">Supplier Database</h1>
           </div>
         </div>
       </header>
@@ -116,7 +116,7 @@ export default function CustomerDatabase() {
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search customers..."
+                placeholder="Search suppliers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8"
@@ -127,13 +127,13 @@ export default function CustomerDatabase() {
             <DialogTrigger asChild>
               <Button onClick={resetForm}>
                 <Plus className="mr-2 h-4 w-4" />
-                Add Customer
+                Add Supplier
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>{editingContact ? 'Edit Customer' : 'Add New Customer'}</DialogTitle>
-                <DialogDescription>Enter customer details</DialogDescription>
+                <DialogTitle>{editingContact ? 'Edit Supplier' : 'Add New Supplier'}</DialogTitle>
+                <DialogDescription>Enter supplier details</DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -178,7 +178,7 @@ export default function CustomerDatabase() {
                   <GroupSelector
                     value={formData.contactGroup}
                     onChange={(value) => setFormData({ ...formData, contactGroup: value })}
-                    type="client"
+                    type="supplier"
                   />
                 </div>
                 <div className="space-y-2">
@@ -202,7 +202,7 @@ export default function CustomerDatabase() {
                     Cancel
                   </Button>
                   <Button type="submit">
-                    {editingContact ? 'Update' : 'Add'} Customer
+                    {editingContact ? 'Update' : 'Add'} Supplier
                   </Button>
                 </div>
               </form>
@@ -212,14 +212,14 @@ export default function CustomerDatabase() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Customers ({filteredCustomers.length})</CardTitle>
+            <CardTitle>Suppliers ({filteredSuppliers.length})</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
               <p className="text-center py-8 text-muted-foreground">Loading...</p>
-            ) : filteredCustomers.length === 0 ? (
+            ) : filteredSuppliers.length === 0 ? (
               <p className="text-center py-8 text-muted-foreground">
-                {searchTerm ? 'No customers found' : 'No customers yet. Add your first customer to get started.'}
+                {searchTerm ? 'No suppliers found' : 'No suppliers yet. Add your first supplier to get started.'}
               </p>
             ) : (
               <Table>
@@ -234,18 +234,18 @@ export default function CustomerDatabase() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCustomers.map((customer) => (
-                    <TableRow key={customer.id}>
-                      <TableCell className="font-medium">{customer.name}</TableCell>
-                      <TableCell>{customer.email}</TableCell>
-                      <TableCell>{customer.phone || '-'}</TableCell>
-                      <TableCell>{customer.contactGroup || '-'}</TableCell>
-                      <TableCell>{customer.taxId || '-'}</TableCell>
+                  {filteredSuppliers.map((supplier) => (
+                    <TableRow key={supplier.id}>
+                      <TableCell className="font-medium">{supplier.name}</TableCell>
+                      <TableCell>{supplier.email}</TableCell>
+                      <TableCell>{supplier.phone || '-'}</TableCell>
+                      <TableCell>{supplier.contactGroup || '-'}</TableCell>
+                      <TableCell>{supplier.taxId || '-'}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(customer)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(supplier)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(customer.id)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(supplier.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </TableCell>

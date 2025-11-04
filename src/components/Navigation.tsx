@@ -33,6 +33,7 @@ export const Navigation = () => {
   }, []);
   
   const customerMenuItems = [
+    { path: '/crm/customer-database', label: 'Customer Database', icon: Users },
     { path: '/invoices', label: 'Invoices', icon: DollarSign },
     { path: '/invoices/recurring', label: 'Recurring Invoices', icon: FileText },
     { path: '/invoices/statements', label: 'Statements', icon: FileText },
@@ -40,6 +41,7 @@ export const Navigation = () => {
   ];
 
   const suppliersInventoryMenuItems = [
+    { path: '/suppliers', label: 'Supplier Database', icon: Users },
     { path: '/purchase-orders', label: 'Purchase Orders', icon: FileText },
     { path: '/purchases', label: 'Purchases', icon: ShoppingCart },
     { path: '/inventory', label: 'Inventory', icon: Package },

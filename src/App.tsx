@@ -64,6 +64,7 @@ import BusinessCommunity from "./pages/BusinessCommunity";
 import LandingSettings from "./pages/LandingSettings";
 import CRMCustomerSupport from "./pages/CRMCustomerSupport";
 import CustomerDatabase from "./pages/crm/CustomerDatabase";
+import SupplierDatabase from "./pages/SupplierDatabase";
 import SalesPipeline from "./pages/crm/SalesPipeline";
 import TicketSystem from "./pages/crm/TicketSystem";
 import BusinessAnalytics from "./pages/BusinessAnalytics";
@@ -100,6 +101,7 @@ const App = () => (
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/crm-customer-support" element={<ProtectedRoute><CRMCustomerSupport /></ProtectedRoute>} />
           <Route path="/crm/customer-database" element={<ProtectedRoute><CustomerDatabase /></ProtectedRoute>} />
+          <Route path="/suppliers" element={<ProtectedRoute><SupplierDatabase /></ProtectedRoute>} />
           <Route path="/crm/sales-pipeline" element={<ProtectedRoute><SalesPipeline /></ProtectedRoute>} />
           <Route path="/crm/ticket-system" element={<ProtectedRoute><TicketSystem /></ProtectedRoute>} />
           <Route path="/business-analytics" element={<BusinessAnalytics />} />
