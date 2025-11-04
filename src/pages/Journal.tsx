@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Plus, BookOpen, X, Eye, Pencil, Trash2, Repeat, Calendar } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
-import { loadJournalEntries, saveJournalEntry, deleteJournalEntry } from '@/utils/accountingStorage';
+import { loadJournalEntriesFromDB, saveJournalEntry, deleteJournalEntry } from '@/utils/accountingStorage';
 import { useSettings } from '@/contexts/SettingsContext';
 import { loadChartOfAccounts, addChartAccount, generateNextAccountNumber } from '@/utils/chartOfAccountsStorage';
 import { JournalEntry, JournalEntryLine, AccountType } from '@/types/accounting';
@@ -30,9 +30,9 @@ export default function Journal() {
   const [recurringJournals, setRecurringJournals] = useState<RecurringJournal[]>([]);
   const [editingRecurring, setEditingRecurring] = useState<RecurringJournal | null>(null);
 
-  // Load only manual journal entries
-  const loadManualEntries = () => {
-    const allEntries = loadJournalEntries();
+  // Load only manual journal entries from database
+  const loadManualEntries = async () => {
+    const allEntries = await loadJournalEntriesFromDB();
     // Filter to only show manually created entries (not automatic from invoices/payments)
     return allEntries.filter(entry => {
       // Manual entries don't start with automatic prefixes
@@ -42,7 +42,7 @@ export default function Journal() {
 
   // Load manual entries and recurring journals on component mount
   useEffect(() => {
-    setEntries(loadManualEntries());
+    loadManualEntries().then(setEntries);
     loadRecurringJournals().then(setRecurringJournals);
   }, []);
   
@@ -120,7 +120,7 @@ export default function Journal() {
     };
 
     saveJournalEntry(entry);
-    setEntries(loadManualEntries());
+    loadManualEntries().then(setEntries);
     setIsDialogOpen(false);
     
     setFormData({ date: new Date().toISOString().split('T')[0], reference: '', description: '' });
@@ -135,7 +135,7 @@ export default function Journal() {
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this journal entry?')) {
       deleteJournalEntry(id);
-      setEntries(loadManualEntries());
+      loadManualEntries().then(setEntries);
       toast({ title: 'Journal entry deleted' });
     }
   };
