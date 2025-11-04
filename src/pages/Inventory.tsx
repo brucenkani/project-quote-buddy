@@ -185,7 +185,7 @@ export default function Inventory() {
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary via-primary-glow to-primary bg-clip-text text-transparent">
               Inventory Management
             </h1>
-            <p className="text-muted-foreground mt-1">Track and manage your {getTypeLabel(activeCompanySettings?.company_type || '')} inventory</p>
+            <p className="text-muted-foreground mt-1">Track and manage your inventory</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" className="gap-2" onClick={() => setIsWarehouseDialogOpen(true)}>

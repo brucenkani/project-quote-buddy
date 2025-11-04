@@ -22,18 +22,8 @@ export interface InventoryItem {
 }
 
 export const getInventoryTypesForCompanyType = (companyType: string): InventoryType[] => {
-  switch (companyType) {
-    case 'manufacturer':
-      return ['raw-materials', 'work-in-progress', 'finished-products', 'consumables'];
-    case 'trading':
-      return ['finished-products'];
-    case 'contractor':
-      return ['consumables'];
-    case 'professional-services':
-      return []; // No inventory for professional services
-    default:
-      return ['consumables'];
-  }
+  // All companies can now use all inventory types
+  return ['raw-materials', 'work-in-progress', 'finished-products', 'consumables'];
 };
 
 // Check if inventory type should be included in cost of sales calculation
