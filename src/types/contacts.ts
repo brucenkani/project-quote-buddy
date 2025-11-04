@@ -8,6 +8,7 @@ export interface Contact {
   phone: string;
   address: string;
   taxId?: string;
+  contactGroup?: string;
   notes?: string;
   createdAt: string;
   updatedAt: string;

@@ -8,12 +8,14 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { useCompany } from '@/contexts/CompanyContext';
 import { useToast } from '@/hooks/use-toast';
 import { Invoice } from '@/types/invoice';
+import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
 interface AgingBucket {
   contactName: string;
+  contactGroup?: string;
   current: number;
   days30: number;
   days60: number;
@@ -52,6 +54,14 @@ export default function ARAgingReport() {
       const today = new Date();
       const bucketMap = new Map<string, AgingBucket>();
 
+      // Fetch contacts to get group information
+      const { data: contacts } = await supabase
+        .from('contacts')
+        .select('name, contact_group')
+        .eq('type', 'client');
+
+      const contactGroupMap = new Map(contacts?.map(c => [c.name, c.contact_group]) || []);
+
       outstandingInvoices.forEach((invoice) => {
         const outstanding = calculateOutstanding(invoice);
         if (outstanding <= 0) return;
@@ -60,10 +70,12 @@ export default function ARAgingReport() {
         const daysOld = Math.floor((today.getTime() - invoiceDate.getTime()) / (1000 * 60 * 60 * 24));
 
         const contactName = invoice.projectDetails.clientName;
+        const contactGroup = contactGroupMap.get(contactName);
         
         if (!bucketMap.has(contactName)) {
           bucketMap.set(contactName, {
             contactName,
+            contactGroup,
             current: 0,
             days30: 0,
             days60: 0,
@@ -90,9 +102,13 @@ export default function ARAgingReport() {
         bucket.total += outstanding;
       });
 
-      const data = Array.from(bucketMap.values()).sort((a, b) => 
-        a.contactName.localeCompare(b.contactName)
-      );
+      const data = Array.from(bucketMap.values()).sort((a, b) => {
+        // Sort by group first, then by name
+        if (a.contactGroup && b.contactGroup && a.contactGroup !== b.contactGroup) {
+          return a.contactGroup.localeCompare(b.contactGroup);
+        }
+        return a.contactName.localeCompare(b.contactName);
+      });
 
       setAgingData(data);
 
@@ -135,7 +151,7 @@ export default function ARAgingReport() {
     doc.text(`As at ${new Date().toLocaleDateString()}`, 14, 34);
 
     const tableData = agingData.map((row) => [
-      row.contactName,
+      row.contactGroup ? `[${row.contactGroup}] ${row.contactName}` : row.contactName,
       settings.currencySymbol + row.current.toFixed(2),
       settings.currencySymbol + row.days30.toFixed(2),
       settings.currencySymbol + row.days60.toFixed(2),
@@ -169,6 +185,7 @@ export default function ARAgingReport() {
 
   const handleExportExcel = () => {
     const data = agingData.map((row) => ({
+      Group: row.contactGroup || '',
       Customer: row.contactName,
       Current: row.current,
       '31-60 Days': row.days30,
@@ -179,6 +196,7 @@ export default function ARAgingReport() {
     }));
 
     data.push({
+      Group: '',
       Customer: 'TOTAL',
       Current: totals.current,
       '31-60 Days': totals.days30,
@@ -242,7 +260,12 @@ export default function ARAgingReport() {
                   <tbody>
                     {agingData.map((row, idx) => (
                       <tr key={idx} className="border-b hover:bg-muted/50">
-                        <td className="p-2">{row.contactName}</td>
+                        <td className="p-2">
+                          {row.contactGroup && (
+                            <span className="text-muted-foreground text-sm mr-2">[{row.contactGroup}]</span>
+                          )}
+                          {row.contactName}
+                        </td>
                         <td className="text-right p-2">{settings.currencySymbol}{row.current.toFixed(2)}</td>
                         <td className="text-right p-2">{settings.currencySymbol}{row.days30.toFixed(2)}</td>
                         <td className="text-right p-2">{settings.currencySymbol}{row.days60.toFixed(2)}</td>

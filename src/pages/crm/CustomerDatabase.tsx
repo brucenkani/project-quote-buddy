@@ -25,6 +25,7 @@ export default function CustomerDatabase() {
     phone: '',
     address: '',
     taxId: '',
+    contactGroup: '',
     notes: '',
     type: 'client' as const,
   });
@@ -64,6 +65,7 @@ export default function CustomerDatabase() {
       phone: contact.phone,
       address: contact.address,
       taxId: contact.taxId || '',
+      contactGroup: contact.contactGroup || '',
       notes: contact.notes || '',
       type: 'client',
     });
@@ -87,6 +89,7 @@ export default function CustomerDatabase() {
       phone: '',
       address: '',
       taxId: '',
+      contactGroup: '',
       notes: '',
       type: 'client',
     });
@@ -169,6 +172,15 @@ export default function CustomerDatabase() {
                       onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
                     />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contactGroup">Group</Label>
+                  <Input
+                    id="contactGroup"
+                    value={formData.contactGroup}
+                    onChange={(e) => setFormData({ ...formData, contactGroup: e.target.value })}
+                    placeholder="e.g., Retail Clients, Wholesale Suppliers"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="address">Address</Label>

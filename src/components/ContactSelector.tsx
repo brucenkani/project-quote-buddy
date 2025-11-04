@@ -26,6 +26,7 @@ export function ContactSelector({ type, value, onSelect, placeholder }: ContactS
     phone: '',
     address: '',
     taxId: '',
+    contactGroup: '',
     notes: '',
   });
 
@@ -47,6 +48,7 @@ export function ContactSelector({ type, value, onSelect, placeholder }: ContactS
       phone: formData.phone,
       address: formData.address,
       taxId: formData.taxId,
+      contactGroup: formData.contactGroup,
       notes: formData.notes,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -56,7 +58,7 @@ export function ContactSelector({ type, value, onSelect, placeholder }: ContactS
     await refreshContacts();
     onSelect(newContact);
     setIsDialogOpen(false);
-    setFormData({ name: '', email: '', phone: '', address: '', taxId: '', notes: '' });
+    setFormData({ name: '', email: '', phone: '', address: '', taxId: '', contactGroup: '', notes: '' });
   };
 
   return (
