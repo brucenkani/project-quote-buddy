@@ -63,10 +63,10 @@ export default function Inventory() {
       sku: formData.sku || `SKU-${Date.now()}`,
       description: formData.description || '',
       unit: formData.unit || 'unit',
-      quantity: formData.quantity || 0,
+      quantity: editingItem ? formData.quantity || 0 : 0, // Always 0 for new items, preserve for edits
       minQuantity: formData.minQuantity || 0,
       unitCost: formData.unitCost || 0,
-      totalValue: (formData.quantity || 0) * (formData.unitCost || 0),
+      totalValue: editingItem ? (formData.quantity || 0) * (formData.unitCost || 0) : 0,
       supplier: formData.supplier,
       location: formData.location,
       warehouse_id: formData.warehouse_id,
@@ -252,8 +252,13 @@ export default function Inventory() {
                     id="quantity"
                     type="number"
                     value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) })}
+                    disabled
+                    className="bg-muted"
+                    title="Quantity is managed through Purchases (increase) and Invoices (decrease)"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Quantities are updated automatically through purchases and sales
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="unit">Unit</Label>

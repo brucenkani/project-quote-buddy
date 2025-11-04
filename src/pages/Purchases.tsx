@@ -14,6 +14,7 @@ import { Navigation } from '@/components/Navigation';
 import { loadPurchases, savePurchase, deletePurchase, generatePurchaseNumber } from '@/utils/purchaseStorage';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useInventory } from '@/contexts/InventoryContext';
+import { useWarehouse } from '@/contexts/WarehouseContext';
 import { Purchase, PurchaseLineItem, PurchasePaymentMethod } from '@/types/purchase';
 import { InventoryType } from '@/types/inventory';
 import { useToast } from '@/hooks/use-toast';
@@ -30,7 +31,8 @@ export default function Purchases() {
   const navigate = useNavigate();
   const location = useLocation();
   const { settings } = useSettings();
-  const { inventory } = useInventory();
+  const { inventory, saveItem: saveInventoryItem, refreshInventory } = useInventory();
+  const { warehouses } = useWarehouse();
   const { activeCompany } = useCompany();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -94,6 +96,16 @@ export default function Purchases() {
     inventoryType: 'raw-materials',
   });
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+  const [isNewInventoryDialogOpen, setIsNewInventoryDialogOpen] = useState(false);
+  const [newInventoryItem, setNewInventoryItem] = useState({
+    name: '',
+    sku: '',
+    description: '',
+    unit: 'unit',
+    type: 'raw-materials' as InventoryType,
+    minQuantity: 0,
+    warehouse_id: '',
+  });
 
   const handleAddLineItem = () => {
     if (!currentLineItem.description || !currentLineItem.quantity || !currentLineItem.unitCost) {
@@ -132,6 +144,58 @@ export default function Purchases() {
     const updatedItems = lineItems.filter(item => item.id !== id);
     setLineItems(updatedItems);
     calculateTotals(updatedItems);
+  };
+
+  const handleCreateNewInventoryItem = async () => {
+    if (!newInventoryItem.name || !newInventoryItem.warehouse_id || !newInventoryItem.type) {
+      toast({ title: 'Please fill in name, type, and warehouse', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const inventoryItem = {
+        id: crypto.randomUUID(),
+        name: newInventoryItem.name,
+        type: newInventoryItem.type,
+        sku: newInventoryItem.sku || `SKU-${Date.now()}`,
+        description: newInventoryItem.description || '',
+        unit: newInventoryItem.unit,
+        quantity: 0, // Always start at 0 - quantity will be added through purchase
+        minQuantity: newInventoryItem.minQuantity,
+        unitCost: currentLineItem.unitCost || 0, // Use the unit cost from the purchase line
+        totalValue: 0,
+        warehouse_id: newInventoryItem.warehouse_id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      await saveInventoryItem(inventoryItem as any);
+      await refreshInventory();
+      
+      // Link the newly created inventory item to the current line item
+      setCurrentLineItem({
+        ...currentLineItem,
+        inventoryItemId: inventoryItem.id,
+        description: inventoryItem.name,
+        inventoryType: inventoryItem.type,
+      });
+
+      // Reset new inventory form
+      setNewInventoryItem({
+        name: '',
+        sku: '',
+        description: '',
+        unit: 'unit',
+        type: 'raw-materials',
+        minQuantity: 0,
+        warehouse_id: '',
+      });
+
+      setIsNewInventoryDialogOpen(false);
+      toast({ title: 'Inventory item created successfully' });
+    } catch (error) {
+      toast({ title: 'Failed to create inventory item', variant: 'destructive' });
+    }
   };
 
   const calculateTotals = (items: PurchaseLineItem[]) => {
@@ -481,30 +545,13 @@ export default function Purchases() {
                 <div className="border rounded-lg p-4 space-y-4">
                   <h3 className="font-semibold">Line Items</h3>
                   
-                  <div className="grid grid-cols-6 gap-2">
+                  <div className="grid grid-cols-5 gap-2">
                     <div>
                       <Label>Description</Label>
                       <Input
                         value={currentLineItem.description}
                         onChange={(e) => setCurrentLineItem({ ...currentLineItem, description: e.target.value })}
                       />
-                    </div>
-                    <div>
-                      <Label>Inventory Type</Label>
-                      <Select
-                        value={currentLineItem.inventoryType}
-                        onValueChange={(value: InventoryType) => setCurrentLineItem({ ...currentLineItem, inventoryType: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="raw-materials">Raw Materials</SelectItem>
-                          <SelectItem value="work-in-progress">Work in Progress</SelectItem>
-                          <SelectItem value="consumables">Consumables</SelectItem>
-                          <SelectItem value="finished-products">Finished Products</SelectItem>
-                        </SelectContent>
-                      </Select>
                     </div>
                     <div>
                       <Label>Quantity</Label>
@@ -522,27 +569,48 @@ export default function Purchases() {
                         onChange={(e) => setCurrentLineItem({ ...currentLineItem, unitCost: parseFloat(e.target.value) })}
                       />
                     </div>
-                    <div>
+                    <div className="col-span-2">
                       <Label>Link to Inventory</Label>
-                      <Select
-                        value={currentLineItem.inventoryItemId || ''}
-                        onValueChange={(value) => setCurrentLineItem({ ...currentLineItem, inventoryItemId: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Optional" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {inventory.map(item => (
-                            <SelectItem key={item.id} value={item.id}>
-                              {item.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex gap-2">
+                        <Select
+                          value={currentLineItem.inventoryItemId || ''}
+                          onValueChange={(value) => {
+                            const selectedItem = inventory.find(i => i.id === value);
+                            if (selectedItem) {
+                              setCurrentLineItem({
+                                ...currentLineItem,
+                                inventoryItemId: value,
+                                description: selectedItem.name,
+                                inventoryType: selectedItem.type,
+                              });
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select existing" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {inventory.map(item => (
+                              <SelectItem key={item.id} value={item.id}>
+                                {item.name} ({item.sku})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setIsNewInventoryDialogOpen(true)}
+                          title="Create new inventory item"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex items-end">
+                    <div className="flex items-end col-span-2">
                       <Button onClick={handleAddLineItem} className="w-full">
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-4 w-4 mr-2" /> Add Line
                       </Button>
                     </div>
                   </div>
@@ -705,6 +773,124 @@ export default function Purchases() {
             )}
           </CardContent>
         </Card>
+
+        {/* New Inventory Item Dialog */}
+        <Dialog open={isNewInventoryDialogOpen} onOpenChange={setIsNewInventoryDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Create New Inventory Item</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Item Name *</Label>
+                  <Input
+                    value={newInventoryItem.name}
+                    onChange={(e) => setNewInventoryItem({ ...newInventoryItem, name: e.target.value })}
+                    placeholder="Enter item name"
+                  />
+                </div>
+                <div>
+                  <Label>SKU</Label>
+                  <Input
+                    value={newInventoryItem.sku}
+                    onChange={(e) => setNewInventoryItem({ ...newInventoryItem, sku: e.target.value })}
+                    placeholder="Auto-generated if empty"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Inventory Type *</Label>
+                  <Select
+                    value={newInventoryItem.type}
+                    onValueChange={(value: InventoryType) => setNewInventoryItem({ ...newInventoryItem, type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="raw-materials">Raw Materials</SelectItem>
+                      <SelectItem value="work-in-progress">Work in Progress</SelectItem>
+                      <SelectItem value="consumables">Consumables</SelectItem>
+                      <SelectItem value="finished-products">Finished Products</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Warehouse *</Label>
+                  <Select
+                    value={newInventoryItem.warehouse_id}
+                    onValueChange={(value) => setNewInventoryItem({ ...newInventoryItem, warehouse_id: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select warehouse" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {warehouses.map(warehouse => (
+                        <SelectItem key={warehouse.id} value={warehouse.id}>
+                          {warehouse.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Unit of Measure</Label>
+                  <Select
+                    value={newInventoryItem.unit}
+                    onValueChange={(value) => setNewInventoryItem({ ...newInventoryItem, unit: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unit">Unit</SelectItem>
+                      <SelectItem value="kg">Kilogram (kg)</SelectItem>
+                      <SelectItem value="g">Gram (g)</SelectItem>
+                      <SelectItem value="l">Liter (l)</SelectItem>
+                      <SelectItem value="ml">Milliliter (ml)</SelectItem>
+                      <SelectItem value="m">Meter (m)</SelectItem>
+                      <SelectItem value="cm">Centimeter (cm)</SelectItem>
+                      <SelectItem value="box">Box</SelectItem>
+                      <SelectItem value="pack">Pack</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Minimum Quantity (Reorder Level)</Label>
+                  <Input
+                    type="number"
+                    value={newInventoryItem.minQuantity}
+                    onChange={(e) => setNewInventoryItem({ ...newInventoryItem, minQuantity: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Description</Label>
+                <Input
+                  value={newInventoryItem.description}
+                  onChange={(e) => setNewInventoryItem({ ...newInventoryItem, description: e.target.value })}
+                  placeholder="Optional description"
+                />
+              </div>
+
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setIsNewInventoryDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateNewInventoryItem}>
+                  Create & Link to Purchase
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
