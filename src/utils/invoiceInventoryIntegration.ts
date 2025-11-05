@@ -13,9 +13,8 @@ export const processInvoiceInventory = async (
 ): Promise<void> => {
   try {
 
-    // Filter line items that are inventory type
     const inventoryLineItems = invoice.lineItems.filter(
-      item => item.lineItemType === 'inventory' && item.inventoryItemId
+      item => !!item.inventoryItemId
     );
 
     if (inventoryLineItems.length === 0) return;
