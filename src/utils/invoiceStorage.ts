@@ -232,20 +232,37 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
         .eq('company_id', companyId)
         .maybeSingle();
       
-      // Only create journal entry if it doesn't exist
+      // Only create revenue journal entry if it doesn't exist
       if (!existingJournalEntry) {
         if (invoice.type === 'credit-note') {
           recordCreditNote(invoice);
         } else {
           recordInvoice(invoice);
         }
-        
-        // Process inventory movements and COGS for inventory line items
-        await processInvoiceInventory(invoice, userId, companyId);
       }
     } catch (journalError) {
       console.error('Failed to create journal entry for invoice:', journalError);
       // Don't throw - invoice is saved, journal entry is supplementary
+    }
+
+    // Process inventory movements and COGS - separate check
+    try {
+      // Check if inventory movements already exist for this invoice
+      const { data: existingMovements } = await supabase
+        .from('inventory_movements')
+        .select('id')
+        .eq('reference_id', invoice.id)
+        .eq('reference_type', 'SALE')
+        .limit(1)
+        .maybeSingle();
+      
+      // Only process if movements don't exist and invoice has inventory items
+      if (!existingMovements) {
+        await processInvoiceInventory(invoice, userId, companyId);
+      }
+    } catch (inventoryError) {
+      console.error('Failed to process inventory for invoice:', inventoryError);
+      // Don't throw - invoice is saved, inventory is supplementary
     }
   } catch (error) {
     console.error('Failed to save invoice:', error);
@@ -274,12 +291,46 @@ export const deleteInvoice = async (id: string): Promise<void> => {
       .single();
 
     if (invoice) {
-      // Delete related journal entries
+      // Delete related journal entries (both revenue and COGS)
       await supabase
         .from('journal_entries')
         .delete()
-        .eq('reference', invoice.invoice_number)
+        .or(`reference.eq.${invoice.invoice_number},reference.eq.${invoice.invoice_number}-COGS`)
         .eq('company_id', memberData.company_id);
+      
+      // Reverse inventory movements and restore quantities
+      const { data: movements } = await supabase
+        .from('inventory_movements')
+        .select('*')
+        .eq('reference_id', id)
+        .eq('reference_type', 'SALE');
+      
+      if (movements && movements.length > 0) {
+        for (const movement of movements) {
+          // Get current inventory quantity
+          const { data: inventoryItem } = await supabase
+            .from('inventory_items')
+            .select('quantity')
+            .eq('id', movement.item_id)
+            .single();
+          
+          if (inventoryItem) {
+            // Restore inventory quantity (movement.quantity is negative for OUT)
+            const restoredQty = Number(inventoryItem.quantity) + Math.abs(Number(movement.quantity));
+            await supabase
+              .from('inventory_items')
+              .update({ quantity: restoredQty })
+              .eq('id', movement.item_id);
+          }
+        }
+        
+        // Delete the movements
+        await supabase
+          .from('inventory_movements')
+          .delete()
+          .eq('reference_id', id)
+          .eq('reference_type', 'SALE');
+      }
     }
 
     // Delete invoice payments
