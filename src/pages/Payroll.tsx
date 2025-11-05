@@ -30,7 +30,7 @@ import { useCompany } from '@/contexts/CompanyContext';
 
 export default function Payroll() {
   const navigate = useNavigate();
-  const { activeCompany, activeCompanySettings } = useCompany();
+  const { activeCompany, activeCompanySettings, loading: companyLoading } = useCompany();
   const [payrollRecords, setPayrollRecords] = useState<any[]>([]);
   const [filteredRecords, setFilteredRecords] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
@@ -40,6 +40,7 @@ export default function Payroll() {
   const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>('all');
   const [dateRangeStart, setDateRangeStart] = useState<string>('');
   const [dateRangeEnd, setDateRangeEnd] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     employee_id: '',
     period_start: '',
@@ -58,8 +59,13 @@ export default function Payroll() {
 
   useEffect(() => {
     checkAuth();
-    loadData();
   }, []);
+
+  useEffect(() => {
+    if (!companyLoading && activeCompany) {
+      loadData();
+    }
+  }, [companyLoading, activeCompany]);
 
   useEffect(() => {
     filterRecords();
@@ -73,35 +79,42 @@ export default function Payroll() {
   };
 
   const loadData = async () => {
-    // First load payroll settings to get country
-    const settingsResult = await supabase
-      .from('payroll_settings')
-      .select('*')
-      .maybeSingle();
+    try {
+      setIsLoading(true);
+      // First load payroll settings to get country
+      const settingsResult = await supabase
+        .from('payroll_settings')
+        .select('*')
+        .maybeSingle();
 
-    const settings = settingsResult.data;
-    setPayrollSettings(settings);
+      const settings = settingsResult.data;
+      setPayrollSettings(settings);
 
-    const country = settings?.country || 'ZA';
-    const taxYear = settings?.current_tax_year || new Date().getFullYear();
+      const country = settings?.country || 'ZA';
+      const taxYear = settings?.current_tax_year || new Date().getFullYear();
 
-    // Load tax brackets for the specific country and year
-    const taxBrackets = await fetchTaxBrackets(country, taxYear);
-    setTaxBrackets(taxBrackets);
+      // Load tax brackets for the specific country and year
+      const taxBrackets = await fetchTaxBrackets(country, taxYear);
+      setTaxBrackets(taxBrackets);
 
-    const [payrollResult, employeesResult] = await Promise.all([
-      supabase.from('payroll').select('*, employees(*)').order('created_at', { ascending: false }),
-      supabase.from('employees').select('*').eq('status', 'active'),
-    ]);
+      const [payrollResult, employeesResult] = await Promise.all([
+        supabase.from('payroll').select('*, employees(*)').order('created_at', { ascending: false }),
+        supabase.from('employees').select('*').eq('status', 'active'),
+      ]);
 
-    if (payrollResult.error) {
-      toast({ title: 'Error', description: payrollResult.error.message, variant: 'destructive' });
-    } else {
-      setPayrollRecords(payrollResult.data || []);
-    }
+      if (payrollResult.error) {
+        toast({ title: 'Error', description: payrollResult.error.message, variant: 'destructive' });
+      } else {
+        setPayrollRecords(payrollResult.data || []);
+      }
 
-    if (!employeesResult.error) {
-      setEmployees(employeesResult.data || []);
+      if (!employeesResult.error) {
+        setEmployees(employeesResult.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -351,6 +364,19 @@ export default function Payroll() {
 
   const selectedEmployee = employees.find(e => e.id === formData.employee_id);
   const previewCalculations = selectedEmployee ? calculatePayroll() : null;
+
+  if (companyLoading || isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <PayrollNavigation />
+        <main className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
