@@ -1,10 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Plus, FileDown, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, Plus, FileDown, FileSpreadsheet, MoreVertical } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { DataTableFilters } from '@/components/ui/data-table-filters';
+import { SortableTableHeader } from '@/components/ui/sortable-table-header';
 import DealDialog from '@/components/crm/DealDialog';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,6 +49,17 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [stageFilter, setStageFilter] = useState('all');
+  const [customerFilter, setCustomerFilter] = useState('all');
+
+  // Sort state
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({
+    key: 'created_at',
+    direction: 'desc',
+  });
 
   useEffect(() => {
     if (activeCompany) {
@@ -100,9 +115,88 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
     );
   };
 
+  // Get unique customers for filter
+  const uniqueCustomers = useMemo(() => {
+    const customers = new Set(deals.map(d => d.customer));
+    return Array.from(customers).sort();
+  }, [deals]);
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(amount);
   };
+
+  // Handle sort
+  const handleSort = (key: string) => {
+    setSortConfig({
+      key,
+      direction: sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc',
+    });
+  };
+
+  // Clear all filters
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setStageFilter('all');
+    setCustomerFilter('all');
+  };
+
+  // Filter and sort deals
+  const displayDeals = useMemo(() => {
+    let filtered = deals;
+
+    // Apply search
+    if (searchQuery) {
+      filtered = filtered.filter(deal =>
+        deal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        deal.customer.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply stage filter
+    if (stageFilter !== 'all') {
+      filtered = filtered.filter(deal => deal.stage === stageFilter);
+    }
+
+    // Apply customer filter
+    if (customerFilter !== 'all') {
+      filtered = filtered.filter(deal => deal.customer === customerFilter);
+    }
+
+    // Apply sorting
+    return filtered.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortConfig.key) {
+        case 'title':
+          aValue = a.title.toLowerCase();
+          bValue = b.title.toLowerCase();
+          break;
+        case 'customer':
+          aValue = a.customer.toLowerCase();
+          bValue = b.customer.toLowerCase();
+          break;
+        case 'value':
+          aValue = a.value;
+          bValue = b.value;
+          break;
+        case 'stage':
+          aValue = a.stage;
+          bValue = b.stage;
+          break;
+        case 'probability':
+          aValue = a.probability;
+          bValue = b.probability;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [deals, searchQuery, stageFilter, customerFilter, sortConfig]);
 
   const exportCustomersToPDF = () => {
     const customers = getCustomerList();
@@ -153,7 +247,54 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
     toast.success('Customer list exported to Excel');
   };
 
-  const getDealsByStage = (stage: string) => deals.filter(d => d.stage === stage);
+  const getStageColor = (stage: string) => {
+    const stageInfo = stages.find(s => s.id === stage);
+    return stageInfo?.color || 'bg-gray-500';
+  };
+
+  const getStageLabel = (stage: string) => {
+    const stageInfo = stages.find(s => s.id === stage);
+    return stageInfo?.name || stage;
+  };
+
+  const handleMoveDeal = async (dealId: string, newStage: string) => {
+    const deal = deals.find(d => d.id === dealId);
+    if (!deal) return;
+
+    try {
+      const { error } = await supabase
+        .from('deals')
+        .update({ stage: newStage })
+        .eq('id', dealId);
+
+      if (error) throw error;
+      
+      await fetchDeals();
+      toast.success(`Deal moved to ${getStageLabel(newStage)}`);
+    } catch (error) {
+      console.error('Error moving deal:', error);
+      toast.error('Failed to move deal');
+    }
+  };
+
+  const handleDeleteDeal = async (dealId: string) => {
+    if (!confirm('Are you sure you want to delete this deal?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('deals')
+        .delete()
+        .eq('id', dealId);
+
+      if (error) throw error;
+      
+      await fetchDeals();
+      toast.success('Deal deleted successfully');
+    } catch (error) {
+      console.error('Error deleting deal:', error);
+      toast.error('Failed to delete deal');
+    }
+  };
 
   const handleAddDeal = () => {
     setSelectedDeal(null);
@@ -246,63 +387,160 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
           </TabsList>
 
           <TabsContent value="pipeline">
+            <DataTableFilters
+              searchValue={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder="Search deals by title or customer..."
+              filters={[
+                {
+                  label: 'Stage',
+                  value: stageFilter,
+                  onValueChange: setStageFilter,
+                  options: stages.map(s => ({ label: s.name, value: s.id })),
+                },
+                {
+                  label: 'Customer',
+                  value: customerFilter,
+                  onValueChange: setCustomerFilter,
+                  options: uniqueCustomers.map(c => ({ label: c, value: c })),
+                },
+              ]}
+              onClearFilters={handleClearFilters}
+            />
+
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <p className="text-muted-foreground">Loading deals...</p>
               </div>
+            ) : displayDeals.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <h3 className="text-lg font-semibold mb-2">No deals found</h3>
+                  <p className="text-muted-foreground mb-4">
+                    {searchQuery || stageFilter !== 'all' || customerFilter !== 'all'
+                      ? 'Try adjusting your filters'
+                      : 'Create your first deal to get started'}
+                  </p>
+                  <Button onClick={handleAddDeal}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Deal
+                  </Button>
+                </CardContent>
+              </Card>
             ) : (
               <>
-                <div className="grid grid-cols-5 gap-4">
-                  {stages.map((stage) => {
-                    const stageDeals = getDealsByStage(stage.id);
-                    const stageValue = stageDeals.reduce((sum, deal) => sum + deal.value, 0);
+                <Card className="mb-6">
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/50">
+                          <SortableTableHeader
+                            sortKey="title"
+                            currentSort={sortConfig}
+                            onSort={handleSort}
+                          >
+                            Deal Title
+                          </SortableTableHeader>
+                          <SortableTableHeader
+                            sortKey="customer"
+                            currentSort={sortConfig}
+                            onSort={handleSort}
+                          >
+                            Customer
+                          </SortableTableHeader>
+                          <SortableTableHeader
+                            sortKey="value"
+                            currentSort={sortConfig}
+                            onSort={handleSort}
+                            className="text-right"
+                          >
+                            Value
+                          </SortableTableHeader>
+                          <SortableTableHeader
+                            sortKey="stage"
+                            currentSort={sortConfig}
+                            onSort={handleSort}
+                          >
+                            Stage
+                          </SortableTableHeader>
+                          <SortableTableHeader
+                            sortKey="probability"
+                            currentSort={sortConfig}
+                            onSort={handleSort}
+                            className="text-center"
+                          >
+                            Probability
+                          </SortableTableHeader>
+                          <TableHead className="text-right">Weighted Value</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {displayDeals.map((deal) => (
+                          <TableRow key={deal.id} className="cursor-pointer hover:bg-muted/50">
+                            <TableCell className="font-medium">{deal.title}</TableCell>
+                            <TableCell>{deal.customer}</TableCell>
+                            <TableCell className="text-right font-semibold">
+                              {formatCurrency(deal.value)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={getStageColor(deal.stage)}>
+                                {getStageLabel(deal.stage)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline">{deal.probability}%</Badge>
+                            </TableCell>
+                            <TableCell className="text-right text-muted-foreground">
+                              {formatCurrency(deal.value * deal.probability / 100)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuItem onClick={() => handleEditDeal(deal)}>
+                                    Edit Deal
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  {stages.map((stage) => (
+                                    deal.stage !== stage.id && (
+                                      <DropdownMenuItem
+                                        key={stage.id}
+                                        onClick={() => handleMoveDeal(deal.id, stage.id)}
+                                      >
+                                        Move to {stage.name}
+                                      </DropdownMenuItem>
+                                    )
+                                  ))}
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => handleDeleteDeal(deal.id)}
+                                    className="text-destructive"
+                                  >
+                                    Delete Deal
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
 
-                    return (
-                      <div key={stage.id} className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-semibold">{stage.name}</h3>
-                          <Badge variant="secondary">{stageDeals.length}</Badge>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {formatCurrency(stageValue)}
-                        </div>
-                        <div className="space-y-3">
-                          {stageDeals.map((deal) => (
-                            <Card 
-                              key={deal.id} 
-                              className="cursor-pointer hover:shadow-md transition-shadow"
-                              onClick={() => handleEditDeal(deal)}
-                            >
-                              <CardHeader className="p-4">
-                                <CardTitle className="text-sm">{deal.title}</CardTitle>
-                              </CardHeader>
-                              <CardContent className="p-4 pt-0 space-y-2">
-                                <p className="text-xs text-muted-foreground">{deal.customer}</p>
-                                <div className="flex justify-between items-center">
-                                  <span className="font-semibold text-sm">{formatCurrency(deal.value)}</span>
-                                  <Badge variant="outline" className="text-xs">{deal.probability}%</Badge>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                          {stageDeals.length === 0 && (
-                            <div className="border-2 border-dashed rounded-lg p-4 text-center text-sm text-muted-foreground">
-                              No deals
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-8 grid grid-cols-3 gap-6">
+                <div className="grid grid-cols-3 gap-6">
                   <Card>
                     <CardHeader>
                       <CardTitle>Pipeline Value</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-3xl font-bold">{formatCurrency(deals.reduce((sum, d) => sum + d.value, 0))}</p>
+                      <p className="text-3xl font-bold">{formatCurrency(displayDeals.reduce((sum, d) => sum + d.value, 0))}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{displayDeals.length} deals</p>
                     </CardContent>
                   </Card>
                   <Card>
@@ -311,16 +549,24 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
                     </CardHeader>
                     <CardContent>
                       <p className="text-3xl font-bold">
-                        {formatCurrency(deals.reduce((sum, d) => sum + (d.value * d.probability / 100), 0))}
+                        {formatCurrency(displayDeals.reduce((sum, d) => sum + (d.value * d.probability / 100), 0))}
                       </p>
+                      <p className="text-sm text-muted-foreground mt-1">Expected revenue</p>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardHeader>
-                      <CardTitle>Conversion Rate</CardTitle>
+                      <CardTitle>Win Rate</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-3xl font-bold">45%</p>
+                      <p className="text-3xl font-bold">
+                        {deals.length > 0 
+                          ? Math.round((deals.filter(d => d.stage === 'closed').length / deals.length) * 100)
+                          : 0}%
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {deals.filter(d => d.stage === 'closed').length} closed deals
+                      </p>
                     </CardContent>
                   </Card>
                 </div>
