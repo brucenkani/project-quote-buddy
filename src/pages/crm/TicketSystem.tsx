@@ -10,7 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DataTableFilters } from '@/components/ui/data-table-filters';
-import { ArrowLeft, Plus, Clock, AlertCircle } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ArrowLeft, Plus } from 'lucide-react';
 
 interface Ticket {
   id: string;
@@ -72,6 +74,12 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
     setAssigneeFilter('all');
     setStartDate('');
     setEndDate('');
+  };
+
+  const handleStatusChange = (ticketId: string, newStatus: 'todo' | 'in-progress' | 'completed' | 'on-hold') => {
+    setTickets(tickets.map(ticket => 
+      ticket.id === ticketId ? { ...ticket, status: newStatus } : ticket
+    ));
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -281,21 +289,26 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
             />
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="w-[50px]">
+                    <Checkbox />
+                  </TableHead>
                   <TableHead>Task</TableHead>
                   <TableHead>Assigned To</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Priority</TableHead>
                   <TableHead>Due Date</TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredTickets.map((ticket) => (
-                  <TableRow key={ticket.id} className="cursor-pointer hover:bg-muted/50">
-                    <TableCell className="font-medium">#{ticket.id}</TableCell>
-                    <TableCell>{ticket.title}</TableCell>
+                  <TableRow key={ticket.id}>
+                    <TableCell>
+                      <Checkbox />
+                    </TableCell>
+                    <TableCell className="font-medium">{ticket.title}</TableCell>
                     <TableCell>{ticket.assignedTo}</TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(ticket.status)}>
@@ -309,6 +322,30 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
                     </TableCell>
                     <TableCell>{ticket.dueDate || '-'}</TableCell>
                     <TableCell>{ticket.createdAt}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="gap-1">
+                            Actions
+                            <span className="ml-1">▼</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => handleStatusChange(ticket.id, 'todo')}>
+                            Mark as To Do
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleStatusChange(ticket.id, 'in-progress')}>
+                            Mark as In Progress
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleStatusChange(ticket.id, 'completed')}>
+                            Mark as Completed
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleStatusChange(ticket.id, 'on-hold')}>
+                            Mark as On Hold
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
