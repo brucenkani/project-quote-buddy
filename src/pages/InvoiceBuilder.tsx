@@ -429,10 +429,16 @@ export default function InvoiceBuilder() {
                           onValueChange={(value) => {
                             const selectedItem = inventory.find(inv => inv.id === value);
                             if (selectedItem) {
-                              updateLineItem(index, 'inventoryItemId', value);
-                              updateLineItem(index, 'description', selectedItem.name);
-                              updateLineItem(index, 'unit', selectedItem.unit);
-                              updateLineItem(index, 'unitPrice', selectedItem.unitCost);
+                              const updated = [...lineItems];
+                              updated[index] = {
+                                ...updated[index],
+                                inventoryItemId: value,
+                                description: selectedItem.name,
+                                unit: selectedItem.unit,
+                                unitPrice: selectedItem.unitCost,
+                              };
+                              updated[index].total = updated[index].quantity * updated[index].unitPrice;
+                              setLineItems(updated);
                             }
                           }}
                         >
