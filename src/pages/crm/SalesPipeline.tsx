@@ -4,11 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Plus, FileDown, FileSpreadsheet, MoreVertical } from 'lucide-react';
+import { ArrowLeft, Plus, FileDown, FileSpreadsheet, MoreVertical, CalendarIcon } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { DataTableFilters } from '@/components/ui/data-table-filters';
 import { SortableTableHeader } from '@/components/ui/sortable-table-header';
+import { cn } from '@/lib/utils';
 import DealDialog from '@/components/crm/DealDialog';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -56,8 +59,8 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [stageFilter, setStageFilter] = useState('all');
   const [customerFilter, setCustomerFilter] = useState('all');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
 
   // Sort state
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({
@@ -199,8 +202,11 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
     setSearchQuery('');
     setStageFilter('all');
     setCustomerFilter('all');
-    setStartDate('');
-    setEndDate('');
+  };
+
+  const handleClearDateRange = () => {
+    setStartDate(undefined);
+    setEndDate(undefined);
   };
 
   // Filter and sort deals
@@ -230,8 +236,8 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
       filtered = filtered.filter(deal => {
         if (!deal.created_at) return true;
         const dealDate = new Date(deal.created_at);
-        if (startDate && dealDate < new Date(startDate)) return false;
-        if (endDate && dealDate > new Date(endDate)) return false;
+        if (startDate && dealDate < startDate) return false;
+        if (endDate && dealDate > endDate) return false;
         return true;
       });
     }
@@ -280,8 +286,8 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
       filtered = filtered.filter(deal => {
         if (!deal.created_at) return true;
         const dealDate = new Date(deal.created_at);
-        if (startDate && dealDate < new Date(startDate)) return false;
-        if (endDate && dealDate > new Date(endDate)) return false;
+        if (startDate && dealDate < startDate) return false;
+        if (endDate && dealDate > endDate) return false;
         return true;
       });
     }
@@ -502,6 +508,65 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
           </TabsList>
 
           <TabsContent value="pipeline">
+            {/* Date Range Filter */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">Date Range:</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[180px] justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "PPP") : <span>Start date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                <span className="text-muted-foreground">to</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[180px] justify-start text-left font-normal",
+                        !endDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "PPP") : <span>End date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                {(startDate || endDate) && (
+                  <Button variant="ghost" size="sm" onClick={handleClearDateRange}>
+                    Clear
+                  </Button>
+                )}
+              </div>
+            </div>
+
             {/* Summary Cards */}
             <div className="grid grid-cols-4 gap-6 mb-6">
               <Card>
@@ -569,12 +634,6 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
                       options: uniqueCustomers.map(c => ({ label: c, value: c })),
                     },
                   ]}
-                  dateFilters={{
-                    startDate,
-                    endDate,
-                    onStartDateChange: setStartDate,
-                    onEndDateChange: setEndDate,
-                  }}
                   onClearFilters={handleClearFilters}
                 />
               </div>
