@@ -28,7 +28,16 @@ interface JournalEntryData {
 const validateBalance = (lines: JournalEntryLine[]): boolean => {
   const totalDebits = lines.reduce((sum, line) => sum + line.debit, 0);
   const totalCredits = lines.reduce((sum, line) => sum + line.credit, 0);
-  return Math.abs(totalDebits - totalCredits) < 0.01;
+  const isBalanced = Math.abs(totalDebits - totalCredits) < 0.01;
+  
+  console.log('⚖️ [VALIDATION DEBUG] Balance validation:', {
+    totalDebits,
+    totalCredits,
+    difference: totalDebits - totalCredits,
+    isBalanced
+  });
+  
+  return isBalanced;
 };
 
 /**
@@ -39,11 +48,21 @@ export const createJournalEntry = async (
   userId: string,
   companyId: string
 ): Promise<string> => {
+  console.log('🏗️ [CREATE ENTRY DEBUG] Starting journal entry creation');
+  console.log('🏗️ [CREATE ENTRY DEBUG] Entry:', entry);
+  console.log('🏗️ [CREATE ENTRY DEBUG] User ID:', userId);
+  console.log('🏗️ [CREATE ENTRY DEBUG] Company ID:', companyId);
+
   if (!validateBalance(entry.lines)) {
-    throw new Error('Transaction is not balanced. Debits must equal credits.');
+    const totalDebits = entry.lines.reduce((sum, line) => sum + line.debit, 0);
+    const totalCredits = entry.lines.reduce((sum, line) => sum + line.credit, 0);
+    const errorMsg = `Transaction is not balanced. Debits: ${totalDebits}, Credits: ${totalCredits}, Difference: ${Math.abs(totalDebits - totalCredits)}`;
+    console.error('❌ [CREATE ENTRY DEBUG] Balance validation failed:', errorMsg);
+    throw new Error(errorMsg);
   }
 
   try {
+    console.log('📤 [CREATE ENTRY DEBUG] Inserting journal entry header...');
     // Create journal entry header
     const { data: journal, error: journalError } = await supabase
       .from('journal_entries')
@@ -58,7 +77,12 @@ export const createJournalEntry = async (
       .select()
       .single();
 
-    if (journalError) throw journalError;
+    if (journalError) {
+      console.error('❌ [CREATE ENTRY DEBUG] Journal header insert error:', journalError);
+      throw journalError;
+    }
+
+    console.log('✅ [CREATE ENTRY DEBUG] Journal header created:', journal);
 
     // Create journal entry lines
     const lineInserts = entry.lines.map(line => ({
@@ -70,15 +94,26 @@ export const createJournalEntry = async (
       description: line.description,
     }));
 
+    console.log('📤 [CREATE ENTRY DEBUG] Inserting journal entry lines:', lineInserts);
+
     const { error: linesError } = await supabase
       .from('journal_entry_lines')
       .insert(lineInserts);
 
-    if (linesError) throw linesError;
+    if (linesError) {
+      console.error('❌ [CREATE ENTRY DEBUG] Journal lines insert error:', linesError);
+      throw linesError;
+    }
 
+    console.log('✅ [CREATE ENTRY DEBUG] Journal entry created successfully with ID:', journal.id);
     return journal.id;
   } catch (error) {
-    console.error('Failed to create journal entry:', error);
+    console.error('❌ [CREATE ENTRY DEBUG] Failed to create journal entry:', error);
+    console.error('❌ [CREATE ENTRY DEBUG] Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+      error
+    });
     throw error;
   }
 };
@@ -142,6 +177,22 @@ export const recordPurchaseInvoice = async (
   bankAccountId?: string,
   supplierInvoiceNumber?: string
 ): Promise<string> => {
+  console.log('📝 [JOURNAL DEBUG] recordPurchaseInvoice called with:', {
+    purchaseNumber,
+    supplier,
+    subtotal,
+    taxAmount,
+    total,
+    date,
+    companyType,
+    paymentMethod,
+    inventoryType,
+    userId,
+    companyId,
+    bankAccountId,
+    supplierInvoiceNumber
+  });
+
   const lines: JournalEntryLine[] = [];
 
   // Determine inventory account based on inventory type
@@ -167,10 +218,17 @@ export const recordPurchaseInvoice = async (
       break;
   }
 
+  console.log('📦 [JOURNAL DEBUG] Inventory account mapping:', {
+    inventoryType,
+    inventoryAccount,
+    inventoryName
+  });
+
   // Professional services expense rather than capitalize
   if (companyType === 'professional-services') {
     inventoryAccount = '7100';
     inventoryName = '7100 - Cost of Goods Sold';
+    console.log('🏢 [JOURNAL DEBUG] Professional services detected, using expense account');
   }
 
   // Debit: Inventory/Expense
@@ -181,6 +239,7 @@ export const recordPurchaseInvoice = async (
     credit: 0,
     description: `Purchase from ${supplier}`,
   });
+  console.log('✅ [JOURNAL DEBUG] Added inventory/expense debit line:', subtotal);
 
   // Debit: VAT Input (if applicable)
   if (taxAmount > 0) {
@@ -191,6 +250,7 @@ export const recordPurchaseInvoice = async (
       credit: 0,
       description: 'VAT on purchase',
     });
+    console.log('✅ [JOURNAL DEBUG] Added VAT input debit line:', taxAmount);
   }
 
   // Credit: Based on payment method
@@ -203,6 +263,7 @@ export const recordPurchaseInvoice = async (
         credit: total,
         description: `Payable to ${supplier}`,
       });
+      console.log('✅ [JOURNAL DEBUG] Added accounts payable credit line:', total);
       break;
     case 'cash':
       lines.push({
@@ -212,9 +273,11 @@ export const recordPurchaseInvoice = async (
         credit: total,
         description: `Cash payment to ${supplier}`,
       });
+      console.log('✅ [JOURNAL DEBUG] Added cash credit line:', total);
       break;
     case 'bank-transfer':
       if (!bankAccountId) {
+        console.error('❌ [JOURNAL DEBUG] Bank account ID required but not provided');
         throw new Error('Bank account ID is required for bank transfer payment method');
       }
       lines.push({
@@ -224,8 +287,21 @@ export const recordPurchaseInvoice = async (
         credit: total,
         description: `Bank payment to ${supplier}`,
       });
+      console.log('✅ [JOURNAL DEBUG] Added bank account credit line:', total);
       break;
   }
+
+  console.log('📊 [JOURNAL DEBUG] All journal entry lines:', lines);
+
+  // Calculate totals for validation
+  const totalDebits = lines.reduce((sum, line) => sum + line.debit, 0);
+  const totalCredits = lines.reduce((sum, line) => sum + line.credit, 0);
+  console.log('🧮 [JOURNAL DEBUG] Balance check:', {
+    totalDebits,
+    totalCredits,
+    difference: Math.abs(totalDebits - totalCredits),
+    isBalanced: Math.abs(totalDebits - totalCredits) < 0.01
+  });
 
   const entry: JournalEntryData = {
     entry_number: `PUR-${purchaseNumber}`,
@@ -234,6 +310,8 @@ export const recordPurchaseInvoice = async (
     reference: supplierInvoiceNumber || purchaseNumber,
     lines,
   };
+
+  console.log('📋 [JOURNAL DEBUG] Journal entry to create:', entry);
 
   return createJournalEntry(entry, userId, companyId);
 };

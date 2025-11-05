@@ -303,33 +303,67 @@ export default function Purchases() {
 
     // Record double-entry accounting in Supabase - ALWAYS use 'credit' for Accounts Payable
     try {
+      console.log('🔍 [PURCHASE DEBUG] Starting journal entry creation');
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && activeCompany && lineItems.length > 0) {
-        // Get the primary inventory type from first line item
-        const primaryInventoryType = lineItems[0].inventoryType || 'raw-materials';
-        
-        // Always record purchase with Accounts Payable (credit method)
-        // Actual payment will be handled separately via payment screen
-        await recordPurchaseInvoice(
-          purchase.purchaseNumber,
-          purchase.vendor,
-          purchase.subtotal,
-          purchase.taxAmount,
-          purchase.total,
-          purchase.date,
-          settings.companyType,
-          'credit', // Always use credit (Accounts Payable) when recording purchase
-          primaryInventoryType,
-          user.id,
-          activeCompany.id,
-          undefined, // No bank account ID for unpaid purchases
-          purchase.supplierInvoiceNumber
-        );
-        toast({ title: editingPurchase ? 'Purchase updated and ledger updated' : 'Purchase created and inventory updated' });
-      } else {
-        toast({ title: editingPurchase ? 'Purchase updated' : 'Purchase created' });
+      
+      if (!user) {
+        console.error('❌ [PURCHASE DEBUG] No authenticated user found');
+        throw new Error('User not authenticated');
       }
+      
+      if (!activeCompany) {
+        console.error('❌ [PURCHASE DEBUG] No active company found');
+        throw new Error('No active company');
+      }
+      
+      if (lineItems.length === 0) {
+        console.error('❌ [PURCHASE DEBUG] No line items found');
+        throw new Error('No line items to process');
+      }
+      
+      console.log('✅ [PURCHASE DEBUG] User ID:', user.id);
+      console.log('✅ [PURCHASE DEBUG] Company ID:', activeCompany.id);
+      console.log('✅ [PURCHASE DEBUG] Company Type:', settings.companyType);
+      console.log('✅ [PURCHASE DEBUG] Line Items Count:', lineItems.length);
+      
+      // Get the primary inventory type from first line item
+      const primaryInventoryType = lineItems[0].inventoryType || 'consumables';
+      console.log('📦 [PURCHASE DEBUG] Primary Inventory Type:', primaryInventoryType);
+      
+      console.log('💰 [PURCHASE DEBUG] Purchase Details:', {
+        purchaseNumber: purchase.purchaseNumber,
+        vendor: purchase.vendor,
+        subtotal: purchase.subtotal,
+        taxAmount: purchase.taxAmount,
+        total: purchase.total,
+        date: purchase.date,
+        paymentMethod: 'credit',
+        inventoryType: primaryInventoryType
+      });
+      
+      // Always record purchase with Accounts Payable (credit method)
+      // Actual payment will be handled separately via payment screen
+      const journalEntryId = await recordPurchaseInvoice(
+        purchase.purchaseNumber,
+        purchase.vendor,
+        purchase.subtotal,
+        purchase.taxAmount,
+        purchase.total,
+        purchase.date,
+        settings.companyType,
+        'credit', // Always use credit (Accounts Payable) when recording purchase
+        primaryInventoryType,
+        user.id,
+        activeCompany.id,
+        undefined, // No bank account ID for unpaid purchases
+        purchase.supplierInvoiceNumber
+      );
+      
+      console.log('✅ [PURCHASE DEBUG] Journal entry created successfully with ID:', journalEntryId);
+      toast({ title: editingPurchase ? 'Purchase updated and ledger updated' : 'Purchase created and inventory updated' });
     } catch (error) {
+      console.error('❌ [PURCHASE DEBUG] Journal entry creation failed:', error);
+      console.error('❌ [PURCHASE DEBUG] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       toast({ 
         title: 'Purchase saved but journal entry failed', 
         description: error instanceof Error ? error.message : 'Unknown error',
