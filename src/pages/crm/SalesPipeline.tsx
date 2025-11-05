@@ -38,7 +38,7 @@ const stages = [
   { id: 'closed', name: 'Closed', color: 'bg-green-500' },
 ];
 
-export default function SalesPipeline() {
+export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
   const navigate = useNavigate();
   const { activeCompany } = useCompany();
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -219,7 +219,7 @@ export default function SalesPipeline() {
                 variant="ghost" 
                 size="sm" 
                 onClick={() => {
-                  console.log('Navigating to /crm-customer-support');
+                  if (onBack) return onBack();
                   navigate('/crm-customer-support');
                 }}
               >

@@ -13,11 +13,11 @@ export default function CRMCustomerSupport() {
   const [activeSection, setActiveSection] = useState<ActiveSection>('overview');
 
   if (activeSection === 'pipeline') {
-    return <SalesPipeline />;
+    return <SalesPipeline onBack={() => setActiveSection('overview')} />;
   }
 
   if (activeSection === 'tickets') {
-    return <TicketSystem />;
+    return <TicketSystem onBack={() => setActiveSection('overview')} />;
   }
 
   return (
