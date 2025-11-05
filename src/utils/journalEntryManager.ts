@@ -191,41 +191,44 @@ export const recordPurchaseInvoice = async (
 
   const lines: JournalEntryLine[] = [];
 
-  // Determine inventory account based on inventory type
+  // Determine inventory account based on inventory type and company type
   let inventoryAccount = '1109';
   let inventoryName = '1109 - Raw Materials';
 
-  switch (inventoryType) {
-    case 'raw-materials':
-      inventoryAccount = '1109';
-      inventoryName = '1109 - Raw Materials';
-      break;
-    case 'work-in-progress':
-      inventoryAccount = '1310';
-      inventoryName = '1310 - Work in Progress';
-      break;
-    case 'consumables':
-      inventoryAccount = '1111';
-      inventoryName = '1111 - Consumables';
-      break;
-    case 'finished-products':
-      inventoryAccount = '1110';
-      inventoryName = '1110 - Finished Goods';
-      break;
+  // For periodic inventory or consumables, expense immediately (debit COGS/Expense)
+  // For perpetual inventory with non-consumables, capitalize to inventory (debit Asset)
+  const useExpenseAccount = inventoryType === 'consumables' || companyType === 'professional-services';
+
+  if (useExpenseAccount) {
+    // Expense immediately for consumables or professional services
+    inventoryAccount = '7100';
+    inventoryName = '7100 - Cost of Goods Sold';
+    console.log('🏢 [JOURNAL DEBUG] Using expense account for immediate recognition');
+  } else {
+    // Capitalize to inventory for resale items
+    switch (inventoryType) {
+      case 'raw-materials':
+        inventoryAccount = '1109';
+        inventoryName = '1109 - Raw Materials';
+        break;
+      case 'work-in-progress':
+        inventoryAccount = '1310';
+        inventoryName = '1310 - Work in Progress';
+        break;
+      case 'finished-products':
+        inventoryAccount = '1110';
+        inventoryName = '1110 - Finished Goods';
+        break;
+    }
+    console.log('📦 [JOURNAL DEBUG] Capitalizing to inventory account');
   }
 
   console.log('📦 [JOURNAL DEBUG] Inventory account mapping:', {
     inventoryType,
     inventoryAccount,
-    inventoryName
+    inventoryName,
+    useExpenseAccount
   });
-
-  // Professional services expense rather than capitalize
-  if (companyType === 'professional-services') {
-    inventoryAccount = '7100';
-    inventoryName = '7100 - Cost of Goods Sold';
-    console.log('🏢 [JOURNAL DEBUG] Professional services detected, using expense account');
-  }
 
   // Debit: Inventory/Expense
   lines.push({
