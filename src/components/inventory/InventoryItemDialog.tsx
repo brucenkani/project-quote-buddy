@@ -212,26 +212,50 @@ export function InventoryItemDialog({ open, onOpenChange, item, onItemCreated }:
               </div>
             </div>
 
-            <div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <Label htmlFor="quantity">Current Quantity</Label>
-                      <Input
-                        id="quantity"
-                        type="number"
-                        value={formData.quantity}
-                        disabled
-                        className="bg-muted cursor-not-allowed"
-                      />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Quantity is managed through purchases (IN) and invoices (OUT)</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <Label htmlFor="unitCost">Unit Cost (WAC)</Label>
+                        <Input
+                          id="unitCost"
+                          type="number"
+                          step="0.01"
+                          value={formData.unitCost || 0}
+                          disabled
+                          className="bg-muted cursor-not-allowed"
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Calculated using Weighted Average Cost method from purchases</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <Label htmlFor="quantity">Current Quantity</Label>
+                        <Input
+                          id="quantity"
+                          type="number"
+                          value={formData.quantity}
+                          disabled
+                          className="bg-muted cursor-not-allowed"
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Quantity is managed through purchases (IN) and invoices (OUT)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             </div>
 
             <div>
