@@ -145,6 +145,13 @@ export const generateIncomeStatementPDF = (
     theme: 'grid',
     styles: { fontSize: 8 },
     headStyles: { fillColor: [59, 130, 246] },
+    columnStyles: {
+      0: { cellWidth: 70, halign: 'left' },
+      1: { cellWidth: 30, halign: 'right' },
+      2: { cellWidth: 30, halign: 'right' },
+      3: { cellWidth: 30, halign: 'right' },
+      4: { cellWidth: 30, halign: 'right' }
+    }
   });
 
   let currentY = (doc as any).lastAutoTable.finalY + 5;
@@ -156,6 +163,13 @@ export const generateIncomeStatementPDF = (
     theme: 'grid',
     styles: { fontSize: 8 },
     headStyles: { fillColor: [239, 68, 68] },
+    columnStyles: {
+      0: { cellWidth: 70, halign: 'left' },
+      1: { cellWidth: 30, halign: 'right' },
+      2: { cellWidth: 30, halign: 'right' },
+      3: { cellWidth: 30, halign: 'right' },
+      4: { cellWidth: 30, halign: 'right' }
+    }
   });
 
   currentY = (doc as any).lastAutoTable.finalY + 5;
@@ -173,6 +187,13 @@ export const generateIncomeStatementPDF = (
     theme: 'grid',
     styles: { fontSize: 9, fontStyle: 'bold' },
     headStyles: { fillColor: [34, 197, 94] },
+    columnStyles: {
+      0: { cellWidth: 70, halign: 'left' },
+      1: { cellWidth: 30, halign: 'right' },
+      2: { cellWidth: 30, halign: 'right' },
+      3: { cellWidth: 30, halign: 'right' },
+      4: { cellWidth: 30, halign: 'right' }
+    }
   });
 
   currentY = (doc as any).lastAutoTable.finalY + 5;
@@ -184,6 +205,13 @@ export const generateIncomeStatementPDF = (
     theme: 'grid',
     styles: { fontSize: 8 },
     headStyles: { fillColor: [251, 146, 60] },
+    columnStyles: {
+      0: { cellWidth: 70, halign: 'left' },
+      1: { cellWidth: 30, halign: 'right' },
+      2: { cellWidth: 30, halign: 'right' },
+      3: { cellWidth: 30, halign: 'right' },
+      4: { cellWidth: 30, halign: 'right' }
+    }
   });
 
   currentY = (doc as any).lastAutoTable.finalY + 5;
@@ -196,6 +224,13 @@ export const generateIncomeStatementPDF = (
       theme: 'grid',
       styles: { fontSize: 8 },
       headStyles: { fillColor: [168, 85, 247] },
+      columnStyles: {
+        0: { cellWidth: 70, halign: 'left' },
+        1: { cellWidth: 30, halign: 'right' },
+        2: { cellWidth: 30, halign: 'right' },
+        3: { cellWidth: 30, halign: 'right' },
+        4: { cellWidth: 30, halign: 'right' }
+      }
     });
     
     currentY = (doc as any).lastAutoTable.finalY + 5;
@@ -216,6 +251,13 @@ export const generateIncomeStatementPDF = (
     ]],
     theme: 'grid',
     styles: { fontSize: 10, fontStyle: 'bold' },
+    columnStyles: {
+      0: { cellWidth: 70, halign: 'left' },
+      1: { cellWidth: 30, halign: 'right' },
+      2: { cellWidth: 30, halign: 'right' },
+      3: { cellWidth: 30, halign: 'right' },
+      4: { cellWidth: 30, halign: 'right' }
+    }
   });
 
   doc.save(`income-statement-${currentPeriod.endDate}.pdf`);
@@ -425,6 +467,13 @@ export const generateBalanceSheetPDF = (
     theme: 'grid',
     styles: { fontSize: 8 },
     headStyles: { fillColor: [59, 130, 246] },
+    columnStyles: {
+      0: { cellWidth: 70, halign: 'left' },
+      1: { cellWidth: 30, halign: 'right' },
+      2: { cellWidth: 30, halign: 'right' },
+      3: { cellWidth: 30, halign: 'right' },
+      4: { cellWidth: 30, halign: 'right' }
+    }
   });
 
   let currentY = (doc as any).lastAutoTable.finalY + 10;
@@ -461,6 +510,13 @@ export const generateBalanceSheetPDF = (
     theme: 'grid',
     styles: { fontSize: 8 },
     headStyles: { fillColor: [59, 130, 246] },
+    columnStyles: {
+      0: { cellWidth: 70, halign: 'left' },
+      1: { cellWidth: 30, halign: 'right' },
+      2: { cellWidth: 30, halign: 'right' },
+      3: { cellWidth: 30, halign: 'right' },
+      4: { cellWidth: 30, halign: 'right' }
+    }
   });
 
   currentY = (doc as any).lastAutoTable.finalY + 10;
@@ -497,6 +553,13 @@ export const generateBalanceSheetPDF = (
     theme: 'grid',
     styles: { fontSize: 8 },
     headStyles: { fillColor: [59, 130, 246] },
+    columnStyles: {
+      0: { cellWidth: 70, halign: 'left' },
+      1: { cellWidth: 30, halign: 'right' },
+      2: { cellWidth: 30, halign: 'right' },
+      3: { cellWidth: 30, halign: 'right' },
+      4: { cellWidth: 30, halign: 'right' }
+    }
   });
 
   doc.save(`balance-sheet-${currentPeriod.endDate}.pdf`);
@@ -639,6 +702,10 @@ export const generateCashFlowPDF = (
     theme: 'grid',
     styles: { fontSize: 9 },
     headStyles: { fillColor: [59, 130, 246] },
+    columnStyles: {
+      0: { cellWidth: 130, halign: 'left' },
+      1: { cellWidth: 60, halign: 'right' }
+    }
   });
 
   let currentY = (doc as any).lastAutoTable.finalY + 10;
@@ -650,6 +717,10 @@ export const generateCashFlowPDF = (
     theme: 'grid',
     styles: { fontSize: 9 },
     headStyles: { fillColor: [59, 130, 246] },
+    columnStyles: {
+      0: { cellWidth: 130, halign: 'left' },
+      1: { cellWidth: 60, halign: 'right' }
+    }
   });
 
   currentY = (doc as any).lastAutoTable.finalY + 10;
@@ -661,6 +732,10 @@ export const generateCashFlowPDF = (
     theme: 'grid',
     styles: { fontSize: 9 },
     headStyles: { fillColor: [59, 130, 246] },
+    columnStyles: {
+      0: { cellWidth: 130, halign: 'left' },
+      1: { cellWidth: 60, halign: 'right' }
+    }
   });
 
   currentY = (doc as any).lastAutoTable.finalY + 10;
@@ -670,6 +745,10 @@ export const generateCashFlowPDF = (
     body: [['Net Cash Flow', `${settings.currencySymbol}${current.netCashFlow.toFixed(2)}`]],
     theme: 'grid',
     styles: { fontSize: 10, fontStyle: 'bold' },
+    columnStyles: {
+      0: { cellWidth: 130, halign: 'left' },
+      1: { cellWidth: 60, halign: 'right' }
+    }
   });
 
   doc.save(`cash-flow-${currentPeriod.endDate}.pdf`);
@@ -778,6 +857,12 @@ export const generateEquityStatementPDF = (
     theme: 'grid',
     styles: { fontSize: 9 },
     headStyles: { fillColor: [59, 130, 246] },
+    columnStyles: {
+      0: { cellWidth: 70, halign: 'left' },
+      1: { cellWidth: 40, halign: 'right' },
+      2: { cellWidth: 40, halign: 'right' },
+      3: { cellWidth: 40, halign: 'right' }
+    }
   });
 
   doc.save(`equity-statement-${currentPeriod.endDate}.pdf`);
