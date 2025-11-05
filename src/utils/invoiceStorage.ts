@@ -245,24 +245,29 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
       // Don't throw - invoice is saved, journal entry is supplementary
     }
 
-    // Process inventory movements and COGS - separate check
-    try {
-      // Check if inventory movements already exist for this invoice
-      const { data: existingMovements } = await supabase
-        .from('inventory_movements')
-        .select('id')
-        .eq('reference_id', invoice.id)
-        .eq('reference_type', 'SALE')
-        .limit(1)
-        .maybeSingle();
-      
-      // Only process if movements don't exist and invoice has inventory items
-      if (!existingMovements) {
+    // Process inventory movements and COGS only for non-draft invoices
+    if (invoice.status !== 'draft') {
+      try {
+        // Check if inventory movements already exist for this invoice
+        const { data: existingMovements } = await supabase
+          .from('inventory_movements')
+          .select('id')
+          .eq('reference_id', invoice.id)
+          .eq('reference_type', 'SALE')
+          .limit(1)
+          .maybeSingle();
+        
+        // If editing an invoice that already has movements, prevent changes
+        if (existingMovements) {
+          throw new Error('Cannot edit a finalized invoice with inventory movements. Please create a credit note instead.');
+        }
+        
+        // Process inventory movements and COGS
         await processInvoiceInventory(invoice, userId, companyId);
+      } catch (inventoryError) {
+        console.error('Failed to process inventory for invoice:', inventoryError);
+        throw inventoryError; // Throw to prevent saving with inconsistent inventory
       }
-    } catch (inventoryError) {
-      console.error('Failed to process inventory for invoice:', inventoryError);
-      // Don't throw - invoice is saved, inventory is supplementary
     }
   } catch (error) {
     console.error('Failed to save invoice:', error);

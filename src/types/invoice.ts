@@ -35,7 +35,7 @@ export interface Invoice {
   total: number;
   dueDate: string;
   issueDate: string;
-  status: 'paid' | 'unpaid' | 'partly-paid' | 'overdue';
+  status: 'draft' | 'paid' | 'unpaid' | 'partly-paid' | 'overdue';
   paymentTerms: string;
   notes?: string;
   payments?: Payment[];
