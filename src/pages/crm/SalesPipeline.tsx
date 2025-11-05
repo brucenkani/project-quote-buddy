@@ -13,6 +13,7 @@ import DealDialog from '@/components/crm/DealDialog';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
+import { format } from 'date-fns';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -24,6 +25,7 @@ interface Deal {
   value: number;
   stage: 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed';
   probability: number;
+  created_at?: string;
 }
 
 interface Customer {
@@ -54,6 +56,8 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [stageFilter, setStageFilter] = useState('all');
   const [customerFilter, setCustomerFilter] = useState('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   // Sort state
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({
@@ -195,6 +199,8 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
     setSearchQuery('');
     setStageFilter('all');
     setCustomerFilter('all');
+    setStartDate('');
+    setEndDate('');
   };
 
   // Filter and sort deals
@@ -217,6 +223,17 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
     // Apply customer filter
     if (customerFilter !== 'all') {
       filtered = filtered.filter(deal => deal.customer === customerFilter);
+    }
+
+    // Apply date range filter
+    if (startDate || endDate) {
+      filtered = filtered.filter(deal => {
+        if (!deal.created_at) return true;
+        const dealDate = new Date(deal.created_at);
+        if (startDate && dealDate < new Date(startDate)) return false;
+        if (endDate && dealDate > new Date(endDate)) return false;
+        return true;
+      });
     }
 
     // Apply sorting
@@ -253,7 +270,48 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
       if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [deals, searchQuery, stageFilter, customerFilter, sortConfig]);
+  }, [deals, searchQuery, stageFilter, customerFilter, startDate, endDate, sortConfig]);
+
+  // Calculate KPIs based on filtered date range
+  const kpiDeals = useMemo(() => {
+    let filtered = deals;
+    
+    if (startDate || endDate) {
+      filtered = filtered.filter(deal => {
+        if (!deal.created_at) return true;
+        const dealDate = new Date(deal.created_at);
+        if (startDate && dealDate < new Date(startDate)) return false;
+        if (endDate && dealDate > new Date(endDate)) return false;
+        return true;
+      });
+    }
+    
+    return filtered;
+  }, [deals, startDate, endDate]);
+
+  const totalSales = useMemo(() => {
+    return kpiDeals
+      .filter(d => d.stage === 'closed')
+      .reduce((sum, d) => sum + d.value, 0);
+  }, [kpiDeals]);
+
+  const pipelineValue = useMemo(() => {
+    return kpiDeals
+      .filter(d => d.stage !== 'closed')
+      .reduce((sum, d) => sum + d.value, 0);
+  }, [kpiDeals]);
+
+  const weightedValue = useMemo(() => {
+    return kpiDeals
+      .filter(d => d.stage !== 'closed')
+      .reduce((sum, d) => sum + (d.value * d.probability / 100), 0);
+  }, [kpiDeals]);
+
+  const winRate = useMemo(() => {
+    const totalDeals = deals.length;
+    const closedDeals = deals.filter(d => d.stage === 'closed').length;
+    return totalDeals > 0 ? Math.round((closedDeals / totalDeals) * 100) : 0;
+  }, [deals]);
 
   const exportCustomersToPDF = () => {
     const customers = getCustomerList();
@@ -445,14 +503,29 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
 
           <TabsContent value="pipeline">
             {/* Summary Cards */}
-            <div className="grid grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-4 gap-6 mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Total Sales</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                    {formatCurrency(totalSales)}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {kpiDeals.filter(d => d.stage === 'closed').length} closed deals
+                  </p>
+                </CardContent>
+              </Card>
               <Card>
                 <CardHeader>
                   <CardTitle>Pipeline Value</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold">{formatCurrency(displayDeals.reduce((sum, d) => sum + d.value, 0))}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{displayDeals.length} deals</p>
+                  <p className="text-3xl font-bold">{formatCurrency(pipelineValue)}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {kpiDeals.filter(d => d.stage !== 'closed').length} open deals
+                  </p>
                 </CardContent>
               </Card>
               <Card>
@@ -460,9 +533,7 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
                   <CardTitle>Weighted Value</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold">
-                    {formatCurrency(displayDeals.reduce((sum, d) => sum + (d.value * d.probability / 100), 0))}
-                  </p>
+                  <p className="text-3xl font-bold">{formatCurrency(weightedValue)}</p>
                   <p className="text-sm text-muted-foreground mt-1">Expected revenue</p>
                 </CardContent>
               </Card>
@@ -471,14 +542,8 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
                   <CardTitle>Win Rate</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold">
-                    {deals.length > 0 
-                      ? Math.round((deals.filter(d => d.stage === 'closed').length / deals.length) * 100)
-                      : 0}%
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {deals.filter(d => d.stage === 'closed').length} closed deals
-                  </p>
+                  <p className="text-3xl font-bold">{winRate}%</p>
+                  <p className="text-sm text-muted-foreground mt-1">All-time conversion</p>
                 </CardContent>
               </Card>
             </div>
@@ -504,6 +569,12 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
                       options: uniqueCustomers.map(c => ({ label: c, value: c })),
                     },
                   ]}
+                  dateFilters={{
+                    startDate,
+                    endDate,
+                    onStartDateChange: setStartDate,
+                    onEndDateChange: setEndDate,
+                  }}
                   onClearFilters={handleClearFilters}
                 />
               </div>
