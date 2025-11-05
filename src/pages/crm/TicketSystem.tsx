@@ -24,11 +24,29 @@ interface Ticket {
 export default function TicketSystem({ onBack }: { onBack?: () => void }) {
   const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
-  const [tickets] = useState<Ticket[]>([
+  const [tickets, setTickets] = useState<Ticket[]>([
     { id: '1', title: 'Login Issue', customer: 'John Doe', status: 'open', priority: 'high', createdAt: '2025-01-15', assignee: 'Sarah' },
     { id: '2', title: 'Feature Request', customer: 'Jane Smith', status: 'in-progress', priority: 'medium', createdAt: '2025-01-14', assignee: 'Mike' },
     { id: '3', title: 'Billing Question', customer: 'Bob Johnson', status: 'resolved', priority: 'low', createdAt: '2025-01-13' },
   ]);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    const newTicket: Ticket = {
+      id: (tickets.length + 1).toString(),
+      title: formData.get('title') as string,
+      customer: formData.get('customer') as string,
+      status: 'open',
+      priority: formData.get('priority') as 'low' | 'medium' | 'high' | 'urgent',
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+
+    setTickets([newTicket, ...tickets]);
+    setShowDialog(false);
+    e.currentTarget.reset();
+  };
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -63,7 +81,7 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
               </Button>
-              <h1 className="text-2xl font-bold">Support Tickets</h1>
+              <h1 className="text-2xl font-bold">Internal Tickets</h1>
             </div>
             <Dialog open={showDialog} onOpenChange={setShowDialog}>
               <DialogTrigger asChild>
@@ -77,19 +95,19 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
                   <DialogTitle>Create New Ticket</DialogTitle>
                   <DialogDescription>Enter ticket details</DialogDescription>
                 </DialogHeader>
-                <form className="space-y-4">
+                <form className="space-y-4" onSubmit={handleSubmit}>
                   <div className="space-y-2">
                     <Label htmlFor="title">Title *</Label>
-                    <Input id="title" required />
+                    <Input id="title" name="title" required />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="customer">Customer *</Label>
-                      <Input id="customer" required />
+                      <Input id="customer" name="customer" required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="priority">Priority</Label>
-                      <Select defaultValue="medium">
+                      <Select name="priority" defaultValue="medium">
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -104,7 +122,7 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="description">Description *</Label>
-                    <Textarea id="description" rows={4} required />
+                    <Textarea id="description" name="description" rows={4} required />
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>

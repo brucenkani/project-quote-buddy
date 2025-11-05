@@ -87,7 +87,7 @@ export default function CRMCustomerSupport() {
                   <Headphones className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <CardTitle>Support Tickets</CardTitle>
+                  <CardTitle>Internal Tickets</CardTitle>
                   <CardDescription>Manage customer support requests</CardDescription>
                 </div>
               </div>
