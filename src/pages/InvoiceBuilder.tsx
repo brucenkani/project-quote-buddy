@@ -214,8 +214,15 @@ export default function InvoiceBuilder() {
       await saveInvoice(invoice);
       console.log('Invoice saved successfully');
       
-      // Journal entry is automatically created by saveInvoice for new invoices
-      toast({ title: 'Invoice saved successfully' });
+      // Check if invoice has inventory items
+      const hasInventoryItems = invoice.lineItems.some(item => item.inventoryItemId);
+      
+      toast({ 
+        title: 'Invoice finalized successfully',
+        description: hasInventoryItems 
+          ? 'Inventory quantities updated and COGS recorded' 
+          : 'Revenue journal entry created'
+      });
       
       navigate('/invoices');
     } catch (error) {
@@ -243,7 +250,7 @@ export default function InvoiceBuilder() {
           </div>
           <Button onClick={handleSave} className="gap-2">
             <Save className="h-4 w-4" />
-            Save Invoice
+            Finalize Invoice
           </Button>
         </div>
 
