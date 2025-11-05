@@ -24,6 +24,7 @@ interface BankAccount {
   currency: string;
   ledgerAccount: string;
   openingBalance: number;
+  currentBalance: number;
   isActive: boolean;
   createdAt: string;
 }
@@ -111,6 +112,7 @@ export default function BankAccounts() {
         currency: acc.currency,
         ledgerAccount: acc.ledger_account,
         openingBalance: Number(acc.opening_balance),
+        currentBalance: Number(acc.current_balance ?? acc.opening_balance ?? 0),
         isActive: acc.is_active,
         createdAt: acc.created_at,
       }));
@@ -537,7 +539,7 @@ export default function BankAccounts() {
                       <TableCell className="font-mono text-sm">{account.accountNumber}</TableCell>
                       <TableCell className="capitalize">{account.accountType}</TableCell>
                       <TableCell className="font-mono text-sm">{account.ledgerAccount}</TableCell>
-                      <TableCell>{account.currency} {account.openingBalance.toFixed(2)}</TableCell>
+                      <TableCell>{account.currency} {account.currentBalance.toFixed(2)}</TableCell>
                       <TableCell>
                         <Button
                           variant={account.isActive ? "default" : "secondary"}
