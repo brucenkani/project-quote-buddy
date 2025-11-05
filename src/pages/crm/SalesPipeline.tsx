@@ -505,45 +505,45 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
             {/* Summary Cards */}
             <div className="grid grid-cols-4 gap-6 mb-6">
               <Card>
-                <CardHeader>
-                  <CardTitle>Total Sales</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {formatCurrency(totalSales)}
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {kpiDeals.filter(d => d.stage === 'closed').length} closed deals
                   </p>
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader>
-                  <CardTitle>Pipeline Value</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium">Pipeline Value</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold">{formatCurrency(pipelineValue)}</p>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-2xl font-bold">{formatCurrency(pipelineValue)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
                     {kpiDeals.filter(d => d.stage !== 'closed').length} open deals
                   </p>
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader>
-                  <CardTitle>Weighted Value</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium">Weighted Value</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold">{formatCurrency(weightedValue)}</p>
-                  <p className="text-sm text-muted-foreground mt-1">Expected revenue</p>
+                  <p className="text-2xl font-bold">{formatCurrency(weightedValue)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Expected revenue</p>
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader>
-                  <CardTitle>Win Rate</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium">Win Rate</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold">{winRate}%</p>
-                  <p className="text-sm text-muted-foreground mt-1">All-time conversion</p>
+                  <p className="text-2xl font-bold">{winRate}%</p>
+                  <p className="text-xs text-muted-foreground mt-1">All-time conversion</p>
                 </CardContent>
               </Card>
             </div>
