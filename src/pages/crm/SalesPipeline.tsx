@@ -125,6 +125,63 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
     return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(amount);
   };
 
+  const exportDealsToPDF = () => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text('Sales Pipeline - Deals', 14, 22);
+    
+    doc.setFontSize(11);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
+    doc.text(`Total Deals: ${displayDeals.length}`, 14, 36);
+    
+    const tableData = displayDeals.map(d => [
+      d.title,
+      d.customer,
+      formatCurrency(d.value),
+      getStageLabel(d.stage),
+      `${d.probability}%`,
+      formatCurrency(d.value * d.probability / 100),
+    ]);
+    
+    (doc as any).autoTable({
+      head: [['Deal Title', 'Customer', 'Value', 'Stage', 'Probability', 'Weighted Value']],
+      body: tableData,
+      startY: 42,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [59, 130, 246] },
+    });
+    
+    // Add summary
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.text('Pipeline Summary', 14, finalY);
+    doc.setFontSize(10);
+    doc.text(`Total Pipeline Value: ${formatCurrency(displayDeals.reduce((sum, d) => sum + d.value, 0))}`, 14, finalY + 7);
+    doc.text(`Weighted Value: ${formatCurrency(displayDeals.reduce((sum, d) => sum + (d.value * d.probability / 100), 0))}`, 14, finalY + 14);
+    
+    doc.save('sales-pipeline-deals.pdf');
+    toast.success('Deals exported to PDF');
+  };
+
+  const exportDealsToExcel = () => {
+    const data = displayDeals.map(d => ({
+      'Deal Title': d.title,
+      'Customer': d.customer,
+      'Value': d.value,
+      'Stage': getStageLabel(d.stage),
+      'Probability (%)': d.probability,
+      'Weighted Value': d.value * d.probability / 100,
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Deals');
+    
+    XLSX.writeFile(wb, 'sales-pipeline-deals.xlsx');
+    toast.success('Deals exported to Excel');
+  };
+
   // Handle sort
   const handleSort = (key: string) => {
     setSortConfig({
@@ -387,26 +444,40 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
           </TabsList>
 
           <TabsContent value="pipeline">
-            <DataTableFilters
-              searchValue={searchQuery}
-              onSearchChange={setSearchQuery}
-              searchPlaceholder="Search deals by title or customer..."
-              filters={[
-                {
-                  label: 'Stage',
-                  value: stageFilter,
-                  onValueChange: setStageFilter,
-                  options: stages.map(s => ({ label: s.name, value: s.id })),
-                },
-                {
-                  label: 'Customer',
-                  value: customerFilter,
-                  onValueChange: setCustomerFilter,
-                  options: uniqueCustomers.map(c => ({ label: c, value: c })),
-                },
-              ]}
-              onClearFilters={handleClearFilters}
-            />
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex-1">
+                <DataTableFilters
+                  searchValue={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  searchPlaceholder="Search deals by title or customer..."
+                  filters={[
+                    {
+                      label: 'Stage',
+                      value: stageFilter,
+                      onValueChange: setStageFilter,
+                      options: stages.map(s => ({ label: s.name, value: s.id })),
+                    },
+                    {
+                      label: 'Customer',
+                      value: customerFilter,
+                      onValueChange: setCustomerFilter,
+                      options: uniqueCustomers.map(c => ({ label: c, value: c })),
+                    },
+                  ]}
+                  onClearFilters={handleClearFilters}
+                />
+              </div>
+              <div className="flex gap-2 ml-4">
+                <Button onClick={exportDealsToPDF} variant="outline" size="sm">
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Export PDF
+                </Button>
+                <Button onClick={exportDealsToExcel} variant="outline" size="sm">
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Export Excel
+                </Button>
+              </div>
+            </div>
 
             {loading ? (
               <div className="flex items-center justify-center py-12">
