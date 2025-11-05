@@ -13,6 +13,7 @@ import { DataTableFilters } from '@/components/ui/data-table-filters';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Plus } from 'lucide-react';
+import { TicketExport } from '@/components/crm/TicketExport';
 
 interface Ticket {
   id: string;
@@ -146,13 +147,15 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
               </Button>
               <h1 className="text-2xl font-bold">Internal Tickets</h1>
             </div>
-            <Dialog open={showDialog} onOpenChange={setShowDialog}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Task
-                </Button>
-              </DialogTrigger>
+            <div className="flex items-center gap-2">
+              <TicketExport tickets={filteredTickets} />
+              <Dialog open={showDialog} onOpenChange={setShowDialog}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Task
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Create New Task</DialogTitle>
@@ -200,6 +203,7 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
                 </form>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
         </div>
       </header>
