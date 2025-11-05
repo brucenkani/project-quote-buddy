@@ -168,8 +168,9 @@ export default function PurchasePayment() {
 
       await saveJournalEntry(journalEntry);
 
-      // Update bank account balance and insert bank transaction if bank transfer
-      if (formData.method === 'bank-transfer' && formData.bankAccountId && activeCompany) {
+      // Update bank account balance and insert bank transaction for all bank-related payments
+      const bankMethods = ['bank-transfer', 'cheque', 'credit-card'];
+      if (bankMethods.includes(formData.method) && formData.bankAccountId && activeCompany) {
         if (selectedAccount) {
           const newBalance = Number(selectedAccount.current_balance || 0) - formData.amount;
           const { error: balErr } = await supabase
@@ -205,8 +206,8 @@ export default function PurchasePayment() {
       const isFullyPaid = newTotalPaid >= purchase.total - 0.01; // Account for floating point
 
       // Always reflect the latest payment method used
-      if (formData.method === 'bank-transfer') {
-        purchase.paymentMethod = 'bank-transfer';
+      if (bankMethods.includes(formData.method)) {
+        purchase.paymentMethod = formData.method;
         purchase.bankAccountId = formData.bankAccountId;
       } else if (formData.method === 'cash') {
         purchase.paymentMethod = 'cash';
@@ -331,7 +332,7 @@ export default function PurchasePayment() {
                   </div>
                 </div>
 
-                {formData.method === 'bank-transfer' && (
+                {['bank-transfer', 'cheque', 'credit-card'].includes(formData.method) && (
                   <div>
                     <Label htmlFor="bankAccount">Bank Account *</Label>
                     <Select
