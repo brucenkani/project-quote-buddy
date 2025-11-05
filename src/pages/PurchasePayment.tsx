@@ -18,6 +18,7 @@ import { saveJournalEntry } from '@/utils/accountingStorage';
 import { JournalEntry, JournalEntryLine } from '@/types/accounting';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
+import { recalculateBankBalance } from '@/utils/bankBalanceCalculator';
 
 export default function PurchasePayment() {
   const { id } = useParams();
@@ -171,33 +172,32 @@ export default function PurchasePayment() {
       // Update bank account balance and insert bank transaction for all bank-related payments
       const bankMethods = ['bank-transfer', 'cheque', 'credit-card'];
       if (bankMethods.includes(formData.method) && formData.bankAccountId && activeCompany) {
-        if (selectedAccount) {
-          const newBalance = Number(selectedAccount.current_balance || 0) - formData.amount;
-          const { error: balErr } = await supabase
-            .from('bank_accounts')
-            .update({ current_balance: newBalance })
-            .eq('id', formData.bankAccountId);
-          if (balErr) console.error('Failed updating bank balance', balErr);
+        // Insert bank transaction first
+        const { data: session } = await supabase.auth.getSession();
+        const userId = session?.session?.user?.id;
+        if (userId) {
+          const { error: txErr } = await supabase.from('bank_transactions').insert({
+            id: crypto.randomUUID(),
+            user_id: userId,
+            company_id: activeCompany.id,
+            date: formData.date,
+            debit: 0,
+            credit: formData.amount,
+            balance: 0, // Will be recalculated
+            is_reconciled: false,
+            description: `Supplier payment ${purchase.purchaseNumber}`,
+            reference: formData.reference || `PAY-${purchase.purchaseNumber}`,
+            account_id: formData.bankAccountId,
+            category: 'supplier_payment',
+          });
+          if (txErr) console.error('Failed inserting bank transaction', txErr);
+        }
 
-          const { data: session } = await supabase.auth.getSession();
-          const userId = session?.session?.user?.id;
-          if (userId) {
-            const { error: txErr } = await supabase.from('bank_transactions').insert({
-              id: crypto.randomUUID(),
-              user_id: userId,
-              company_id: activeCompany.id,
-              date: formData.date,
-              debit: 0,
-              credit: formData.amount,
-              balance: newBalance,
-              is_reconciled: false,
-              description: `Supplier payment ${purchase.purchaseNumber}`,
-              reference: formData.reference || `PAY-${purchase.purchaseNumber}`,
-              account_id: formData.bankAccountId,
-              category: 'supplier_payment',
-            });
-            if (txErr) console.error('Failed inserting bank transaction', txErr);
-          }
+        // Recalculate bank balance from all transactions
+        try {
+          await recalculateBankBalance(formData.bankAccountId);
+        } catch (error) {
+          console.error('Failed to recalculate bank balance:', error);
         }
       }
 

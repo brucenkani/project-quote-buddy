@@ -15,6 +15,7 @@ import { calculateExpenseAmountDue } from '@/utils/expenseStatusCalculator';
 import { recordExpensePayment } from '@/utils/doubleEntryManager';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
+import { recalculateBankBalance } from '@/utils/bankBalanceCalculator';
 
 export default function ExpensePayment() {
   const navigate = useNavigate();
@@ -145,14 +146,7 @@ export default function ExpensePayment() {
     // Update bank account balance if bank transfer
     if (paymentData.paymentMethod === 'bank' && selectedBank && activeCompany) {
       const updateBankBalance = async () => {
-        const newBalance = Number(selectedBank.current_balance || 0) - paymentData.amount;
-        const { error: balErr } = await supabase
-          .from('bank_accounts')
-          .update({ current_balance: newBalance })
-          .eq('id', paymentData.bankAccountId);
-        if (balErr) console.error('Failed updating bank balance', balErr);
-
-        // Insert bank transaction record
+        // Insert bank transaction record first
         const { data: session } = await supabase.auth.getSession();
         const userId = session?.session?.user?.id;
         if (userId) {
@@ -163,7 +157,7 @@ export default function ExpensePayment() {
             date: paymentData.paymentDate,
             debit: 0,
             credit: paymentData.amount,
-            balance: newBalance,
+            balance: 0, // Will be recalculated
             is_reconciled: false,
             description: `Expense payment to ${expense.vendor}`,
             reference: paymentData.paymentReference,
@@ -171,6 +165,13 @@ export default function ExpensePayment() {
             category: 'expense_payment',
           });
           if (txErr) console.error('Failed inserting bank transaction', txErr);
+        }
+
+        // Recalculate bank balance from all transactions
+        try {
+          await recalculateBankBalance(paymentData.bankAccountId);
+        } catch (error) {
+          console.error('Failed to recalculate bank balance:', error);
         }
       };
       updateBankBalance();

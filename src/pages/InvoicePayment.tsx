@@ -15,6 +15,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { calculateInvoiceStatus, calculateAmountDue } from '@/utils/invoiceStatusCalculator';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
+import { recalculateBankBalance } from '@/utils/bankBalanceCalculator';
 
 export default function InvoicePayment() {
   const navigate = useNavigate();
@@ -156,14 +157,7 @@ export default function InvoicePayment() {
 
       // Update bank account balance if bank transfer
       if (paymentData.paymentMethod === 'bank' && selectedBank && activeCompany) {
-        const newBalance = Number(selectedBank.current_balance || 0) + paymentData.amount;
-        const { error: balErr } = await supabase
-          .from('bank_accounts')
-          .update({ current_balance: newBalance })
-          .eq('id', paymentData.bankAccountId);
-        if (balErr) console.error('Failed updating bank balance', balErr);
-
-        // Insert bank transaction record
+        // Insert bank transaction record first
         const { data: session } = await supabase.auth.getSession();
         const userId = session?.session?.user?.id;
         if (userId) {
@@ -174,7 +168,7 @@ export default function InvoicePayment() {
             date: paymentData.paymentDate,
             debit: paymentData.amount,
             credit: 0,
-            balance: newBalance,
+            balance: 0, // Will be recalculated
             is_reconciled: false,
             description: `Payment received from ${invoice.projectDetails.clientName}`,
             reference: uniqueRef,
@@ -182,6 +176,13 @@ export default function InvoicePayment() {
             category: 'customer_payment',
           });
           if (txErr) console.error('Failed inserting bank transaction', txErr);
+        }
+
+        // Recalculate bank balance from all transactions
+        try {
+          await recalculateBankBalance(paymentData.bankAccountId);
+        } catch (error) {
+          console.error('Failed to recalculate bank balance:', error);
         }
       }
 
