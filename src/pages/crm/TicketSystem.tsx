@@ -14,20 +14,20 @@ import { ArrowLeft, Plus, Clock, AlertCircle } from 'lucide-react';
 interface Ticket {
   id: string;
   title: string;
-  customer: string;
-  status: 'open' | 'in-progress' | 'resolved' | 'closed';
+  assignedTo: string;
+  status: 'todo' | 'in-progress' | 'completed' | 'on-hold';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   createdAt: string;
-  assignee?: string;
+  dueDate?: string;
 }
 
 export default function TicketSystem({ onBack }: { onBack?: () => void }) {
   const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
   const [tickets, setTickets] = useState<Ticket[]>([
-    { id: '1', title: 'Login Issue', customer: 'John Doe', status: 'open', priority: 'high', createdAt: '2025-01-15', assignee: 'Sarah' },
-    { id: '2', title: 'Feature Request', customer: 'Jane Smith', status: 'in-progress', priority: 'medium', createdAt: '2025-01-14', assignee: 'Mike' },
-    { id: '3', title: 'Billing Question', customer: 'Bob Johnson', status: 'resolved', priority: 'low', createdAt: '2025-01-13' },
+    { id: '1', title: 'Review quarterly reports', assignedTo: 'Sarah', status: 'todo', priority: 'high', createdAt: '2025-01-15', dueDate: '2025-01-20' },
+    { id: '2', title: 'Update client presentation', assignedTo: 'Mike', status: 'in-progress', priority: 'medium', createdAt: '2025-01-14', dueDate: '2025-01-18' },
+    { id: '3', title: 'Schedule team meeting', assignedTo: 'John', status: 'completed', priority: 'low', createdAt: '2025-01-13' },
   ]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -37,10 +37,11 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
     const newTicket: Ticket = {
       id: (tickets.length + 1).toString(),
       title: formData.get('title') as string,
-      customer: formData.get('customer') as string,
-      status: 'open',
+      assignedTo: formData.get('assignedTo') as string,
+      status: 'todo',
       priority: formData.get('priority') as 'low' | 'medium' | 'high' | 'urgent',
       createdAt: new Date().toISOString().split('T')[0],
+      dueDate: formData.get('dueDate') as string || undefined,
     };
 
     setTickets([newTicket, ...tickets]);
@@ -50,12 +51,22 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      'open': 'bg-blue-500',
-      'in-progress': 'bg-yellow-500',
-      'resolved': 'bg-green-500',
-      'closed': 'bg-gray-500',
+      'todo': 'bg-gray-500',
+      'in-progress': 'bg-blue-500',
+      'completed': 'bg-green-500',
+      'on-hold': 'bg-yellow-500',
     };
     return colors[status] || 'bg-gray-500';
+  };
+
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      'todo': 'To Do',
+      'in-progress': 'In Progress',
+      'completed': 'Completed',
+      'on-hold': 'On Hold',
+    };
+    return labels[status] || status;
   };
 
   const getPriorityColor = (priority: string) => {
@@ -87,23 +98,23 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Ticket
+                  Add Task
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Create New Ticket</DialogTitle>
-                  <DialogDescription>Enter ticket details</DialogDescription>
+                  <DialogTitle>Create New Task</DialogTitle>
+                  <DialogDescription>Add a new internal task or to-do item</DialogDescription>
                 </DialogHeader>
                 <form className="space-y-4" onSubmit={handleSubmit}>
                   <div className="space-y-2">
-                    <Label htmlFor="title">Title *</Label>
-                    <Input id="title" name="title" required />
+                    <Label htmlFor="title">Task Title *</Label>
+                    <Input id="title" name="title" placeholder="Enter task description" required />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="customer">Customer *</Label>
-                      <Input id="customer" name="customer" required />
+                      <Label htmlFor="assignedTo">Assigned To *</Label>
+                      <Input id="assignedTo" name="assignedTo" placeholder="Team member name" required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="priority">Priority</Label>
@@ -121,14 +132,18 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description *</Label>
-                    <Textarea id="description" name="description" rows={4} required />
+                    <Label htmlFor="dueDate">Due Date</Label>
+                    <Input id="dueDate" name="dueDate" type="date" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea id="description" name="description" rows={4} placeholder="Additional details..." />
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
                       Cancel
                     </Button>
-                    <Button type="submit">Create Ticket</Button>
+                    <Button type="submit">Create Task</Button>
                   </div>
                 </form>
               </DialogContent>
@@ -141,10 +156,10 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
         <div className="grid grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Open Tickets</CardTitle>
+              <CardTitle className="text-sm font-medium">To Do</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{tickets.filter(t => t.status === 'open').length}</div>
+              <div className="text-2xl font-bold">{tickets.filter(t => t.status === 'todo').length}</div>
             </CardContent>
           </Card>
           <Card>
@@ -157,39 +172,36 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Resolved</CardTitle>
+              <CardTitle className="text-sm font-medium">Completed</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{tickets.filter(t => t.status === 'resolved').length}</div>
+              <div className="text-2xl font-bold">{tickets.filter(t => t.status === 'completed').length}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Avg. Response Time</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                2.5h
-              </div>
+              <div className="text-2xl font-bold">{tickets.length}</div>
             </CardContent>
           </Card>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>All Tickets</CardTitle>
+            <CardTitle>All Tasks</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Customer</TableHead>
+                  <TableHead>Task</TableHead>
+                  <TableHead>Assigned To</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Priority</TableHead>
-                  <TableHead>Assignee</TableHead>
+                  <TableHead>Due Date</TableHead>
                   <TableHead>Created</TableHead>
                 </TableRow>
               </TableHeader>
@@ -198,10 +210,10 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
                   <TableRow key={ticket.id} className="cursor-pointer hover:bg-muted/50">
                     <TableCell className="font-medium">#{ticket.id}</TableCell>
                     <TableCell>{ticket.title}</TableCell>
-                    <TableCell>{ticket.customer}</TableCell>
+                    <TableCell>{ticket.assignedTo}</TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(ticket.status)}>
-                        {ticket.status}
+                        {getStatusLabel(ticket.status)}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -209,7 +221,7 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
                         {ticket.priority}
                       </Badge>
                     </TableCell>
-                    <TableCell>{ticket.assignee || '-'}</TableCell>
+                    <TableCell>{ticket.dueDate || '-'}</TableCell>
                     <TableCell>{ticket.createdAt}</TableCell>
                   </TableRow>
                 ))}

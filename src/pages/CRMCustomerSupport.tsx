@@ -88,7 +88,7 @@ export default function CRMCustomerSupport() {
                 </div>
                 <div>
                   <CardTitle>Internal Tickets</CardTitle>
-                  <CardDescription>Manage customer support requests</CardDescription>
+                  <CardDescription>Manage internal tasks and to-do items</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -96,15 +96,15 @@ export default function CRMCustomerSupport() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                  Multi-channel support tracking
+                  Task assignment and tracking
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                  Priority assignment and SLA management
+                  Priority and status management
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                  Resolution time analytics
+                  Team collaboration and productivity
                 </li>
               </ul>
             </CardContent>
