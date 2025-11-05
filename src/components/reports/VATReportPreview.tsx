@@ -2,10 +2,12 @@ import { CompanySettings } from '@/types/settings';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Invoice } from '@/types/invoice';
 import { Expense } from '@/types/accounting';
+import { Purchase } from '@/types/purchase';
 
 interface VATReportPreviewProps {
   invoices: Invoice[];
   expenses: Expense[];
+  purchases: Purchase[];
   dateRange: { startDate: string; endDate: string };
   settings: CompanySettings;
 }
@@ -13,6 +15,7 @@ interface VATReportPreviewProps {
 export function VATReportPreview({ 
   invoices, 
   expenses, 
+  purchases,
   dateRange, 
   settings 
 }: VATReportPreviewProps) {
@@ -31,20 +34,31 @@ export function VATReportPreview({
     return sum + inv.subtotal;
   }, 0);
 
-  // Calculate input VAT (from expenses)
-  const inputVAT = expenses.reduce((sum, exp) => {
+  // Calculate input VAT (from expenses and purchases)
+  const expenseInputVAT = expenses.reduce((sum, exp) => {
     if (exp.includesVAT && exp.vatAmount) {
       return sum + exp.vatAmount;
     }
     return sum;
   }, 0);
 
-  const inputTaxable = expenses.reduce((sum, exp) => {
+  const expenseInputTaxable = expenses.reduce((sum, exp) => {
     if (exp.includesVAT && exp.vatAmount) {
       return sum + (exp.amount - exp.vatAmount);
     }
     return sum;
   }, 0);
+
+  const purchaseInputVAT = purchases.reduce((sum, purch) => {
+    return sum + purch.taxAmount;
+  }, 0);
+
+  const purchaseInputTaxable = purchases.reduce((sum, purch) => {
+    return sum + purch.subtotal;
+  }, 0);
+
+  const inputVAT = expenseInputVAT + purchaseInputVAT;
+  const inputTaxable = expenseInputTaxable + purchaseInputTaxable;
 
   const netVAT = outputVAT - inputVAT;
 

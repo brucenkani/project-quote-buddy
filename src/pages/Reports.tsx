@@ -70,6 +70,7 @@ export default function Reports() {
   // VAT Report Data
   const [vatInvoices, setVatInvoices] = useState<any[]>([]);
   const [vatExpenses, setVatExpenses] = useState<any[]>([]);
+  const [vatPurchases, setVatPurchases] = useState<any[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -429,12 +430,18 @@ export default function Reports() {
       return expenseDate >= new Date(dateRange.startDate) && expenseDate <= new Date(dateRange.endDate);
     });
 
+    const { loadPurchases } = await import('@/utils/purchaseStorage');
+    const purchases = (await loadPurchases()).filter(purch => {
+      const purchDate = new Date(purch.date);
+      return purchDate >= new Date(dateRange.startDate) && purchDate <= new Date(dateRange.endDate);
+    });
+
     const effectiveSettings = { ...settings, companyName: activeCompany?.name || settings.companyName } as any;
 
     if (format === 'pdf') {
-      generateVATReportPDF(invoices, filteredExpenses, dateRange, effectiveSettings);
+      generateVATReportPDF(invoices, filteredExpenses, purchases, dateRange, effectiveSettings);
     } else {
-      generateVATReportExcel(invoices, filteredExpenses, dateRange, effectiveSettings);
+      generateVATReportExcel(invoices, filteredExpenses, purchases, dateRange, effectiveSettings);
     }
 
     setShowVATReportPreview(false);
@@ -452,7 +459,13 @@ export default function Reports() {
       return expenseDate >= new Date(dateRange.startDate) && expenseDate <= new Date(dateRange.endDate);
     });
 
-    return { invoices, expenses: filteredExpenses };
+    const { loadPurchases } = await import('@/utils/purchaseStorage');
+    const purchases = (await loadPurchases()).filter(purch => {
+      const purchDate = new Date(purch.date);
+      return purchDate >= new Date(dateRange.startDate) && purchDate <= new Date(dateRange.endDate);
+    });
+
+    return { invoices, expenses: filteredExpenses, purchases };
   };
 
   return (
@@ -649,6 +662,7 @@ export default function Reports() {
                       const data = await getVATReportData();
                       setVatInvoices(data.invoices);
                       setVatExpenses(data.expenses);
+                      setVatPurchases(data.purchases);
                       setShowVATReportPreview(true);
                     }} 
                     variant="secondary" 
@@ -820,6 +834,7 @@ export default function Reports() {
           <VATReportPreview
             invoices={vatInvoices}
             expenses={vatExpenses}
+            purchases={vatPurchases}
             dateRange={dateRange}
             settings={{ ...settings, companyName: activeCompany?.name || settings.companyName } as any}
           />

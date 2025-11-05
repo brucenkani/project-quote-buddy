@@ -3,6 +3,7 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Invoice } from '@/types/invoice';
 import { Expense } from '@/types/accounting';
+import { Purchase } from '@/types/purchase';
 import { CompanySettings } from '@/types/settings';
 
 interface VATReportData {
@@ -34,6 +35,7 @@ interface VATReportData {
 export const calculateVATReport = (
   invoices: Invoice[],
   expenses: Expense[],
+  purchases: Purchase[],
   dateRange: { startDate: string; endDate: string }
 ): VATReportData => {
   const outputTransactions = invoices
@@ -51,7 +53,8 @@ export const calculateVATReport = (
       vatAmount: inv.taxAmount,
     }));
 
-  const inputTransactions = expenses
+  // Combine expenses and purchases for input VAT
+  const expenseInputTransactions = expenses
     .filter(exp => {
       const expDate = new Date(exp.date);
       return expDate >= new Date(dateRange.startDate) && 
@@ -66,6 +69,23 @@ export const calculateVATReport = (
       taxableAmount: exp.amount - (exp.vatAmount || 0),
       vatAmount: exp.vatAmount || 0,
     }));
+
+  const purchaseInputTransactions = purchases
+    .filter(purch => {
+      const purchDate = new Date(purch.date);
+      return purchDate >= new Date(dateRange.startDate) && 
+             purchDate <= new Date(dateRange.endDate) &&
+             purch.taxAmount > 0;
+    })
+    .map(purch => ({
+      date: purch.date,
+      reference: purch.purchaseNumber,
+      description: `Purchase from ${purch.vendor}`,
+      taxableAmount: purch.subtotal,
+      vatAmount: purch.taxAmount,
+    }));
+
+  const inputTransactions = [...expenseInputTransactions, ...purchaseInputTransactions];
 
   const outputVATTotal = outputTransactions.reduce((sum, t) => sum + t.vatAmount, 0);
   const outputTaxableTotal = outputTransactions.reduce((sum, t) => sum + t.taxableAmount, 0);
@@ -91,11 +111,12 @@ export const calculateVATReport = (
 export const generateVATReportPDF = (
   invoices: Invoice[],
   expenses: Expense[],
+  purchases: Purchase[],
   dateRange: { startDate: string; endDate: string },
   settings: CompanySettings
 ): void => {
   const doc = new jsPDF();
-  const data = calculateVATReport(invoices, expenses, dateRange);
+  const data = calculateVATReport(invoices, expenses, purchases, dateRange);
 
   // Header
   doc.setFontSize(20);
@@ -173,10 +194,11 @@ export const generateVATReportPDF = (
 export const generateVATReportExcel = (
   invoices: Invoice[],
   expenses: Expense[],
+  purchases: Purchase[],
   dateRange: { startDate: string; endDate: string },
   settings: CompanySettings
 ): void => {
-  const data = calculateVATReport(invoices, expenses, dateRange);
+  const data = calculateVATReport(invoices, expenses, purchases, dateRange);
 
   // Create workbook
   const wb = XLSX.utils.book_new();
