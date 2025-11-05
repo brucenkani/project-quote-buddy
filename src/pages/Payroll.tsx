@@ -58,10 +58,6 @@ export default function Payroll() {
   const [selectedPayslipRecord, setSelectedPayslipRecord] = useState<any>(null);
 
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  useEffect(() => {
     if (!companyLoading && activeCompany) {
       loadData();
     }
@@ -70,13 +66,6 @@ export default function Payroll() {
   useEffect(() => {
     filterRecords();
   }, [selectedEmployeeFilter, dateRangeStart, dateRangeEnd, payrollRecords]);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate('/auth');
-    }
-  };
 
   const loadData = async () => {
     try {
