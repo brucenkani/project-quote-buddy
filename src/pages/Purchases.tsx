@@ -59,8 +59,65 @@ export default function Purchases() {
       }
 
       // Check if we should open edit dialog for a specific purchase (from PO conversion)
-      const state = location.state as { editPurchaseId?: string };
-      if (state?.editPurchaseId) {
+      const state = location.state as { editPurchaseId?: string; fromPO?: boolean; poData?: any };
+      
+      // Handle conversion from PO - prepopulate form with PO data
+      if (state?.fromPO && state?.poData) {
+        const poData = state.poData;
+        const purchaseNum = await generatePurchaseNumber();
+        
+        // Set form with PO data
+        setFormData({
+          purchaseNumber: purchaseNum,
+          vendor: poData.vendor,
+          vendorContact: poData.vendorContact,
+          date: new Date().toISOString().split('T')[0],
+          dueDate: poData.expectedDelivery,
+          subtotal: poData.subtotal,
+          taxRate: poData.taxRate,
+          taxAmount: poData.taxAmount,
+          discount: poData.discount,
+          total: poData.total,
+          status: 'pending',
+          paymentMethod: 'credit',
+          notes: `Converted from PO ${poData.poNumber}`,
+          projectId: poData.projectId,
+          inventoryMethod: 'perpetual',
+          supplierInvoiceNumber: '',
+          receivedDate: '',
+        });
+        
+        // Set line items with PO data
+        const convertedLineItems: PurchaseLineItem[] = poData.lineItems.map((item: any) => ({
+          id: item.id,
+          description: item.description,
+          quantity: item.quantity,
+          receivedQuantity: 0,
+          unitCost: item.unitCost,
+          total: item.total,
+          inventoryType: 'raw-materials' as InventoryType,
+        }));
+        setLineItems(convertedLineItems);
+        
+        // Set vendor for ContactSelector
+        if (poData.vendor) {
+          setSelectedVendor({ 
+            id: poData.vendor, 
+            name: poData.vendor, 
+            email: poData.vendorContact || '',
+            type: 'supplier' 
+          } as Contact);
+        }
+        
+        // Store PO info for later use when saving
+        setFormData(prev => ({ ...prev, convertedFromPOId: poData.poId, convertedFromPONumber: poData.poNumber }));
+        
+        // Open dialog
+        setIsDialogOpen(true);
+        
+        // Clear the state
+        navigate(location.pathname, { replace: true, state: {} });
+      } else if (state?.editPurchaseId) {
         const purchaseToEdit = loaded.find(p => p.id === state.editPurchaseId);
         if (purchaseToEdit) {
           handleEdit(purchaseToEdit);
@@ -72,7 +129,7 @@ export default function Purchases() {
     init();
   }, [activeCompany, location.state]);
 
-  const [formData, setFormData] = useState<Partial<Purchase>>({
+  const [formData, setFormData] = useState<Partial<Purchase> & { convertedFromPOId?: string; convertedFromPONumber?: string }>({
     purchaseNumber: '',
     vendor: '',
     date: new Date().toISOString().split('T')[0],
@@ -205,6 +262,22 @@ export default function Purchases() {
     };
 
     await savePurchase(purchase);
+    
+    // If this was converted from a PO, update the PO status
+    if (formData.convertedFromPOId && !editingPurchase) {
+      const { savePurchaseOrder, loadPurchaseOrders } = await import('@/utils/purchaseOrderStorage');
+      const orders = await loadPurchaseOrders();
+      const po = orders.find(o => o.id === formData.convertedFromPOId);
+      if (po && po.status !== 'confirmed') {
+        const updatedPO = {
+          ...po,
+          status: 'confirmed' as const,
+          convertedToPurchaseId: purchase.id,
+          updatedAt: new Date().toISOString()
+        };
+        await savePurchaseOrder(updatedPO);
+      }
+    }
 
     // Create inventory movements for all line items with inventory links
     if (activeCompany && !editingPurchase) {

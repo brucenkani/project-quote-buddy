@@ -594,59 +594,32 @@ export default function PurchaseOrders() {
             </AlertDialogCancel>
             <Button
               variant="outline"
-              onClick={async () => {
+              onClick={() => {
                 if (!orderToConvert) return;
                 
-                // Convert PO to Purchase first
-                const purchaseNumber = await generatePurchaseNumber();
-                const purchase: Purchase = {
-                  id: crypto.randomUUID(),
-                  purchaseNumber,
-                  vendor: orderToConvert.vendor,
-                  vendorContact: orderToConvert.vendorContact,
-                  date: new Date().toISOString().split('T')[0],
-                  dueDate: orderToConvert.expectedDelivery,
-                  lineItems: orderToConvert.lineItems.map(item => ({
-                    id: item.id,
-                    description: item.description,
-                    quantity: item.quantity,
-                    receivedQuantity: 0,
-                    unitCost: item.unitCost,
-                    total: item.total,
-                    inventoryType: 'raw-materials' as InventoryType,
-                  })),
-                  subtotal: orderToConvert.subtotal,
-                  taxRate: orderToConvert.taxRate,
-                  taxAmount: orderToConvert.taxAmount,
-                  discount: orderToConvert.discount,
-                  total: orderToConvert.total,
-                  status: 'pending',
-                  paymentMethod: 'credit',
-                  notes: `Converted from PO ${orderToConvert.poNumber}`,
-                  projectId: orderToConvert.projectId,
-                  inventoryMethod: 'perpetual',
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                };
-
-                await savePurchase(purchase);
-
-                // Update PO status to confirmed
-                const updatedOrder = { 
-                  ...orderToConvert, 
-                  status: 'confirmed' as const, 
-                  convertedToPurchaseId: purchase.id, 
-                  updatedAt: new Date().toISOString() 
-                };
-                await savePurchaseOrder(updatedOrder);
-                const updated = await loadPurchaseOrders();
-                setOrders(updated);
-
+                // Navigate to purchases page with PO data to create purchase with additional details
+                navigate('/purchases', { 
+                  state: { 
+                    fromPO: true,
+                    poData: {
+                      poId: orderToConvert.id,
+                      poNumber: orderToConvert.poNumber,
+                      vendor: orderToConvert.vendor,
+                      vendorContact: orderToConvert.vendorContact,
+                      expectedDelivery: orderToConvert.expectedDelivery,
+                      lineItems: orderToConvert.lineItems,
+                      subtotal: orderToConvert.subtotal,
+                      taxRate: orderToConvert.taxRate,
+                      taxAmount: orderToConvert.taxAmount,
+                      discount: orderToConvert.discount,
+                      total: orderToConvert.total,
+                      projectId: orderToConvert.projectId,
+                    }
+                  } 
+                });
+                
                 setConvertDialogOpen(false);
                 setOrderToConvert(null);
-                
-                // Navigate to purchases page with the new purchase for editing
-                navigate('/purchases', { state: { editPurchaseId: purchase.id } });
               }}
             >
               Edit First
