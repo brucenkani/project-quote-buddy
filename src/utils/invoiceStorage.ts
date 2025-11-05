@@ -241,7 +241,7 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
         }
         
         // Process inventory movements and COGS for inventory line items
-        await processInvoiceInventory(invoice);
+        await processInvoiceInventory(invoice, userId, companyId);
       }
     } catch (journalError) {
       console.error('Failed to create journal entry for invoice:', journalError);

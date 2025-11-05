@@ -6,13 +6,12 @@ import { getInventoryAccount, getCOGSAccount } from '@/utils/accountMapping';
  * Process inventory movements and COGS when invoice is saved
  * Creates inventory movements (OUT) and records COGS journal entry
  */
-export const processInvoiceInventory = async (invoice: Invoice): Promise<void> => {
+export const processInvoiceInventory = async (
+  invoice: Invoice,
+  userId: string,
+  companyId: string
+): Promise<void> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
-    const activeCompanyId = localStorage.getItem('activeCompanyId');
-    if (!activeCompanyId) throw new Error('No active company');
 
     // Filter line items that are inventory type
     const inventoryLineItems = invoice.lineItems.filter(
@@ -50,8 +49,8 @@ export const processInvoiceInventory = async (invoice: Invoice): Promise<void> =
           unit_cost: inventoryItem.cost_price,
           reference_id: invoice.id,
           reference_type: 'SALE',
-          user_id: user.id,
-          company_id: activeCompanyId,
+          user_id: userId,
+          company_id: companyId,
           notes: `Sale via invoice ${invoice.invoiceNumber}`,
         });
 
@@ -70,7 +69,7 @@ export const processInvoiceInventory = async (invoice: Invoice): Promise<void> =
     }
 
     // Create COGS journal entry for all inventory items
-    await createCOGSJournalEntry(invoice, inventoryLineItems);
+    await createCOGSJournalEntry(invoice, inventoryLineItems, userId, companyId);
 
   } catch (error) {
     console.error('Failed to process invoice inventory:', error);
@@ -85,14 +84,11 @@ export const processInvoiceInventory = async (invoice: Invoice): Promise<void> =
  */
 const createCOGSJournalEntry = async (
   invoice: Invoice,
-  inventoryLineItems: LineItem[]
+  inventoryLineItems: LineItem[],
+  userId: string,
+  companyId: string
 ): Promise<void> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
-    const activeCompanyId = localStorage.getItem('activeCompanyId');
-    if (!activeCompanyId) throw new Error('No active company');
 
     // Calculate total COGS
     let totalCOGS = 0;
@@ -118,7 +114,7 @@ const createCOGSJournalEntry = async (
     const { data: maxEntry } = await supabase
       .from('journal_entries')
       .select('entry_number')
-      .eq('company_id', activeCompanyId)
+      .eq('company_id', companyId)
       .order('entry_number', { ascending: false })
       .limit(1)
       .single();
@@ -135,9 +131,9 @@ const createCOGSJournalEntry = async (
         entry_number: entryNumber,
         date: invoice.issueDate,
         description: `COGS for invoice ${invoice.invoiceNumber}`,
-        reference: invoice.invoiceNumber,
-        user_id: user.id,
-        company_id: activeCompanyId,
+        reference: `${invoice.invoiceNumber}-COGS`,
+        user_id: userId,
+        company_id: companyId,
         is_manual: false,
       })
       .select()
