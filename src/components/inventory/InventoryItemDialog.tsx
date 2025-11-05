@@ -35,8 +35,6 @@ export function InventoryItemDialog({ open, onOpenChange, item, onItemCreated }:
     quantity: 0,
     minQuantity: 0,
     unitCost: 0,
-    supplier: '',
-    location: '',
     warehouse_id: '',
   });
 
@@ -53,8 +51,6 @@ export function InventoryItemDialog({ open, onOpenChange, item, onItemCreated }:
         quantity: 0,
         minQuantity: 0,
         unitCost: 0,
-        supplier: '',
-        location: '',
         warehouse_id: '',
       });
     }
@@ -75,10 +71,8 @@ export function InventoryItemDialog({ open, onOpenChange, item, onItemCreated }:
       unit: formData.unit || 'unit',
       quantity: item ? formData.quantity || 0 : 0, // Always 0 for new items, preserve for edits
       minQuantity: formData.minQuantity || 0,
-      unitCost: formData.unitCost || 0,
-      totalValue: item ? (formData.quantity || 0) * (formData.unitCost || 0) : 0,
-      supplier: formData.supplier,
-      location: formData.location,
+      unitCost: item?.unitCost || 0, // Preserve existing unit cost for edits, default to 0 for new
+      totalValue: item ? (formData.quantity || 0) * (item.unitCost || 0) : 0,
       warehouse_id: formData.warehouse_id || undefined,
       lastRestocked: new Date().toISOString(),
       createdAt: item?.createdAt || new Date().toISOString(),
@@ -218,39 +212,26 @@ export function InventoryItemDialog({ open, onOpenChange, item, onItemCreated }:
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="unitCost">Unit Cost</Label>
-                <Input
-                  id="unitCost"
-                  type="number"
-                  step="0.01"
-                  value={formData.unitCost}
-                  onChange={(e) => setFormData({ ...formData, unitCost: parseFloat(e.target.value) || 0 })}
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <Label htmlFor="quantity">Current Quantity</Label>
-                        <Input
-                          id="quantity"
-                          type="number"
-                          value={formData.quantity}
-                          disabled
-                          className="bg-muted cursor-not-allowed"
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Quantity is managed through purchases (IN) and invoices (OUT)</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+            <div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Label htmlFor="quantity">Current Quantity</Label>
+                      <Input
+                        id="quantity"
+                        type="number"
+                        value={formData.quantity}
+                        disabled
+                        className="bg-muted cursor-not-allowed"
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Quantity is managed through purchases (IN) and invoices (OUT)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
 
             <div>
@@ -261,27 +242,6 @@ export function InventoryItemDialog({ open, onOpenChange, item, onItemCreated }:
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Optional description"
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="supplier">Supplier</Label>
-                <Input
-                  id="supplier"
-                  value={formData.supplier}
-                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                  placeholder="Supplier name (optional)"
-                />
-              </div>
-              <div>
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="Storage location (optional)"
-                />
-              </div>
             </div>
           </div>
 
