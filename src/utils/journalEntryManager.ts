@@ -11,7 +11,6 @@ interface JournalEntryLine {
   account_name: string;
   debit: number;
   credit: number;
-  description?: string;
 }
 
 interface JournalEntryData {
@@ -91,7 +90,6 @@ export const createJournalEntry = async (
       account_name: line.account_name,
       debit: line.debit,
       credit: line.credit,
-      description: line.description,
     }));
 
     console.log('📤 [CREATE ENTRY DEBUG] Inserting journal entry lines:', lineInserts);
@@ -143,14 +141,12 @@ export const recordPurchaseOrder = async (
         account_name: '9900 - Memorandum',
         debit: totalAmount,
         credit: 0,
-        description: `PO commitment to ${supplier}`,
       },
       {
         account_id: '9901',
         account_name: '9901 - Memorandum Contra',
         debit: 0,
         credit: totalAmount,
-        description: 'PO commitment contra',
       },
     ],
   };
@@ -237,7 +233,6 @@ export const recordPurchaseInvoice = async (
     account_name: inventoryName,
     debit: subtotal,
     credit: 0,
-    description: `Purchase from ${supplier}`,
   });
   console.log('✅ [JOURNAL DEBUG] Added inventory/expense debit line:', subtotal);
 
@@ -248,7 +243,6 @@ export const recordPurchaseInvoice = async (
       account_name: '1105 - VAT Input (Accounts Receivable)',
       debit: taxAmount,
       credit: 0,
-      description: 'VAT on purchase',
     });
     console.log('✅ [JOURNAL DEBUG] Added VAT input debit line:', taxAmount);
   }
@@ -261,7 +255,6 @@ export const recordPurchaseInvoice = async (
         account_name: '3100 - Trade and Other Payables',
         debit: 0,
         credit: total,
-        description: `Payable to ${supplier}`,
       });
       console.log('✅ [JOURNAL DEBUG] Added accounts payable credit line:', total);
       break;
@@ -271,7 +264,6 @@ export const recordPurchaseInvoice = async (
         account_name: '1100 - Cash on Hand',
         debit: 0,
         credit: total,
-        description: `Cash payment to ${supplier}`,
       });
       console.log('✅ [JOURNAL DEBUG] Added cash credit line:', total);
       break;
@@ -285,7 +277,6 @@ export const recordPurchaseInvoice = async (
         account_name: 'Bank Account',
         debit: 0,
         credit: total,
-        description: `Bank payment to ${supplier}`,
       });
       console.log('✅ [JOURNAL DEBUG] Added bank account credit line:', total);
       break;
@@ -341,14 +332,12 @@ export const recordPurchasePayment = async (
         account_name: '3100 - Trade and Other Payables',
         debit: amount,
         credit: 0,
-        description: `Payment for ${purchaseNumber}`,
       },
       {
         account_id: bankAccountId,
         account_name: `Bank Account`,
         debit: 0,
         credit: amount,
-        description: `Payment to ${supplier}`,
       },
     ],
   };
@@ -383,14 +372,12 @@ export const recordInventorySale = async (
         account_name: '7100 - Cost of Goods Sold',
         debit: cost,
         credit: 0,
-        description: `COGS for ${invoiceNumber}`,
       },
       {
         account_id: inventoryAccount,
         account_name: inventoryName,
         debit: 0,
         credit: cost,
-        description: 'Inventory reduction',
       },
     ],
   };
@@ -432,14 +419,12 @@ export const recordInventoryAdjustment = async (
             account_name: '7500 - Inventory Adjustments',
             debit: absValue,
             credit: 0,
-            description: `Loss/shortage of ${itemName}`,
           },
           {
             account_id: inventoryAccount,
             account_name: inventoryName,
             debit: 0,
             credit: absValue,
-            description: 'Inventory reduction',
           },
         ]
       : [
@@ -448,14 +433,12 @@ export const recordInventoryAdjustment = async (
             account_name: inventoryName,
             debit: absValue,
             credit: 0,
-            description: 'Inventory increase',
           },
           {
             account_id: '6500',
             account_name: '6500 - Other Income',
             debit: 0,
             credit: absValue,
-            description: `Gain/surplus of ${itemName}`,
           },
         ],
   };
@@ -490,7 +473,6 @@ export const reverseJournalEntry = async (
       account_name: line.account_name,
       debit: line.credit,
       credit: line.debit,
-      description: `Reversal: ${line.description || ''}`,
     }));
 
     const entry: JournalEntryData = {
