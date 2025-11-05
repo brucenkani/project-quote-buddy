@@ -710,7 +710,7 @@ export const generateCashFlowExcel = (
   XLSX.writeFile(workbook, `cash-flow-${currentPeriod.endDate}.xlsx`);
 };
 
-// Equity Statement PDF
+// Equity Statement PDF - Matching on-screen format
 export const generateEquityStatementPDF = (
   accounts: ChartAccount[],
   currentPeriod: PeriodData,
@@ -725,28 +725,65 @@ export const generateEquityStatementPDF = (
   doc.text('Statement of Changes in Equity', 105, 20, { align: 'center' });
   doc.setFontSize(10);
   doc.text(settings.companyName, 105, 28, { align: 'center' });
-  doc.text(`Period: ${currentPeriod.startDate} to ${currentPeriod.endDate}`, 105, 35, { align: 'center' });
+  doc.text(`For the period ending ${currentPeriod.endDate}`, 105, 35, { align: 'center' });
 
-  const data = [
-    ['Opening Balance', `${settings.currencySymbol}${equity.totalOpening.toFixed(2)}`],
-    ['Add: Net Income', `${settings.currencySymbol}${equity.retainedEarnings.netIncome.toFixed(2)}`],
-    ['Less: Drawings', `${settings.currencySymbol}${equity.retainedEarnings.drawings.toFixed(2)}`],
-    ['Closing Balance', `${settings.currencySymbol}${equity.totalClosing.toFixed(2)}`],
-  ];
+  const data: any[] = [];
+  let startY = 45;
+
+  // Share Capital section
+  if (equity.shareCapital.length > 0) {
+    data.push([{ content: 'Share Capital', colSpan: 4, styles: { fillColor: [219, 234, 254], fontStyle: 'bold' } }]);
+    equity.shareCapital.forEach(item => {
+      data.push([
+        item.account,
+        `${settings.currencySymbol}${item.opening.toFixed(2)}`,
+        `${settings.currencySymbol}${item.movement.toFixed(2)}`,
+        `${settings.currencySymbol}${item.closing.toFixed(2)}`
+      ]);
+    });
+  }
+
+  // Reserves section
+  if (equity.reserves.length > 0) {
+    data.push([{ content: 'Reserves', colSpan: 4, styles: { fillColor: [220, 252, 231], fontStyle: 'bold' } }]);
+    equity.reserves.forEach(item => {
+      data.push([
+        item.account,
+        `${settings.currencySymbol}${item.opening.toFixed(2)}`,
+        `${settings.currencySymbol}${item.movement.toFixed(2)}`,
+        `${settings.currencySymbol}${item.closing.toFixed(2)}`
+      ]);
+    });
+  }
+
+  // Retained Earnings section
+  data.push([{ content: 'Retained Earnings', colSpan: 4, styles: { fillColor: [254, 249, 195], fontStyle: 'bold' } }]);
+  data.push(['Opening Balance', `${settings.currencySymbol}${equity.retainedEarnings.opening.toFixed(2)}`, '-', '-']);
+  data.push(['Add: Net Income for Period', '-', `${settings.currencySymbol}${equity.retainedEarnings.netIncome.toFixed(2)}`, '-']);
+  data.push(['Less: Drawings', '-', `(${settings.currencySymbol}${equity.retainedEarnings.drawings.toFixed(2)})`, '-']);
+  data.push(['Closing Balance', '-', '-', `${settings.currencySymbol}${equity.retainedEarnings.closing.toFixed(2)}`]);
+
+  // Total Equity
+  data.push([
+    { content: 'Total Equity', styles: { fontStyle: 'bold', fillColor: [59, 130, 246], textColor: [255, 255, 255] } },
+    { content: `${settings.currencySymbol}${equity.totalOpening.toFixed(2)}`, styles: { fontStyle: 'bold', fillColor: [59, 130, 246], textColor: [255, 255, 255] } },
+    { content: `${settings.currencySymbol}${equity.totalMovement.toFixed(2)}`, styles: { fontStyle: 'bold', fillColor: [59, 130, 246], textColor: [255, 255, 255] } },
+    { content: `${settings.currencySymbol}${equity.totalClosing.toFixed(2)}`, styles: { fontStyle: 'bold', fillColor: [59, 130, 246], textColor: [255, 255, 255] } }
+  ]);
 
   autoTable(doc, {
-    startY: 45,
-    head: [['Description', 'Amount']],
+    startY,
+    head: [['Description', 'Opening Balance', 'Movement', 'Closing Balance']],
     body: data,
     theme: 'grid',
-    styles: { fontSize: 10 },
+    styles: { fontSize: 9 },
     headStyles: { fillColor: [59, 130, 246] },
   });
 
   doc.save(`equity-statement-${currentPeriod.endDate}.pdf`);
 };
 
-// Equity Statement Excel
+// Equity Statement Excel - Matching on-screen format
 export const generateEquityStatementExcel = (
   accounts: ChartAccount[],
   currentPeriod: PeriodData,
@@ -755,12 +792,54 @@ export const generateEquityStatementExcel = (
 ) => {
   const equity = generateEquityStatement(accounts, currentPeriod, priorPeriod);
 
-  const data = [
-    { Description: 'Opening Balance', Amount: equity.totalOpening },
-    { Description: 'Add: Net Income', Amount: equity.retainedEarnings.netIncome },
-    { Description: 'Less: Drawings', Amount: equity.retainedEarnings.drawings },
-    { Description: 'Closing Balance', Amount: equity.totalClosing },
+  const data: any[] = [
+    { Description: settings.companyName, 'Opening Balance': '', Movement: '', 'Closing Balance': '' },
+    { Description: 'Statement of Changes in Equity', 'Opening Balance': '', Movement: '', 'Closing Balance': '' },
+    { Description: `For the period ending ${currentPeriod.endDate}`, 'Opening Balance': '', Movement: '', 'Closing Balance': '' },
+    { Description: '', 'Opening Balance': '', Movement: '', 'Closing Balance': '' },
   ];
+
+  // Share Capital
+  if (equity.shareCapital.length > 0) {
+    data.push({ Description: 'Share Capital', 'Opening Balance': '', Movement: '', 'Closing Balance': '' });
+    equity.shareCapital.forEach(item => {
+      data.push({
+        Description: item.account,
+        'Opening Balance': item.opening,
+        Movement: item.movement,
+        'Closing Balance': item.closing
+      });
+    });
+  }
+
+  // Reserves
+  if (equity.reserves.length > 0) {
+    data.push({ Description: 'Reserves', 'Opening Balance': '', Movement: '', 'Closing Balance': '' });
+    equity.reserves.forEach(item => {
+      data.push({
+        Description: item.account,
+        'Opening Balance': item.opening,
+        Movement: item.movement,
+        'Closing Balance': item.closing
+      });
+    });
+  }
+
+  // Retained Earnings
+  data.push({ Description: 'Retained Earnings', 'Opening Balance': '', Movement: '', 'Closing Balance': '' });
+  data.push({ Description: 'Opening Balance', 'Opening Balance': equity.retainedEarnings.opening, Movement: '-', 'Closing Balance': '-' });
+  data.push({ Description: 'Add: Net Income for Period', 'Opening Balance': '-', Movement: equity.retainedEarnings.netIncome, 'Closing Balance': '-' });
+  data.push({ Description: 'Less: Drawings', 'Opening Balance': '-', Movement: -equity.retainedEarnings.drawings, 'Closing Balance': '-' });
+  data.push({ Description: 'Closing Balance', 'Opening Balance': '-', Movement: '-', 'Closing Balance': equity.retainedEarnings.closing });
+  
+  // Total
+  data.push({ Description: '', 'Opening Balance': '', Movement: '', 'Closing Balance': '' });
+  data.push({
+    Description: 'Total Equity',
+    'Opening Balance': equity.totalOpening,
+    Movement: equity.totalMovement,
+    'Closing Balance': equity.totalClosing
+  });
 
   const worksheet = XLSX.utils.json_to_sheet(data);
   const workbook = XLSX.utils.book_new();
