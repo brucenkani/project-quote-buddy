@@ -257,13 +257,11 @@ export const saveInvoice = async (invoice: Invoice): Promise<void> => {
           .limit(1)
           .maybeSingle();
         
-        // If editing an invoice that already has movements, prevent changes
-        if (existingMovements) {
-          throw new Error('Cannot edit a finalized invoice with inventory movements. Please create a credit note instead.');
+        // Only process inventory if no movements exist yet (first time finalizing)
+        if (!existingMovements) {
+          // Process inventory movements and COGS
+          await processInvoiceInventory(invoice, userId, companyId);
         }
-        
-        // Process inventory movements and COGS
-        await processInvoiceInventory(invoice, userId, companyId);
       } catch (inventoryError) {
         console.error('Failed to process inventory for invoice:', inventoryError);
         throw inventoryError; // Throw to prevent saving with inconsistent inventory
