@@ -45,10 +45,12 @@ export interface CashFlowData {
 }
 
 export interface EquityStatementData {
-  openingBalance: number;
-  netIncome: number;
-  drawings: number;
-  closingBalance: number;
+  shareCapital: { account: string; opening: number; movement: number; closing: number }[];
+  reserves: { account: string; opening: number; movement: number; closing: number }[];
+  retainedEarnings: { opening: number; netIncome: number; drawings: number; closing: number };
+  totalOpening: number;
+  totalMovement: number;
+  totalClosing: number;
 }
 
 // Helper function to extract account number from various formats
@@ -435,33 +437,90 @@ export const generateCashFlowStatement = (
   return { operating, investing, financing, netCashFlow };
 };
 
-// Generate Equity Statement
+// Generate Equity Statement with detailed breakdown
 export const generateEquityStatement = (
   accounts: ChartAccount[],
   currentPeriod: PeriodData,
   priorPeriod: PeriodData
 ): EquityStatementData => {
-  // Get opening balance from prior period equity accounts
+  const shareCapital: { account: string; opening: number; movement: number; closing: number }[] = [];
+  const reserves: { account: string; opening: number; movement: number; closing: number }[] = [];
+  
+  // Get equity accounts categorized by sub-category
   const equityAccounts = accounts.filter(a => a.accountType === 'equity');
-  let openingBalance = 0;
   
   equityAccounts.forEach(account => {
-    openingBalance += calculateAccountBalance(account, priorPeriod.journalEntries, priorPeriod.expenses);
+    // Skip drawings and retained earnings (handled separately)
+    if (account.accountName.toLowerCase().includes('drawing') || 
+        account.accountName.toLowerCase().includes('retained earnings')) {
+      return;
+    }
+    
+    const opening = calculateAccountBalance(account, priorPeriod.journalEntries, priorPeriod.expenses);
+    const closing = calculateAccountBalance(account, currentPeriod.journalEntries, currentPeriod.expenses);
+    const movement = closing - opening;
+    
+    const accountLabel = `${account.accountNumber} - ${account.accountName}`;
+    
+    if (account.subCategory === 'share-capital') {
+      shareCapital.push({ account: accountLabel, opening, movement, closing });
+    } else if (account.subCategory === 'reserves') {
+      reserves.push({ account: accountLabel, opening, movement, closing });
+    }
   });
-
+  
   // Get net income from current period
   const incomeStatement = generateIncomeStatement(accounts, currentPeriod);
   const netIncome = incomeStatement.netIncome;
 
-  // Get drawings
-  const drawingsAccount = accounts.find(a => a.accountName === "Owner's Drawings");
-  const drawings = drawingsAccount 
-    ? calculateAccountBalance(drawingsAccount, currentPeriod.journalEntries, currentPeriod.expenses)
+  // Get retained earnings opening balance
+  const retainedEarningsAccount = accounts.find(a => 
+    a.accountName.toLowerCase().includes('retained earnings') && 
+    !a.accountName.toLowerCase().includes('current period')
+  );
+  const retainedEarningsOpening = retainedEarningsAccount 
+    ? calculateAccountBalance(retainedEarningsAccount, priorPeriod.journalEntries, priorPeriod.expenses)
     : 0;
 
-  const closingBalance = openingBalance + netIncome - drawings;
+  // Get drawings
+  const drawingsAccount = accounts.find(a => a.accountName.toLowerCase().includes('drawing'));
+  const drawings = drawingsAccount 
+    ? Math.abs(calculateAccountBalance(drawingsAccount, currentPeriod.journalEntries, currentPeriod.expenses))
+    : 0;
 
-  return { openingBalance, netIncome, drawings, closingBalance };
+  const retainedEarningsClosing = retainedEarningsOpening + netIncome - drawings;
+  
+  const retainedEarnings = {
+    opening: retainedEarningsOpening,
+    netIncome,
+    drawings,
+    closing: retainedEarningsClosing
+  };
+
+  // Calculate totals
+  const totalOpening = 
+    shareCapital.reduce((sum, item) => sum + item.opening, 0) +
+    reserves.reduce((sum, item) => sum + item.opening, 0) +
+    retainedEarningsOpening;
+    
+  const totalMovement = 
+    shareCapital.reduce((sum, item) => sum + item.movement, 0) +
+    reserves.reduce((sum, item) => sum + item.movement, 0) +
+    (netIncome - drawings);
+    
+  const totalClosing = 
+    shareCapital.reduce((sum, item) => sum + item.closing, 0) +
+    reserves.reduce((sum, item) => sum + item.closing, 0) +
+    retainedEarningsClosing;
+
+  return { 
+    shareCapital, 
+    reserves, 
+    retainedEarnings, 
+    totalOpening, 
+    totalMovement, 
+    totalClosing 
+  };
 };
 
 // Enhanced KPIs Interface

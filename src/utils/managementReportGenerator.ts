@@ -728,10 +728,10 @@ export const generateEquityStatementPDF = (
   doc.text(`Period: ${currentPeriod.startDate} to ${currentPeriod.endDate}`, 105, 35, { align: 'center' });
 
   const data = [
-    ['Opening Balance', `${settings.currencySymbol}${equity.openingBalance.toFixed(2)}`],
-    ['Add: Net Income', `${settings.currencySymbol}${equity.netIncome.toFixed(2)}`],
-    ['Less: Drawings', `${settings.currencySymbol}${equity.drawings.toFixed(2)}`],
-    ['Closing Balance', `${settings.currencySymbol}${equity.closingBalance.toFixed(2)}`],
+    ['Opening Balance', `${settings.currencySymbol}${equity.totalOpening.toFixed(2)}`],
+    ['Add: Net Income', `${settings.currencySymbol}${equity.retainedEarnings.netIncome.toFixed(2)}`],
+    ['Less: Drawings', `${settings.currencySymbol}${equity.retainedEarnings.drawings.toFixed(2)}`],
+    ['Closing Balance', `${settings.currencySymbol}${equity.totalClosing.toFixed(2)}`],
   ];
 
   autoTable(doc, {
@@ -756,10 +756,10 @@ export const generateEquityStatementExcel = (
   const equity = generateEquityStatement(accounts, currentPeriod, priorPeriod);
 
   const data = [
-    { Description: 'Opening Balance', Amount: equity.openingBalance },
-    { Description: 'Add: Net Income', Amount: equity.netIncome },
-    { Description: 'Less: Drawings', Amount: equity.drawings },
-    { Description: 'Closing Balance', Amount: equity.closingBalance },
+    { Description: 'Opening Balance', Amount: equity.totalOpening },
+    { Description: 'Add: Net Income', Amount: equity.retainedEarnings.netIncome },
+    { Description: 'Less: Drawings', Amount: equity.retainedEarnings.drawings },
+    { Description: 'Closing Balance', Amount: equity.totalClosing },
   ];
 
   const worksheet = XLSX.utils.json_to_sheet(data);
