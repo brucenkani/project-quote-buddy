@@ -461,10 +461,19 @@ export const generateEquityStatement = (
     const movement = closing - opening;
     
     const accountLabel = `${account.accountNumber} - ${account.accountName}`;
-    
-    if (account.subCategory === 'share-capital') {
+    // Classify into sections with robust fallbacks
+    const sub = (account.subCategory || '').toLowerCase();
+    const name = account.accountName.toLowerCase();
+
+    const isShareCapital = sub === 'share-capital' || name.includes('share capital') || name.includes('ordinary share') || name.includes('preference share');
+    const isReserve = sub === 'reserves' || name.includes('reserve') || name.includes('premium');
+
+    if (isShareCapital) {
       shareCapital.push({ account: accountLabel, opening, movement, closing });
-    } else if (account.subCategory === 'reserves') {
+    } else if (isReserve) {
+      reserves.push({ account: accountLabel, opening, movement, closing });
+    } else {
+      // Default any other equity (except drawings/retained earnings) to reserves
       reserves.push({ account: accountLabel, opening, movement, closing });
     }
   });
