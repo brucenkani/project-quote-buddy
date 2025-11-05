@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DataTableFilters } from '@/components/ui/data-table-filters';
 import { ArrowLeft, Plus, Clock, AlertCircle } from 'lucide-react';
 
 interface Ticket {
@@ -29,6 +30,49 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
     { id: '2', title: 'Update client presentation', assignedTo: 'Mike', status: 'in-progress', priority: 'medium', createdAt: '2025-01-14', dueDate: '2025-01-18' },
     { id: '3', title: 'Schedule team meeting', assignedTo: 'John', status: 'completed', priority: 'low', createdAt: '2025-01-13' },
   ]);
+
+  // Filter states
+  const [searchValue, setSearchValue] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [assigneeFilter, setAssigneeFilter] = useState('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // Get unique assignees for filter
+  const uniqueAssignees = useMemo(() => {
+    const assignees = [...new Set(tickets.map(t => t.assignedTo))];
+    return assignees.map(a => ({ label: a, value: a }));
+  }, [tickets]);
+
+  // Filtered tickets
+  const filteredTickets = useMemo(() => {
+    return tickets.filter(ticket => {
+      const matchesSearch = ticket.title.toLowerCase().includes(searchValue.toLowerCase()) ||
+                          ticket.assignedTo.toLowerCase().includes(searchValue.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
+      const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter;
+      const matchesAssignee = assigneeFilter === 'all' || ticket.assignedTo === assigneeFilter;
+      
+      let matchesDateRange = true;
+      if (startDate || endDate) {
+        const ticketDate = new Date(ticket.createdAt);
+        if (startDate && new Date(startDate) > ticketDate) matchesDateRange = false;
+        if (endDate && new Date(endDate) < ticketDate) matchesDateRange = false;
+      }
+
+      return matchesSearch && matchesStatus && matchesPriority && matchesAssignee && matchesDateRange;
+    });
+  }, [tickets, searchValue, statusFilter, priorityFilter, assigneeFilter, startDate, endDate]);
+
+  const handleClearFilters = () => {
+    setSearchValue('');
+    setStatusFilter('all');
+    setPriorityFilter('all');
+    setAssigneeFilter('all');
+    setStartDate('');
+    setEndDate('');
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -159,7 +203,7 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
               <CardTitle className="text-sm font-medium">To Do</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{tickets.filter(t => t.status === 'todo').length}</div>
+              <div className="text-2xl font-bold">{filteredTickets.filter(t => t.status === 'todo').length}</div>
             </CardContent>
           </Card>
           <Card>
@@ -167,7 +211,7 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
               <CardTitle className="text-sm font-medium">In Progress</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{tickets.filter(t => t.status === 'in-progress').length}</div>
+              <div className="text-2xl font-bold">{filteredTickets.filter(t => t.status === 'in-progress').length}</div>
             </CardContent>
           </Card>
           <Card>
@@ -175,7 +219,7 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
               <CardTitle className="text-sm font-medium">Completed</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{tickets.filter(t => t.status === 'completed').length}</div>
+              <div className="text-2xl font-bold">{filteredTickets.filter(t => t.status === 'completed').length}</div>
             </CardContent>
           </Card>
           <Card>
@@ -183,7 +227,7 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
               <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{tickets.length}</div>
+              <div className="text-2xl font-bold">{filteredTickets.length}</div>
             </CardContent>
           </Card>
         </div>
@@ -193,6 +237,48 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
             <CardTitle>All Tasks</CardTitle>
           </CardHeader>
           <CardContent>
+            <DataTableFilters
+              searchValue={searchValue}
+              onSearchChange={setSearchValue}
+              searchPlaceholder="Search tasks..."
+              filters={[
+                {
+                  label: 'Status',
+                  value: statusFilter,
+                  onValueChange: setStatusFilter,
+                  options: [
+                    { label: 'To Do', value: 'todo' },
+                    { label: 'In Progress', value: 'in-progress' },
+                    { label: 'Completed', value: 'completed' },
+                    { label: 'On Hold', value: 'on-hold' },
+                  ],
+                },
+                {
+                  label: 'Priority',
+                  value: priorityFilter,
+                  onValueChange: setPriorityFilter,
+                  options: [
+                    { label: 'Low', value: 'low' },
+                    { label: 'Medium', value: 'medium' },
+                    { label: 'High', value: 'high' },
+                    { label: 'Urgent', value: 'urgent' },
+                  ],
+                },
+                {
+                  label: 'Assignee',
+                  value: assigneeFilter,
+                  onValueChange: setAssigneeFilter,
+                  options: uniqueAssignees,
+                },
+              ]}
+              dateFilters={{
+                startDate,
+                endDate,
+                onStartDateChange: setStartDate,
+                onEndDateChange: setEndDate,
+              }}
+              onClearFilters={handleClearFilters}
+            />
             <Table>
               <TableHeader>
                 <TableRow>
@@ -206,7 +292,7 @@ export default function TicketSystem({ onBack }: { onBack?: () => void }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tickets.map((ticket) => (
+                {filteredTickets.map((ticket) => (
                   <TableRow key={ticket.id} className="cursor-pointer hover:bg-muted/50">
                     <TableCell className="font-medium">#{ticket.id}</TableCell>
                     <TableCell>{ticket.title}</TableCell>
