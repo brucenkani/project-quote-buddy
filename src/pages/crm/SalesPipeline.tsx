@@ -138,10 +138,10 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
     const tableData = displayDeals.map(d => [
       d.title,
       d.customer,
-      formatCurrency(d.value),
+      d.value.toFixed(2),
       getStageLabel(d.stage),
       `${d.probability}%`,
-      formatCurrency(d.value * d.probability / 100),
+      (d.value * d.probability / 100).toFixed(2),
     ]);
     
     (doc as any).autoTable({
@@ -444,6 +444,46 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
           </TabsList>
 
           <TabsContent value="pipeline">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-3 gap-6 mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Pipeline Value</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">{formatCurrency(displayDeals.reduce((sum, d) => sum + d.value, 0))}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{displayDeals.length} deals</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Weighted Value</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">
+                    {formatCurrency(displayDeals.reduce((sum, d) => sum + (d.value * d.probability / 100), 0))}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">Expected revenue</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Win Rate</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">
+                    {deals.length > 0 
+                      ? Math.round((deals.filter(d => d.stage === 'closed').length / deals.length) * 100)
+                      : 0}%
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {deals.filter(d => d.stage === 'closed').length} closed deals
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Filters and Export Buttons */}
             <div className="flex justify-between items-center mb-4">
               <div className="flex-1">
                 <DataTableFilters
@@ -603,44 +643,6 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
                     </Table>
                   </CardContent>
                 </Card>
-
-                <div className="grid grid-cols-3 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Pipeline Value</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-3xl font-bold">{formatCurrency(displayDeals.reduce((sum, d) => sum + d.value, 0))}</p>
-                      <p className="text-sm text-muted-foreground mt-1">{displayDeals.length} deals</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Weighted Value</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-3xl font-bold">
-                        {formatCurrency(displayDeals.reduce((sum, d) => sum + (d.value * d.probability / 100), 0))}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">Expected revenue</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Win Rate</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-3xl font-bold">
-                        {deals.length > 0 
-                          ? Math.round((deals.filter(d => d.stage === 'closed').length / deals.length) * 100)
-                          : 0}%
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {deals.filter(d => d.stage === 'closed').length} closed deals
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
               </>
             )}
           </TabsContent>
