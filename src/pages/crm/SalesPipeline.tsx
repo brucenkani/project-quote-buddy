@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompany } from '@/contexts/CompanyContext';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
 interface Deal {
@@ -144,7 +144,7 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
       (d.value * d.probability / 100).toFixed(2),
     ]);
     
-    (doc as any).autoTable({
+    autoTable(doc, {
       head: [['Deal Title', 'Customer', 'Value', 'Stage', 'Probability', 'Weighted Value']],
       body: tableData,
       startY: 42,
@@ -273,7 +273,7 @@ export default function SalesPipeline({ onBack }: { onBack?: () => void }) {
       formatCurrency(c.totalValue),
     ]);
     
-    (doc as any).autoTable({
+    autoTable(doc, {
       head: [['Customer Name', 'Status', 'Total Deals', 'Closed Deals', 'Total Value']],
       body: tableData,
       startY: 35,
