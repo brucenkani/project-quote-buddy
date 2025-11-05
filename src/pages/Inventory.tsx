@@ -22,6 +22,7 @@ import { WarehouseDialog } from '@/components/inventory/WarehouseDialog';
 import { WarehouseTransferDialog } from '@/components/inventory/WarehouseTransferDialog';
 import { WarehouseSelector } from '@/components/inventory/WarehouseSelector';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { InventoryItemDialog } from '@/components/inventory/InventoryItemDialog';
 
 export default function Inventory() {
   const { toast } = useToast();
@@ -34,74 +35,9 @@ export default function Inventory() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
 
-  const availableTypes = getInventoryTypesForCompanyType(activeCompanySettings?.company_type || '');
-
-  const [formData, setFormData] = useState<Partial<InventoryItem>>({
-    name: '',
-    type: availableTypes[0],
-    sku: '',
-    description: '',
-    unit: 'unit',
-    quantity: 0,
-    minQuantity: 0,
-    unitCost: 0,
-    supplier: '',
-    location: '',
-    warehouse_id: '',
-  });
-
-  const handleSubmit = async () => {
-    if (!formData.name || !formData.type || !formData.warehouse_id) {
-      toast({ title: 'Please fill in all required fields including warehouse', variant: 'destructive' });
-      return;
-    }
-
-    const item: InventoryItem = {
-      id: editingItem?.id || crypto.randomUUID(),
-      name: formData.name!,
-      type: formData.type!,
-      sku: formData.sku || `SKU-${Date.now()}`,
-      description: formData.description || '',
-      unit: formData.unit || 'unit',
-      quantity: editingItem ? formData.quantity || 0 : 0, // Always 0 for new items, preserve for edits
-      minQuantity: formData.minQuantity || 0,
-      unitCost: formData.unitCost || 0,
-      totalValue: editingItem ? (formData.quantity || 0) * (formData.unitCost || 0) : 0,
-      supplier: formData.supplier,
-      location: formData.location,
-      warehouse_id: formData.warehouse_id,
-      lastRestocked: new Date().toISOString(),
-      createdAt: editingItem?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    try {
-      await saveItem(item);
-      await refreshInventory();
-      setIsDialogOpen(false);
-      setEditingItem(null);
-      setFormData({
-        name: '',
-        type: availableTypes[0],
-        sku: '',
-        description: '',
-        unit: 'unit',
-        quantity: 0,
-        minQuantity: 0,
-        unitCost: 0,
-        supplier: '',
-        location: '',
-        warehouse_id: '',
-      });
-      toast({ title: editingItem ? 'Item updated' : 'Item added successfully' });
-    } catch (error) {
-      toast({ title: 'Failed to save item', variant: 'destructive' });
-    }
-  };
 
   const handleEdit = (item: InventoryItem) => {
     setEditingItem(item);
-    setFormData(item);
     setIsDialogOpen(true);
   };
 
@@ -196,136 +132,20 @@ export default function Inventory() {
               <ArrowRightLeft className="h-4 w-4" />
               Transfer Stock
             </Button>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2" onClick={() => { setEditingItem(null); setFormData({ name: '', type: availableTypes[0], sku: '', description: '', unit: 'unit', quantity: 0, minQuantity: 0, unitCost: 0, supplier: '', location: '', warehouse_id: '' }); }}>
-                  <Plus className="h-4 w-4" />
-                  Add Item
-                </Button>
-              </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingItem ? 'Edit Item' : 'Add New Item'}</DialogTitle>
-              </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Item Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="type">Type *</Label>
-                  <Select value={formData.type} onValueChange={(value: any) => setFormData({ ...formData, type: value })}>
-                    <SelectTrigger id="type">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableTypes.map(type => (
-                        <SelectItem key={type} value={type}>{getTypeLabel(type)}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor="sku">SKU</Label>
-                  <Input
-                    id="sku"
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    placeholder="Auto-generated if empty"
-                  />
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Input
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="quantity">Quantity</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    value={formData.quantity}
-                    disabled
-                    className="bg-muted"
-                    title="Quantity is managed through Purchases (increase) and Invoices (decrease)"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Quantities are updated automatically through purchases and sales
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="unit">Unit</Label>
-                  <Input
-                    id="unit"
-                    value={formData.unit}
-                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                  />
-                </div>
-                  <div className="space-y-2">
-                  <Label htmlFor="unitCost">Unit Cost ({activeCompanySettings?.currency_symbol || 'R'})</Label>
-                  <Input
-                    id="unitCost"
-                    type="number"
-                    step="0.01"
-                    value={formData.unitCost}
-                    onChange={(e) => setFormData({ ...formData, unitCost: parseFloat(e.target.value) })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="minQuantity">Min Quantity (Alert)</Label>
-                  <Input
-                    id="minQuantity"
-                    type="number"
-                    value={formData.minQuantity}
-                    onChange={(e) => setFormData({ ...formData, minQuantity: parseFloat(e.target.value) })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="supplier">Supplier</Label>
-                  <ContactSelector
-                    type="supplier"
-                    value=""
-                    onSelect={(contact: Contact) => {
-                      setFormData({ ...formData, supplier: contact.name });
-                    }}
-                    placeholder="Select or add supplier"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="warehouse">Warehouse *</Label>
-                  <WarehouseSelector
-                    value={formData.warehouse_id || ''}
-                    onSelect={(warehouseId) => setFormData({ ...formData, warehouse_id: warehouseId })}
-                    placeholder="Select warehouse"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleSubmit}>Save</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+            <Button className="gap-2" onClick={() => { setEditingItem(null); setIsDialogOpen(true); }}>
+              <Plus className="h-4 w-4" />
+              Add Item
+            </Button>
           </div>
         </div>
 
         <WarehouseDialog open={isWarehouseDialogOpen} onOpenChange={setIsWarehouseDialogOpen} />
         <WarehouseTransferDialog open={isTransferDialogOpen} onOpenChange={setIsTransferDialogOpen} />
+        <InventoryItemDialog 
+          open={isDialogOpen} 
+          onOpenChange={setIsDialogOpen} 
+          item={editingItem}
+        />
 
         {/* Dashboard Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
