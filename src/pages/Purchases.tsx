@@ -649,16 +649,57 @@ export default function Purchases() {
                           <TableHead>Qty</TableHead>
                           <TableHead>Unit Cost</TableHead>
                           <TableHead>Total</TableHead>
+                          <TableHead>Inventory</TableHead>
                           <TableHead></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {lineItems.map(item => (
+                        {lineItems.map((item, index) => (
                           <TableRow key={item.id}>
                             <TableCell>{item.description}</TableCell>
                             <TableCell>{item.quantity}</TableCell>
                             <TableCell>{settings.currencySymbol}{item.unitCost.toFixed(2)}</TableCell>
                             <TableCell>{settings.currencySymbol}{item.total.toFixed(2)}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2 min-w-[200px]">
+                                <Select
+                                  value={item.inventoryItemId || ''}
+                                  onValueChange={(value) => {
+                                    const selectedItem = inventory.find(i => i.id === value);
+                                    if (selectedItem) {
+                                      const updatedItems = [...lineItems];
+                                      updatedItems[index] = {
+                                        ...item,
+                                        inventoryItemId: value,
+                                        inventoryType: selectedItem.type,
+                                      };
+                                      setLineItems(updatedItems);
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger className="h-8">
+                                    <SelectValue placeholder="Link to inventory" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {inventory.map(invItem => (
+                                      <SelectItem key={invItem.id} value={invItem.id}>
+                                        {invItem.name} ({invItem.sku})
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => setIsNewInventoryDialogOpen(true)}
+                                  title="Create new inventory item"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
                             <TableCell>
                               <Button
                                 variant="ghost"
