@@ -1803,6 +1803,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_payroll_employee"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_safe_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_payroll_employee"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "payroll_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
