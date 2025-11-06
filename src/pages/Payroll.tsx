@@ -87,7 +87,10 @@ export default function Payroll() {
       setTaxBrackets(taxBrackets);
 
       const [payrollResult, employeesResult] = await Promise.all([
-        supabase.from('payroll').select('*, employees(*)').order('created_at', { ascending: false }),
+        supabase
+          .from('payroll')
+          .select('*, employees:employees!fk_payroll_employee(*)')
+          .order('created_at', { ascending: false }),
         supabase.from('employees').select('*').eq('status', 'active'),
       ]);
 
