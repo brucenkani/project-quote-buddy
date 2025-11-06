@@ -3,6 +3,18 @@ import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 
 export const generatePayslipPDF = async (payrollRecord: any, companySettings: any) => {
+  // Import supabase dynamically to avoid circular dependencies
+  const { supabase } = await import('@/integrations/supabase/client');
+  
+  // Fetch custom payroll items
+  const { data: customItems } = await supabase
+    .from('custom_payroll_items')
+    .select('*')
+    .eq('payroll_id', payrollRecord.id);
+  
+  const customIncomeItems = customItems?.filter(item => item.item_type === 'income') || [];
+  const customDeductionItems = customItems?.filter(item => item.item_type === 'deduction') || [];
+  
   // Map database schema to expected format
   const settings = {
     companyName: companySettings.company_name || companySettings.companyName || '',
@@ -91,15 +103,23 @@ export const generatePayslipPDF = async (payrollRecord: any, companySettings: an
   // Earnings Table - Dynamic currency
   const currencySymbol = payrollRecord.currency_symbol || 'R';
   yPos += 12;
+  
+  const earningsBody: (string | number)[][] = [
+    ['Basic Salary', parseFloat(payrollRecord.basic_salary).toFixed(2)],
+    ['Allowances', parseFloat(payrollRecord.allowances).toFixed(2)],
+    ['Overtime', parseFloat(payrollRecord.overtime).toFixed(2)],
+    ['Bonuses', parseFloat(payrollRecord.bonuses).toFixed(2)],
+  ];
+  
+  // Add custom income items
+  customIncomeItems.forEach(item => {
+    earningsBody.push([item.description, parseFloat(String(item.amount)).toFixed(2)]);
+  });
+  
   autoTable(doc, {
     startY: yPos,
     head: [[`Earnings`, `Amount (${currencySymbol})`]],
-    body: [
-      ['Basic Salary', parseFloat(payrollRecord.basic_salary).toFixed(2)],
-      ['Allowances', parseFloat(payrollRecord.allowances).toFixed(2)],
-      ['Overtime', parseFloat(payrollRecord.overtime).toFixed(2)],
-      ['Bonuses', parseFloat(payrollRecord.bonuses).toFixed(2)],
-    ],
+    body: earningsBody,
     foot: [['Gross Salary', parseFloat(payrollRecord.gross_salary).toFixed(2)]],
     theme: 'grid',
     headStyles: { fillColor: [66, 66, 66] },
@@ -112,7 +132,7 @@ export const generatePayslipPDF = async (payrollRecord: any, companySettings: an
   // Deductions Table - Dynamic based on country
   yPos = (doc as any).lastAutoTable.finalY + 10;
   
-  const deductionsBody: any[] = [
+  const deductionsBody: (string | number)[][] = [
     ['PAYE (Pay As You Earn)', parseFloat(payrollRecord.paye).toFixed(2)],
   ];
   
@@ -132,6 +152,11 @@ export const generatePayslipPDF = async (payrollRecord: any, companySettings: an
   if (parseFloat(payrollRecord.other_deductions) > 0) {
     deductionsBody.push(['Other Deductions', parseFloat(payrollRecord.other_deductions).toFixed(2)]);
   }
+  
+  // Add custom deduction items
+  customDeductionItems.forEach(item => {
+    deductionsBody.push([item.description, parseFloat(String(item.amount)).toFixed(2)]);
+  });
 
   autoTable(doc, {
     startY: yPos,
