@@ -46,9 +46,14 @@ serve(async (req) => {
       .from('company_members')
       .select('company_id')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (memberError || !memberData) {
+    if (memberError) {
+      console.error('Error fetching company membership:', memberError);
+      throw new Error('Error fetching company association');
+    }
+    
+    if (!memberData) {
       throw new Error('No company association found');
     }
 

@@ -181,6 +181,7 @@ export default function Payroll() {
     try {
       const { data: payrollData, error: payrollError } = await supabase.from('payroll').insert([{
         employee_id: formData.employee_id,
+        company_id: activeCompany?.id,
         period_start: formData.period_start,
         period_end: formData.period_end,
         basic_salary: calculations.basic_salary,
