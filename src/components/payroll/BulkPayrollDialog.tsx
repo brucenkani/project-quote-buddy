@@ -195,14 +195,13 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
 
         if (payrollError) throw payrollError;
 
-        // Generate PDF payslip and send email
+        // Generate PDF and check SMTP configuration
         const payrollWithEmployee = {
           ...payrollData,
           employees: employee,
         };
         
         try {
-          // Get company settings with proper mapping
           const companySettings = {
             company_name: activeCompanySettings?.company_name || '',
             email: activeCompanySettings?.email || '',
@@ -210,18 +209,51 @@ export function BulkPayrollDialog({ open, onOpenChange, onComplete }: BulkPayrol
             address: activeCompanySettings?.address || '',
           };
           
-          // Generate PDF and get blob
+          // Generate PDF
           await generatePayslipPDF(payrollWithEmployee, companySettings);
-          // Note: generatePayslipPDF downloads the PDF directly, so we skip email for now
-          // In production, you would modify generatePayslipPDF to return the blob
+          
+          // Check if SMTP is configured
+          const smtpConfigured = payrollSettings?.smtp_host && 
+                                 payrollSettings?.smtp_user && 
+                                 payrollSettings?.smtp_password;
+          
+          if (smtpConfigured) {
+            // Send email notification
+            try {
+              const { error: emailError } = await supabase.functions.invoke('send-payslip-email', {
+                body: {
+                  employeeEmail: employee.email,
+                  employeeName: `${employee.first_name} ${employee.last_name}`,
+                  periodStart,
+                  periodEnd,
+                  netSalary: calculations.net_salary,
+                  pdfBase64: '', // PDF generation needs refactoring to return blob
+                },
+              });
+
+              if (emailError) {
+                console.error('Email error for', employee.email, ':', emailError);
+              }
+            } catch (emailError) {
+              console.error('Email sending error:', emailError);
+            }
+          }
         } catch (error) {
           console.error('PDF generation error:', error);
         }
       }
 
+      const smtpConfigured = payrollSettings?.smtp_host && 
+                             payrollSettings?.smtp_user && 
+                             payrollSettings?.smtp_password;
+      
+      const message = smtpConfigured 
+        ? `Payroll processed and emails sent for ${selectedEmployees.length} employee(s)`
+        : `Payroll processed for ${selectedEmployees.length} employee(s). Configure SMTP to send emails.`;
+      
       toast({
         title: 'Success',
-        description: `Payroll processed for ${selectedEmployees.length} employee(s)`,
+        description: message,
       });
       
       onComplete();

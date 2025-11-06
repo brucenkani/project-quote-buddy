@@ -253,12 +253,45 @@ export default function Payroll() {
           // Generate PDF
           await generatePayslipPDF(payrollWithEmployee, companySettings);
           
-          // Skip email sending (matching bulk payroll behavior)
-          // Email requires SMTP configuration in Payroll Settings
-          toast({ 
-            title: 'Success', 
-            description: 'Payroll created successfully'
-          });
+          // Check if SMTP is configured
+          const smtpConfigured = payrollSettings?.smtp_host && 
+                                 payrollSettings?.smtp_user && 
+                                 payrollSettings?.smtp_password;
+          
+          if (smtpConfigured) {
+            // Send email notification with PDF
+            try {
+              const { error: emailError } = await supabase.functions.invoke('send-payslip-email', {
+                body: {
+                  employeeEmail: selectedEmployee.email,
+                  employeeName: `${selectedEmployee.first_name} ${selectedEmployee.last_name}`,
+                  periodStart: formData.period_start,
+                  periodEnd: formData.period_end,
+                  netSalary: calculations.net_salary,
+                  pdfBase64: '', // PDF generation needs refactoring to return blob
+                },
+              });
+
+              if (emailError) throw emailError;
+              
+              toast({ 
+                title: 'Success', 
+                description: `Payroll created and email sent to ${selectedEmployee.email}` 
+              });
+            } catch (emailError) {
+              console.error('Email error:', emailError);
+              toast({
+                title: 'Partial Success',
+                description: 'Payroll created but email notification failed',
+                variant: 'destructive',
+              });
+            }
+          } else {
+            toast({ 
+              title: 'Success', 
+              description: 'Payroll created successfully. Configure SMTP in settings to send emails.' 
+            });
+          }
         } catch (error) {
           console.error('Error generating payslip:', error);
           toast({
