@@ -420,7 +420,14 @@ export default function Index() {
                   Need professional help with <span className="font-semibold text-foreground">Financial Statements</span>, <span className="font-semibold text-foreground">Tax Returns</span>, or <span className="font-semibold text-foreground">Compliance Matters</span>?
                 </p>
                 
-                {/* Cards and Contact Info Section */}
+                {/* Contact Info */}
+                <div className="text-base text-muted-foreground space-y-1 mb-8">
+                  <p className="font-medium">Contact me for expert assistance:</p>
+                  <p className="font-semibold text-lg text-foreground mt-2">+27 65 967 2215</p>
+                  <p className="text-foreground">bruce@nkani.co.za</p>
+                </div>
+                
+                {/* Cards Section */}
                 <div className="flex flex-col lg:flex-row items-center justify-center gap-6 mb-8">
                   {/* Left Card - Websites & Excel Templates */}
                   <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/30 dark:to-orange-900/20 border-orange-200 dark:border-orange-800 w-full max-w-[300px]">
@@ -444,13 +451,6 @@ export default function Index() {
                       </Button>
                     </CardHeader>
                   </Card>
-
-                  {/* Contact Info - Center */}
-                  <div className="text-base text-muted-foreground space-y-1 lg:mx-8">
-                    <p className="font-medium">Contact me for expert assistance:</p>
-                    <p className="font-semibold text-lg text-foreground mt-2">+27 65 967 2215</p>
-                    <p className="text-foreground">bruce@nkani.co.za</p>
-                  </div>
 
                   {/* Right Card - Report & Document Builders */}
                   <Card className="cursor-pointer hover:shadow-lg transition-all bg-gradient-to-br from-teal-50 to-teal-100/50 dark:from-teal-950/30 dark:to-teal-900/20 border-teal-200 dark:border-teal-800 w-full max-w-[300px]">
