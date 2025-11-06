@@ -73,24 +73,30 @@ export default function Employees() {
   };
 
   const generateNextEmployeeNumber = async (companyId: string): Promise<string> => {
-    // Get the highest employee number for this company
+    // Get all employee numbers for this company to find the next available number
     const { data, error } = await supabase
       .from('employees')
       .select('employee_number')
-      .eq('company_id', companyId)
-      .order('employee_number', { ascending: false })
-      .limit(1);
+      .eq('company_id', companyId);
 
-    if (error || !data || data.length === 0) {
+    if (error) {
+      console.error('Error fetching employee numbers:', error);
       return '0001';
     }
 
-    // Extract numeric part and increment
-    const lastNumber = data[0].employee_number;
-    const numericPart = parseInt(lastNumber.replace(/\D/g, '')) || 0;
-    const nextNumber = numericPart + 1;
+    if (!data || data.length === 0) {
+      return '0001';
+    }
+
+    // Extract all numeric values and find the max
+    const existingNumbers = data
+      .map(emp => parseInt(emp.employee_number.replace(/\D/g, '')) || 0)
+      .filter(num => num > 0);
+
+    const maxNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
+    const nextNumber = maxNumber + 1;
     
-    // Format with leading zeros
+    // Format with leading zeros (minimum 4 digits)
     return nextNumber.toString().padStart(4, '0');
   };
 
