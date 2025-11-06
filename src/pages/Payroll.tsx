@@ -253,40 +253,12 @@ export default function Payroll() {
           // Generate PDF
           await generatePayslipPDF(payrollWithEmployee, companySettings);
           
-          // Send email notification (simplified - no attachment for now)
-          try {
-            const { error: emailError } = await supabase.functions.invoke('send-payslip-email', {
-              body: {
-                employeeEmail: selectedEmployee.email,
-                employeeName: `${selectedEmployee.first_name} ${selectedEmployee.last_name}`,
-                periodStart: formData.period_start,
-                periodEnd: formData.period_end,
-                netSalary: calculations.net_salary,
-                currencySymbol: payrollSettings?.currency_symbol || 'R',
-              },
-            });
-
-            if (emailError) {
-              console.error('Email error:', emailError);
-              toast({
-                title: 'Partial Success',
-                description: 'Payroll created but email notification failed',
-                variant: 'destructive',
-              });
-            } else {
-              toast({ 
-                title: 'Success', 
-                description: `Payroll created and email sent to ${selectedEmployee.email}` 
-              });
-            }
-          } catch (emailError) {
-            console.error('Email sending error:', emailError);
-            toast({
-              title: 'Partial Success',
-              description: 'Payroll created but email notification failed',
-              variant: 'destructive',
-            });
-          }
+          // Skip email sending (matching bulk payroll behavior)
+          // Email requires SMTP configuration in Payroll Settings
+          toast({ 
+            title: 'Success', 
+            description: 'Payroll created successfully'
+          });
         } catch (error) {
           console.error('Error generating payslip:', error);
           toast({
