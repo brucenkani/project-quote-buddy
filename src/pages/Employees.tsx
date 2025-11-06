@@ -161,6 +161,25 @@ export default function Employees() {
         employeeNumber = await generateNextEmployeeNumber(companyMembers.company_id);
       }
 
+      // Ensure uniqueness within the company (DB enforces UNIQUE(company_id, employee_number))
+      if (employeeNumber) {
+        const { data: existing, error: checkError } = await supabase
+          .from('employees')
+          .select('id')
+          .eq('company_id', companyMembers.company_id)
+          .eq('employee_number', employeeNumber)
+          .maybeSingle();
+
+        if (!checkError && existing && (!editingEmployee || existing.id !== editingEmployee.id)) {
+          toast({
+            title: 'Duplicate employee number',
+            description: 'This number already exists in your company. Leave it blank to auto-generate.',
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+
       const dataToSubmit = {
         ...formData,
         employee_number: employeeNumber,
