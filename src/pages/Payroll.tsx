@@ -134,10 +134,10 @@ export default function Payroll() {
     if (!employee) return null;
 
     const basicSalary = parseFloat(employee.basic_salary);
-    const allowances = parseFloat(formData.allowances);
+    const allowances = 0; // Now using custom income items instead
     const overtime = parseFloat(formData.overtime);
     const bonuses = parseFloat(formData.bonuses);
-    const otherDeductions = parseFloat(formData.other_deductions);
+    const otherDeductions = 0; // Now using custom deductions instead
 
     // Add custom income to gross salary
     const customIncomeTotal = customIncome.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
@@ -185,13 +185,13 @@ export default function Payroll() {
         period_start: formData.period_start,
         period_end: formData.period_end,
         basic_salary: calculations.basic_salary,
-        allowances: parseFloat(formData.allowances),
+        allowances: 0, // Now using custom income items
         overtime: parseFloat(formData.overtime),
         bonuses: parseFloat(formData.bonuses),
         gross_salary: calculations.gross_salary,
         paye: calculations.paye,
         uif: calculations.uif,
-        other_deductions: parseFloat(formData.other_deductions),
+        other_deductions: 0, // Now using custom deductions
         total_deductions: calculations.total_deductions,
         net_salary: calculations.net_salary,
         status: 'pending',
@@ -497,16 +497,6 @@ export default function Payroll() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="allowances">Allowances</Label>
-                    <Input
-                      id="allowances"
-                      type="number"
-                      step="0.01"
-                      value={formData.allowances}
-                      onChange={(e) => setFormData({ ...formData, allowances: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="overtime">Overtime</Label>
                     <Input
                       id="overtime"
@@ -516,6 +506,7 @@ export default function Payroll() {
                       onChange={(e) => setFormData({ ...formData, overtime: e.target.value })}
                     />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="bonuses">Bonuses</Label>
                     <Input
@@ -526,22 +517,12 @@ export default function Payroll() {
                       onChange={(e) => setFormData({ ...formData, bonuses: e.target.value })}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="other_deductions">Other Deductions</Label>
-                    <Input
-                      id="other_deductions"
-                      type="number"
-                      step="0.01"
-                      value={formData.other_deductions}
-                      onChange={(e) => setFormData({ ...formData, other_deductions: e.target.value })}
-                    />
-                  </div>
                 </div>
 
                 {/* Custom Income Section */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <Label>Custom Income Items</Label>
+                    <Label className="text-base font-semibold">Custom Income Items</Label>
                     <Button
                       type="button"
                       variant="outline"
@@ -552,6 +533,7 @@ export default function Payroll() {
                       Add Income
                     </Button>
                   </div>
+                  <p className="text-xs text-muted-foreground">Add allowances, commissions, or other earnings with custom names</p>
                   {customIncome.map((item, index) => (
                     <div key={index} className="flex gap-2">
                       <Input
@@ -590,7 +572,7 @@ export default function Payroll() {
                 {/* Custom Deductions Section */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <Label>Custom Deductions</Label>
+                    <Label className="text-base font-semibold">Custom Deductions</Label>
                     <Button
                       type="button"
                       variant="outline"
@@ -601,6 +583,7 @@ export default function Payroll() {
                       Add Deduction
                     </Button>
                   </div>
+                  <p className="text-xs text-muted-foreground">Add loans, garnishments, or other deductions with custom names</p>
                   {customDeductions.map((item, index) => (
                     <div key={index} className="flex gap-2">
                       <Input
