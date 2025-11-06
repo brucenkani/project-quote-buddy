@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { PayrollNavigation } from '@/components/PayrollNavigation';
@@ -361,7 +361,9 @@ export default function Payroll() {
   };
 
   const selectedEmployee = employees.find(e => e.id === formData.employee_id);
-  const previewCalculations = selectedEmployee ? calculatePayroll() : null;
+  const previewCalculations = useMemo(() => {
+    return selectedEmployee ? calculatePayroll() : null;
+  }, [selectedEmployee, formData, customIncome, customDeductions, taxBrackets, payrollSettings]);
 
   if (companyLoading || isLoading) {
     return (
