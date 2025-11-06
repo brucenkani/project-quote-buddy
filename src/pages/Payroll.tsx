@@ -722,7 +722,7 @@ export default function Payroll() {
                 {filteredRecords.map((record) => (
                   <TableRow key={record.id}>
                     <TableCell>
-                      {record.employees.first_name} {record.employees.last_name}
+                      {record.employees ? `${record.employees.first_name} ${record.employees.last_name}` : 'Unknown Employee'}
                     </TableCell>
                     <TableCell>
                       {format(new Date(record.period_start), 'dd/MM/yyyy')} - {format(new Date(record.period_end), 'dd/MM/yyyy')}
@@ -752,7 +752,7 @@ export default function Payroll() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Payroll Record</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete this payroll record for {record.employees.first_name} {record.employees.last_name}? This action cannot be undone.
+                                Are you sure you want to delete this payroll record for {record.employees ? `${record.employees.first_name} ${record.employees.last_name}` : 'this employee'}? This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
